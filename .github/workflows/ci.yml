@@ -23,7 +23,7 @@ jobs:
           test -f "build/Nexonic Download Manager.app/Contents/Resources/Extension/manifest.json"
           plutil -lint "build/Nexonic Download Manager.app/Contents/Info.plist"
           python3 scripts/host-ping.py "build/Nexonic Download Manager.app/Contents/MacOS/nexonic-host"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: nexonic-download-manager
           path: build/*.dmg
@@ -54,7 +54,7 @@ jobs:
           $s.Write([BitConverter]::GetBytes($body.Length), 0, 4); $s.Write($body, 0, $body.Length); $s.Close()
           $out = $p.StandardOutput.ReadToEnd(); $p.WaitForExit()
           if ($out -notmatch '"ok":true') { throw "no ping answer: $out" }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: nexonic-download-manager-windows
           path: build/*.exe
