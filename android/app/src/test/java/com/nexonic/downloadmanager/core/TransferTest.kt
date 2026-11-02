@@ -1,6 +1,5 @@
 package com.nexonic.downloadmanager.core
 
-import com.sun.net.httpserver.HttpServer
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -9,7 +8,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.File
-import java.net.InetSocketAddress
 import java.util.Collections
 import java.util.Random
 import java.util.concurrent.CountDownLatch
@@ -24,16 +22,15 @@ class TransferTest {
     private val served = AtomicLong()
     @Volatile private var phase = 0
     private val cookiesSeen = Collections.synchronizedList(mutableListOf<String?>())
-    private lateinit var server: HttpServer
-    private lateinit var other: HttpServer
+    private lateinit var server: MiniHttpServer
+    private lateinit var other: MiniHttpServer
     private lateinit var dir: File
 
-    private val base get() = "http://127.0.0.1:${server.address.port}"
+    private val base get() = "http://127.0.0.1:${server.port}"
 
     @Before fun setUp() {
-        dir = createTempDir("ndm-test")
-        server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
-        server.executor = java.util.concurrent.Executors.newCachedThreadPool()
+        dir = kotlin.io.path.createTempDirectory("ndm-test").toFile()
+        server = MiniHttpServer()
         server.createContext("/file.bin") { ex ->
             val myPhase = phase
             cookiesSeen.add(ex.requestHeaders.getFirst("Cookie"))
@@ -68,7 +65,7 @@ class TransferTest {
         server.createContext("/missing") { ex -> ex.sendResponseHeaders(404, -1); ex.close() }
         server.createContext("/same") { ex -> ex.responseHeaders.add("Location", "/file.bin"); ex.sendResponseHeaders(302, -1); ex.close() }
         server.start()
-        other = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
+        other = MiniHttpServer()
         other.createContext("/away") { ex ->
             ex.responseHeaders.add("Location", "$base/file.bin"); ex.sendResponseHeaders(302, -1); ex.close()
         }
@@ -76,7 +73,7 @@ class TransferTest {
     }
 
     @After fun tearDown() {
-        server.stop(0); other.stop(0); dir.deleteRecursively()
+        server.stop(); other.stop(); dir.deleteRecursively()
     }
 
     private class Result : TransferListener {
@@ -130,7 +127,7 @@ class TransferTest {
         cookiesSeen.clear()
         // A redirect from another server must not carry that server's cookie.
         val f = File(dir, "d.bin")
-        run(DownloadRequest("http://127.0.0.1:${other.address.port}/away", cookies = "secret=1"), f, connections = 2)
+        run(DownloadRequest("http://127.0.0.1:${other.port}/away", cookies = "secret=1"), f, connections = 2)
         assertTrue(cookiesSeen.isNotEmpty() && cookiesSeen.all { it == null })
         assertArrayEquals(content, f.readBytes())
     }

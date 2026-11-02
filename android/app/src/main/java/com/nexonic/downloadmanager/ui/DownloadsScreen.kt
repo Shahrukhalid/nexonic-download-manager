@@ -32,7 +32,7 @@ import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Image
-import androidx.compose.material.icons.outlined.InsertDriveFile
+import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Movie
 import androidx.compose.material.icons.outlined.MusicNote
@@ -98,7 +98,7 @@ fun categoryIcon(c: FileCategory): ImageVector = when (c) {
     FileCategory.DOCUMENTS -> Icons.Outlined.Description
     FileCategory.PROGRAMS -> Icons.Outlined.Apps
     FileCategory.IMAGES -> Icons.Outlined.Image
-    FileCategory.OTHER -> Icons.Outlined.InsertDriveFile
+    FileCategory.OTHER -> Icons.AutoMirrored.Outlined.InsertDriveFile
 }
 
 @Composable
