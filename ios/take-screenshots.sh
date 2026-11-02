@@ -26,12 +26,15 @@ shoot() {
   run 60 xcrun simctl ui "$sim" appearance light
   run 120 xcrun simctl shutdown "$sim"
 }
-shoot "$(device 'iPhone 16 Pro')" ios \
+# Use the iPhone simulator the tests already started ($SIM from the workflow); a cold first boot takes 10+ minutes on CI.
+IPHONE="${SIM:-$(device 'iPhone 16 Pro')}"
+# Start booting the iPad now, so it's ready when the iPhone pictures are done.
+IPAD=$(device 'iPad Pro 13' || device 'iPad Air' || true)
+if [ -n "$IPAD" ]; then (xcrun simctl boot "$IPAD" >/dev/null 2>&1 &); fi
+shoot "$IPHONE" ios \
   main:downloads:light:8 detail:detail:light:8 add:add:light:9 browser:browser:light:12 found:found:light:13 setup:setup:light:6 main-dark:downloads:dark:8
 # The iPad can be slow to boot on CI: give it 8 minutes, and never block the run.
-IPAD=$(device 'iPad Pro 13' || device 'iPad Air' || true)
 if [ -n "$IPAD" ]; then
-  xcrun simctl shutdown all >/dev/null 2>&1 || true
   ( shoot "$IPAD" ipad main:detail:light:9 browser:found:light:13 ) &
   pid=$!
   for i in $(seq 1 480); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done
