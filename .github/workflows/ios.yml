@@ -1,0 +1,81 @@
+name: iOS
+# iPhone and iPad app with the Share extension and the Shortcuts action: tests, simulator build, unsigned device
+# build (signing needs the owner's Apple developer team, see ios/README.md) and screenshots.
+on:
+  push:
+    branches: [main, feature/mobile-platforms]
+    paths: ["ios/**", "Sources/NexonicCore/**", "android/demo/page.html", ".github/workflows/ios.yml"]
+  pull_request:
+    paths: ["ios/**", "Sources/NexonicCore/**", ".github/workflows/ios.yml"]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Xcode project
+        run: |
+          brew list xcodegen >/dev/null 2>&1 || brew install -q xcodegen
+          xcodebuild -version
+          cd ios && NDM_VERSION="$(cat ../VERSION)" NDM_TEAM_ID="" xcodegen generate
+      - name: Pick a simulator
+        run: |
+          SIM=$(xcrun simctl list devices available -j | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];print(next(x['udid'] for r in sorted(d,reverse=True) for x in d[r] if x['name'].startswith('iPhone 16')))")
+          echo "SIM=$SIM" >> "$GITHUB_ENV"
+      - name: Tests
+        run: |
+          xcodebuild test -project ios/Nexonic.xcodeproj -scheme Nexonic -destination "id=$SIM" \
+            -derivedDataPath build/test CODE_SIGNING_ALLOWED=NO -quiet
+      - name: Build for the simulator
+        run: |
+          xcodebuild build -project ios/Nexonic.xcodeproj -scheme Nexonic -configuration Debug -destination "id=$SIM" \
+            -derivedDataPath build/sim CODE_SIGNING_ALLOWED=NO -quiet
+          APP=build/sim/Build/Products/Debug-iphonesimulator/Nexonic.app
+          test -d "$APP/PlugIns/NexonicShare.appex"
+          test -d "$APP/Frameworks/NexonicKit.framework"
+          /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" "$APP/PlugIns/NexonicShare.appex/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "$APP/PlugIns/NexonicShare.appex/Info.plist"
+          ls "$APP/Metadata.appintents" >/dev/null && echo "App Intents metadata: OK"
+          echo "APP=$APP" >> "$GITHUB_ENV"
+      - name: Build for iPhone and iPad (unsigned)
+        run: |
+          xcodebuild archive -project ios/Nexonic.xcodeproj -scheme Nexonic -configuration Release -destination "generic/platform=iOS" \
+            -archivePath build/Nexonic.xcarchive CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO -quiet
+          mkdir -p out/Payload
+          cp -R build/Nexonic.xcarchive/Products/Applications/Nexonic.app out/Payload/
+          (cd out && zip -qry NexonicDownloadManager-iOS-unsigned.ipa Payload && rm -rf Payload)
+          (cd "$(dirname "$APP")" && zip -qry "$GITHUB_WORKSPACE/out/Nexonic-simulator.app.zip" Nexonic.app)
+          ls -la out
+      - name: Screenshots (iPhone and iPad)
+        run: |
+          nohup python3 scripts/demo-server.py 8099 >/dev/null 2>&1 &
+          mkdir -p /tmp/demo-page && sed 's#{{FILES}}#http://127.0.0.1:8099#g' android/demo/page.html > /tmp/demo-page/page.html
+          nohup python3 -m http.server 8098 --bind 127.0.0.1 --directory /tmp/demo-page >/dev/null 2>&1 &
+          sleep 1
+          bash ios/take-screenshots.sh "$APP"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NexonicDownloadManager-iOS
+          path: out/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shots-ios
+          path: shots/*.png
+      - name: Save screenshots to the screenshots branch
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        run: |
+          set -e
+          mv shots ../shots
+          git fetch -q origin screenshots
+          git checkout -q screenshots
+          rm -f ios-*.png ipad-*.png
+          cp ../shots/*.png .
+          git add -A
+          git -c user.name="Shahrukh Khalid" -c user.email="90670731+Shahrukhalid@users.noreply.github.com" commit -qm "iPhone and iPad screenshots" || exit 0
+          git push -q origin screenshots

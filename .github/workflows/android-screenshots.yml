@@ -33,7 +33,8 @@ jobs:
       - name: Demo servers (a large test file with byte ranges, and a sample web page)
         run: |
           nohup python3 scripts/demo-server.py 8099 >/dev/null 2>&1 &
-          nohup python3 -m http.server 8098 --bind 127.0.0.1 --directory android/demo >/dev/null 2>&1 &
+          mkdir -p /tmp/demo-page && sed 's#{{FILES}}#http://10.0.2.2:8099#g' android/demo/page.html > /tmp/demo-page/page.html
+          nohup python3 -m http.server 8098 --bind 127.0.0.1 --directory /tmp/demo-page >/dev/null 2>&1 &
           sleep 1
           curl -sf -r 0-0 -o /dev/null http://127.0.0.1:8099/x.mp4 && curl -sf -o /dev/null http://127.0.0.1:8098/page.html
       - name: Take the pictures

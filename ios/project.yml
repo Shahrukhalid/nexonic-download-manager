@@ -1,0 +1,89 @@
+# Xcode project for the iPhone and iPad app. Generate it with:  NDM_VERSION=$(cat ../VERSION) xcodegen
+name: Nexonic
+options:
+  bundleIdPrefix: com.nexonic
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    MARKETING_VERSION: ${NDM_VERSION}
+    CURRENT_PROJECT_VERSION: 1
+    SWIFT_VERSION: "5.0"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    DEVELOPMENT_TEAM: ${NDM_TEAM_ID}
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+targets:
+  NexonicKit:
+    type: framework
+    platform: iOS
+    sources:
+      - path: NexonicKit
+      # Shared with the Mac and Windows apps' rules (plain Foundation, unchanged).
+      - path: ../Sources/NexonicCore/FileNames.swift
+      - path: ../Sources/NexonicCore/FileCategory.swift
+      - path: ../Sources/NexonicCore/Links.swift
+      - path: ../Sources/NexonicCore/BatchPattern.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nexonic.downloadmanager.kit
+        APPLICATION_EXTENSION_API_ONLY: YES
+        GENERATE_INFOPLIST_FILE: YES
+        SKIP_INSTALL: YES
+  Nexonic:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+    dependencies:
+      - target: NexonicKit
+      - target: NexonicShare
+    entitlements:
+      path: App/Nexonic.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nexonic.downloadmanager
+        INFOPLIST_FILE: App/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        PRODUCT_NAME: Nexonic
+  NexonicShare:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: ShareExtension
+    dependencies:
+      - target: NexonicKit
+        embed: false
+    entitlements:
+      path: ShareExtension/ShareExtension.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nexonic.downloadmanager.share
+        INFOPLIST_FILE: ShareExtension/Info.plist
+        PRODUCT_NAME: NexonicShare
+  NexonicKitTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: NexonicKit
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.nexonic.downloadmanager.tests
+schemes:
+  Nexonic:
+    build:
+      targets:
+        Nexonic: all
+        NexonicKitTests: [test]
+    test:
+      targets:
+        - NexonicKitTests
+      gatherCoverageData: false
+    run:
+      config: Debug
+    archive:
+      config: Release
