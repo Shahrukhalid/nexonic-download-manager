@@ -2,7 +2,7 @@ import Foundation
 import NexonicCore
 
 // Browser helper (native messaging) and the `ndm` command line: both hand downloads to the app through the inbox.
-let version = "0.6.3"
+let version = "0.6.4"
 
 func openApp(_ url: String) {
     let p = Process()
@@ -40,13 +40,13 @@ func reply(_ object: [String: Any]) {
     if let data = try? NativeMessaging.encode(object) { output.write(data) }
 }
 
-/// The proxy set in the app, so lookups take the same route as downloads. Its password is read from the Keychain only
-/// when the proxy needs a login. The settings file is only read here, never changed.
+/// The proxy set in the app, so lookups take the same route as downloads. Its password comes from the app's private
+/// secrets file. Nothing is changed here.
 func savedProxy() -> ProxySettings? {
     guard let data = try? Data(contentsOf: AppPaths.settings), var s = try? JSONDecoder().decode(AppSettings.self, from: data) else {
         return nil
     }
-    if !s.proxy.username.isEmpty, s.proxy.password.isEmpty, let p = KeychainStore().read()?[Secrets.proxyKey] { s.proxy.password = p }
+    if !s.proxy.username.isEmpty, s.proxy.password.isEmpty, let p = FileStore(migrate: false).read()?[Secrets.proxyKey] { s.proxy.password = p }
     return s.proxy
 }
 

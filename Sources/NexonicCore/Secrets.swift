@@ -1,7 +1,7 @@
 import Foundation
 import Security
 
-/// Where cookies and passwords are kept: the macOS Keychain in the app, memory in tests.
+/// Where cookies and passwords are kept: a private file in the app, memory in tests.
 public protocol SecretStore: AnyObject {
     /// All saved secrets, or nil when they can't be read (Keychain locked or access denied). Then nothing is written
     /// either, so a denied prompt never wipes them.
@@ -16,7 +16,7 @@ public final class KeychainStore: SecretStore {
 
     public init() {}
 
-    private var query: [String: Any] {
+    fileprivate var query: [String: Any] {
         [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service, kSecAttrAccount as String: account]
     }
 
@@ -40,6 +40,72 @@ public final class KeychainStore: SecretStore {
         add[kSecAttrLabel as String] = "Nexonic Download Manager"
         add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         return SecItemAdd(add as CFDictionary, nil) == errSecSuccess
+    }
+}
+
+extension KeychainStore {
+    /// Runs Keychain calls without ever showing a password prompt (they fail instead).
+    static func silently<T>(_ body: () -> T) -> T {
+        var was: DarwinBoolean = true
+        SecKeychainGetUserInteractionAllowed(&was)
+        SecKeychainSetUserInteractionAllowed(false)
+        defer { SecKeychainSetUserInteractionAllowed(was.boolValue) }
+        return body()
+    }
+
+    /// What 0.6.2 and 0.6.3 saved, if macOS hands it over without asking; nil otherwise.
+    public func readWithoutPrompt() -> [String: String]? {
+        Self.silently { read() }
+    }
+
+    /// Removes the item (without asking). Used once the secrets have moved to the private file.
+    public func deleteWithoutPrompt() {
+        _ = Self.silently { SecItemDelete(query as CFDictionary) }
+    }
+}
+
+/// Cookies, download passwords and the proxy password in one private file (secrets.json, readable only by your user
+/// account, inside your Library; protected on disk by FileVault). The Keychain is no longer used: the app isn't signed
+/// with a developer certificate, so macOS asked for the login password after every update.
+public final class FileStore: SecretStore {
+    public let url: URL
+    private let migrate: Bool
+
+    /// `migrate`: move secrets saved in the Keychain by 0.6.2/0.6.3 into the file (the app does this; the browser
+    /// helper only reads).
+    public init(url: URL = AppPaths.support.appendingPathComponent("secrets.json"), migrate: Bool = true) {
+        self.url = url
+        self.migrate = migrate
+    }
+
+    public func read() -> [String: String]? {
+        if let data = try? Data(contentsOf: url) {
+            return try? JSONDecoder().decode([String: String].self, from: data)  // damaged: nil, so it's never overwritten
+        }
+        guard !FileManager.default.fileExists(atPath: url.path) else { return nil }  // there but unreadable
+        guard migrate else { return [:] }
+        let keychain = KeychainStore()
+        guard let old = keychain.readWithoutPrompt(), !old.isEmpty else { return [:] }
+        guard write(old) else { return old }
+        keychain.deleteWithoutPrompt()
+        return old
+    }
+
+    public func write(_ values: [String: String]) -> Bool {
+        guard let data = try? JSONEncoder().encode(values) else { return false }
+        let fm = FileManager.default
+        try? fm.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let temp = url.deletingLastPathComponent().appendingPathComponent(".secrets-\(UUID().uuidString).json")
+        // Created owner-only before anything is written, then moved over the old file in one step.
+        guard fm.createFile(atPath: temp.path, contents: data, attributes: [.posixPermissions: 0o600]) else { return false }
+        do {
+            if fm.fileExists(atPath: url.path) { _ = try fm.replaceItemAt(url, withItemAt: temp) } else { try fm.moveItem(at: temp, to: url) }
+            try? fm.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+            return true
+        } catch {
+            try? fm.removeItem(at: temp)
+            return false
+        }
     }
 }
 

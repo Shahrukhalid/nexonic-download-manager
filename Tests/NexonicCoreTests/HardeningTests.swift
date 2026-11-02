@@ -152,4 +152,19 @@ final class UpdateTests: XCTestCase {
         try Data("abd".utf8).write(to: file)
         XCTAssertFalse(Updates.verify(file, sha256: sha))
     }
+
+    func testSecretsFileIsPrivateAndNeverPrompts() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let store = FileStore(url: dir.appendingPathComponent("secrets.json"), migrate: false)
+        XCTAssertEqual(store.read(), [:])  // nothing saved yet
+        XCTAssertTrue(store.write(["proxy.password": "p"]))
+        XCTAssertEqual(store.read(), ["proxy.password": "p"])
+        XCTAssertTrue(store.write(["proxy.password": "q"]))  // replaced in one step
+        XCTAssertEqual(store.read(), ["proxy.password": "q"])
+        let mode = try FileManager.default.attributesOfItem(atPath: store.url.path)[.posixPermissions] as? Int
+        XCTAssertEqual(mode, 0o600)  // only this user
+        try Data("damaged".utf8).write(to: store.url)
+        XCTAssertNil(store.read())  // unreadable: nil, so the app never overwrites it with an empty list
+    }
 }

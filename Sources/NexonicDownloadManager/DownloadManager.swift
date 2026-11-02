@@ -31,15 +31,14 @@ final class DownloadManager: ObservableObject {
         }
     }
 
-    /// Cookies and passwords are kept in the Keychain (see Secrets); `stored` is what it holds now.
-    private static let vault: SecretStore = KeychainStore()
+    /// Cookies and passwords are kept in a private file (see FileStore); `stored` is what it holds now.
+    private static let vault: SecretStore = FileStore()
     private var vaultReadable = false
     private var stored: [String: String] = [:]
-    /// Plain-text secrets found in files saved by 0.6.1, kept there (never added to) until the Keychain takes them.
+    /// Plain-text secrets found in files saved by 0.6.1, kept there (never added to) until the secrets file takes them.
     private var legacySecrets: [String: String] = [:]
-    /// The download list could not be read: its Keychain entries are kept, not pruned (see SavedFile).
+    /// The download list could not be read: its saved secrets are kept, not pruned (see SavedFile).
     private var listDamaged = false
-    private var warnedKeychain = false
 
     private var transfers: [UUID: Downloader] = [:]
     private var recent: [UUID: [Int64]] = [:]  // received bytes at each of the last ticks
@@ -77,7 +76,7 @@ final class DownloadManager: ObservableObject {
         if settings.notifications {
             UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
         }
-        // Lists saved by 0.6.1 or older hold cookies and passwords in the file: move them into the Keychain now.
+        // Lists saved by 0.6.1 or older hold cookies and passwords in the file: move them into the secrets file now.
         persist()
         saveSettings()
         collectInbox()
@@ -537,8 +536,8 @@ final class DownloadManager: ObservableObject {
         UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: UUID().uuidString, content: c, trigger: nil))
     }
 
-    // Secrets never go into the files in plain text. If the Keychain can't take them, the values from 0.6.1 files stay
-    // where they were (until the Keychain works), new ones are kept only while the app runs, and the user is told.
+    // Secrets live only in the private secrets file, not in the lists. If it can't be written, the values from 0.6.1
+    // files stay where they were and new ones are kept while the app runs; it is tried again on the next save.
     private func persist() {
         var list = Secrets.stripped(items)
         if !syncSecrets() {
@@ -557,47 +556,20 @@ final class DownloadManager: ObservableObject {
         save(s, to: AppPaths.settings)
     }
 
-    /// Writes the current secrets to the Keychain when they changed. False when the Keychain can't be read or written.
+    /// Writes the current secrets to the private file when they changed. False when it can't be read or written.
     private func syncSecrets() -> Bool {
-        guard vaultReadable else { return keychainFailed() }
+        if !vaultReadable, let saved = Self.vault.read() {  // try again quietly
+            vaultReadable = true
+            stored = saved
+        }
+        guard vaultReadable else { return false }
         var all = Secrets.collect(items, settings)
         if listDamaged { all = stored.merging(all) { _, new in new } }  // the unreadable list's secrets stay recoverable
         if all == stored { legacySecrets = [:]; return true }
-        guard Self.vault.write(all) else { return keychainFailed() }
+        guard Self.vault.write(all) else { return false }
         stored = all
         legacySecrets = [:]  // migrated: the files are written without them from now on
         return true
-    }
-
-    private func keychainFailed() -> Bool {
-        guard !warnedKeychain else { return false }
-        warnedKeychain = true
-        Task { @MainActor [weak self] in self?.askAboutKeychain() }
-        return false
-    }
-
-    /// Tells the user that passwords and cookies can't be kept safely right now, and lets them try again.
-    private func askAboutKeychain() {
-        let alert = NSAlert()
-        alert.messageText = "Passwords and cookies can't be saved in the Keychain"
-        alert.informativeText = "Nexonic Download Manager keeps download passwords, cookies and the proxy password in "
-            + "your Keychain, never in plain files. The Keychain is locked or access was denied, so new ones are kept "
-            + "only until you quit. Allow access when macOS asks, then choose Try Again."
-        alert.addButton(withTitle: "Try Again")
-        alert.addButton(withTitle: "Later")
-        guard alert.runModal() == .alertFirstButtonReturn else { return }
-        warnedKeychain = false
-        if let saved = Self.vault.read() {
-            vaultReadable = true
-            stored = saved
-            var list = items
-            var s = settings
-            Secrets.fill(&list, &s, from: saved)
-            items = list
-            if s.proxy.password != settings.proxy.password { settings = s }  // saves too
-        }
-        persist()
-        saveSettings()
     }
 
     private func save<T: Encodable>(_ value: T, to url: URL) {

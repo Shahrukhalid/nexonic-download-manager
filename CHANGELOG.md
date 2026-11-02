@@ -1,3 +1,12 @@
+## 0.6.4
+
+- **No more Keychain password prompts on Mac:** after an update, macOS no longer asks for your login password when
+  the app starts. Cookies, download passwords and the proxy password are now kept in a private file that only your
+  user account can read (`secrets.json` in the app's Library folder, protected on disk by FileVault), never in the
+  download lists. Values saved by 0.6.2/0.6.3 are moved over when macOS allows it without asking; otherwise
+  re-enter the proxy password once in Settings.
+- The "Passwords and cookies can't be saved in the Keychain" message is gone.
+
 ## 0.6.3
 
 - **Pick the video quality:** the Download this video button and the download window list the qualities each video
