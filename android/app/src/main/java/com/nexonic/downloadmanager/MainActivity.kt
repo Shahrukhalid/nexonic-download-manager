@@ -1,0 +1,99 @@
+package com.nexonic.downloadmanager
+
+import android.Manifest
+import android.app.Application
+import android.content.Intent
+import android.os.Build
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.nexonic.downloadmanager.browser.Browser
+import com.nexonic.downloadmanager.browser.Offer
+import com.nexonic.downloadmanager.core.Links
+import com.nexonic.downloadmanager.data.Downloads
+import com.nexonic.downloadmanager.service.Notifier
+import com.nexonic.downloadmanager.service.Scheduler
+import com.nexonic.downloadmanager.service.canNotify
+import com.nexonic.downloadmanager.ui.App
+import com.nexonic.downloadmanager.ui.NexonicTheme
+
+class NexonicApp : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        Downloads.init(this)
+        Notifier.channels(this)
+        Scheduler.apply(this)
+    }
+}
+
+enum class Tab { DOWNLOADS, BROWSER, SETTINGS }
+
+/** Shared UI state: which tab is open and which add window or menu is showing. */
+class UiState {
+    var tab by mutableStateOf(Tab.DOWNLOADS)
+    /** The add window: a browser offer, or pasted/shared text. */
+    var addOffer by mutableStateOf<Offer?>(null)
+    var addText by mutableStateOf<String?>(null)
+    var longPress by mutableStateOf<Pair<Offer, Boolean>?>(null)
+    var detailId by mutableStateOf<Long?>(null)
+    var message by mutableStateOf<String?>(null)
+}
+
+class MainActivity : ComponentActivity() {
+    private val ui = UiState()
+    lateinit var browser: Browser
+        private set
+
+    private val notifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
+        super.onCreate(savedInstanceState)
+        Downloads.init(this)
+        browser = Browser(this,
+            onOffer = { offer ->
+                if (Downloads.settings.askBeforeDownload) ui.addOffer = offer
+                else com.nexonic.downloadmanager.ui.quickAdd(offer) { ui.message = it }
+            },
+            onLongPress = { offer, image -> ui.longPress = offer to image },
+        )
+        if (Build.VERSION.SDK_INT >= 33 && !canNotify(this)) notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+        handle(intent)
+        setContent { NexonicTheme { App(ui, browser) } }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handle(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Downloads.pump()
+    }
+
+    /** Links shared from other apps, "Open with" web links, and taps on notifications. */
+    private fun handle(intent: Intent?) {
+        intent ?: return
+        when (intent.action) {
+            Intent.ACTION_SEND -> {
+                val text = listOfNotNull(intent.getStringExtra(Intent.EXTRA_TEXT), intent.getStringExtra(Intent.EXTRA_SUBJECT)).joinToString(" ")
+                val links = Links.split(text)
+                if (links.isEmpty()) ui.message = "No web link was shared."
+                else { ui.tab = Tab.DOWNLOADS; ui.addText = links.joinToString("\n") }
+            }
+            Intent.ACTION_VIEW -> {
+                val u = intent.dataString
+                if (u != null && Links.isWebLink(u)) { ui.tab = Tab.BROWSER; browser.go(u) }
+            }
+        }
+        if (intent.getBooleanExtra("startLater", false)) Downloads.startLater()
+        intent.getLongExtra("open", 0L).takeIf { it != 0L }?.let { ui.tab = Tab.DOWNLOADS; ui.detailId = it }
+        intent.action = null
+    }
+}

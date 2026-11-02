@@ -1,0 +1,230 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
+package com.nexonic.downloadmanager.ui
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ContentPaste
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.nexonic.downloadmanager.browser.Offer
+import com.nexonic.downloadmanager.core.BatchPattern
+import com.nexonic.downloadmanager.core.DownloadRequest
+import com.nexonic.downloadmanager.core.FileCategory
+import com.nexonic.downloadmanager.core.FileNames
+import com.nexonic.downloadmanager.core.Format
+import com.nexonic.downloadmanager.core.Http
+import com.nexonic.downloadmanager.core.HttpStatusException
+import com.nexonic.downloadmanager.core.Links
+import com.nexonic.downloadmanager.core.ProbeResult
+import com.nexonic.downloadmanager.data.Downloads
+import com.nexonic.downloadmanager.data.NewDownload
+import com.nexonic.downloadmanager.data.Secrets
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+
+/**
+ * The download window (like the desktop "Download File Info"): file name, size, type and whether it can resume,
+ * with Start Download, Download Later or Cancel. Also takes pasted or shared links, several at once, and batch patterns.
+ */
+@Composable
+fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
+    val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val context = LocalContext.current
+    var input by remember { mutableStateOf(offer?.url ?: text.orEmpty()) }
+    var batch by remember { mutableStateOf(false) }
+    var name by remember { mutableStateOf(offer?.fileName.orEmpty()) }
+    var nameEdited by remember { mutableStateOf(false) }
+    var probe by remember { mutableStateOf<ProbeResult?>(null) }
+    var probing by remember { mutableStateOf(false) }
+    var problem by remember { mutableStateOf<String?>(null) }
+    var showLogin by remember { mutableStateOf(false) }
+    var user by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
+    val links: List<String> = remember(input, batch) {
+        val l = if (batch) Links.split(input).flatMap { BatchPattern.expand(it, 2000) }.filter { Links.isWebLink(it) } else Links.split(input)
+        l.distinct()
+    }
+    val single = links.singleOrNull()
+
+    // Ask the server for the name and size of a single link.
+    LaunchedEffect(single, user, password) {
+        probe = null; problem = null
+        if (single == null) return@LaunchedEffect
+        delay(350)
+        probing = true
+        val req = DownloadRequest(single, offer?.cookies?.takeIf { single == offer?.url }, offer?.referer, offer?.userAgent, user.ifEmpty { null }, password.ifEmpty { null })
+        val result = withContext(Dispatchers.IO) { runCatching { Http.probe(req) } }
+        probing = false
+        result.onSuccess { p ->
+            probe = p
+            if (!nameEdited) name = p.fileName
+        }.onFailure { e ->
+            problem = when {
+                e is HttpStatusException && (e.code == 401 || e.code == 403) -> "The server asks for a login or refused the link (${e.code})."
+                e is HttpStatusException -> "The server answered ${e.code}."
+                else -> "Could not reach the server. You can still add it and try later."
+            }
+            if (!nameEdited && name.isEmpty()) name = FileNames.fromUrl(single)
+        }
+    }
+
+    fun add(startNow: Boolean) {
+        if (links.isEmpty()) return
+        val secrets = Secrets(cookies = offer?.cookies, user = user.ifEmpty { null }, password = password.ifEmpty { null })
+        links.forEach { u ->
+            val same = single != null
+            Downloads.add(
+                NewDownload(
+                    url = u,
+                    fileName = if (same && name.isNotBlank()) name else FileNames.fromUrl(u),
+                    size = if (same) probe?.size ?: offer?.size?.takeIf { it >= 0 } else null,
+                    resumable = if (same) probe?.resumable ?: false else false,
+                    referer = offer?.referer, userAgent = offer?.userAgent,
+                    secrets = if (u == offer?.url || offer == null) secrets else Secrets(),
+                    mime = if (same) probe?.contentType ?: offer?.mime else null,
+                    quality = offer?.quality,
+                ),
+                startNow,
+            )
+        }
+        val what = if (links.size == 1) "Download" else "${links.size} downloads"
+        onDone(if (startNow) "$what started" else "$what saved for later")
+    }
+
+    ModalBottomSheet(onDismissRequest = { onDone(null) }, sheetState = sheet) {
+        Column(
+            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text("Download file", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+
+            if (offer == null) {
+                OutlinedTextField(
+                    value = input, onValueChange = { input = it },
+                    label = { Text("Links (one or more)") },
+                    placeholder = { Text("https://…") },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 90.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            val clip = context.getSystemService(android.content.ClipboardManager::class.java)
+                                ?.primaryClip?.getItemAt(0)?.coerceToText(context)?.toString().orEmpty()
+                            if (clip.isNotBlank()) input = clip
+                        }) { Icon(Icons.Outlined.ContentPaste, "Paste") }
+                    },
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Batch pattern", style = MaterialTheme.typography.bodyMedium)
+                        Text("file[01-50].jpg makes 50 links", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(checked = batch, onCheckedChange = { batch = it })
+                }
+            } else {
+                Text(offer.url, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+
+            when {
+                single != null -> {
+                    OutlinedTextField(
+                        value = name, onValueChange = { name = it; nameEdited = true },
+                        label = { Text("File name") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
+                    )
+                    val category = FileCategory.of(name)
+                    InfoRow("Size", when {
+                        probing -> "Checking…"
+                        probe?.size != null -> Format.size(probe!!.size!!)
+                        (offer?.size ?: -1) >= 0 -> Format.size(offer!!.size)
+                        else -> "Unknown"
+                    })
+                    InfoRow("Type", category.label)
+                    InfoRow("Saved to", "Downloads/Nexonic" + (if (Downloads.settings.categoryFolders) category.folder?.let { "/$it" } ?: "" else ""))
+                    InfoRow("Resume", when { probing -> "…"; probe?.resumable == true -> "Yes"; probe != null -> "No (starts over if stopped)"; else -> "Unknown" })
+                    offer?.quality?.let { InfoRow("Quality", it) }
+                    if (probing) Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp); Spacer(Modifier.width(8.dp))
+                        Text("Asking the server…", style = MaterialTheme.typography.bodySmall)
+                    }
+                    problem?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+                }
+                links.size > 1 -> {
+                    Text("${links.size} links", fontWeight = FontWeight.SemiBold)
+                    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.surfaceVariant).padding(10.dp)) {
+                        links.take(8).forEach { Text(FileNames.fromUrl(it), style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                        if (links.size > 8) Text("and ${links.size - 8} more", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                input.isNotBlank() -> Text("No web link found. Links start with http:// or https://", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            }
+
+            TextButton(onClick = { showLogin = !showLogin }) { Text(if (showLogin) "Hide login" else "Needs a login?") }
+            if (showLogin) {
+                OutlinedTextField(user, { user = it }, label = { Text("User name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(password, { password = it }, label = { Text("Password") }, singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
+                Text("Sent only to this site, and kept encrypted on this phone.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                TextButton(onClick = { onDone(null) }) { Text("Cancel") }
+                Spacer(Modifier.weight(1f))
+                OutlinedButton(onClick = { add(false) }, enabled = links.isNotEmpty()) { Text("Later") }
+                Button(onClick = { add(true) }, enabled = links.isNotEmpty()) { Text("Start download") }
+            }
+            Spacer(Modifier.height(12.dp))
+        }
+    }
+}
+
+@Composable
+fun InfoRow(label: String, value: String) {
+    Row(Modifier.fillMaxWidth()) {
+        Box(Modifier.width(96.dp)) { Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium) }
+        Text(value, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+    }
+}

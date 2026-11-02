@@ -1,0 +1,273 @@
+package com.nexonic.downloadmanager.data
+
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.os.Handler
+import android.os.Looper
+import com.nexonic.downloadmanager.core.DownloadRequest
+import com.nexonic.downloadmanager.core.FileNames
+import com.nexonic.downloadmanager.core.Links
+import com.nexonic.downloadmanager.core.SpeedLimiter
+import com.nexonic.downloadmanager.core.Transfer
+import com.nexonic.downloadmanager.core.TransferListener
+import com.nexonic.downloadmanager.core.TransferState
+import com.nexonic.downloadmanager.service.DownloadService
+import com.nexonic.downloadmanager.service.Notifier
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import java.io.File
+import java.util.concurrent.Executors
+
+/** What the app needs to add a download (from the Add window, the browser or a shared link). */
+data class NewDownload(
+    val url: String,
+    val fileName: String,
+    val size: Long? = null,
+    val resumable: Boolean = false,
+    val referer: String? = null,
+    val userAgent: String? = null,
+    val secrets: Secrets = Secrets(),
+    val mime: String? = null,
+    val quality: String? = null,
+)
+
+/**
+ * The download list and the queue: at most [Settings.maxActive] downloads run at once, the rest wait their turn.
+ * Downloads are written to the app's own folder and moved to the public Downloads folder when they finish.
+ */
+object Downloads {
+    private lateinit var app: Context
+    private lateinit var store: ListStore
+    lateinit var secrets: SecretStore
+        private set
+    lateinit var settings: Settings
+        private set
+    private val io = Executors.newSingleThreadExecutor()
+    private val main = Handler(Looper.getMainLooper())
+    private val transfers = mutableMapOf<Long, Transfer>()
+    private val mimes = mutableMapOf<Long, String?>()
+    val limiter = SpeedLimiter()
+
+    private val _items = MutableStateFlow<List<DownloadItem>>(emptyList())
+    val items: StateFlow<List<DownloadItem>> = _items.asStateFlow()
+
+    private val _waitingForWifi = MutableStateFlow(false)
+    val waitingForWifi: StateFlow<Boolean> = _waitingForWifi.asStateFlow()
+
+    fun init(context: Context) {
+        if (::app.isInitialized) return
+        app = context.applicationContext
+        store = ListStore(app)
+        secrets = SecretStore(app)
+        settings = Settings(app)
+        limiter.bytesPerSecond = settings.speedLimitKB * 1024
+        // Downloads that were running when the app stopped continue.
+        _items.value = store.load().map { if (it.status == Status.DOWNLOADING) it.copy(status = Status.QUEUED, speed = 0) else it.copy(speed = 0) }
+        if (_items.value.any { it.status == Status.QUEUED }) main.post { pump() }
+        // Waiting for Wi-Fi: start as soon as an unmetered network is back.
+        runCatching {
+            app.getSystemService(ConnectivityManager::class.java)?.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
+                override fun onCapabilitiesChanged(network: android.net.Network, caps: NetworkCapabilities) {
+                    if (_waitingForWifi.value) main.post { pump() }
+                }
+            })
+        }
+    }
+
+    private fun partFile(id: Long): File = File(app.getExternalFilesDir(null) ?: app.filesDir, "partial/$id.part")
+
+    @Synchronized private fun update(id: Long, save: Boolean = true, change: (DownloadItem) -> DownloadItem) {
+        _items.value = _items.value.map { if (it.id == id) change(it) else it }
+        if (save) persist()
+    }
+
+    private fun persist() {
+        val snapshot = _items.value
+        io.execute { runCatching { store.save(snapshot) } }
+    }
+
+    fun get(id: Long): DownloadItem? = _items.value.firstOrNull { it.id == id }
+
+    /** Adds a download; `startNow = false` keeps it for later (Start queue or the scheduler starts it). */
+    @Synchronized fun add(d: NewDownload, startNow: Boolean): Long {
+        val existing = _items.value.firstOrNull { it.url == d.url && it.status != Status.COMPLETE && it.status != Status.FAILED }
+        if (existing != null) {
+            // Never add a link that is already being downloaded: show the running one instead.
+            if (startNow && existing.status !in listOf(Status.DOWNLOADING, Status.QUEUED)) resume(existing.id)
+            return existing.id
+        }
+        val id = maxOf(System.currentTimeMillis(), (_items.value.maxOfOrNull { it.id } ?: 0) + 1)
+        val name = FileNames.sanitize(d.fileName)
+        if (!d.secrets.isEmpty) secrets.put(id, d.secrets)
+        mimes[id] = d.mime
+        val item = DownloadItem(
+            id = id, url = d.url, fileName = name, size = d.size, resumable = d.resumable,
+            referer = d.referer, userAgent = d.userAgent, quality = d.quality,
+            status = if (startNow) Status.QUEUED else Status.LATER,
+        )
+        _items.value = listOf(item) + _items.value
+        persist()
+        if (startNow) pump()
+        return id
+    }
+
+    fun resume(id: Long) {
+        update(id) { if (it.status == Status.COMPLETE || it.status == Status.DOWNLOADING) it else it.copy(status = Status.QUEUED, error = null) }
+        pump()
+    }
+
+    fun pause(id: Long) {
+        val t = synchronized(this) { transfers.remove(id) }
+        update(id) { if (it.status == Status.COMPLETE) it else it.copy(status = Status.PAUSED, speed = 0) }
+        t?.pause()
+        pump()
+    }
+
+    fun retry(id: Long) {
+        update(id) { it.copy(status = Status.QUEUED, error = null) }
+        pump()
+    }
+
+    /** A fresh link for a download whose link expired: it continues where it stopped. */
+    fun refreshLink(id: Long, url: String, cookies: String?) {
+        if (!Links.isWebLink(url)) return
+        pause(id)
+        if (!cookies.isNullOrEmpty()) secrets.put(id, secrets.get(id).copy(cookies = cookies))
+        update(id) { it.copy(url = url) }
+        resume(id)
+    }
+
+    fun setLogin(id: Long, user: String, password: String) {
+        secrets.put(id, secrets.get(id).copy(user = user.ifEmpty { null }, password = password.ifEmpty { null }))
+    }
+
+    fun pauseAll() { _items.value.filter { it.isActive }.forEach { pause(it.id) } }
+
+    fun startAll() {
+        _items.value.filter { it.status in listOf(Status.PAUSED, Status.LATER, Status.FAILED) }.forEach { item ->
+            update(item.id, save = false) { it.copy(status = Status.QUEUED, error = null) }
+        }
+        persist()
+        pump()
+    }
+
+    /** The scheduler: everything kept for later starts now. */
+    fun startLater() {
+        _items.value.filter { it.status == Status.LATER }.forEach { item -> update(item.id, save = false) { it.copy(status = Status.QUEUED) } }
+        persist()
+        pump()
+    }
+
+    fun remove(id: Long, deleteFile: Boolean) {
+        val t = synchronized(this) { transfers.remove(id) }
+        t?.pause()
+        val item = get(id) ?: return
+        synchronized(this) { _items.value = _items.value.filterNot { it.id == id } }
+        persist()
+        secrets.remove(id)
+        io.execute {
+            Thread.sleep(300)
+            partFile(id).delete()
+            if (deleteFile) item.contentUri?.let { Publisher.delete(app, it) }
+        }
+        pump()
+    }
+
+    fun clearFinished() {
+        synchronized(this) { _items.value = _items.value.filterNot { it.status == Status.COMPLETE } }
+        persist()
+    }
+
+    fun setSpeedLimit(kb: Long) {
+        settings.speedLimitKB = kb
+        limiter.bytesPerSecond = kb * 1024
+    }
+
+    private fun onWifiOrNotNeeded(): Boolean {
+        if (!settings.wifiOnly) return true
+        val cm = app.getSystemService(ConnectivityManager::class.java) ?: return true
+        val caps = cm.getNetworkCapabilities(cm.activeNetwork) ?: return false
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED)
+    }
+
+    /** Starts queued downloads while there is room. */
+    @Synchronized fun pump() {
+        if (!::app.isInitialized) return
+        val queued = _items.value.filter { it.status == Status.QUEUED && it.id !in transfers }
+        if (queued.isEmpty()) { if (transfers.isEmpty()) DownloadService.stop(app); return }
+        if (!onWifiOrNotNeeded()) {
+            _waitingForWifi.value = true
+            if (transfers.isEmpty()) DownloadService.stop(app)
+            return
+        }
+        _waitingForWifi.value = false
+        var room = settings.maxActive - transfers.size
+        for (item in queued.sortedBy { it.addedAt }) {
+            if (room <= 0) break
+            startTransfer(item)
+            room--
+        }
+        if (transfers.isNotEmpty()) DownloadService.start(app)
+    }
+
+    private fun startTransfer(item: DownloadItem) {
+        val id = item.id
+        val s = secrets.get(id)
+        val request = DownloadRequest(item.url, s.cookies, item.referer, item.userAgent, s.user, s.password)
+        val listener = object : TransferListener {
+            override fun progress(state: TransferState, bytesPerSecond: Long) {
+                update(id, save = false) {
+                    if (it.status != Status.DOWNLOADING) it
+                    else it.copy(written = state.written, size = state.size ?: it.size, speed = bytesPerSecond, resumable = state.resumable)
+                }
+            }
+
+            override fun checkpoint(state: TransferState) {
+                update(id) { if (it.status == Status.COMPLETE) it else it.copy(state = state, written = state.written, size = state.size ?: it.size) }
+            }
+
+            override fun finished(state: TransferState) {
+                synchronized(this@Downloads) { transfers.remove(id) }
+                val current = get(id) ?: return
+                try {
+                    val saved = Publisher.publish(app, partFile(id), current.fileName, mimes[id], settings.categoryFolders)
+                    update(id) {
+                        it.copy(status = Status.COMPLETE, written = state.written, size = state.size ?: state.written, speed = 0,
+                            fileName = saved.name, contentUri = saved.uri.toString(), savedPath = saved.path,
+                            finishedAt = System.currentTimeMillis(), state = null, error = null)
+                    }
+                    secrets.remove(id)
+                    get(id)?.let { Notifier.finished(app, it) }
+                } catch (e: Exception) {
+                    update(id) { it.copy(status = Status.FAILED, speed = 0, error = "Could not save to Downloads: ${e.message}") }
+                }
+                main.post { pump() }
+            }
+
+            override fun failed(message: String, state: TransferState) {
+                synchronized(this@Downloads) { transfers.remove(id) }
+                update(id) { it.copy(status = Status.FAILED, error = message, speed = 0, state = state) }
+                get(id)?.let { Notifier.failed(app, it) }
+                main.post { pump() }
+            }
+        }
+        val t = Transfer(request, partFile(id), settings.connections, item.state, listener, limiter)
+        transfers[id] = t
+        update(id) { it.copy(status = Status.DOWNLOADING, error = null) }
+        t.start()
+    }
+
+    /** Called when the system ends background time (Android 15 limits data-sync services): keep progress, retry later. */
+    fun pauseForSystem() {
+        _items.value.filter { it.status == Status.DOWNLOADING }.forEach { item ->
+            val t = synchronized(this) { transfers.remove(item.id) }
+            t?.pause()
+            update(item.id) { it.copy(status = Status.QUEUED, speed = 0) }
+        }
+    }
+
+    val activeCount: Int get() = _items.value.count { it.status == Status.DOWNLOADING }
+    val totalSpeed: Long get() = _items.value.filter { it.status == Status.DOWNLOADING }.sumOf { it.speed }
+}
