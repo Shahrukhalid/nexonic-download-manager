@@ -34,7 +34,7 @@ jobs:
       - name: Build the APKs
         env:
           NDM_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.NDM_ANDROID_KEYSTORE_PASSWORD }}
-          NDM_ANDROID_KEY_ALIAS: ${{ secrets.NDM_ANDROID_KEY_ALIAS }}
+          NDM_ANDROID_KEY_ALIAS: nexonic # not a secret; as a secret GitHub would hide every "nexonic" in the logs
           NDM_ANDROID_KEY_PASSWORD: ${{ secrets.NDM_ANDROID_KEY_PASSWORD }}
         run: gradle -p android --no-daemon assembleDebug assembleRelease
       - name: Check the APKs
