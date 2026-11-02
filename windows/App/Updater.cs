@@ -16,6 +16,7 @@ public static class Updater
     static bool busy;
     static bool installing;   // an update is downloading: never start a second one
     static Window? progressWindow;
+    static bool closingProgress;
 
     /// <summary>Checks a few seconds after the app opens, then once a day while it keeps running.</summary>
     public static void Start(DownloadManager m)
@@ -148,6 +149,7 @@ public static class Updater
         };
         installing = true;
         progressWindow = progress;
+        progress.Closing += (_, e) => { if (installing && progress.IsVisible && !closingProgress) e.Cancel = true; };  // stays until the download ends
         progress.Show();
         var file = Path.Combine(Path.GetTempPath(), $"NexonicDownloadManager-{r.Version}-Setup.exe");
         try
@@ -156,7 +158,7 @@ public static class Updater
             await using (var src = await c.GetStreamAsync(url))
             await using (var dst = File.Create(file))
                 await src.CopyToAsync(dst);
-            progress.Close();
+            closingProgress = true; progress.Close(); closingProgress = false;
             if (!Updates.Verify(file, digest))
             {
                 try { File.Delete(file); } catch { }
@@ -170,7 +172,7 @@ public static class Updater
         }
         catch (Exception e)
         {
-            progress.Close();
+            closingProgress = true; progress.Close(); closingProgress = false;
             installing = false;
             MessageBox.Show("The update could not be downloaded: " + e.Message + "\nTry again later, or download it from the release page.", "Update");
             return;

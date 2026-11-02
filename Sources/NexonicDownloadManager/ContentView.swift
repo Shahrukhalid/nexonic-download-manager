@@ -321,7 +321,8 @@ struct ContentView: View {
     }
 
     private func confirmClearFinished() {
-        let n = manager.items.filter { $0.status == .finished }.count
+        let ids = manager.items.filter { $0.status == .finished }.map(\.id)  // only the ones counted in the question
+        let n = ids.count
         guard n > 0 else { return }
         let alert = NSAlert()
         alert.messageText = "Remove \(n) completed \(n == 1 ? "download" : "downloads") from the list?"
@@ -329,7 +330,8 @@ struct ContentView: View {
         alert.addButton(withTitle: "Remove")
         alert.addButton(withTitle: "Cancel")
         guard alert.runModal() == .alertFirstButtonReturn else { return }
-        manager.clearFinished()
+        ids.forEach { manager.remove($0) }
+        selection.subtract(ids)
     }
 
     private func moveTo(_ ids: Set<UUID>, _ queue: String) {

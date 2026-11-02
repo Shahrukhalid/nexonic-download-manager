@@ -233,11 +233,12 @@ public partial class MainWindow : Window
     void OnPauseAll(object s, RoutedEventArgs e) => manager.PauseAll();
     void OnClear(object s, RoutedEventArgs e)
     {
-        var n = manager.Rows.Count(r => r.Record.Status == DownloadStatus.Finished);
+        var done = manager.Rows.Where(r => r.Record.Status == DownloadStatus.Finished).ToList();  // only the ones counted in the question
+        var n = done.Count;
         if (n == 0) return;
         if (MessageBox.Show(this, $"Remove {n} completed {(n == 1 ? "download" : "downloads")} from the list?\n\nThe downloaded files stay on your PC.",
                 "Delete Completed", MessageBoxButton.OKCancel, MessageBoxImage.Question, MessageBoxResult.Cancel) == MessageBoxResult.OK)
-            manager.ClearFinished();
+            foreach (var r in done) manager.Remove(r);
     }
     void OnScheduler(object s, RoutedEventArgs e) { Dialogs.Scheduler(this, manager, CurrentQueue); BuildSidebar(); }
     void OnStartQueue(object s, RoutedEventArgs e) { manager.StartQueue(CurrentQueue); BuildSidebar(); }
