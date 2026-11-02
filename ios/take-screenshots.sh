@@ -20,6 +20,9 @@ shoot() {
   run 600 xcrun simctl bootstatus "$sim" -b
   run 60 xcrun simctl status_bar "$sim" override --time 9:41 --dataNetwork wifi --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100
   run 180 xcrun simctl install "$sim" "$APP"
+  # The first launch after installing can take minutes on CI; do it once before the pictures.
+  run 240 xcrun simctl launch "$sim" "$BUNDLE"
+  sleep 5
   for spec in "$@"; do
     IFS=: read -r name screen look wait <<< "$spec"
     run 60 xcrun simctl ui "$sim" appearance "${look:-light}"

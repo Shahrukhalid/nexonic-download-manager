@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Serves one large made-up file with byte ranges on 127.0.0.1:<port>, so screenshots can show a real running download."""
-import http.server, re, sys
+import http.server, re, sys, time
 
 SIZE = 900 * 1024 * 1024
 CHUNK = b"\0" * 65536
+# Optional speed limit in MB/s (second argument), so a download is still running when the pictures are taken.
+PAUSE = len(CHUNK) / (float(sys.argv[2]) * 1024 * 1024) if len(sys.argv) > 2 else 0
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
@@ -31,6 +33,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             while left > 0:
                 n = min(left, len(CHUNK))
                 self.wfile.write(CHUNK[:n])
+                if PAUSE:
+                    time.sleep(PAUSE)
                 left -= n
         except (BrokenPipeError, ConnectionResetError):
             pass
