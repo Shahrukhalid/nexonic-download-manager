@@ -1,3 +1,9 @@
+## 0.6.7
+
+- **Clear message when a video needs you to be signed in** (for example some Vimeo videos): instead of the video
+  engine's technical text, the app explains what to do: open the video in your browser while signed in and click
+  Download this video, or enter your account under Properties → Login.
+
 ## 0.6.6
 
 - **Select All** button in the toolbar (click again to deselect).

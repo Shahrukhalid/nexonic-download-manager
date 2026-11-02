@@ -98,8 +98,9 @@ public enum SiteVideo {
         if let r = msg.range(of: #"^\[[^\]]+\] [^:]+: "#, options: .regularExpression) { msg.removeSubrange(r) }
         if msg.isEmpty { return "The video could not be downloaded" }
         if msg.localizedCaseInsensitiveContains("DRM") { return "This video is copy-protected and can't be saved" }
-        if msg.localizedCaseInsensitiveContains("sign in") || msg.localizedCaseInsensitiveContains("login") {
-            return "The site wants you to be signed in. Open the video in your browser while signed in and send it from there"
+        let signIn = ["sign in", "sign-in", "login", "log in", "logged-in", "logged in", "account credentials", "--cookies"]
+        if signIn.contains(where: { msg.localizedCaseInsensitiveContains($0) }) {
+            return "The site only lets signed-in users download this video. Open it in your browser while signed in and click Download this video (your sign-in is sent along), or enter your account under Properties → Login"
         }
         return msg
     }

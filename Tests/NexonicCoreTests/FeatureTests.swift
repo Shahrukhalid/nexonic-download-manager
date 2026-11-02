@@ -177,6 +177,7 @@ final class SiteVideoTests: XCTestCase {
         XCTAssertEqual(SiteVideo.savedFile("NDMF /Users/me/Downloads/Talk [abc].mp4"), "/Users/me/Downloads/Talk [abc].mp4")
         XCTAssertEqual(SiteVideo.error("WARNING: x\nERROR: [youtube] abc: Video unavailable"), "Video unavailable")
         XCTAssertTrue(SiteVideo.error("ERROR: This video is DRM protected").contains("copy-protected"))
+        XCTAssertTrue(SiteVideo.error("ERROR: [vimeo] 1111417978: The web client only works when logged-in. Use --cookies, --cookies-from-browser, --username and --password, --netrc-cmd, or --netrc (vimeo) to provide account credentials.").hasPrefix("The site only lets signed-in users"))
     }
 
     func testArguments() {
