@@ -34,10 +34,16 @@ public final class Downloader: NSObject, URLSessionDownloadDelegate {
     private init(identifier: String) {
         self.identifier = identifier
         super.init()
-        let config = URLSessionConfiguration.background(withIdentifier: identifier)
+        // Screenshots (debug builds only): the CI simulator fails background transfers with -1, so the demo uses a normal session.
+        #if DEBUG
+        let demo = UserDefaults.standard.string(forKey: "ndm_demo") == "1"
+        #else
+        let demo = false
+        #endif
+        let config = demo ? URLSessionConfiguration.default : URLSessionConfiguration.background(withIdentifier: identifier)
         // The Share extension's downloads finish in the shared folder; without the App Group iOS would refuse the session.
-        if AppGroup.available { config.sharedContainerIdentifier = AppGroup.id }
-        config.sessionSendsLaunchEvents = true
+        if AppGroup.available && !demo { config.sharedContainerIdentifier = AppGroup.id }
+        if !demo { config.sessionSendsLaunchEvents = true }
         config.isDiscretionary = false
         config.httpCookieStorage = HTTPCookieStorage.shared // cookies are sent only to their own domains
         config.httpMaximumConnectionsPerHost = 6
@@ -160,6 +166,7 @@ public final class Downloader: NSObject, URLSessionDownloadDelegate {
         case NSURLErrorCannotFindHost, NSURLErrorCannotConnectToHost: return "Could not reach the server."
         case NSURLErrorAppTransportSecurityRequiresSecureConnection: return "This server needs a secure (https) link."
         case NSURLErrorServerCertificateUntrusted, NSURLErrorSecureConnectionFailed: return "The server's secure connection can't be trusted."
+        case NSURLErrorUnknown: return "The download stopped. Tap Try Again."
         default: return "The download stopped (\(error.code)). Tap Try Again."
         }
     }

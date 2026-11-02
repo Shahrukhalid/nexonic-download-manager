@@ -170,27 +170,28 @@ struct BrowserView: View {
         .onChange(of: model.demoShowFound) { _, show in if show { browser.showFound = true; model.demoShowFound = false } }
         .sheet(isPresented: $browser.showFound) {
             NavigationStack {
-                List(browser.found) { c in
-                    HStack {
-                        let cat = FileCategory(fileName: c.url.lastPathComponent)
-                        Image(systemName: cat.symbol).foregroundStyle(cat.color).frame(width: 30)
-                        VStack(alignment: .leading) {
-                            Text(c.url.lastPathComponent.removingPercentEncoding ?? c.url.lastPathComponent).lineLimit(1)
-                            Text("\(c.kind.rawValue) · \(c.label)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                List {
+                    Section {
+                        ForEach(browser.found) { c in
+                            HStack {
+                                let cat = FileCategory(fileName: c.url.lastPathComponent)
+                                Image(systemName: cat.symbol).foregroundStyle(cat.color).frame(width: 30)
+                                VStack(alignment: .leading) {
+                                    Text(c.url.lastPathComponent.removingPercentEncoding ?? c.url.lastPathComponent).lineLimit(1)
+                                    Text("\(c.kind.rawValue) · \(c.label)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                                }
+                                Spacer()
+                                Button("Download") {
+                                    browser.showFound = false
+                                    Task { await browser.handOver(c.url, suggestedName: nil) }
+                                }
+                                .buttonStyle(.bordered)
+                            }
                         }
-                        Spacer()
-                        Button("Download") {
-                            browser.showFound = false
-                            Task { await browser.handOver(c.url, suggestedName: nil) }
-                        }
-                        .buttonStyle(.bordered)
-                    }
+                    } footer: { Text("Streaming and copy-protected video can't be saved.") }
                 }
                 .navigationTitle("Found on this page")
                 .navigationBarTitleDisplayMode(.inline)
-                .safeAreaInset(edge: .bottom) {
-                    Text("Streaming and copy-protected video can't be saved.").font(.footnote).foregroundStyle(.secondary).padding()
-                }
             }
             .presentationDetents([.medium, .large])
         }

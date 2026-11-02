@@ -36,75 +36,88 @@ struct DownloadsView: View {
     @State private var view: ListView = .all
     @State private var category: FileCategory?
     @State private var query = ""
-    @State private var column: NavigationSplitViewColumn = .sidebar
 
     private var shown: [DownloadJob] {
         model.jobs.filter { view.includes($0) && (category == nil || $0.category == category)
             && (query.isEmpty || $0.fileName.localizedCaseInsensitiveContains(query) || $0.url.absoluteString.localizedCaseInsensitiveContains(query)) }
     }
 
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
     var body: some View {
         @Bindable var model = model
-        NavigationSplitView(preferredCompactColumn: $column) {
-            List(selection: $model.selection) {
-                Section {
-                    Picker("Show", selection: $view) {
-                        ForEach(ListView.allCases) { v in Text("\(v.rawValue) \(model.jobs.filter(v.includes).count)").tag(v) }
-                    }
-                    .pickerStyle(.segmented)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
-                    .listRowBackground(Color.clear)
+        Group {
+            if sizeClass == .compact {
+                // iPhone: a plain stack, so a download opened from code (a notification, the screenshots) shows its details.
+                NavigationStack(path: Binding(get: { model.selection.map { [$0] } ?? [] }, set: { model.selection = $0.last })) {
+                    list(selection: nil)
+                        .navigationDestination(for: UUID.self) { DetailView(id: $0) }
                 }
-                if shown.isEmpty {
-                    ContentUnavailableView {
-                        Label(model.jobs.isEmpty ? "No downloads yet" : "Nothing here", systemImage: "arrow.down.circle")
-                    } description: {
-                        Text(model.jobs.isEmpty ? "In Safari or Chrome, tap Share → Download with Nexonic. Or tap + to paste a link." : "No downloads match.")
-                    } actions: {
-                        if model.jobs.isEmpty {
-                            Button("Set Up Download Shortcut") { model.showSetup = true }
-                        }
-                    }
-                    .listRowBackground(Color.clear)
-                } else {
-                    ForEach(shown) { job in
-                        NavigationLink(value: job.id) { DownloadRow(job: job, speed: model.speeds[job.id] ?? 0) }
-                            .swipeActions(edge: .trailing) {
-                                Button(role: .destructive) { model.remove(job, deleteFile: false) } label: { Label("Remove", systemImage: "trash") }
-                            }
-                            .swipeActions(edge: .leading) {
-                                if job.isActive { Button { model.pause(job) } label: { Label("Pause", systemImage: "pause.fill") }.tint(.orange) }
-                                else if job.status != .complete { Button { model.resume(job) } label: { Label("Resume", systemImage: "play.fill") }.tint(.green) }
-                            }
-                    }
+            } else {
+                NavigationSplitView {
+                    list(selection: $model.selection)
+                } detail: {
+                    if let selection = model.selection { DetailView(id: selection) }
+                    else { ContentUnavailableView("Select a download", systemImage: "arrow.down.circle") }
                 }
             }
-            .navigationTitle("Downloads")
-            .searchable(text: $query, prompt: "Search downloads")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button { model.showPaste = true } label: { Label("Add", systemImage: "plus") }
-                }
-                ToolbarItem(placement: .topBarLeading) {
-                    Menu {
-                        Picker("Type", selection: $category) {
-                            Text("All types").tag(FileCategory?.none)
-                            ForEach(FileCategory.allCases, id: \.self) { c in Label(c.label, systemImage: c.symbol).tag(Optional(c)) }
-                        }
-                        Divider()
-                        if model.activeCount > 0 { Button("Pause All", systemImage: "pause") { model.pauseAll() } }
-                        Button("Start All", systemImage: "play") { model.startLater() }
-                        Button("Clear Finished", systemImage: "checkmark.circle") { model.clearFinished() }
-                    } label: { Label("More", systemImage: category == nil ? "line.3.horizontal.decrease.circle" : "line.3.horizontal.decrease.circle.fill") }
-                }
-            }
-        } detail: {
-            if let selection = model.selection { DetailView(id: selection) }
-            else { ContentUnavailableView("Select a download", systemImage: "arrow.down.circle") }
         }
         .sheet(isPresented: Binding(get: { model.showPaste }, set: { model.showPaste = $0 })) { PasteView() }
-        // On iPhone, a download opened from code (a notification, or the screenshots) shows its details.
-        .onChange(of: model.selection) { _, id in if id != nil { column = .detail } }
+    }
+
+    private func list(selection: Binding<UUID?>?) -> some View {
+        List(selection: selection) {
+            Section {
+                Picker("Show", selection: $view) {
+                    ForEach(ListView.allCases) { v in Text("\(v.rawValue) \(model.jobs.filter(v.includes).count)").tag(v) }
+                }
+                .pickerStyle(.segmented)
+                .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                .listRowBackground(Color.clear)
+            }
+            if shown.isEmpty {
+                ContentUnavailableView {
+                    Label(model.jobs.isEmpty ? "No downloads yet" : "Nothing here", systemImage: "arrow.down.circle")
+                } description: {
+                    Text(model.jobs.isEmpty ? "In Safari or Chrome, tap Share → Download with Nexonic. Or tap + to paste a link." : "No downloads match.")
+                } actions: {
+                    if model.jobs.isEmpty {
+                        Button("Set Up Download Shortcut") { model.showSetup = true }
+                    }
+                }
+                .listRowBackground(Color.clear)
+            } else {
+                ForEach(shown) { job in
+                    NavigationLink(value: job.id) { DownloadRow(job: job, speed: model.speeds[job.id] ?? 0) }
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) { model.remove(job, deleteFile: false) } label: { Label("Remove", systemImage: "trash") }
+                        }
+                        .swipeActions(edge: .leading) {
+                            if job.isActive { Button { model.pause(job) } label: { Label("Pause", systemImage: "pause.fill") }.tint(.orange) }
+                            else if job.status != .complete { Button { model.resume(job) } label: { Label("Resume", systemImage: "play.fill") }.tint(.green) }
+                        }
+                }
+            }
+        }
+        .navigationTitle("Downloads")
+        .searchable(text: $query, prompt: "Search downloads")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button { model.showPaste = true } label: { Label("Add", systemImage: "plus") }
+            }
+            ToolbarItem(placement: .topBarLeading) {
+                Menu {
+                    Picker("Type", selection: $category) {
+                        Text("All types").tag(FileCategory?.none)
+                        ForEach(FileCategory.allCases, id: \.self) { c in Label(c.label, systemImage: c.symbol).tag(Optional(c)) }
+                    }
+                    Divider()
+                    if model.activeCount > 0 { Button("Pause All", systemImage: "pause") { model.pauseAll() } }
+                    Button("Start All", systemImage: "play") { model.startLater() }
+                    Button("Clear Finished", systemImage: "checkmark.circle") { model.clearFinished() }
+                } label: { Label("More", systemImage: category == nil ? "line.3.horizontal.decrease.circle" : "line.3.horizontal.decrease.circle.fill") }
+            }
+        }
     }
 }
 
