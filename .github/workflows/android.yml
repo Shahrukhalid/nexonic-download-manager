@@ -44,7 +44,14 @@ jobs:
           cp android/app/build/outputs/apk/debug/app-debug.apk out/NexonicDownloadManager-Android-debug.apk
           rel=$(ls android/app/build/outputs/apk/release/*.apk | head -1)
           cp "$rel" out/NexonicDownloadManager-Android-release$( [[ "$rel" == *unsigned* ]] && echo -unsigned ).apk
-          AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          AAPT="$BT/aapt2"
+          if ls out/*release.apk >/dev/null 2>&1; then
+            echo "Release APK signature:"
+            "$BT/apksigner" verify --verbose --print-certs out/NexonicDownloadManager-Android-release.apk | grep -E "Verified using|Signer #1 certificate DN|SHA-256 digest"
+          else
+            echo "Release APK is unsigned: set the NDM_ANDROID_* secrets (android/setup-android-signing.sh)."
+          fi
           "$AAPT" dump badging out/NexonicDownloadManager-Android-debug.apk | grep -E "^package|sdkVersion|targetSdk"
           "$AAPT" dump permissions out/NexonicDownloadManager-Android-debug.apk
           ls -la out
