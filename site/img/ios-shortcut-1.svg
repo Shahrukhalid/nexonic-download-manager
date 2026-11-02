@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="380" viewBox="0 0 640 380" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">
+<rect width="640" height="380" rx="18" fill="#eef2f7"/>
+<circle cx="40" cy="40" r="20" fill="#2563eb"/><text x="40" y="47" text-anchor="middle" fill="#fff" font-size="20" font-weight="700">1</text>
+<text x="72" y="47" fill="#0f172a" font-size="19" font-weight="600">Shortcuts: add the Download with Nexonic action</text>
+<rect x="380" y="70" width="200" height="296" rx="26" fill="#0f172a"/>
+<rect x="388" y="78" width="184" height="280" rx="20" fill="#fff"/>
+<rect x="452" y="84" width="56" height="10" rx="5" fill="#0f172a"/>
+<rect x="388" y="100" width="184" height="258" fill="#f8fafc"/>
+<text x="398" y="122" font-size="12" font-weight="700" fill="#0f172a">New Shortcut</text>
+<rect x="396" y="136" width="168" height="76" rx="10" fill="#fff" stroke="#e2e8f0"/>
+<rect x="404" y="146" width="22" height="22" rx="5.720000000000001" fill="#2563eb"/><path d="M415.0 150.84 V159.2 M411.26 156.12 L415.0 159.64 L418.74 156.12 M410.16 162.72 H419.84" stroke="#fff" stroke-width="1.98" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="434" y="160" font-size="10.5" font-weight="700" fill="#0f172a">Download</text>
+<rect x="404" y="172" width="86" height="18" rx="9" fill="#dbeafe"/><text x="447" y="185" text-anchor="middle" font-size="9.5" fill="#1d4ed8" font-weight="600">Shortcut Input</text>
+<text x="502" y="185" font-size="10.5" fill="#0f172a">with</text><text x="404" y="204" font-size="10.5" fill="#0f172a">Nexonic</text>
+<rect x="400" y="168" width="94" height="26" rx="12" fill="none" stroke="#f59e0b" stroke-width="3.5"/>
+<rect x="396" y="226" width="168" height="30" rx="10" fill="#fff" stroke="#e2e8f0"/><text x="408" y="245" font-size="10" fill="#64748b">Search for apps and actions</text>
+<text x="40" y="104" font-size="15" fill="#334155">Open Shortcuts and tap +.</text>
+<text x="40" y="130" font-size="15" fill="#334155">Search Nexonic, add Download with Nexonic,</text>
+<text x="40" y="156" font-size="15" fill="#334155">and set Links to Shortcut Input.</text>
+<text x="40" y="182" font-size="15" fill="#334155"></text>
+<text x="40" y="208" font-size="15" fill="#334155">Optional: you can already say</text>
+<text x="40" y="234" font-size="15" fill="#334155">"Download with Nexonic" to Siri.</text>
+</svg>

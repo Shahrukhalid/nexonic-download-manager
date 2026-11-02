@@ -60,12 +60,15 @@ jobs:
           sleep 1
           bash ios/take-screenshots.sh "$APP"
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: NexonicDownloadManager-iOS
           path: out/*
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: shots-ios
+          if-no-files-found: ignore
           path: shots/*.png
       - name: Save screenshots to the screenshots branch
         if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'

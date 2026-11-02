@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="380" viewBox="0 0 640 380" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">
+<rect width="640" height="380" rx="18" fill="#eef2f7"/>
+<circle cx="40" cy="40" r="20" fill="#2563eb"/><text x="40" y="47" text-anchor="middle" fill="#fff" font-size="20" font-weight="700">4</text>
+<text x="72" y="47" fill="#0f172a" font-size="19" font-weight="600">From now on: Share → Download with Nexonic</text>
+<rect x="380" y="70" width="200" height="296" rx="26" fill="#0f172a"/>
+<rect x="388" y="78" width="184" height="280" rx="20" fill="#fff"/>
+<rect x="452" y="84" width="56" height="10" rx="5" fill="#0f172a"/>
+<rect x="388" y="100" width="184" height="26" fill="#f1f5f9"/><rect x="398" y="105" width="164" height="16" rx="8" fill="#e2e8f0"/>
+<text x="480" y="117" text-anchor="middle" font-size="9" fill="#64748b">example.com/course/week-8</text>
+<rect x="398" y="136" width="164" height="70" rx="8" fill="#134e4a"/><circle cx="480" cy="171" r="13" fill="#ffffff33"/><path d="M476 164 L486 171 L476 178 Z" fill="#fff"/>
+<rect x="398" y="214" width="120" height="8" rx="4" fill="#cbd5e1"/><rect x="398" y="228" width="150" height="8" rx="4" fill="#e2e8f0"/><rect x="398" y="242" width="100" height="8" rx="4" fill="#e2e8f0"/>
+<rect x="388" y="166" width="184" height="192" fill="#0f172a" opacity=".25"/>
+<rect x="388" y="206" width="184" height="152" rx="16" fill="#f8fafc"/>
+<rect x="465" y="212" width="30" height="4" rx="2" fill="#cbd5e1"/>
+<text x="398" y="232" font-size="9" fill="#64748b">example.com</text>
+<rect x="398" y="244" width="34" height="34" rx="8.84" fill="#2563eb"/><path d="M415.0 251.48 V264.4 M409.22 259.64 L415.0 265.08 L420.78 259.64 M407.52 269.84 H422.48" stroke="#fff" stroke-width="3.06" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="415" y="292" text-anchor="middle" font-size="7.6" fill="#0f172a" font-weight="700">Nexonic</text>
+<rect x="392" y="238" width="46" height="64" rx="15" fill="none" stroke="#f59e0b" stroke-width="3.5"/>
+<rect x="440" y="244" width="34" height="34" rx="9" fill="#22c55e"/><text x="457" y="292" text-anchor="middle" font-size="8.5" fill="#334155" >Messages</text>
+<rect x="482" y="244" width="34" height="34" rx="9" fill="#3b82f6"/><text x="499" y="292" text-anchor="middle" font-size="8.5" fill="#334155" >Mail</text>
+<rect x="524" y="244" width="34" height="34" rx="9" fill="#f97316"/><text x="541" y="292" text-anchor="middle" font-size="8.5" fill="#334155" >Notes</text>
+<rect x="396" y="306" width="168" height="26" rx="7" fill="#fff" stroke="#e2e8f0"/><text x="406" y="323" font-size="10" fill="#0f172a" >Copy</text>
+<rect x="396" y="334" width="168" height="26" rx="7" fill="#fff" stroke="#e2e8f0"/><text x="406" y="351" font-size="10" fill="#0f172a" >Add to Reading List</text>
+<text x="40" y="104" font-size="15" fill="#334155">Nexonic is the first app in the row.</text>
+<text x="40" y="130" font-size="15" fill="#334155">Tap it: the Nexonic download window opens</text>
+<text x="40" y="156" font-size="15" fill="#334155">with the name, size and quality.</text>
+<text x="40" y="182" font-size="15" fill="#334155">Tap Download Now. Done!</text>
+</svg>

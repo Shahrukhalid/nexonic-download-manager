@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="380" viewBox="0 0 640 380" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">
+<rect width="640" height="380" rx="18" fill="#eef2f7"/>
+<circle cx="40" cy="40" r="20" fill="#2563eb"/><text x="40" y="47" text-anchor="middle" fill="#fff" font-size="20" font-weight="700">2</text>
+<text x="72" y="47" fill="#0f172a" font-size="19" font-weight="600">Tap ⓘ and turn on Show in Share Sheet</text>
+<rect x="380" y="70" width="200" height="296" rx="26" fill="#0f172a"/>
+<rect x="388" y="78" width="184" height="280" rx="20" fill="#fff"/>
+<rect x="452" y="84" width="56" height="10" rx="5" fill="#0f172a"/>
+<rect x="388" y="100" width="184" height="258" fill="#f8fafc"/>
+<text x="398" y="122" font-size="12" font-weight="700" fill="#0f172a">Details</text><text x="560" y="122" text-anchor="end" font-size="11" fill="#2563eb" font-weight="600">Done</text>
+<rect x="396" y="138" width="168" height="26" rx="7" fill="#fff" stroke="#e2e8f0"/><text x="406" y="155" font-size="10" fill="#0f172a" >Pin in Menu Bar</text><rect x="530" y="144" width="28" height="15" rx="7.5" fill="#cbd5e1"/><circle cx="540" cy="151.5" r="6" fill="#fff"/>
+<rect x="396" y="168" width="168" height="26" rx="7" fill="#fff" stroke="#e2e8f0"/><text x="406" y="185" font-size="10" fill="#0f172a" font-weight="700">Show in Share Sheet</text><rect x="530" y="174" width="28" height="15" rx="7.5" fill="#16a34a"/><circle cx="552" cy="181.5" r="6" fill="#fff"/>
+<rect x="392" y="164" width="176" height="34" rx="10" fill="none" stroke="#f59e0b" stroke-width="3.5"/>
+<text x="398" y="214" font-size="8.5" fill="#64748b">Receives: URLs and Text</text>
+<rect x="396" y="222" width="168" height="26" rx="7" fill="#fff" stroke="#e2e8f0"/><text x="406" y="239" font-size="10" fill="#0f172a" >Use with Siri</text><rect x="530" y="228" width="28" height="15" rx="7.5" fill="#16a34a"/><circle cx="552" cy="235.5" r="6" fill="#fff"/>
+<text x="40" y="104" font-size="15" fill="#334155">Your shortcut now appears in the Share sheet</text>
+<text x="40" y="130" font-size="15" fill="#334155">too. The Share sheet entry from the app</text>
+<text x="40" y="156" font-size="15" fill="#334155">works without it; this is only for</text>
+<text x="40" y="182" font-size="15" fill="#334155">automations.</text>
+</svg>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="380" viewBox="0 0 640 380" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">
+<rect width="640" height="380" rx="18" fill="#eef2f7"/>
+<circle cx="40" cy="40" r="20" fill="#2563eb"/><text x="40" y="47" text-anchor="middle" fill="#fff" font-size="20" font-weight="700">1</text>
+<text x="72" y="47" fill="#0f172a" font-size="19" font-weight="600">Open a page or file link and tap Share</text>
+<rect x="380" y="70" width="200" height="296" rx="26" fill="#0f172a"/>
+<rect x="388" y="78" width="184" height="280" rx="20" fill="#fff"/>
+<rect x="452" y="84" width="56" height="10" rx="5" fill="#0f172a"/>
+<rect x="388" y="100" width="184" height="26" fill="#f1f5f9"/><rect x="398" y="105" width="164" height="16" rx="8" fill="#e2e8f0"/>
+<text x="480" y="117" text-anchor="middle" font-size="9" fill="#64748b">example.com/course/week-8</text>
+<rect x="398" y="136" width="164" height="70" rx="8" fill="#134e4a"/><circle cx="480" cy="171" r="13" fill="#ffffff33"/><path d="M476 164 L486 171 L476 178 Z" fill="#fff"/>
+<rect x="398" y="214" width="120" height="8" rx="4" fill="#cbd5e1"/><rect x="398" y="228" width="150" height="8" rx="4" fill="#e2e8f0"/><rect x="398" y="242" width="100" height="8" rx="4" fill="#e2e8f0"/>
+<rect x="388" y="322" width="184" height="36" rx="0" fill="#f1f5f9"/>
+<path d="M404 340 l6 -6 M404 340 l6 6" stroke="#94a3b8" stroke-width="2" fill="none"/><path d="M428 334 l6 6 l-6 6" stroke="#94a3b8" stroke-width="2" fill="none"/>
+<path d="M474 340 H469 V354 H493 V340 H488 M481 330 V346 M476 335 L481 330 L486 335" stroke="#2563eb" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="458" y="322" width="44" height="36" rx="11" fill="none" stroke="#f59e0b" stroke-width="3.5"/>
+<rect x="512" y="333" width="14" height="14" rx="3" fill="none" stroke="#94a3b8" stroke-width="2"/><rect x="540" y="333" width="14" height="14" rx="3" fill="none" stroke="#94a3b8" stroke-width="2"/>
+<text x="40" y="104" font-size="15" fill="#334155">In Safari, Chrome or any app with a link,</text>
+<text x="40" y="130" font-size="15" fill="#334155">tap the Share button.</text>
+<text x="40" y="156" font-size="15" fill="#334155"></text>
+<text x="40" y="182" font-size="15" fill="#334155">In Chrome it is in the ⋯ menu or the</text>
+<text x="40" y="208" font-size="15" fill="#334155">address bar.</text>
+</svg>

@@ -175,6 +175,7 @@ p.sub{color:var(--muted);text-align:center;max-width:700px;margin:0 auto 44px;fo
 .gal img{width:100%;object-fit:cover;object-position:top left}
 .gal.mac img{aspect-ratio:1240/684}.gal.win img{aspect-ratio:988/695}
 .gal.android{grid-template-columns:repeat(4,1fr)}.gal.android img{aspect-ratio:1080/2400}
+.gal.ios{grid-template-columns:repeat(4,1fr)}.gal.ios img{aspect-ratio:1206/2622}
 .phones{display:flex;gap:18px;justify-content:center;margin:0 auto 40px;max-width:760px}
 .phones img{width:31%;aspect-ratio:1080/2400;border-radius:22px;border:6px solid #0b1220;box-shadow:0 24px 60px rgba(15,23,42,.25);cursor:zoom-in;background:#0b1220}
 .gal figcaption{padding:12px 14px;font-size:14px;color:var(--muted)}.gal figcaption b{color:var(--fg);display:block;font-size:15px}
@@ -193,6 +194,7 @@ p.sub{color:var(--muted);text-align:center;max-width:700px;margin:0 auto 44px;fo
 .panel pre{background:#0b1220;color:#e2e8f0;border-radius:10px;padding:12px 14px;overflow-x:auto;margin:10px 0}
 kbd{font-family:inherit;font-size:13px;background:var(--bg2);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 7px;color:var(--fg)}
 .fl{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:8px}
+.fl.two-col{grid-template-columns:repeat(2,1fr);max-width:980px;margin-left:auto;margin-right:auto}
 .fl figure{margin:0}.fl figcaption{font-size:14px;color:var(--muted);margin-top:8px}.fl figcaption b{color:var(--fg)}
 .fl img{border-radius:12px;border:1px solid var(--line);width:100%}
 
@@ -231,13 +233,13 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
 .lb.on{display:flex}.lb img{max-height:92vh;width:auto;border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
 
 @media (max-width:980px){
-  .gal.android{grid-template-columns:repeat(3,1fr)}
+  .gal.android,.gal.ios{grid-template-columns:repeat(3,1fr)}.fl.two-col{grid-template-columns:1fr 1fr}
   .hero h1{font-size:42px}.dl-grid,.f-grid,.gal,.steps,.fl{grid-template-columns:1fr 1fr}
   .split{grid-template-columns:1fr;gap:28px}.split.rev .media{order:0}
   .foot{grid-template-columns:1fr 1fr}.nav .links a:not(.navdl){display:none}
 }
 @media (max-width:640px){
-  .gal.android{grid-template-columns:1fr 1fr}.phones{gap:10px}.phones img{border-width:4px;border-radius:16px}
+  .gal.android,.gal.ios{grid-template-columns:1fr 1fr}.fl.two-col{grid-template-columns:1fr}.phones{gap:10px}.phones img{border-width:4px;border-radius:16px}
   section{padding:64px 0}.hero h1{font-size:34px}.hero p.lead{font-size:17px}section h2{font-size:30px}
   .dl-grid,.f-grid,.gal,.steps,.two,.fl{grid-template-columns:1fr}
   .stats .wrap{grid-template-columns:1fr 1fr}.btns .btn{width:100%}
@@ -266,6 +268,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
   <symbol id="i-puzzle" viewBox="0 0 24 24"><path d="M10 3h4v3a2 2 0 1 0 4 0V3h3v7h-3a2 2 0 1 0 0 4h3v7h-7v-3a2 2 0 1 0-4 0v3H3v-7h3a2 2 0 1 0 0-4H3V3z"/></symbol>
   <symbol id="i-gh" viewBox="0 0 24 24"><path d="M9 19c-4 1.5-4-2-6-2.5m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12 12 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></symbol>
   <symbol id="i-apple" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M8 9H6v12h12V9h-2M12 3v12M8 7l4-4 4 4"/></symbol>
   <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></symbol>
   <symbol id="i-win" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M9 20h6M12 16v4"/></symbol>
 </svg>
@@ -274,7 +277,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
   <div class="wrap">
     <a class="brand" href="./"><img src="icon.png" alt="" width="30" height="30">Nexonic Download Manager</a>
     <div class="links">
-      <a href="#features">Features</a><a href="#videos">Videos</a><a href="#android">Android</a><a href="#screenshots">Screenshots</a><a href="#install">Install</a><a href="#faq">FAQ</a>
+      <a href="#features">Features</a><a href="#videos">Videos</a><a href="#android">Android</a><a href="#ios">iPhone</a><a href="#screenshots">Screenshots</a><a href="#install">Install</a><a href="#faq">FAQ</a>
       <a href="https://github.com/Shahrukhalid/nexonic-download-manager">GitHub</a>
       <a class="navdl" href="#download">Download</a>
     </div>
@@ -326,7 +329,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
     <span class="eyebrow">Download</span>
     <h2>Get Nexonic Download Manager</h2>
     <p class="sub">Version __VERSION__. Everything is included: on Mac and Windows the video engine, ffmpeg and the command-line tool. Nothing else to install.</p>
-    <p class="mobile-note" id="mobile-note">The iPhone and iPad version is in development. Nexonic runs today on Mac, Windows and Android.</p>
+    <p class="mobile-note" id="mobile-note">The iPhone and iPad app is in testing. <a href="#ios">See how one-tap downloads work</a>, or open this page on a Mac, Windows PC or Android phone.</p>
 
     <div class="dl-grid">
       <div class="dl" id="card-mac">
@@ -493,15 +496,44 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
   </div>
 </section>
 
+<section id="ios" class="alt">
+  <div class="wrap">
+    <span class="eyebrow">iPhone and iPad</span>
+    <h2>Download with one tap on iPhone and iPad</h2>
+    <p class="sub">Share any link from Safari, Chrome or another app to <b>Download with Nexonic</b>. It works as soon as the app is installed; no Shortcut needed. Downloads keep running in the background and land in the Files app.</p>
+    <div class="phones">
+      <img src="img/ios-add.png" alt="The Nexonic download window on iPhone with name, size and Download Now" width="1206" height="2622" loading="lazy" data-zoom>
+      <img src="img/ios-main.png" alt="Downloads list on iPhone" width="1206" height="2622" loading="lazy" data-zoom>
+      <img src="img/ios-setup.png" alt="Set Up Download Shortcut guide in the app" width="1206" height="2622" loading="lazy" data-zoom>
+    </div>
+    <h3 id="ios-setup" style="text-align:center;font-size:24px;margin:8px 0 8px">Set up the one-tap shortcut</h3>
+    <p class="sub" style="margin-bottom:28px">Put Nexonic first in the Share sheet once; after that every download is one tap. The same guide is in the app under Settings → Set Up Download Shortcut.</p>
+    <div class="fl two-col">
+      <figure><img src="img/ios-share-1.svg" alt="Step 1: tap Share" width="640" height="380" loading="lazy" data-zoom><figcaption><b>1. Tap Share</b> on a page or file link in Safari, Chrome or any app.</figcaption></figure>
+      <figure><img src="img/ios-share-2.svg" alt="Step 2: swipe to More" width="640" height="380" loading="lazy" data-zoom><figcaption><b>2. Swipe the app row to the end</b> and tap More.</figcaption></figure>
+      <figure><img src="img/ios-share-3.svg" alt="Step 3: add Download with Nexonic to Favorites" width="640" height="380" loading="lazy" data-zoom><figcaption><b>3. Tap Edit, then +</b> next to Download with Nexonic, and drag it to the top.</figcaption></figure>
+      <figure><img src="img/ios-share-4.svg" alt="Step 4: Share, Download with Nexonic" width="640" height="380" loading="lazy" data-zoom><figcaption><b>4. Share → Download with Nexonic</b>, pick the quality and tap Download Now.</figcaption></figure>
+    </div>
+    <h3 style="text-align:center;font-size:20px;margin:44px 0 8px">Optional: Shortcuts and Siri</h3>
+    <p class="sub" style="margin-bottom:28px">The <b>Download with Nexonic</b> action is in the Shortcuts app on its own, and Siri understands “Download with Nexonic”. For automations, make a shortcut and show it in the Share sheet:</p>
+    <div class="fl two-col">
+      <figure><img src="img/ios-shortcut-1.svg" alt="Shortcuts: add the Download with Nexonic action" width="640" height="380" loading="lazy" data-zoom><figcaption><b>1. Shortcuts → +</b>, add Download with Nexonic and set Links to Shortcut Input.</figcaption></figure>
+      <figure><img src="img/ios-shortcut-2.svg" alt="Turn on Show in Share Sheet" width="640" height="380" loading="lazy" data-zoom><figcaption><b>2. Tap ⓘ</b> and turn on Show in Share Sheet.</figcaption></figure>
+    </div>
+    <p class="dl-note">The iPhone and iPad app is in testing and not on the App Store yet; you can <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/ios/README.md">install it with Xcode</a>. iOS runs background downloads itself (one connection per file); streaming and copy-protected video can't be saved.</p>
+  </div>
+</section>
+
 <section id="screenshots">
   <div class="wrap">
     <span class="eyebrow">Screenshots</span>
-    <h2>Native on Mac, Windows and Android</h2>
+    <h2>Native on every system</h2>
     <p class="sub">The same features on every system, in light and dark mode. Click any picture to enlarge it.</p>
     <div class="tabs" role="tablist">
       <button role="tab" aria-selected="true" data-tab="mac" type="button">Mac</button>
       <button role="tab" aria-selected="false" data-tab="win" type="button">Windows</button>
       <button role="tab" aria-selected="false" data-tab="android" type="button">Android</button>
+      <button role="tab" aria-selected="false" data-tab="ios" type="button">iPhone &amp; iPad</button>
     </div>
     <div class="gal mac" data-panel="mac">
       <figure><img src="img/mac-main.png" alt="Main window" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>Main window</b>Categories, queues and live status</figcaption></figure>
@@ -519,6 +551,17 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <figure><img src="img/android-found.png" alt="Found on this page panel on Android" width="1080" height="2400" loading="lazy" data-zoom><figcaption><b>Found on this page</b>Videos, music and files</figcaption></figure>
       <figure><img src="img/android-settings.png" alt="Settings on Android" width="1080" height="2400" loading="lazy" data-zoom><figcaption><b>Settings</b>Connections, Wi-Fi only, scheduler</figcaption></figure>
       <figure><img src="img/android-main-dark.png" alt="Downloads list in dark mode on Android" width="1080" height="2400" loading="lazy" data-zoom><figcaption><b>Dark mode</b>Follows your phone</figcaption></figure>
+    </div>
+    <div class="gal ios" data-panel="ios" hidden>
+      <figure><img src="img/ios-main.png" alt="Downloads on iPhone" width="1206" height="2622" loading="lazy" data-zoom><figcaption><b>Downloads</b>Types, search and live progress</figcaption></figure>
+      <figure><img src="img/ios-add.png" alt="Download window on iPhone" width="1206" height="2622" loading="lazy" data-zoom><figcaption><b>Download window</b>Also opens from the Share sheet</figcaption></figure>
+      <figure><img src="img/ios-detail.png" alt="Details on iPhone" width="1206" height="2622" loading="lazy" data-zoom><figcaption><b>Details</b>Open, share, show in Files</figcaption></figure>
+      <figure><img src="img/ios-browser.png" alt="Built-in browser on iPhone" width="1206" height="2622" loading="lazy" data-zoom><figcaption><b>Built-in browser</b>Downloads go straight to Nexonic</figcaption></figure>
+      <figure><img src="img/ios-found.png" alt="Found on this page on iPhone" width="1206" height="2622" loading="lazy" data-zoom><figcaption><b>Found on this page</b>Videos, music and files</figcaption></figure>
+      <figure><img src="img/ios-setup.png" alt="Set Up Download Shortcut on iPhone" width="1206" height="2622" loading="lazy" data-zoom><figcaption><b>Shortcut guide</b>One-tap setup in the app</figcaption></figure>
+      <figure><img src="img/ios-main-dark.png" alt="Dark mode on iPhone" width="1206" height="2622" loading="lazy" data-zoom><figcaption><b>Dark mode</b>Follows your iPhone</figcaption></figure>
+      <figure><img src="img/ipad-main.png" alt="Downloads and details side by side on iPad" width="2064" height="2752" loading="lazy" data-zoom><figcaption><b>iPad</b>List and details side by side</figcaption></figure>
+      <figure><img src="img/ipad-browser.png" alt="Browser on iPad" width="2064" height="2752" loading="lazy" data-zoom><figcaption><b>iPad browser</b>Found on this page</figcaption></figure>
     </div>
     <div class="gal win" data-panel="win" hidden>
       <figure><img src="img/windows-main.png" alt="Main window on Windows" width="988" height="695" loading="lazy" data-zoom><figcaption><b>Main window</b>Toolbar, categories and queues</figcaption></figure>
@@ -654,7 +697,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
     <div class="faq">
       <details><summary>Is it really free?</summary><p>Yes. Nexonic Download Manager is free and open source under the MIT license, with no ads, no account, no trial and no tracking.</p></details>
       <details><summary>Is this an IDM alternative for Mac?</summary><p>Yes. It is a native Mac app with IDM-style features: multi-connection downloads, pause and resume, categories, a scheduler, queues and browser integration. It is not affiliated with Internet Download Manager.</p></details>
-      <details><summary>Is there an Android or iPhone app?</summary><p>Yes for Android 10 and later: <a href="#android">see what it does</a> and <a href="#install-android">how to install it</a>. The iPhone and iPad version is in development.</p></details>
+      <details><summary>Is there an Android or iPhone app?</summary><p>Yes for Android 10 and later: <a href="#android">see what it does</a> and <a href="#install-android">how to install it</a>. The iPhone and iPad app is in testing (<a href="#ios">how it works</a>): Share → Download with Nexonic from Safari or Chrome, a Shortcuts action, and files in the Files app.</p></details>
       <details><summary>Which browsers work?</summary><p>Chrome, Edge, Brave and Opera through the extension, and Firefox through the add-on. Open the app once, then install the extension and restart the browser.</p></details>
       <details><summary>The browser doesn't hand over downloads. What do I do?</summary><p>Open the app once so it can register with your browsers, then restart the browser. If the app can't be reached, the browser keeps the download, so nothing is lost.</p></details>
       <details><summary>macOS says it can't verify the app. What do I do?</summary><p>That's expected: the app is free and not sold through Apple, so macOS asks once. Follow the three steps in <a href="#first-launch">First launch on Mac</a>, or install with the one-line Terminal command and there is no warning.</p></details>
@@ -729,6 +772,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
   else if(android){dl.href=base+'NexonicDownloadManager-Android.apk';lab.textContent='Download for Android';sub.textContent='Android 10 or later · v'+document.querySelector('.pill b').textContent.replace(/[^0-9.]/g,'');other.textContent='Mac and Windows';other.href='#download';document.getElementById('card-android').classList.add('rec');}
   else{other.textContent='Mac, Windows and Android';if(mobile)document.getElementById('mobile-note').style.display='block';}
   if(android){var he=document.getElementById('hero-ext');he.href='#android';document.getElementById('hero-ext-label').textContent='How it works on Android';he.querySelector('small').textContent='Built-in browser and Share from Chrome';}
+  if(/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1)){var hx=document.getElementById('hero-ext');hx.href='#ios';document.getElementById('hero-ext-label').textContent='One-tap downloads on iPhone';hx.querySelector('small').textContent='Share → Download with Nexonic';}
   if(ff&&!mobile){var a=document.getElementById('ext-firefox'),b=document.getElementById('ext-chrome');a.className='btn primary';b.className='btn outline';a.insertBefore(b.querySelector('svg'),a.firstChild);a.parentNode.insertBefore(a,b);document.getElementById('hero-ext').href=a.href;document.getElementById('hero-ext-label').textContent='Add to Firefox';}
   if(sub.textContent.indexOf('__')>-1)sub.textContent='Mac and Windows';
 
@@ -744,6 +788,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
   })});
   if(win)tabs[1].click();
   if(android)tabs[2].click();
+  if(/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1))tabs[3].click();
 
   var lb=document.getElementById('lb'), lbi=lb.querySelector('img');
   document.querySelectorAll('img[data-zoom]').forEach(function(i){i.addEventListener('click',function(){lbi.src=i.currentSrc||i.src;lbi.alt=i.alt;lb.classList.add('on')})});

@@ -9,7 +9,8 @@ device() { xcrun simctl list devices available -j | python3 -c "import json,sys;
 shoot() {
   local sim=$1 prefix=$2; shift 2
   xcrun simctl boot "$sim" 2>/dev/null || true
-  xcrun simctl bootstatus "$sim" -b >/dev/null
+  for i in $(seq 1 180); do xcrun simctl list devices booted | grep -q "$sim" && break; sleep 1; done
+  sleep 15
   xcrun simctl status_bar "$sim" override --time 9:41 --dataNetwork wifi --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100
   xcrun simctl install "$sim" "$APP"
   for spec in "$@"; do
@@ -26,5 +27,13 @@ shoot() {
 }
 shoot "$(device 'iPhone 16 Pro')" ios \
   main:downloads:light:8 detail:detail:light:8 add:add:light:9 browser:browser:light:12 found:found:light:13 setup:setup:light:6 main-dark:downloads:dark:8
-shoot "$(device 'iPad Pro 13')" ipad main:detail:light:9 browser:found:light:13
+# The iPad can be slow to boot on CI: give it 8 minutes, and never block the run.
+IPAD=$(device 'iPad Pro 13' || device 'iPad Air' || true)
+if [ -n "$IPAD" ]; then
+  xcrun simctl shutdown all >/dev/null 2>&1 || true
+  ( shoot "$IPAD" ipad main:detail:light:9 browser:found:light:13 ) &
+  pid=$!
+  for i in $(seq 1 480); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done
+  if kill -0 "$pid" 2>/dev/null; then echo "iPad screenshots took too long; skipped."; kill "$pid" 2>/dev/null || true; fi
+fi
 ls -la shots
