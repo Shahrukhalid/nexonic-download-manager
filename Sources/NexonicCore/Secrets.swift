@@ -86,7 +86,7 @@ public final class FileStore: SecretStore {
         guard migrate else { return [:] }
         let keychain = KeychainStore()
         guard let old = keychain.readWithoutPrompt(), !old.isEmpty else { return [:] }
-        guard write(old) else { return old }
+        guard write(old) else { return nil }  // not moved yet: the Keychain item stays and the move is tried again
         keychain.deleteWithoutPrompt()
         return old
     }

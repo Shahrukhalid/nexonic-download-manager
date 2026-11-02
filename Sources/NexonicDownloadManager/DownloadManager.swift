@@ -558,13 +558,25 @@ final class DownloadManager: ObservableObject {
 
     /// Writes the current secrets to the private file when they changed. False when it can't be read or written.
     private func syncSecrets() -> Bool {
+        var recovered = false
         if !vaultReadable, let saved = Self.vault.read() {  // try again quietly
             vaultReadable = true
+            recovered = true
             stored = saved
+            // Put the recovered values back where they are missing (the settings change saves itself afterwards).
+            var list = items
+            var s = settings
+            Secrets.fill(&list, &s, from: saved)
+            items = list
+            if s.proxy.password != settings.proxy.password {
+                let password = s.proxy.password
+                Task { @MainActor [weak self] in self?.settings.proxy.password = password }
+            }
         }
         guard vaultReadable else { return false }
         var all = Secrets.collect(items, settings)
-        if listDamaged { all = stored.merging(all) { _, new in new } }  // the unreadable list's secrets stay recoverable
+        // The unreadable list's secrets stay recoverable; recovered ones are never replaced by values not yet filled in.
+        if listDamaged || recovered { all = stored.merging(all) { _, new in new } }
         if all == stored { legacySecrets = [:]; return true }
         guard Self.vault.write(all) else { return false }
         stored = all
