@@ -179,31 +179,3 @@ export function isVideoSite(url) {
   }
 }
 
-/** "1080p", "2160p (4K)" (the same names the app uses). */
-export function qualityName(height) {
-  return { 4320: "4320p (8K)", 2160: "2160p (4K)", 1440: "1440p (2K)" }[height] || `${height}p`;
-}
-
-/**
- * The page button's menu for a video-site video, from the qualities the app's helper looked up (best first). When the
- * lookup failed (an older app, no network, a site the video engine can't read) it offers best quality and sound only.
- */
-export function qualityMenu(reply) {
-  const about = (bytes) => (bytes > 0 ? ` · about ${formatSize(bytes)}` : "");
-  const seen = new Set();
-  const list = (reply && reply.ok && Array.isArray(reply.qualities) ? reply.qualities : [])
-    .filter((q) => q && Number.isInteger(q.height) && q.height >= 100 && q.height <= 10000 && !seen.has(q.height) && seen.add(q.height))
-    .slice(0, 12);
-  const items = list.map((q, i) => ({
-    label: `${qualityName(q.height)}${i === 0 ? " · best" : ""}${about(q.size)}`,
-    maxHeight: i === 0 ? 0 : q.height,  // the best one is sent as "best", so the app never picks lower by mistake
-    audioOnly: false,
-  }));
-  if (!items.length) {
-    // An app older than 0.6.3 doesn't know the lookup: say so, instead of silently offering only two choices.
-    if (reply && reply.error === "Unknown message") items.push({ label: "Update the Nexonic app to choose a quality", note: true });
-    items.push({ label: "Video, best quality", maxHeight: 0, audioOnly: false });
-  }
-  items.push({ label: `Sound only${about(reply && reply.ok ? reply.soundSize : 0)}`, maxHeight: 0, audioOnly: true });
-  return items;
-}

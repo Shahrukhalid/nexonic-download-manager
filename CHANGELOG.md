@@ -1,3 +1,13 @@
+## 0.6.6
+
+- **Select All** button in the toolbar (click again to deselect).
+- **Asks before deleting:** Delete, Delete and Move to Trash, and Delete Completed now ask first. Removing from the
+  list keeps the files unless you tick "Also move the downloaded files to the Trash".
+- **Download this video** in the browser shows *Video, best quality* and *Sound only* at once again (no waiting).
+  The app's download window still lets you pick another quality.
+- **Updates:** only one update can run at a time. Checking for updates while one is downloading shows its progress
+  instead of starting a second download.
+
 ## 0.6.5
 
 - **Update checks work on busy networks:** GitHub allows only 60 update checks an hour per network, so on shared

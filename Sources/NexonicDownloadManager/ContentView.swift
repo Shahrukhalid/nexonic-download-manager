@@ -192,9 +192,13 @@ struct ContentView: View {
             Button { selection.forEach(manager.pause) } label: { Label("Stop", systemImage: "pause.fill") }
                 .disabled(selection.isEmpty).help("Stop the selected downloads")
             Button { manager.pauseAll() } label: { Label("Stop All", systemImage: "stop.fill") }.help("Stop every download")
-            Button { selection.forEach { manager.remove($0) }; selection = [] } label: { Label("Delete", systemImage: "trash") }
+            Button { toggleSelectAll() } label: {
+                Label(allSelected ? "Select None" : "Select All", systemImage: allSelected ? "checklist.unchecked" : "checklist.checked")
+            }
+            .disabled(shown.isEmpty).help(allSelected ? "Deselect all downloads" : "Select every download in this list")
+            Button { confirmDelete(selection) } label: { Label("Delete", systemImage: "trash") }
                 .disabled(selection.isEmpty).help("Remove the selected downloads from the list")
-            Button { manager.clearFinished() } label: { Label("Delete Completed", systemImage: "checkmark.circle") }
+            Button { confirmClearFinished() } label: { Label("Delete Completed", systemImage: "checkmark.circle") }
                 .help("Remove finished downloads from the list")
         }
         ToolbarItemGroup {
@@ -257,8 +261,49 @@ struct ContentView: View {
             }
         }
         Divider()
-        Button("Delete") { ids.forEach { manager.remove($0) }; selection.subtract(ids) }
-        Button("Delete and Move File to Trash") { ids.forEach { manager.remove($0, deleteFile: true) }; selection.subtract(ids) }
+        Button("Delete…") { confirmDelete(ids) }
+        Button("Delete and Move File to Trash…") { confirmDelete(ids, deleteFile: true) }
+    }
+
+    private var allSelected: Bool { !shown.isEmpty && selection.isSuperset(of: shown.map(\.id)) }
+
+    private func toggleSelectAll() {
+        selection = allSelected ? [] : Set(shown.map(\.id))
+    }
+
+    /// Asks before anything is removed. Files stay on the Mac unless the user ticks the box (or chose the Trash item).
+    private func confirmDelete(_ ids: Set<UUID>, deleteFile: Bool = false) {
+        guard !ids.isEmpty else { return }
+        let n = ids.count
+        let what = n == 1 ? "this download" : "these \(n) downloads"
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = deleteFile ? "Delete \(what) and move the \(n == 1 ? "file" : "files") to the Trash?"
+                                       : "Remove \(what) from the list?"
+        alert.informativeText = deleteFile ? "You can still restore the files from the Trash."
+                                           : "The downloaded files stay on your Mac."
+        alert.addButton(withTitle: deleteFile ? "Move to Trash" : "Remove")
+        alert.addButton(withTitle: "Cancel")
+        if !deleteFile {
+            alert.showsSuppressionButton = true
+            alert.suppressionButton?.title = "Also move the downloaded files to the Trash"
+        }
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let trash = deleteFile || alert.suppressionButton?.state == .on
+        ids.forEach { manager.remove($0, deleteFile: trash) }
+        selection.subtract(ids)
+    }
+
+    private func confirmClearFinished() {
+        let n = manager.items.filter { $0.status == .finished }.count
+        guard n > 0 else { return }
+        let alert = NSAlert()
+        alert.messageText = "Remove \(n) completed \(n == 1 ? "download" : "downloads") from the list?"
+        alert.informativeText = "The downloaded files stay on your Mac."
+        alert.addButton(withTitle: "Remove")
+        alert.addButton(withTitle: "Cancel")
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        manager.clearFinished()
     }
 
     private func moveTo(_ ids: Set<UUID>, _ queue: String) {

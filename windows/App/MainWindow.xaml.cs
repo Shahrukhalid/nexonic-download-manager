@@ -198,9 +198,41 @@ public partial class MainWindow : Window
 
     void OnResume(object s, RoutedEventArgs e) { foreach (var r in Selected) manager.Resume(r); }
     void OnPause(object s, RoutedEventArgs e) { foreach (var r in Selected) manager.Pause(r); }
-    void OnRemove(object s, RoutedEventArgs e) { foreach (var r in Selected) manager.Remove(r); }
+    void OnRemove(object s, RoutedEventArgs e) => ConfirmRemove(Selected, toRecycleBin: false);
+
+    void OnSelectAll(object s, RoutedEventArgs e)
+    {
+        if (Grid.Items.Count > 0 && Grid.SelectedItems.Count == Grid.Items.Count) Grid.UnselectAll();
+        else Grid.SelectAll();
+        Grid.Focus();
+    }
+
+    /// <summary>Asks before anything is removed. Files stay unless the user chose the Recycle Bin.</summary>
+    void ConfirmRemove(List<Row> rows, bool toRecycleBin)
+    {
+        if (rows.Count == 0) return;
+        var what = rows.Count == 1 ? "this download" : $"these {rows.Count} downloads";
+        var text = toRecycleBin
+            ? $"Delete {what} and move the {(rows.Count == 1 ? "file" : "files")} to the Recycle Bin?\n\nYou can still restore them from the Recycle Bin."
+            : $"Remove {what} from the list?\n\nThe downloaded files stay on your PC.";
+        if (MessageBox.Show(this, text, "Delete", MessageBoxButton.OKCancel, MessageBoxImage.Warning, MessageBoxResult.Cancel) != MessageBoxResult.OK) return;
+        foreach (var r in rows)
+        {
+            if (toRecycleBin && r.Record.SavedPath is { } p && System.IO.File.Exists(p))
+                Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(p, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs,
+                    Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+            manager.Remove(r);
+        }
+    }
     void OnPauseAll(object s, RoutedEventArgs e) => manager.PauseAll();
-    void OnClear(object s, RoutedEventArgs e) => manager.ClearFinished();
+    void OnClear(object s, RoutedEventArgs e)
+    {
+        var n = manager.Rows.Count(r => r.Record.Status == DownloadStatus.Finished);
+        if (n == 0) return;
+        if (MessageBox.Show(this, $"Remove {n} completed {(n == 1 ? "download" : "downloads")} from the list?\n\nThe downloaded files stay on your PC.",
+                "Delete Completed", MessageBoxButton.OKCancel, MessageBoxImage.Question, MessageBoxResult.Cancel) == MessageBoxResult.OK)
+            manager.ClearFinished();
+    }
     void OnScheduler(object s, RoutedEventArgs e) { Dialogs.Scheduler(this, manager, CurrentQueue); BuildSidebar(); }
     void OnStartQueue(object s, RoutedEventArgs e) { manager.StartQueue(CurrentQueue); BuildSidebar(); }
     void OnStopQueue(object s, RoutedEventArgs e) { manager.StopQueue(CurrentQueue); BuildSidebar(); }
@@ -210,16 +242,7 @@ public partial class MainWindow : Window
     void OnHelp(object s, RoutedEventArgs e) => HelpWindows.ShowHelp(this);
     void OnAbout(object s, RoutedEventArgs e) => HelpWindows.ShowAbout(this);
 
-    void OnRemoveFile(object s, RoutedEventArgs e)
-    {
-        foreach (var r in Selected)
-        {
-            if (r.Record.SavedPath is { } p && System.IO.File.Exists(p))
-                Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(p, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs,
-                    Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
-            manager.Remove(r);
-        }
-    }
+    void OnRemoveFile(object s, RoutedEventArgs e) => ConfirmRemove(Selected, toRecycleBin: true);
 
     void OnOpen(object s, RoutedEventArgs e)
     {

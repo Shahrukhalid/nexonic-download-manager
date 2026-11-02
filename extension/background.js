@@ -1,6 +1,6 @@
 import {
   DEFAULTS, HOST, addMedia, cookieHeader, header, isMedia, isStreamPlaylist, isVideoSite, isWebLink, nameFromUrl, shouldTakeOver, sortMedia,
-  qualityMenu, summarizePlaylist, titleToName,
+  summarizePlaylist, titleToName,
 } from "./helpers.js";
 
 async function settings() {
@@ -32,25 +32,6 @@ async function send(url, extra = {}) {
     await chrome.action.setBadgeText({ text: "!" });
     return false;
   }
-}
-
-// ---- Qualities of a video-site video (looked up by the app's helper with its video engine) ----
-
-const lookups = new Map(); // link -> { at, items }, so opening the menu again is instant
-
-async function qualities(url, referrer) {
-  if (!isWebLink(url) || !isVideoSite(url)) return qualityMenu(null);
-  const now = Date.now();
-  for (const [u, l] of lookups) if (now - l.at > 10 * 60000) lookups.delete(u);
-  if (lookups.has(url)) return lookups.get(url).items;
-  const message = { type: "qualities", url, referrer, cookies: await cookiesFor(url), userAgent: navigator.userAgent };
-  const reply = await Promise.race([
-    chrome.runtime.sendNativeMessage(HOST, message).catch(() => null),
-    new Promise((resolve) => setTimeout(() => resolve(null), 45000)),
-  ]);
-  const items = qualityMenu(reply);
-  if (reply && reply.ok) lookups.set(url, { at: now, items });
-  return items;
 }
 
 // ---- Browser downloads go to the app ----
@@ -235,8 +216,6 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
         for (const url of msg.urls || []) if (await send(url, { referrer, later: !!msg.later })) sent++;
         return { ok: sent > 0, sent };
       }
-      case "site-qualities":
-        return { items: await qualities(msg.url, referrer) };
       case "media-list":
         return { media: await mediaOf(tabId) };
       case "page-links":

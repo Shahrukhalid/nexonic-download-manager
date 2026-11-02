@@ -91,18 +91,3 @@ test("video sites", () => {
   assert.equal(isVideoSite("not a link"), false);
 });
 
-test("quality menu lists what the video offers, best first", async () => {
-  const { qualityMenu } = await import("./helpers.js");
-  const menu = qualityMenu({ ok: true, soundSize: 4 * 1048576, qualities: [
-    { height: 2160, size: 900 * 1048576 }, { height: 1080, size: 0 }, { height: 1080, size: 1 }, { height: 720, size: 50 * 1048576 }, { height: 12 },
-  ] });
-  assert.deepEqual(menu.map((m) => m.label), ["2160p (4K) · best · about 900 MB", "1080p", "720p · about 50 MB", "Sound only · about 4.0 MB"]);
-  assert.deepEqual(menu.map((m) => [m.maxHeight, m.audioOnly]), [[0, false], [1080, false], [720, false], [0, true]]);
-  // an older app or a failed lookup: the two choices from before
-  for (const r of [null, { ok: false }, { ok: true, qualities: "x" }])
-    assert.deepEqual(qualityMenu(r).map((m) => m.label), ["Video, best quality", "Sound only"]);
-  // an app older than 0.6.3: a note first, so it's clear why there are no qualities
-  const old = qualityMenu({ ok: false, error: "Unknown message" });
-  assert.equal(old[0].note, true);
-  assert.deepEqual(old.slice(1).map((m) => m.label), ["Video, best quality", "Sound only"]);
-});

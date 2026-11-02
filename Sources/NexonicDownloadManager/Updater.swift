@@ -5,6 +5,7 @@ import NexonicCore
 @MainActor
 enum Updater {
     private static var busy = false
+    private static var installing = false  // an update is downloading: never start a second one
     private static var timer: Timer?
     private static var panel: NSPanel?
 
@@ -18,6 +19,7 @@ enum Updater {
     }
 
     static func check(manual: Bool) {
+        if installing { panel?.makeKeyAndOrderFront(nil); return }  // already updating: show that instead
         guard manual || DownloadManager.shared.settings.checkForUpdates, !busy else { return }
         busy = true
         Task {
@@ -40,6 +42,7 @@ enum Updater {
 
     private static func found(_ release: Updates.Release?, manual: Bool) {
         let current = AppLinks.version
+        guard !installing else { return }
         guard let release else {
             if manual {
                 message("Couldn't check for updates", "GitHub didn't answer. Check your internet connection and try again "
@@ -61,7 +64,9 @@ enum Updater {
         alert.addButton(withTitle: "Remind Me Later")
         alert.addButton(withTitle: "Skip This Version")
         NSApp.activate(ignoringOtherApps: true)
-        switch alert.runModal() {
+        let choice = alert.runModal()
+        guard !installing else { return }  // another check's Update Now got there first
+        switch choice {
         case .alertFirstButtonReturn: install(release)
         case .alertThirdButtonReturn: DownloadManager.shared.settings.skippedVersion = release.version
         default: break
@@ -95,6 +100,7 @@ enum Updater {
             AppLinks.open(release.page)  // e.g. opened from the disk image: download it from the release page instead
             return
         }
+        installing = true
         showProgress("Downloading version \(release.version)…")
         URLSession.shared.downloadTask(with: zip) { temp, response, _ in
             var file: URL?
@@ -109,6 +115,7 @@ enum Updater {
                 panel?.close()
                 panel = nil
                 guard let file = downloaded else {
+                    installing = false
                     message("The update could not be downloaded or did not match the published file",
                             "Nothing was changed. Try again later, or download it from the release page.")
                     return
@@ -145,6 +152,7 @@ enum Updater {
             p.arguments = [script.path, "\(ProcessInfo.processInfo.processIdentifier)", zip.path, dir.path, app.path]
             try p.run()
         } catch {
+            installing = false
             message("The update could not be installed", error.localizedDescription)
             return
         }

@@ -82,6 +82,9 @@
         <Button Style="{StaticResource ToolButton}" Click="OnPauseAll" ToolTip="Stop every download">
           <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE71A;" /><TextBlock Style="{StaticResource Caption}" Text="Stop All" /></StackPanel>
         </Button>
+        <Button Style="{StaticResource ToolButton}" Click="OnSelectAll" ToolTip="Select every download in this list (click again to deselect)">
+          <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE762;" /><TextBlock Style="{StaticResource Caption}" Text="Select All" /></StackPanel>
+        </Button>
         <Button Style="{StaticResource ToolButton}" Click="OnRemove" ToolTip="Remove the selected downloads from the list">
           <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE74D;" /><TextBlock Style="{StaticResource Caption}" Text="Delete" /></StackPanel>
         </Button>
@@ -158,8 +161,8 @@
               <MenuItem Header="Copy Link" Click="OnCopyLink" />
               <MenuItem x:Name="MoveMenu" Header="Move to Queue" />
               <Separator />
-              <MenuItem Header="Delete" Click="OnRemove" />
-              <MenuItem Header="Delete and Move File to Recycle Bin" Click="OnRemoveFile" />
+              <MenuItem Header="Delete…" Click="OnRemove" />
+              <MenuItem Header="Delete and Move File to Recycle Bin…" Click="OnRemoveFile" />
             </ContextMenu>
           </DataGrid.ContextMenu>
           <DataGrid.Columns>
