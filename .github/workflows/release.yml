@@ -64,7 +64,8 @@ jobs:
           ditto -c -k --keepParent "build/Nexonic Download Manager.app" up/NexonicDownloadManager-Mac.zip
           cp "build/NexonicExtension-$V.zip" up/NexonicExtension-Chrome.zip
           cp "build/NexonicFirefoxAddon-$V.xpi" up/NexonicAddon-Firefox.xpi
-          gh release create "$GITHUB_REF_NAME" --draft --title "Nexonic Download Manager $V" --notes-file CHANGELOG.md up/*
+          cat packaging/RELEASE-HEADER.md CHANGELOG.md > build/release-notes.md
+          gh release create "$GITHUB_REF_NAME" --draft --title "Nexonic Download Manager $V" --notes-file build/release-notes.md up/*
   ffmpeg-windows:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -129,6 +130,24 @@ jobs:
           Copy-Item "build\NexonicDownloadManager-Setup-$v.exe" build\NexonicDownloadManager-Windows-Setup.exe
           Copy-Item "build\NexonicDownloadManager-$v-windows-portable.zip" build\NexonicDownloadManager-Windows-Portable.zip
           gh release upload $env:GITHUB_REF_NAME build\NexonicDownloadManager-Windows-Setup.exe build\NexonicDownloadManager-Windows-Portable.zip
+      - name: Attach latest.json (update details the apps read when GitHub's API refuses)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          $repo = $env:GITHUB_REPOSITORY
+          gh release download $tag --dir dl --pattern "Nexonic*"
+          $base = "https://github.com/$repo/releases/download/$tag"
+          $assets = @(Get-ChildItem dl | Sort-Object Name | ForEach-Object {
+            [ordered]@{ name = $_.Name; browser_download_url = "$base/$($_.Name)"; digest = "sha256:" + (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower() }
+          })
+          if ($assets.Count -lt 6) { throw "Expected 6 release files, found $($assets.Count)" }
+          [ordered]@{
+            tag_name = $tag; html_url = "https://github.com/$repo/releases/tag/$tag"; draft = $false; prerelease = $false
+            body = (Get-Content CHANGELOG.md -Raw); assets = $assets
+          } | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8NoBOM latest.json
+          gh release upload $tag latest.json --clobber
       - name: Publish the release (all Mac and Windows files are attached now)
         env:
           GH_TOKEN: ${{ github.token }}

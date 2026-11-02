@@ -45,7 +45,12 @@ public static class Updater
         {
             using var c = Client();
             c.Timeout = TimeSpan.FromSeconds(20);
-            release = Updates.Parse(await c.GetStringAsync(Updates.LatestUrl));
+            // GitHub's API first; when it refuses or fails, the copy of the same details attached to the release.
+            foreach (var url in new[] { Updates.LatestUrl, Updates.MirrorUrl })
+            {
+                try { release = Updates.Parse(await c.GetStringAsync(url)); } catch { }
+                if (release != null) break;
+            }
         }
         catch { }
         finally { busy = false; }
@@ -53,7 +58,7 @@ public static class Updater
         var current = HelpWindows.Version;
         if (release is null)
         {
-            if (manual) MessageBox.Show("Check your internet connection and try again.", "Couldn't check for updates");
+            if (manual) MessageBox.Show("GitHub didn't answer. Check your internet connection and try again later, or download the newest version from the website.", "Couldn't check for updates");
             return;
         }
         if (!Updates.IsNewer(release.Version, current))

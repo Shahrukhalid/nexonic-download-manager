@@ -1,3 +1,12 @@
+## 0.6.5
+
+- **Update checks work on busy networks:** GitHub allows only 60 update checks an hour per network, so on shared
+  office or mobile networks "Check for Updates" could fail with "Check your internet connection". The app now
+  falls back to a copy of the update details attached to every release (still verified by SHA-256 before
+  installing).
+- **First launch on Mac:** step-by-step pictures for allowing the app the first time (README, website, release
+  notes and Help).
+
 ## 0.6.4
 
 - **No more Keychain password prompts on Mac:** after an update, macOS no longer asks for your login password when

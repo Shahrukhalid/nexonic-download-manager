@@ -20,22 +20,31 @@ enum Updater {
     static func check(manual: Bool) {
         guard manual || DownloadManager.shared.settings.checkForUpdates, !busy else { return }
         busy = true
-        var request = URLRequest(url: Updates.latestURL, timeoutInterval: 20)
+        Task {
+            // GitHub's API first; when it refuses or fails, the copy of the same details attached to the release.
+            var release = await fetch(Updates.latestURL)
+            if release == nil { release = await fetch(Updates.mirrorURL) }
+            busy = false
+            found(release, manual: manual)
+        }
+    }
+
+    private nonisolated static func fetch(_ url: URL) async -> Updates.Release? {
+        var request = URLRequest(url: url, timeoutInterval: 20)
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
         request.setValue("NexonicDownloadManager/\(AppLinks.version)", forHTTPHeaderField: "User-Agent")
-        URLSession.shared.dataTask(with: request) { data, _, _ in
-            let release = data.flatMap(Updates.parse)
-            Task { @MainActor in
-                busy = false
-                found(release, manual: manual)
-            }
-        }.resume()
+        guard let (data, response) = try? await URLSession.shared.data(for: request),
+              (response as? HTTPURLResponse)?.statusCode == 200 else { return nil }
+        return Updates.parse(data)
     }
 
     private static func found(_ release: Updates.Release?, manual: Bool) {
         let current = AppLinks.version
         guard let release else {
-            if manual { message("Couldn't check for updates", "Check your internet connection and try again.") }
+            if manual {
+                message("Couldn't check for updates", "GitHub didn't answer. Check your internet connection and try again "
+                        + "later, or download the newest version from the website.")
+            }
             return
         }
         guard Updates.isNewer(release.version, than: current) else {

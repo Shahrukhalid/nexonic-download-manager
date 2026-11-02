@@ -53,9 +53,9 @@ curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | 
 1. Open the `.dmg`, read the Terms of Use and click **Agree**.
 2. Drag **Nexonic Download Manager** onto **Applications** (replace the old version if asked), then open it from
    Applications.
-3. The first time, macOS may say it *could not verify* the app, because it is free and not sold through Apple.
-   Click **Done**, open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**.
-   On macOS 13–14 you can instead right-click the app → **Open**.
+3. The first time, macOS says it *could not verify* the app. That's expected: the app is free and not sold through
+   Apple. Allow it once (see [First launch on Mac](#first-launch-on-mac) below); after that it opens normally, and
+   in-app updates never ask again.
 4. If macOS says the app *is damaged and can't be opened*, open **Terminal** and run
    `xattr -cr "/Applications/Nexonic Download Manager.app"`, then open the app again.
 
@@ -74,6 +74,27 @@ curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | 
 
 Updating? Install the new version over the old one; your downloads and settings are kept. If the Dock or Start menu
 still shows the old icon, quit the app and open it again (on Mac, restarting the computer refreshes the icon cache).
+
+
+### First launch on Mac
+
+macOS shows a warning the first time you open an app that isn't sold through Apple. Allow it once:
+
+1. **Open the app. When macOS says it was *Not Opened*, click Done** (not *Move to Bin*).
+
+   <img src="docs/img/mac-first-launch-1.svg" alt="Step 1: click Done" width="480">
+
+2. **Open System Settings → Privacy & Security**, scroll down to *Security* and click **Open Anyway** next to
+   "Nexonic Download Manager was blocked".
+
+   <img src="docs/img/mac-first-launch-2.svg" alt="Step 2: Privacy & Security, Open Anyway" width="480">
+
+3. **Click Open Anyway** in the window that appears and enter your Mac password (or use Touch ID).
+
+   <img src="docs/img/mac-first-launch-3.svg" alt="Step 3: Open Anyway" width="480">
+
+That's it: macOS won't ask again for this version, and updates installed from inside the app (**Update Now**) open
+without any warning. On macOS 13–14 you can also right-click the app → **Open** → **Open**.
 
 ## Features
 

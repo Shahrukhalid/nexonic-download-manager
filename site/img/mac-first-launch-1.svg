@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="380" viewBox="0 0 640 380" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">
+<rect width="640" height="380" rx="18" fill="#eef2f7"/>
+<circle cx="40" cy="40" r="20" fill="#2563eb"/><text x="40" y="47" text-anchor="middle" fill="#fff" font-size="20" font-weight="700">1</text>
+<text x="72" y="47" fill="#0f172a" font-size="19" font-weight="600">Open the app. When macOS stops it, click Done</text>
+<rect x="170" y="78" width="300" height="270" rx="16" fill="#fff" stroke="#d1d5db"/><circle cx="320" cy="122" r="26" fill="#9ca3af"/><path d="M320 108 l13 25 h-26 z" fill="#fbbf24"/><rect x="318.5" y="118" width="3" height="9" fill="#111"/><circle cx="320" cy="130" r="1.8" fill="#111"/>
+<text x="320" y="178" text-anchor="middle" font-size="16" font-weight="700" fill="#111">"Nexonic Download Manager"</text>
+<text x="320" y="198" text-anchor="middle" font-size="16" font-weight="700" fill="#111">Not Opened</text>
+<text x="320" y="226" text-anchor="middle" font-size="13" fill="#4b5563">macOS could not verify the app.</text>
+<text x="320" y="245" text-anchor="middle" font-size="13" fill="#4b5563">That's expected: it's free and not sold via Apple.</text>
+<rect x="192" y="290" width="120" height="34" rx="9" fill="#e5e7eb"/><text x="252.0" y="312" text-anchor="middle" fill="#111827" font-size="15">Done</text><rect x="186" y="284" width="132" height="46" rx="13" fill="none" stroke="#f59e0b" stroke-width="4"/><rect x="328" y="290" width="120" height="34" rx="9" fill="#2f6fed"/><text x="388.0" y="312" text-anchor="middle" fill="#fff" font-size="15">Move to Bin</text>
+</svg>

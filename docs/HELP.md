@@ -70,7 +70,7 @@ The same guide is built into the app: **Help → Nexonic Download Manager Help**
 
 **A link has expired.** Right-click the download, choose Refresh Link and paste a fresh link. The download continues without starting over.
 
-**macOS won't open the app.** Install or update with one Terminal command and macOS won't ask: curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | bash — otherwise open System Settings, then Privacy & Security, and click Open Anyway. On macOS 13 and 14 you can also right-click the app and choose Open.
+**macOS won't open the app.** Install or update with one Terminal command and macOS won't ask: curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | bash — otherwise: 1) when macOS says the app was Not Opened, click Done; 2) open System Settings, then Privacy & Security, scroll to Security and click Open Anyway; 3) click Open Anyway again and enter your Mac password. macOS asks only once, and updates installed with Update Now open without a warning. On macOS 13 and 14 you can also right-click the app and choose Open. Pictures of each step: https://github.com/Shahrukhalid/nexonic-download-manager#first-launch-on-mac
 
 **macOS says the app is damaged.** Open Terminal and run: xattr -cr "/Applications/Nexonic Download Manager.app" Then open the app again. This happens because the app is free and not sold through Apple.
 

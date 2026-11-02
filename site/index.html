@@ -164,6 +164,19 @@ footer{border-top:1px solid var(--line);padding:30px 0;color:var(--muted);font-s
   </div>
 </section>
 
+<section id="first-launch">
+  <div class="wrap" style="max-width:820px">
+    <h2>First launch on Mac</h2>
+    <p class="sub">macOS shows a warning the first time you open an app that isn't sold through Apple. Allow it once; in-app updates never ask again.</p>
+    <ol style="padding-left:20px;line-height:1.6">
+      <li><strong>Open the app.</strong> When macOS says it was <em>Not Opened</em>, click <strong>Done</strong> (not Move to Bin).<br><img src="img/mac-first-launch-1.svg" alt="Step 1: click Done" style="width:100%;max-width:520px;margin:10px 0 18px"></li>
+      <li><strong>Open System Settings → Privacy &amp; Security</strong>, scroll to <em>Security</em> and click <strong>Open Anyway</strong>.<br><img src="img/mac-first-launch-2.svg" alt="Step 2: Privacy and Security, Open Anyway" style="width:100%;max-width:520px;margin:10px 0 18px"></li>
+      <li><strong>Click Open Anyway</strong> in the window that appears and enter your Mac password (or use Touch ID).<br><img src="img/mac-first-launch-3.svg" alt="Step 3: Open Anyway" style="width:100%;max-width:520px;margin:10px 0 18px"></li>
+    </ol>
+    <p class="sub">On macOS 13–14 you can also right-click the app → Open → Open.</p>
+  </div>
+</section>
+
 <section id="faq" style="background:var(--card)">
   <div class="wrap" style="max-width:820px">
     <h2>FAQ</h2>
@@ -171,7 +184,7 @@ footer{border-top:1px solid var(--line);padding:30px 0;color:var(--muted);font-s
     <details><summary>Is it really free?</summary><p>Yes. Nexonic Download Manager is free and open source under the MIT license, with no ads, no account and no tracking.</p></details>
     <details><summary>Is this an IDM alternative for Mac?</summary><p>Yes. It is a native Mac app with IDM-style features: multi-connection downloads, pause and resume, a scheduler, queues and browser integration. It is not affiliated with Internet Download Manager.</p></details>
     <details><summary>Which browsers work?</summary><p>Chrome, Edge, Brave and Opera through the extension, and Firefox through the add-on. Open the app once, then install the extension.</p></details>
-    <details><summary>macOS says it can't verify the app. What do I do?</summary><p>Install with the one-line Terminal command above and there is no warning. If you used the disk image, open System Settings, then Privacy &amp; Security, and click Open Anyway. The app is free and not sold through Apple, so macOS asks once.</p></details>
+    <details><summary>macOS says it can't verify the app. What do I do?</summary><p>That's expected: the app is free and not sold through Apple, so macOS asks once. Follow the three steps in <a href="#first-launch">First launch on Mac</a>, or install with the one-line Terminal command above and there is no warning.</p></details>
     <details><summary>Can it download any video?</summary><p>It saves videos from many sites and streamed video. Copy-protected services are not supported. Only download what you have the right to save, and respect each site's terms.</p></details>
     <details><summary>How do I report a problem?</summary><p><a href="https://github.com/Shahrukhalid/nexonic-download-manager/issues/new">Open an issue on GitHub</a> with your system, the app version from About, and the link if it is public.</p></details>
   </div>
