@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nexonic Download Manager: free IDM alternative for Mac and Windows</title>
-<meta name="description" content="Free, open-source download manager for Mac and Windows. Up to 32 connections per file, pause and resume, scheduler and queues, browser extension, and video downloads. No ads, no account.">
-<meta name="keywords" content="download manager, free download manager, IDM alternative, IDM for Mac, download accelerator, Mac download manager, Windows download manager, video downloader, open source">
+<meta name="description" content="Free, open-source download manager for Mac and Windows. Up to 32 connections per file, pause and resume, scheduler and queues, browser extension, and video downloads up to 8K. No ads, no account.">
+<meta name="keywords" content="download manager, free download manager, IDM alternative, IDM for Mac, download accelerator, Mac download manager, Windows download manager, video downloader, browser extension, open source">
 <link rel="canonical" href="https://shahrukhalid.github.io/nexonic-download-manager/">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="icon.png">
-<meta name="theme-color" content="#2563eb">
+<meta name="theme-color" content="#0b1220">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Nexonic Download Manager">
 <meta property="og:title" content="Nexonic Download Manager: free IDM alternative for Mac and Windows">
@@ -48,160 +48,641 @@
     {"@type": "Question", "name": "Is Nexonic Download Manager free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. It is free and open source under the MIT license, with no ads, no account and no tracking."}},
     {"@type": "Question", "name": "Is there an IDM alternative for Mac?", "acceptedAnswer": {"@type": "Answer", "text": "Nexonic Download Manager is a native Mac app (macOS 13 or later, Apple silicon and Intel) with IDM-style features: multi-connection downloads, pause and resume, a scheduler, queues and a browser extension."}},
     {"@type": "Question", "name": "Does it work with Chrome and Firefox?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The browser extension works with Chrome, Edge, Brave, Opera and Firefox and hands downloads to the app."}},
-    {"@type": "Question", "name": "Can it download videos?", "acceptedAnswer": {"@type": "Answer", "text": "It saves videos from many sites and streamed video as one .mp4 file. Copy-protected services are not supported, and you should only download what you have the right to save."}}
+    {"@type": "Question", "name": "Can it download videos?", "acceptedAnswer": {"@type": "Answer", "text": "It saves videos from 1,000+ sites in the quality you pick, up to 4K/8K, or sound only, and streamed video as one .mp4 file. Copy-protected services are not supported, and you should only download what you have the right to save."}},
+    {"@type": "Question", "name": "How do I update the app?", "acceptedAnswer": {"@type": "Answer", "text": "The app checks for updates when it opens and shows what is new, with Update Now, Remind Me Later or Skip This Version. Every update is checked against its SHA-256 before it is installed."}}
   ]
 }
 </script>
 <style>
-:root{--bg:#ffffff;--fg:#0f172a;--muted:#475569;--card:#f8fafc;--line:#e2e8f0;--brand:#2563eb;--brand2:#1d4ed8;--hero1:#0b1220;--hero2:#1e3a8a}
-@media (prefers-color-scheme:dark){:root{--bg:#0b1220;--fg:#e2e8f0;--muted:#94a3b8;--card:#111a2e;--line:#1f2a44}}
-*{box-sizing:border-box}html{scroll-behavior:smooth}
-body{margin:0;font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg)}
-a{color:var(--brand)}img{max-width:100%;display:block}
-.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
-nav{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
-nav .brand{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;font-weight:700}
-nav .brand img{width:32px;height:32px}
-nav .links a{color:#cbd5e1;text-decoration:none;margin-left:18px;font-size:15px}
-header{background:linear-gradient(160deg,var(--hero1),var(--hero2));color:#fff;padding-bottom:56px}
-.hero{display:grid;grid-template-columns:1.05fr 1fr;gap:40px;align-items:center;padding-top:40px}
-.hero h1{font-size:44px;line-height:1.15;margin:0 0 16px}
-.hero p.lead{font-size:19px;color:#cbd5e1;margin:0 0 26px}
-.btns{display:flex;flex-wrap:wrap;gap:12px}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 20px;border-radius:10px;font-weight:600;text-decoration:none;border:1px solid transparent}
-.btn.primary{background:var(--brand);color:#fff}.btn.primary:hover{background:var(--brand2)}
-.btn.ghost{border-color:#475569;color:#e2e8f0}.btn.ghost:hover{border-color:#94a3b8}
-.small{font-size:14px;color:#94a3b8;margin-top:14px}
-.shot{border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
-section{padding:64px 0}section h2{font-size:32px;margin:0 0 10px;text-align:center}
-section p.sub{color:var(--muted);text-align:center;max-width:680px;margin:0 auto 36px}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
-.card h3{margin:0 0 6px;font-size:18px}.card p{margin:0;color:var(--muted);font-size:15px}
-.shots{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
-.shots figure{margin:0}.shots figcaption{color:var(--muted);font-size:14px;margin-top:8px;text-align:center}
-table{width:100%;border-collapse:collapse;background:var(--card);border-radius:14px;overflow:hidden}
-td,th{padding:14px 16px;border-bottom:1px solid var(--line);text-align:left}
-details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:12px}
-summary{font-weight:600;cursor:pointer}details p{color:var(--muted);margin:10px 0 0}
-footer{border-top:1px solid var(--line);padding:30px 0;color:var(--muted);font-size:14px;text-align:center}
-@media (max-width:860px){.hero{grid-template-columns:1fr}.hero h1{font-size:34px}.grid{grid-template-columns:1fr 1fr}.shots{grid-template-columns:1fr}nav .links{display:none}}
-@media (max-width:560px){.grid{grid-template-columns:1fr}}
+:root{
+  --bg:#ffffff;--bg2:#f6f8fc;--fg:#0f172a;--muted:#526077;--line:#e3e8f0;--card:#ffffff;
+  --brand:#2563eb;--brand2:#1d4ed8;--brand-soft:#e8efff;--ok:#16a34a;
+  --hero1:#070d1a;--hero2:#0f1f4d;--hero3:#1e3a8a;
+  --radius:16px;--shadow:0 1px 2px rgba(15,23,42,.06),0 8px 24px rgba(15,23,42,.06);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0a1020;--bg2:#0d1529;--fg:#e6ebf5;--muted:#9aa7bd;--line:#1e2a44;--card:#111a30;--brand-soft:#16244a;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased}
+a{color:var(--brand)}img{max-width:100%;height:auto;display:block}
+svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.wrap{max-width:1160px;margin:0 auto;padding:0 20px}
+code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px}
+
+/* nav */
+.nav{position:sticky;top:0;z-index:50;background:rgba(7,13,26,.82);backdrop-filter:saturate(180%) blur(14px);-webkit-backdrop-filter:saturate(180%) blur(14px);border-bottom:1px solid rgba(255,255,255,.08)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+.brand{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;font-weight:700;letter-spacing:-.01em}
+.brand img{width:30px;height:30px}
+.nav .links{display:flex;align-items:center;gap:22px}
+.nav .links a{color:#c3cde0;text-decoration:none;font-size:15px}.nav .links a:hover{color:#fff}
+.nav .links a.navdl{background:var(--brand);color:#fff;padding:8px 14px;border-radius:9px;font-weight:600}
+.nav .links a.navdl:hover{background:var(--brand2)}
+
+/* hero */
+header.hero{background:radial-gradient(1200px 600px at 80% -10%,rgba(59,130,246,.35),transparent 60%),linear-gradient(165deg,var(--hero1),var(--hero2) 60%,var(--hero3));color:#fff;padding:56px 0 0;overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1fr;gap:40px;text-align:center}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid rgba(255,255,255,.18);border-radius:999px;font-size:13px;color:#cfd8ea;background:rgba(255,255,255,.05);text-decoration:none}
+.pill b{color:#fff;font-weight:600}.pill .dot{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.25)}
+.hero h1{font-size:56px;line-height:1.08;letter-spacing:-.03em;margin:18px auto 18px;max-width:880px}
+.hero h1 span{background:linear-gradient(90deg,#93c5fd,#60a5fa 40%,#a5b4fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lead{font-size:19px;color:#c3cde0;margin:0 auto 30px;max-width:720px}
+.btns{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:13px 20px;border-radius:11px;font-weight:600;font-size:16px;text-decoration:none;border:1px solid transparent;transition:background .15s,border-color .15s,transform .15s;cursor:pointer}
+.btn:hover{transform:translateY(-1px)}
+.btn.primary{background:var(--brand);color:#fff;box-shadow:0 8px 24px rgba(37,99,235,.35)}.btn.primary:hover{background:var(--brand2)}
+.btn.glass{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.18);color:#e6ebf5}.btn.glass:hover{border-color:rgba(255,255,255,.4)}
+.btn.lg{padding:15px 24px;font-size:17px}
+.btn small{display:block;font-weight:500;font-size:12px;opacity:.8;line-height:1.2}
+.btn .t{display:flex;flex-direction:column;align-items:flex-start;line-height:1.25}
+.meta{font-size:14px;color:#94a3b8;margin-top:16px}
+.meta a{color:#cbd5e1}
+.trust{display:flex;flex-wrap:wrap;gap:8px 22px;justify-content:center;margin-top:22px;font-size:14px;color:#c3cde0}
+.trust span{display:inline-flex;align-items:center;gap:7px}.trust svg.i{width:16px;height:16px;color:#4ade80}
+.window{max-width:1040px;margin:8px auto 0;border-radius:14px 14px 0 0;overflow:hidden;background:#1b2337;box-shadow:0 -10px 80px rgba(37,99,235,.35),0 30px 80px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);border-bottom:0}
+.window img{width:100%;aspect-ratio:1240/684}
+
+/* stats */
+.stats{background:var(--bg2);border-bottom:1px solid var(--line)}
+.stats .wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:28px 20px;text-align:center}
+.stats b{display:block;font-size:30px;letter-spacing:-.02em;color:var(--fg)}
+.stats span{font-size:14px;color:var(--muted)}
+
+/* sections */
+section{padding:88px 0}
+.alt{background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.eyebrow{display:block;text-align:center;font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--brand);margin-bottom:10px}
+section h2{font-size:38px;line-height:1.15;letter-spacing:-.02em;margin:0 0 12px;text-align:center}
+p.sub{color:var(--muted);text-align:center;max-width:700px;margin:0 auto 44px;font-size:17px}
+
+/* downloads */
+.dl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.dl{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow);display:flex;flex-direction:column;position:relative}
+.dl.rec{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft),var(--shadow)}
+.dl .tag{position:absolute;top:-11px;left:22px;background:var(--brand);color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;display:none}
+.dl.rec .tag{display:block}
+.dl .os{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.dl .os .logo{width:44px;height:44px;border-radius:12px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center}
+.dl .os .logo svg{width:24px;height:24px}
+.dl h3{margin:0;font-size:20px}.dl .req{color:var(--muted);font-size:14px;margin:0 0 18px}
+.dl .btn{width:100%;margin-bottom:10px}
+.dl .btn.outline{border-color:var(--line);color:var(--fg);background:transparent}.dl .btn.outline:hover{border-color:var(--brand);color:var(--brand)}
+.dl ul{list-style:none;padding:0;margin:8px 0 0;font-size:14px;color:var(--muted)}
+.dl li{display:flex;gap:8px;padding:4px 0}.dl li svg.i{width:16px;height:16px;color:var(--ok);margin-top:3px}
+.cmd{margin-top:22px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow);display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.cmd .txt{flex:1 1 300px}.cmd h4{margin:0 0 4px;font-size:16px}.cmd p{margin:0;color:var(--muted);font-size:14px}
+.cmd .box{flex:1 1 520px;display:flex;align-items:center;gap:8px;background:#0b1220;color:#e2e8f0;border-radius:10px;padding:10px 10px 10px 14px;min-width:0}
+.cmd .box code{flex:1;overflow-x:auto;white-space:nowrap;font-size:13px}
+.copy{background:rgba(255,255,255,.1);color:#fff;border:0;border-radius:7px;padding:7px 12px;font:600 13px inherit;cursor:pointer;font-family:inherit}.copy:hover{background:rgba(255,255,255,.2)}
+.dl-note{text-align:center;color:var(--muted);font-size:14px;margin-top:20px}
+.mobile-note{display:none;text-align:center;background:var(--brand-soft);border-radius:12px;padding:12px 16px;margin:0 auto 24px;max-width:620px;font-size:15px}
+
+/* features */
+.f-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.f{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+.f .ic{width:42px;height:42px;border-radius:11px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;margin-bottom:14px}
+.f h3{margin:0 0 6px;font-size:17px}.f p{margin:0;color:var(--muted);font-size:15px}
+
+/* split rows */
+.split{display:grid;grid-template-columns:1fr 1.15fr;gap:56px;align-items:center}
+.split + .split{margin-top:88px}
+.split.rev .media{order:-1}
+.split h3{font-size:28px;letter-spacing:-.02em;margin:0 0 12px;line-height:1.2}
+.split p{color:var(--muted);margin:0 0 16px}
+.checks{list-style:none;padding:0;margin:0}
+.checks li{display:flex;gap:10px;padding:6px 0}.checks svg.i{color:var(--ok);margin-top:2px}
+.media img{border-radius:12px;border:1px solid var(--line);box-shadow:0 24px 60px rgba(15,23,42,.18);cursor:zoom-in}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 18px}
+.chip{font-size:13px;padding:5px 10px;border-radius:999px;background:var(--brand-soft);color:var(--brand);font-weight:600}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;counter-reset:s}
+.step{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px;position:relative}
+.step:before{counter-increment:s;content:counter(s);display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--brand);color:#fff;font-weight:700;margin-bottom:14px}
+.step h3{margin:0 0 6px;font-size:18px}.step p{margin:0;color:var(--muted);font-size:15px}
+
+/* gallery */
+.tabs{display:flex;gap:6px;justify-content:center;margin:0 auto 28px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:5px;width:max-content}
+.tabs button{border:0;background:transparent;color:var(--muted);font:600 15px inherit;font-family:inherit;padding:9px 18px;border-radius:8px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--brand);color:#fff}
+.gal{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.gal[hidden]{display:none}
+.gal figure{margin:0;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:zoom-in;transition:transform .15s,box-shadow .15s}
+.gal figure:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.gal img{width:100%;object-fit:cover;object-position:top left}
+.gal.mac img{aspect-ratio:1240/684}.gal.win img{aspect-ratio:988/695}
+.gal figcaption{padding:12px 14px;font-size:14px;color:var(--muted)}.gal figcaption b{color:var(--fg);display:block;font-size:15px}
+
+/* tables & misc */
+.tbl{width:100%;border-collapse:separate;border-spacing:0;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:15px}
+.tbl th,.tbl td{padding:13px 16px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.tbl tr:last-child td{border-bottom:0}.tbl th{background:var(--bg2);font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.tbl a{font-weight:600}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px}
+.panel h3{margin:0 0 10px;font-size:19px;display:flex;align-items:center;gap:10px}
+.panel h3 svg.i{color:var(--brand)}
+.panel p,.panel li{color:var(--muted);font-size:15px}
+.panel ol,.panel ul{padding-left:20px;margin:8px 0 0}.panel li{margin-bottom:6px}
+.panel pre{background:#0b1220;color:#e2e8f0;border-radius:10px;padding:12px 14px;overflow-x:auto;margin:10px 0}
+kbd{font-family:inherit;font-size:13px;background:var(--bg2);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 7px;color:var(--fg)}
+.fl{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:8px}
+.fl figure{margin:0}.fl figcaption{font-size:14px;color:var(--muted);margin-top:8px}.fl figcaption b{color:var(--fg)}
+.fl img{border-radius:12px;border:1px solid var(--line);width:100%}
+
+/* changelog */
+.rel{border-left:2px solid var(--line);padding-left:22px;max-width:820px;margin:0 auto}
+.rel article{position:relative;padding-bottom:26px}
+.rel article:before{content:"";position:absolute;left:-29px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--card);border:2px solid var(--brand)}
+.rel article:first-child:before{background:var(--brand)}
+.rel h3{margin:0 0 6px;font-size:18px}.rel h3 small{font-weight:500;color:var(--muted);font-size:13px;margin-left:8px}
+.rel ul{margin:0;padding-left:18px;color:var(--muted);font-size:15px}
+
+/* faq */
+.faq{max-width:840px;margin:0 auto}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0 20px;margin-bottom:10px}
+summary{font-weight:600;cursor:pointer;padding:17px 0;list-style:none;display:flex;justify-content:space-between;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary:after{content:"+";font-size:22px;line-height:1;color:var(--muted);transition:transform .2s}
+details[open] summary:after{transform:rotate(45deg)}
+details p{color:var(--muted);margin:0 0 18px}
+
+/* cta + footer */
+.cta{background:linear-gradient(135deg,var(--hero2),var(--hero3));color:#fff;border-radius:22px;padding:52px 28px;text-align:center}
+.cta h2{color:#fff}.cta p{color:#c3cde0;margin:0 auto 26px;max-width:600px}
+footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-size:14px}
+.foot{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:28px}
+.foot h4{color:var(--fg);margin:0 0 10px;font-size:14px}
+.foot a{color:var(--muted);text-decoration:none;display:block;padding:3px 0}.foot a:hover{color:var(--brand)}
+.foot .brand{color:var(--fg);margin-bottom:10px}
+.legal{border-top:1px solid var(--line);margin-top:30px;padding-top:20px;font-size:13px}
+
+.two>*,.dl-grid>*,.f-grid>*,.split>*,.steps>*,.gal>*,.fl>*{min-width:0}
+.panel code,.tbl code,.f code{overflow-wrap:anywhere}
+
+/* lightbox */
+.lb{position:fixed;inset:0;background:rgba(3,7,18,.88);display:none;align-items:center;justify-content:center;z-index:100;padding:24px;cursor:zoom-out}
+.lb.on{display:flex}.lb img{max-height:92vh;width:auto;border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+
+@media (max-width:980px){
+  .hero h1{font-size:42px}.dl-grid,.f-grid,.gal,.steps,.fl{grid-template-columns:1fr 1fr}
+  .split{grid-template-columns:1fr;gap:28px}.split.rev .media{order:0}
+  .foot{grid-template-columns:1fr 1fr}.nav .links a:not(.navdl){display:none}
+}
+@media (max-width:640px){
+  section{padding:64px 0}.hero h1{font-size:34px}.hero p.lead{font-size:17px}section h2{font-size:30px}
+  .dl-grid,.f-grid,.gal,.steps,.two,.fl{grid-template-columns:1fr}
+  .stats .wrap{grid-template-columns:1fr 1fr}.btns .btn{width:100%}
+  .brand{font-size:15px;white-space:nowrap}.brand img{width:26px;height:26px}
+  .tabs{width:auto}.tbl{font-size:14px}.tbl th,.tbl td{padding:10px 12px}
+}
 </style>
 </head>
 <body>
-<header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 19h16"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M4 18a8 8 0 1 1 16 0"/><path d="m12 14 4-5"/></symbol>
+  <symbol id="i-term" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.9-3M4 4v4h4M4 13a8 8 0 0 0 14.9 3M20 20v-4h-4"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-puzzle" viewBox="0 0 24 24"><path d="M10 3h4v3a2 2 0 1 0 4 0V3h3v7h-3a2 2 0 1 0 0 4h3v7h-7v-3a2 2 0 1 0-4 0v3H3v-7h3a2 2 0 1 0 0-4H3V3z"/></symbol>
+  <symbol id="i-gh" viewBox="0 0 24 24"><path d="M9 19c-4 1.5-4-2-6-2.5m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12 12 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></symbol>
+  <symbol id="i-apple" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></symbol>
+  <symbol id="i-win" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M9 20h6M12 16v4"/></symbol>
+</svg>
+
+<nav class="nav">
   <div class="wrap">
-    <nav>
-      <a class="brand" href="./"><img src="icon.png" alt="" width="32" height="32">Nexonic Download Manager</a>
-      <div class="links"><a href="#features">Features</a><a href="#download">Download</a><a href="#faq">FAQ</a><a href="https://github.com/Shahrukhalid/nexonic-download-manager">GitHub</a></div>
-    </nav>
-    <div class="hero">
+    <a class="brand" href="./"><img src="icon.png" alt="" width="30" height="30">Nexonic Download Manager</a>
+    <div class="links">
+      <a href="#features">Features</a><a href="#videos">Videos</a><a href="#screenshots">Screenshots</a><a href="#install">Install</a><a href="#faq">FAQ</a>
+      <a href="https://github.com/Shahrukhalid/nexonic-download-manager">GitHub</a>
+      <a class="navdl" href="#download">Download</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-grid">
       <div>
-        <h1>The free download manager for Mac and Windows</h1>
-        <p class="lead">Download faster with up to 32 connections per file, pause and resume anytime, schedule downloads for the night, and save videos in the best quality. No ads, no account, no tracking.</p>
+        <a class="pill" href="#whats-new"><span class="dot"></span><b>Version __VERSION__</b> is out · see what's new</a>
+        <h1>The free download manager <span>for Mac and Windows</span></h1>
+        <p class="lead">Download up to 32 times in parallel, pause and resume anytime, schedule downloads for the night and save videos from 1,000+ sites in the quality you pick. No ads, no account, no tracking.</p>
         <div class="btns">
-          <a class="btn primary" id="main-dl" href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest">Download free</a>
-          <a class="btn ghost" href="https://github.com/Shahrukhalid/nexonic-download-manager">View source on GitHub</a>
+          <a class="btn primary lg" id="hero-dl" href="#download"><svg class="i"><use href="#i-dl"/></svg><span class="t"><span id="hero-dl-label">Download free</span><small id="hero-dl-sub">Mac and Windows · v__VERSION__</small></span></a>
+          <a class="btn glass lg" id="hero-ext" href="#extension"><svg class="i"><use href="#i-puzzle"/></svg><span class="t"><span id="hero-ext-label">Get the browser extension</span><small>Chrome, Edge, Brave, Opera, Firefox</small></span></a>
         </div>
-        <p class="small">Version __VERSION__ · macOS 13+ (Apple silicon and Intel) · Windows 10 and 11 · MIT license</p>
+        <p class="meta">Also for <a href="#download" id="hero-other">Windows</a> · <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest">All files and release notes</a> · <a href="https://github.com/Shahrukhalid/nexonic-download-manager">Source code</a></p>
+        <div class="trust">
+          <span><svg class="i"><use href="#i-check"/></svg>Free forever (MIT)</span>
+          <span><svg class="i"><use href="#i-check"/></svg>Native Mac and Windows apps</span>
+          <span><svg class="i"><use href="#i-check"/></svg>No ads, no account</span>
+          <span><svg class="i"><use href="#i-check"/></svg>Verified updates (SHA-256)</span>
+        </div>
       </div>
-      <img class="shot" src="img/mac-main.png" alt="Nexonic Download Manager main window on Mac showing several downloads in progress" width="1200" height="750">
+      <div class="window">
+        <picture>
+          <source srcset="img/mac-main-dark.png" media="(prefers-color-scheme: dark)">
+          <img src="img/mac-main.png" alt="Nexonic Download Manager main window on Mac with downloads sorted into categories and queues" width="1240" height="684" fetchpriority="high" data-zoom>
+        </picture>
+      </div>
     </div>
   </div>
 </header>
 
-<main>
-<section id="features">
+<div class="stats">
   <div class="wrap">
-    <h2>Everything you expect from a download manager</h2>
-    <p class="sub">An open-source alternative to Internet Download Manager (IDM), built natively for each system.</p>
-    <div class="grid">
-      <div class="card"><h3>Faster downloads</h3><p>Each file is split into parts that download at the same time, with up to 32 connections.</p></div>
-      <div class="card"><h3>Pause and resume</h3><p>Stop and continue later, even after a restart. Expired links can be refreshed without starting over.</p></div>
-      <div class="card"><h3>Browser integration</h3><p>Click a download link in Chrome, Edge, Brave, Opera or Firefox and a compact window shows the name, size and folder, ready to start.</p></div>
-      <div class="card"><h3>Video downloads</h3><p>Save videos from many sites in the best quality, or just the sound. Streamed video is saved as one .mp4.</p></div>
-      <div class="card"><h3>Scheduler and queues</h3><p>Start downloads at night, stop in the morning, and sleep or shut down the computer when done.</p></div>
-      <div class="card"><h3>Batch and site grabber</h3><p>Download numbered series like img[001-100].jpg, or every file linked from a page.</p></div>
-      <div class="card"><h3>Speed limits and proxy</h3><p>Limit speed for all or one download, use a proxy, and download password-protected files.</p></div>
-      <div class="card"><h3>Command line</h3><p>Add downloads from scripts with the ndm command, including queues, folders and limits.</p></div>
-      <div class="card"><h3>Private by design</h3><p>No account and no tracking. Your downloads and settings stay on your computer.</p></div>
-    </div>
+    <div><b>32</b><span>connections per file</span></div>
+    <div><b>1,000+</b><span>video sites, up to 8K</span></div>
+    <div><b>5</b><span>browsers supported</span></div>
+    <div><b>$0</b><span>no ads, no account</span></div>
   </div>
-</section>
+</div>
 
-<section style="background:var(--card)">
-  <div class="wrap">
-    <h2>Native on Mac and Windows</h2>
-    <p class="sub">The same features on both systems, with light and dark mode.</p>
-    <div class="shots">
-      <figure><img src="img/mac-info.png" alt="Download window that opens when a link is clicked in the browser" loading="lazy"><figcaption>Click a link in the browser: name, size, folder, Start</figcaption></figure>
-      <figure><img src="img/mac-progress.png" alt="Progress window with speed graph and connections" loading="lazy"><figcaption>A progress window for every download</figcaption></figure>
-      <figure><img src="img/mac-scheduler.png" alt="Scheduler window on Mac" loading="lazy"><figcaption>Scheduler and queues</figcaption></figure>
-      <figure><img src="img/windows-main.png" alt="Nexonic Download Manager on Windows" loading="lazy"><figcaption>Windows app</figcaption></figure>
-    </div>
-  </div>
-</section>
+<main>
 
 <section id="download">
   <div class="wrap">
-    <h2>Download</h2>
-    <p class="sub">Everything is included. Nothing else to install.</p>
-    <div class="card" style="margin-bottom:18px">
-      <h3>Mac: install with one command</h3>
-      <p>Paste this into Terminal. It installs or updates the app in Applications and opens it, with no security warning.</p>
-      <pre style="overflow-x:auto;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px;margin:12px 0 0"><code>curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | bash</code></pre>
+    <span class="eyebrow">Download</span>
+    <h2>Get Nexonic Download Manager</h2>
+    <p class="sub">Version __VERSION__. Everything is included: the video engine, ffmpeg and the command-line tool. Nothing else to install.</p>
+    <p class="mobile-note" id="mobile-note">Nexonic Download Manager runs on Mac and Windows computers. Open this page on your computer to download it.</p>
+
+    <div class="dl-grid">
+      <div class="dl" id="card-mac">
+        <span class="tag">Recommended for you</span>
+        <div class="os"><div class="logo"><svg class="i"><use href="#i-apple"/></svg></div><h3>Mac</h3></div>
+        <p class="req">macOS 13 or later · Apple silicon and Intel</p>
+        <a class="btn primary" href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Mac.dmg"><svg class="i"><use href="#i-dl"/></svg>Download for Mac (.dmg)</a>
+        <a class="btn outline" href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Mac.zip">Mac app (.zip)</a>
+        <ul>
+          <li><svg class="i"><use href="#i-check"/></svg>One universal app for every Mac</li>
+          <li><svg class="i"><use href="#i-check"/></svg>Updates itself from inside the app</li>
+        </ul>
+      </div>
+      <div class="dl" id="card-win">
+        <span class="tag">Recommended for you</span>
+        <div class="os"><div class="logo"><svg class="i"><use href="#i-win"/></svg></div><h3>Windows</h3></div>
+        <p class="req">Windows 10 and 11 · 64-bit</p>
+        <a class="btn primary" href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Setup.exe"><svg class="i"><use href="#i-dl"/></svg>Download for Windows (.exe)</a>
+        <a class="btn outline" href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Portable.zip">Portable, no install (.zip)</a>
+        <ul>
+          <li><svg class="i"><use href="#i-check"/></svg>Installer adds the <code>ndm</code> command</li>
+          <li><svg class="i"><use href="#i-check"/></svg>Portable version runs from any folder</li>
+        </ul>
+      </div>
+      <div class="dl" id="extension">
+        <span class="tag">Recommended for you</span>
+        <div class="os"><div class="logo"><svg class="i"><use href="#i-puzzle"/></svg></div><h3>Browser extension</h3></div>
+        <p class="req">Install the app first, then add the extension</p>
+        <a class="btn primary" id="ext-chrome" href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicExtension-Chrome.zip"><svg class="i"><use href="#i-dl"/></svg>Chrome, Edge, Brave, Opera</a>
+        <a class="btn outline" id="ext-firefox" href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicAddon-Firefox.xpi">Firefox add-on</a>
+        <ul>
+          <li><svg class="i"><use href="#i-check"/></svg>Sends downloads and videos to the app</li>
+          <li><svg class="i"><use href="#i-check"/></svg>Chrome .zip and Firefox .xpi, ready to add</li>
+          <li><svg class="i"><use href="#i-check"/></svg>Firefox add-on is signed by Mozilla</li>
+        </ul>
+      </div>
     </div>
-    <table>
-      <tr><th>System</th><th>File</th></tr>
-      <tr><td>Mac (macOS 13+, Apple silicon and Intel)</td><td><a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Mac.dmg">NexonicDownloadManager-Mac.dmg</a></td></tr>
-      <tr><td>Windows 10 / 11</td><td><a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Setup.exe">NexonicDownloadManager-Windows-Setup.exe</a></td></tr>
-      <tr><td>Windows, no install</td><td><a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Portable.zip">Portable .zip</a></td></tr>
-      <tr><td>Chrome, Edge, Brave, Opera</td><td><a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicExtension-Chrome.zip">Extension .zip</a></td></tr>
-      <tr><td>Firefox</td><td><a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicAddon-Firefox.xpi">Add-on .xpi</a></td></tr>
+
+    <div class="cmd">
+      <div class="txt"><h4>Mac: install with one command</h4><p>Installs or updates the app in Applications and opens it, with no security warning.</p></div>
+      <div class="box"><code id="cmd">curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | bash</code><button class="copy" data-copy="cmd" type="button">Copy</button></div>
+    </div>
+    <p class="dl-note">Download links always fetch the latest release from GitHub. Every file is listed with its SHA-256 on the <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest">release page</a>. Installation help: <a href="#install">Install guide</a>.</p>
+  </div>
+</section>
+
+<section id="features" class="alt">
+  <div class="wrap">
+    <span class="eyebrow">Features</span>
+    <h2>Everything you expect from a download manager</h2>
+    <p class="sub">An open-source alternative to Internet Download Manager (IDM), built natively for each system with the same features on both.</p>
+    <div class="f-grid">
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-bolt"/></svg></div><h3>Faster downloads</h3><p>Each file is split into parts that download at the same time, with up to 32 connections. Finished connections help the slowest part, so all stay busy to the end.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-pause"/></svg></div><h3>Pause and resume</h3><p>Stop and continue later, even after you quit the app or restart the computer. A file that changed on the server is downloaded again instead of mixed up.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-refresh"/></svg></div><h3>Refresh expired links</h3><p>Right-click a download, choose Refresh Link and paste a fresh link. It continues where it stopped, without starting over.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-globe"/></svg></div><h3>Browser integration</h3><p>Click a download link in Chrome, Edge, Brave, Opera or Firefox and a compact window shows name, size, category and folder. If the app isn't running, the browser simply keeps the download.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-video"/></svg></div><h3>Video downloads</h3><p>Save videos from YouTube, Instagram, Facebook, X, TikTok and 1,000+ sites in the quality you pick, up to 4K/8K, or sound only.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-folder"/></svg></div><h3>Automatic categories</h3><p>Files are sorted into Compressed, Documents, Music, Video, Programs and Images, each saved in its own folder. Browse All, Unfinished and Finished.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-clock"/></svg></div><h3>Scheduler and queues</h3><p>Start a queue at night, stop it in the morning, run downloads one by one or a few at a time, then quit, sleep or shut down when done.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-grid"/></svg></div><h3>Batch, grabber and clipboard</h3><p>Download numbered series like <code>img[001-100].jpg</code>, every file linked from a page, or links you copy. Paste several links at once.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-gauge"/></svg></div><h3>Speed limits and proxy</h3><p>Limit speed for all downloads or just one, use a proxy, sign in to password-protected files and verify checksums.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-term"/></svg></div><h3>Command line</h3><p>Add downloads from scripts with <code>ndm &lt;link&gt;</code>, including queues, folders and limits. Run <code>ndm help</code> for every option.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-refresh"/></svg></div><h3>Updates inside the app</h3><p>New versions appear when you open the app, with what's new, Update Now, Remind Me Later or Skip. Each update is verified before it installs.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-lock"/></svg></div><h3>Private by design</h3><p>No account, no ads, no tracking. Your downloads, cookies and passwords stay on your computer, protected for your user only.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <span class="eyebrow">How it works</span>
+    <h2>Up and running in a minute</h2>
+    <p class="sub">Three steps, and every download link you click goes through Nexonic.</p>
+    <div class="steps">
+      <div class="step"><h3>Install the app</h3><p>Download it for <a href="#card-mac">Mac</a> or <a href="#card-win">Windows</a> and open it once, so it can register with your browsers.</p></div>
+      <div class="step"><h3>Add the extension</h3><p>Add the <a href="#extension">browser extension</a> to Chrome, Edge, Brave, Opera or Firefox. It takes about 30 seconds.</p></div>
+      <div class="step"><h3>Click any download</h3><p>Click a link or the <b>Download this video</b> button. Pick the folder or quality and press <b>Start Download</b>.</p></div>
+    </div>
+
+    <div class="split" style="margin-top:88px">
+      <div>
+        <span class="chip">Browser hand-off</span>
+        <h3 style="margin-top:14px">A download window the moment you click</h3>
+        <p>The extension hands the link to the app with its cookies and referrer, so downloads from sites where you are signed in just work.</p>
+        <ul class="checks">
+          <li><svg class="i"><use href="#i-check"/></svg>Name, size, category and folder before you start</li>
+          <li><svg class="i"><use href="#i-check"/></svg>Start Download, Download Later or Cancel</li>
+          <li><svg class="i"><use href="#i-check"/></svg>No duplicates: a link already downloading is shown, not added twice</li>
+          <li><svg class="i"><use href="#i-check"/></svg>Right-click any link → Download with Nexonic</li>
+        </ul>
+      </div>
+      <div class="media"><img src="img/mac-info.png" alt="Download File Info window with file name, size, category, folder and queue" width="1240" height="684" loading="lazy" data-zoom></div>
+    </div>
+
+    <div class="split rev">
+      <div>
+        <span class="chip">Live progress</span>
+        <h3 style="margin-top:14px">See every connection at work</h3>
+        <p>Each download gets its own progress window, and several can run side by side.</p>
+        <ul class="checks">
+          <li><svg class="i"><use href="#i-check"/></svg>Speed, time left and a live speed graph</li>
+          <li><svg class="i"><use href="#i-check"/></svg>Start position and progress of each connection</li>
+          <li><svg class="i"><use href="#i-check"/></svg>Pause, Resume and Cancel from the window</li>
+          <li><svg class="i"><use href="#i-check"/></svg>Resume capability shown before you rely on it</li>
+        </ul>
+      </div>
+      <div class="media"><img src="img/mac-progress.png" alt="Progress window with transfer rate, speed graph and eight connections" width="1240" height="684" loading="lazy" data-zoom></div>
+    </div>
+  </div>
+</section>
+
+<section id="videos" class="alt">
+  <div class="wrap">
+    <div class="split">
+      <div>
+        <span class="chip">Video downloads</span>
+        <h3 style="margin-top:14px;font-size:34px">Save videos in the quality you choose</h3>
+        <p>Point at a video and click <b>Download this video</b>, or paste the page link into Add URL. The qualities the video offers are listed with their approximate size.</p>
+        <div class="chips"><span class="chip">2160p (4K)</span><span class="chip">1440p</span><span class="chip">1080p</span><span class="chip">720p</span><span class="chip">480p</span><span class="chip">Sound only</span></div>
+        <ul class="checks">
+          <li><svg class="i"><use href="#i-check"/></svg>YouTube, Instagram, Facebook, X, TikTok, Vimeo and 1,000+ sites</li>
+          <li><svg class="i"><use href="#i-check"/></svg>Streamed video (.m3u8) downloaded in parallel and saved as one .mp4</li>
+          <li><svg class="i"><use href="#i-check"/></svg>The video engine updates itself every day</li>
+          <li><svg class="i"><use href="#i-check"/></svg>Videos that need sign-in: send them from your browser while signed in</li>
+        </ul>
+        <p style="font-size:14px;margin-top:16px">Copy-protected services are not supported. Only download what you have the right to save, and respect each site's terms.</p>
+      </div>
+      <div class="media"><img src="img/mac-add.png" alt="Add Download window: paste a link, choose the folder and queue" width="1240" height="684" loading="lazy" data-zoom></div>
+    </div>
+  </div>
+</section>
+
+<section id="screenshots">
+  <div class="wrap">
+    <span class="eyebrow">Screenshots</span>
+    <h2>Native on Mac and Windows</h2>
+    <p class="sub">The same features on both systems, in light and dark mode. Click any picture to enlarge it.</p>
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="mac" type="button">Mac</button>
+      <button role="tab" aria-selected="false" data-tab="win" type="button">Windows</button>
+    </div>
+    <div class="gal mac" data-panel="mac">
+      <figure><img src="img/mac-main.png" alt="Main window" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>Main window</b>Categories, queues and live status</figcaption></figure>
+      <figure><img src="img/mac-main-dark.png" alt="Main window in dark mode" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>Dark mode</b>Follows your system setting</figcaption></figure>
+      <figure><img src="img/mac-info.png" alt="Download window from the browser" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>From the browser</b>Name, size, folder, Start</figcaption></figure>
+      <figure><img src="img/mac-progress.png" alt="Progress window" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>Progress window</b>Speed graph and connections</figcaption></figure>
+      <figure><img src="img/mac-scheduler.png" alt="Scheduler" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>Scheduler</b>Start and stop queues on time</figcaption></figure>
+      <figure><img src="img/mac-batch.png" alt="Batch download" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>Batch download</b>Numbered series in one go</figcaption></figure>
+    </div>
+    <div class="gal win" data-panel="win" hidden>
+      <figure><img src="img/windows-main.png" alt="Main window on Windows" width="988" height="695" loading="lazy" data-zoom><figcaption><b>Main window</b>Toolbar, categories and queues</figcaption></figure>
+      <figure><img src="img/windows-info.png" alt="Download window on Windows" width="988" height="695" loading="lazy" data-zoom><figcaption><b>From the browser</b>Name, size, folder, Start</figcaption></figure>
+      <figure><img src="img/windows-progress.png" alt="Progress window on Windows" width="988" height="695" loading="lazy" data-zoom><figcaption><b>Progress window</b>Speed graph and connections</figcaption></figure>
+      <figure><img src="img/windows-add.png" alt="Add URL on Windows" width="988" height="695" loading="lazy" data-zoom><figcaption><b>Add URL</b>Links, folder and queue</figcaption></figure>
+      <figure><img src="img/windows-scheduler.png" alt="Scheduler on Windows" width="988" height="695" loading="lazy" data-zoom><figcaption><b>Scheduler</b>Start and stop queues on time</figcaption></figure>
+      <figure><img src="img/windows-batch.png" alt="Batch download on Windows" width="988" height="695" loading="lazy" data-zoom><figcaption><b>Batch download</b>Numbered series in one go</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="install" class="alt">
+  <div class="wrap">
+    <span class="eyebrow">Install guide</span>
+    <h2>Installing and first launch</h2>
+    <p class="sub">Updating? Install the new version over the old one; your downloads and settings are kept. Or use Update Now inside the app.</p>
+    <div class="two">
+      <div class="panel">
+        <h3><svg class="i"><use href="#i-apple"/></svg>Mac</h3>
+        <ol>
+          <li><b>Quickest:</b> run the one-line Terminal command from <a href="#download">Download</a>. No warning appears.</li>
+          <li><b>Or</b> open the <code>.dmg</code>, click <b>Agree</b> and drag the app onto <b>Applications</b>.</li>
+          <li>The first time, macOS says it could not verify the app, because it is free and not sold through Apple. Allow it once with the three steps below.</li>
+          <li>If macOS says the app <i>is damaged</i>, run this in Terminal, then open it again:</li>
+        </ol>
+        <pre><code>xattr -cr "/Applications/Nexonic Download Manager.app"</code></pre>
+      </div>
+      <div class="panel">
+        <h3><svg class="i"><use href="#i-win"/></svg>Windows</h3>
+        <ol>
+          <li>Run <code>NexonicDownloadManager-Windows-Setup.exe</code>.</li>
+          <li>If Windows says <i>Windows protected your PC</i>, click <b>More info → Run anyway</b>.</li>
+          <li>Choose <b>I accept the agreement</b> and follow the steps.</li>
+          <li>No install wanted? Unzip the portable version and run <code>NexonicDownloadManager.exe</code>.</li>
+        </ol>
+      </div>
+      <div class="panel">
+        <h3><svg class="i"><use href="#i-puzzle"/></svg>Chrome, Edge, Brave, Opera</h3>
+        <ol>
+          <li>Open the app once.</li>
+          <li>Unzip <code>NexonicExtension-Chrome.zip</code>.</li>
+          <li>Open the extensions page (<code>chrome://extensions</code>, <code>edge://extensions</code>…) and turn on <b>Developer mode</b>.</li>
+          <li>Click <b>Load unpacked</b> and pick the unzipped folder. Restart the browser.</li>
+        </ol>
+      </div>
+      <div class="panel">
+        <h3><svg class="i"><use href="#i-puzzle"/></svg>Firefox</h3>
+        <ol>
+          <li>Open the app once.</li>
+          <li>Click the <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicAddon-Firefox.xpi">Firefox add-on</a> link in Firefox, or drag the <code>.xpi</code> onto a Firefox window.</li>
+          <li>Click <b>Add</b> when Firefox asks. The add-on is signed by Mozilla.</li>
+        </ol>
+      </div>
+    </div>
+
+    <h3 id="first-launch" style="text-align:center;font-size:24px;margin:56px 0 8px">First launch on Mac</h3>
+    <p class="sub" style="margin-bottom:28px">macOS asks once for each version. Updates installed with Update Now open without a warning.</p>
+    <div class="fl">
+      <figure><img src="img/mac-first-launch-1.svg" alt="Step 1: when macOS says Not Opened, click Done" width="640" height="380" loading="lazy"><figcaption><b>1. Click Done</b> when macOS says the app was <i>Not Opened</i> (not Move to Bin).</figcaption></figure>
+      <figure><img src="img/mac-first-launch-2.svg" alt="Step 2: System Settings, Privacy and Security, Open Anyway" width="640" height="380" loading="lazy"><figcaption><b>2. Open System Settings → Privacy &amp; Security</b>, scroll to Security and click <b>Open Anyway</b>.</figcaption></figure>
+      <figure><img src="img/mac-first-launch-3.svg" alt="Step 3: click Open Anyway and enter your password" width="640" height="380" loading="lazy"><figcaption><b>3. Click Open Anyway</b> and enter your Mac password or use Touch ID.</figcaption></figure>
+    </div>
+    <p class="dl-note">On macOS 13 and 14 you can also right-click the app → Open → Open.</p>
+  </div>
+</section>
+
+<section id="use">
+  <div class="wrap">
+    <span class="eyebrow">Quick guide</span>
+    <h2>How to use it</h2>
+    <p class="sub">The full user guide is built into the app (Help, <kbd>⌘?</kbd> on Mac, <kbd>F1</kbd> on Windows) and <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/docs/HELP.md">online</a>.</p>
+    <table class="tbl">
+      <tr><th style="width:38%">To</th><th>Do this</th></tr>
+      <tr><td>Download a link</td><td><b>Add URL</b> (<kbd>⌘N</kbd> / <kbd>Ctrl+N</kbd>), paste one or more links, <b>Start Download</b></td></tr>
+      <tr><td>Save a video</td><td>Point at the video → <b>Download this video</b>, or paste the page link into Add URL and pick a quality</td></tr>
+      <tr><td>Download from a website</td><td>Click the download link in your browser; the app takes over</td></tr>
+      <tr><td>Download at night</td><td><b>Scheduler</b> → <b>New Queue</b> → set the time → add downloads with <b>Download Later</b></td></tr>
+      <tr><td>Continue an expired download</td><td>Right-click → <b>Refresh Link…</b> and paste a fresh link</td></tr>
+      <tr><td>Download a numbered series</td><td><b>Batch</b> → write the link once with a pattern, e.g. <code>file[01-50].jpg</code></td></tr>
+      <tr><td>Grab every file from a page</td><td><b>Grabber</b> → enter the page address → filter by type → download the ones you check</td></tr>
+      <tr><td>Limit speed</td><td><b>Settings</b> for all downloads, or <b>Properties</b> for one</td></tr>
+      <tr><td>Use the command line</td><td><code>ndm https://example.com/file.zip --queue Night</code> · Mac: Settings → Browsers &amp; Command Line → Install ndm Command</td></tr>
+      <tr><td>Stop or resume everything</td><td><kbd>⇧⌘P</kbd> stop all · <kbd>⇧⌘R</kbd> resume all (Ctrl on Windows)</td></tr>
     </table>
-    <p class="sub" style="margin-top:18px">Install steps and first-launch tips are in the <a href="https://github.com/Shahrukhalid/nexonic-download-manager#install">README</a> and the <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/docs/HELP.md">user guide</a>.</p>
   </div>
 </section>
 
-<section id="first-launch">
-  <div class="wrap" style="max-width:820px">
-    <h2>First launch on Mac</h2>
-    <p class="sub">macOS shows a warning the first time you open an app that isn't sold through Apple. Allow it once; in-app updates never ask again.</p>
-    <ol style="padding-left:20px;line-height:1.6">
-      <li><strong>Open the app.</strong> When macOS says it was <em>Not Opened</em>, click <strong>Done</strong> (not Move to Bin).<br><img src="img/mac-first-launch-1.svg" alt="Step 1: click Done" style="width:100%;max-width:520px;margin:10px 0 18px"></li>
-      <li><strong>Open System Settings → Privacy &amp; Security</strong>, scroll to <em>Security</em> and click <strong>Open Anyway</strong>.<br><img src="img/mac-first-launch-2.svg" alt="Step 2: Privacy and Security, Open Anyway" style="width:100%;max-width:520px;margin:10px 0 18px"></li>
-      <li><strong>Click Open Anyway</strong> in the window that appears and enter your Mac password (or use Touch ID).<br><img src="img/mac-first-launch-3.svg" alt="Step 3: Open Anyway" style="width:100%;max-width:520px;margin:10px 0 18px"></li>
-    </ol>
-    <p class="sub">On macOS 13–14 you can also right-click the app → Open → Open.</p>
+<section id="privacy" class="alt">
+  <div class="wrap">
+    <span class="eyebrow">Privacy and security</span>
+    <h2>Built to be trusted</h2>
+    <p class="sub">Open source, so anyone can check what it does.</p>
+    <div class="f-grid">
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-lock"/></svg></div><h3>No account, no tracking</h3><p>The app only connects to the addresses you download from, and to GitHub for updates and its video engine.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-shield"/></svg></div><h3>Secrets stay private</h3><p>Cookies and passwords are kept in a file only your user can read on Mac, and encrypted for your user on Windows.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-globe"/></svg></div><h3>Sent only where they belong</h3><p>Cookies and logins go only to the download's own server, never to other hosts or after a switch from https to http.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-check"/></svg></div><h3>Verified updates</h3><p>An update installs only if it matches the SHA-256 published with the release; on Mac the app's identity is checked too.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-refresh"/></svg></div><h3>Reliable resume</h3><p>Every part the server sends is checked, so a changed file is never mixed with old parts.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-gh"/></svg></div><h3>Open source, MIT</h3><p>Swift and SwiftUI on Mac, C# and WPF on Windows. Built and tested in public on GitHub.</p></div>
+    </div>
   </div>
 </section>
 
-<section id="faq" style="background:var(--card)">
-  <div class="wrap" style="max-width:820px">
-    <h2>FAQ</h2>
-    <p class="sub">Short answers to common questions.</p>
-    <details><summary>Is it really free?</summary><p>Yes. Nexonic Download Manager is free and open source under the MIT license, with no ads, no account and no tracking.</p></details>
-    <details><summary>Is this an IDM alternative for Mac?</summary><p>Yes. It is a native Mac app with IDM-style features: multi-connection downloads, pause and resume, a scheduler, queues and browser integration. It is not affiliated with Internet Download Manager.</p></details>
-    <details><summary>Which browsers work?</summary><p>Chrome, Edge, Brave and Opera through the extension, and Firefox through the add-on. Open the app once, then install the extension.</p></details>
-    <details><summary>macOS says it can't verify the app. What do I do?</summary><p>That's expected: the app is free and not sold through Apple, so macOS asks once. Follow the three steps in <a href="#first-launch">First launch on Mac</a>, or install with the one-line Terminal command above and there is no warning.</p></details>
-    <details><summary>Can it download any video?</summary><p>It saves videos from many sites and streamed video. Copy-protected services are not supported. Only download what you have the right to save, and respect each site's terms.</p></details>
-    <details><summary>How do I report a problem?</summary><p><a href="https://github.com/Shahrukhalid/nexonic-download-manager/issues/new">Open an issue on GitHub</a> with your system, the app version from About, and the link if it is public.</p></details>
+<section id="whats-new">
+  <div class="wrap">
+    <span class="eyebrow">What's new</span>
+    <h2>Recent releases</h2>
+    <p class="sub">The full history is in the <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/CHANGELOG.md">changelog</a> and on the <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases">releases page</a>.</p>
+    <div class="rel">
+      <article><h3>0.6.7 <small>Latest</small></h3><ul><li>Clear message when a video needs you to be signed in, with what to do next.</li></ul></article>
+      <article><h3>0.6.6</h3><ul><li>Select All, and a confirmation before deleting.</li><li>Automatic categories with their own folders, like IDM.</li><li>Google Images, Facebook and Reddit redirect links download the real file; paste several links separated by commas.</li></ul></article>
+      <article><h3>0.6.5</h3><ul><li>Update checks work on busy shared networks.</li><li>Step-by-step pictures for the first launch on Mac.</li></ul></article>
+      <article><h3>0.6.3 – 0.6.4</h3><ul><li>Pick the video quality, up to 4K/8K, with sizes.</li><li>No more password prompts on Mac after updates.</li></ul></article>
+    </div>
+  </div>
+</section>
+
+<section id="faq" class="alt">
+  <div class="wrap">
+    <span class="eyebrow">FAQ</span>
+    <h2>Frequently asked questions</h2>
+    <p class="sub">Can't find your answer? <a href="https://github.com/Shahrukhalid/nexonic-download-manager/discussions">Ask in Discussions</a>.</p>
+    <div class="faq">
+      <details><summary>Is it really free?</summary><p>Yes. Nexonic Download Manager is free and open source under the MIT license, with no ads, no account, no trial and no tracking.</p></details>
+      <details><summary>Is this an IDM alternative for Mac?</summary><p>Yes. It is a native Mac app with IDM-style features: multi-connection downloads, pause and resume, categories, a scheduler, queues and browser integration. It is not affiliated with Internet Download Manager.</p></details>
+      <details><summary>Which browsers work?</summary><p>Chrome, Edge, Brave and Opera through the extension, and Firefox through the add-on. Open the app once, then install the extension and restart the browser.</p></details>
+      <details><summary>The browser doesn't hand over downloads. What do I do?</summary><p>Open the app once so it can register with your browsers, then restart the browser. If the app can't be reached, the browser keeps the download, so nothing is lost.</p></details>
+      <details><summary>macOS says it can't verify the app. What do I do?</summary><p>That's expected: the app is free and not sold through Apple, so macOS asks once. Follow the three steps in <a href="#first-launch">First launch on Mac</a>, or install with the one-line Terminal command and there is no warning.</p></details>
+      <details><summary>Can it download any video?</summary><p>It saves videos from 1,000+ sites and streamed video. For videos that need you to be signed in, open the video in your browser while signed in and click Download this video, or add your login under Properties → Login. Copy-protected services are not supported.</p></details>
+      <details><summary>A video site stopped working.</summary><p>The video engine updates itself every day, so try again later. If it still fails, report the problem with the page link.</p></details>
+      <details><summary>How do I update?</summary><p>The app tells you when a new version is out and installs it with Update Now (it closes, updates and opens again). You can also use Check for Updates, or download the new version from this page and install it over the old one.</p></details>
+      <details><summary>Where are my files saved?</summary><p>In your Downloads folder by default, sorted into category folders (Downloads/Video, Downloads/Music…). You can choose another folder in the download window or turn categories off in Settings.</p></details>
+      <details><summary>How do I report a problem?</summary><p><a href="https://github.com/Shahrukhalid/nexonic-download-manager/issues/new">Open an issue on GitHub</a> with your system, the app version from About, and the link if it is public.</p></details>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="cta">
+      <h2>Download faster, starting today</h2>
+      <p>Free for Mac and Windows, with the browser extension for Chrome, Edge, Brave, Opera and Firefox.</p>
+      <div class="btns">
+        <a class="btn primary lg" href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Mac.dmg"><svg class="i"><use href="#i-apple"/></svg>Download for Mac</a>
+        <a class="btn primary lg" href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Setup.exe"><svg class="i"><use href="#i-win"/></svg>Download for Windows</a>
+        <a class="btn glass lg" href="#extension"><svg class="i"><use href="#i-puzzle"/></svg>Browser extension</a>
+      </div>
+      <p class="meta" style="margin-bottom:0">If it saves you time, please <a href="https://github.com/Shahrukhalid/nexonic-download-manager">star it on GitHub</a> so others can find it.</p>
+    </div>
   </div>
 </section>
 </main>
 
 <footer>
   <div class="wrap">
-    Made by <a href="https://www.shahrukhalid.com">Shahrukh Khalid</a> · <a href="https://github.com/Shahrukhalid">GitHub</a> · <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/TERMS.md">Terms of Use</a> · <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/LICENSE">MIT License</a><br>
-    Not affiliated with Internet Download Manager or any site mentioned. If the app helps you, please <a href="https://github.com/Shahrukhalid/nexonic-download-manager">star it on GitHub</a>.
+    <div class="foot">
+      <div>
+        <a class="brand" href="./"><img src="icon.png" alt="" width="28" height="28">Nexonic Download Manager</a>
+        <p style="margin:0;max-width:340px">Free, open-source download manager for Mac and Windows. Made by <a href="https://www.shahrukhalid.com" style="display:inline;color:var(--brand)">Shahrukh Khalid</a>.</p>
+      </div>
+      <div><h4>Download</h4>
+        <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Mac.dmg">Mac</a>
+        <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Setup.exe">Windows</a>
+        <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicExtension-Chrome.zip">Chrome extension</a>
+        <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicAddon-Firefox.xpi">Firefox add-on</a>
+      </div>
+      <div><h4>Help</h4>
+        <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/docs/HELP.md">User guide</a>
+        <a href="#install">Install guide</a>
+        <a href="#faq">FAQ</a>
+        <a href="https://github.com/Shahrukhalid/nexonic-download-manager/issues/new">Report a problem</a>
+      </div>
+      <div><h4>Project</h4>
+        <a href="https://github.com/Shahrukhalid/nexonic-download-manager">Source code</a>
+        <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/CHANGELOG.md">Changelog</a>
+        <a href="https://github.com/Shahrukhalid/nexonic-download-manager/discussions">Discussions</a>
+        <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/TERMS.md">Terms of Use</a>
+      </div>
+    </div>
+    <div class="legal">© 2026 Shahrukh Khalid · <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/LICENSE">MIT License</a> · Not affiliated with Internet Download Manager or any site mentioned; their names belong to their owners.</div>
   </div>
 </footer>
+
+<div class="lb" id="lb" role="dialog" aria-label="Enlarged screenshot"><img alt=""></div>
+
 <script>
 (function(){
-  var a=document.getElementById('main-dl'), ua=navigator.userAgent, base='https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/';
-  if(/Macintosh|Mac OS X/.test(ua)&&!/iPhone|iPad/.test(ua)){a.href=base+'NexonicDownloadManager-Mac.dmg';a.textContent='Download for Mac';}
-  else if(/Windows/.test(ua)){a.href=base+'NexonicDownloadManager-Windows-Setup.exe';a.textContent='Download for Windows';}
+  var base='https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/';
+  var ua=navigator.userAgent, mobile=/iPhone|iPad|iPod|Android/i.test(ua);
+  var mac=/Macintosh|Mac OS X/.test(ua)&&!mobile&&!(navigator.maxTouchPoints>1), win=/Windows/.test(ua);
+  var ff=/Firefox\//.test(ua);
+  var dl=document.getElementById('hero-dl'), lab=document.getElementById('hero-dl-label'), sub=document.getElementById('hero-dl-sub'), other=document.getElementById('hero-other');
+  if(mac){dl.href=base+'NexonicDownloadManager-Mac.dmg';lab.textContent='Download for Mac';sub.textContent='macOS 13+ · Apple silicon and Intel';other.textContent='Windows';other.href=base+'NexonicDownloadManager-Windows-Setup.exe';document.getElementById('card-mac').classList.add('rec');}
+  else if(win){dl.href=base+'NexonicDownloadManager-Windows-Setup.exe';lab.textContent='Download for Windows';sub.textContent='Windows 10 and 11 · 64-bit';other.textContent='Mac';other.href=base+'NexonicDownloadManager-Mac.dmg';document.getElementById('card-win').classList.add('rec');}
+  else{other.textContent='Mac and Windows';if(mobile)document.getElementById('mobile-note').style.display='block';}
+  if(ff){var a=document.getElementById('ext-firefox'),b=document.getElementById('ext-chrome');a.className='btn primary';b.className='btn outline';a.insertBefore(b.querySelector('svg'),a.firstChild);a.parentNode.insertBefore(a,b);document.getElementById('hero-ext').href=a.href;document.getElementById('hero-ext-label').textContent='Add to Firefox';}
+  if(sub.textContent.indexOf('__')>-1)sub.textContent='Mac and Windows';
+
+  document.querySelectorAll('.copy').forEach(function(btn){btn.addEventListener('click',function(){
+    var t=document.getElementById(btn.dataset.copy).textContent;
+    (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){btn.textContent='Copied';setTimeout(function(){btn.textContent='Copy'},1600)},function(){});
+  })});
+
+  var tabs=document.querySelectorAll('.tabs button');
+  tabs.forEach(function(t){t.addEventListener('click',function(){
+    tabs.forEach(function(x){x.setAttribute('aria-selected',x===t)});
+    document.querySelectorAll('[data-panel]').forEach(function(p){p.hidden=p.dataset.panel!==t.dataset.tab});
+  })});
+  if(win)tabs[1].click();
+
+  var lb=document.getElementById('lb'), lbi=lb.querySelector('img');
+  document.querySelectorAll('img[data-zoom]').forEach(function(i){i.addEventListener('click',function(){lbi.src=i.currentSrc||i.src;lbi.alt=i.alt;lb.classList.add('on')})});
+  lb.addEventListener('click',function(){lb.classList.remove('on')});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')lb.classList.remove('on')});
 })();
 </script>
 </body>
