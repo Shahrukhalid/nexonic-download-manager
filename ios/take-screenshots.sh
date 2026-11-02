@@ -9,8 +9,7 @@ device() { xcrun simctl list devices available -j | python3 -c "import json,sys;
 shoot() {
   local sim=$1 prefix=$2; shift 2
   xcrun simctl boot "$sim" 2>/dev/null || true
-  for i in $(seq 1 180); do xcrun simctl list devices booted | grep -q "$sim" && break; sleep 1; done
-  sleep 15
+  xcrun simctl bootstatus "$sim" -b >/dev/null
   xcrun simctl status_bar "$sim" override --time 9:41 --dataNetwork wifi --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100
   xcrun simctl install "$sim" "$APP"
   for spec in "$@"; do
