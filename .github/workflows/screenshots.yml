@@ -84,7 +84,8 @@ jobs:
         run: |
           git fetch -q origin screenshots && git checkout -q screenshots || git checkout -q --orphan screenshots
           git rm -rq --cached . 2>/dev/null || true
-          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          # Keep the Android pictures (made by the Android screenshots workflow).
+          find . -mindepth 1 -maxdepth 1 ! -name .git ! -name 'android-*' -exec rm -rf {} +
           cp ../shots/*.png .
           printf 'Pictures of the app for the README, made by the Screenshots workflow.\n' > README.md
           git add -A

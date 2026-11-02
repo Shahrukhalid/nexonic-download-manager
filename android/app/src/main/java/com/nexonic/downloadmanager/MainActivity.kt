@@ -42,6 +42,7 @@ class UiState {
     var longPress by mutableStateOf<Pair<Offer, Boolean>?>(null)
     var detailId by mutableStateOf<Long?>(null)
     var message by mutableStateOf<String?>(null)
+    var showFound by mutableStateOf(false)
 }
 
 class MainActivity : ComponentActivity() {
@@ -62,8 +63,10 @@ class MainActivity : ComponentActivity() {
             },
             onLongPress = { offer, image -> ui.longPress = offer to image },
         )
-        if (Build.VERSION.SDK_INT >= 33 && !canNotify(this)) notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+        val demo = Demo.requested(intent)
+        if (!demo && Build.VERSION.SDK_INT >= 33 && !canNotify(this)) notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
         handle(intent)
+        if (demo) Demo.run(intent, ui, browser)
         setContent { NexonicTheme { App(ui, browser) } }
     }
 

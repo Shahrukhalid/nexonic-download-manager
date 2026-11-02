@@ -137,6 +137,13 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
 </p>
 
 <p align="center">
+  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/android-main.png" alt="Android: downloads" width="200">
+  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/android-found.png" alt="Android: Found on this page" width="200">
+  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/android-detail.png" alt="Android: download details" width="200">
+  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/android-add.png" alt="Android: download window" width="200">
+</p>
+
+<p align="center">
   <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/mac-add.png" alt="Add URL" width="290">
   <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/mac-scheduler.png" alt="Scheduler" width="290">
   <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/windows-main.png" alt="Windows" width="290">

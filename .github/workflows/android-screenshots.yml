@@ -1,0 +1,64 @@
+name: Android screenshots
+# Opens the real Android app in an emulator with a sample list and saves pictures of its screens to the
+# "screenshots" branch (used by the README and the website), next to the Mac and Windows pictures.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, feature/mobile-platforms]
+    paths: ["android/**", ".github/workflows/android-screenshots.yml"]
+permissions:
+  contents: write
+concurrency:
+  group: screenshots-android
+  cancel-in-progress: true
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.11.1"
+      - run: gradle -p android --no-daemon assembleDebug
+      - name: Allow the emulator to use KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Demo servers (a large test file with byte ranges, and a sample web page)
+        run: |
+          nohup python3 scripts/demo-server.py 8099 >/dev/null 2>&1 &
+          nohup python3 -m http.server 8098 --bind 127.0.0.1 --directory android/demo >/dev/null 2>&1 &
+          sleep 1
+          curl -sf -r 0-0 -o /dev/null http://127.0.0.1:8099/x.mp4 && curl -sf -o /dev/null http://127.0.0.1:8098/page.html
+      - name: Take the pictures
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          script: bash android/demo/take-screenshots.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shots-android
+          path: shots/*.png
+      - name: Save to the screenshots branch
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        run: |
+          set -e
+          mv shots ../shots
+          git fetch -q origin screenshots
+          git checkout -q screenshots
+          rm -f android-*.png
+          cp ../shots/android-*.png .
+          git add -A
+          git -c user.name="Shahrukh Khalid" -c user.email="90670731+Shahrukhalid@users.noreply.github.com" commit -qm "Android screenshots" || exit 0
+          git push -q origin screenshots

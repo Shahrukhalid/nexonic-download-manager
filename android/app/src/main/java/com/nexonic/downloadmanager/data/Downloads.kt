@@ -268,6 +268,12 @@ object Downloads {
         }
     }
 
+    /** Screenshots only (debug builds): replaces the list with sample downloads. */
+    @Synchronized fun loadDemo(sample: List<DownloadItem>) {
+        _items.value = sample
+        persist()
+    }
+
     val activeCount: Int get() = _items.value.count { it.status == Status.DOWNLOADING }
     val totalSpeed: Long get() = _items.value.filter { it.status == Status.DOWNLOADING }.sumOf { it.speed }
 }

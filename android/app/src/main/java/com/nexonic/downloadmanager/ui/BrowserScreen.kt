@@ -75,7 +75,6 @@ fun BrowserScreen(browser: Browser, ui: UiState) {
     val found by browser.found.collectAsState()
     var address by remember { mutableStateOf(url) }
     var editing by remember { mutableStateOf(false) }
-    var showFound by remember { mutableStateOf(false) }
     val focus = LocalFocusManager.current
 
     LaunchedEffect(url) { if (!editing) address = url }
@@ -115,7 +114,7 @@ fun BrowserScreen(browser: Browser, ui: UiState) {
             )
             if (found.isNotEmpty()) {
                 ExtendedFloatingActionButton(
-                    onClick = { showFound = true },
+                    onClick = { ui.showFound = true },
                     icon = { Icon(Icons.Outlined.Download, null) },
                     text = { Text("${found.size} found") },
                     modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
@@ -124,9 +123,9 @@ fun BrowserScreen(browser: Browser, ui: UiState) {
         }
     }
 
-    if (showFound) {
+    if (ui.showFound) {
         val sheet = rememberModalBottomSheetState()
-        ModalBottomSheet(onDismissRequest = { showFound = false }, sheetState = sheet) {
+        ModalBottomSheet(onDismissRequest = { ui.showFound = false }, sheetState = sheet) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
                 Text("Found on this page", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                 Text(
@@ -138,7 +137,7 @@ fun BrowserScreen(browser: Browser, ui: UiState) {
             LazyColumn(Modifier.fillMaxWidth().navigationBarsPadding(), contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 24.dp)) {
                 items(found.sortedBy { order(it) }, key = { it.url }) { f ->
                     FoundRow(f) {
-                        showFound = false
+                        ui.showFound = false
                         ui.addOffer = browser.offerFor(f.url, f.label)
                     }
                 }
