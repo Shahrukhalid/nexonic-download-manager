@@ -18,8 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -124,8 +124,9 @@ fun BrowserScreen(browser: Browser, ui: UiState) {
     }
 
     if (ui.showFound) {
-        val sheet = rememberModalBottomSheetState()
+        val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(onDismissRequest = { ui.showFound = false }, sheetState = sheet) {
+            Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 24.dp)) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
                 Text("Found on this page", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                 Text(
@@ -134,13 +135,12 @@ fun BrowserScreen(browser: Browser, ui: UiState) {
                 )
                 Spacer(Modifier.height(8.dp))
             }
-            LazyColumn(Modifier.fillMaxWidth().navigationBarsPadding(), contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 24.dp)) {
-                items(found.sortedBy { order(it) }, key = { it.url }) { f ->
-                    FoundRow(f) {
-                        ui.showFound = false
-                        ui.addOffer = browser.offerFor(f.url, f.label)
-                    }
+            found.sortedBy { order(it) }.forEach { f ->
+                FoundRow(f) {
+                    ui.showFound = false
+                    ui.addOffer = browser.offerFor(f.url, f.label)
                 }
+            }
             }
         }
     }

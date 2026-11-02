@@ -20,10 +20,15 @@ shot() {
   adb shell am force-stop "$PKG"
   adb shell pm clear "$PKG" >/dev/null
   adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS || true
+  adb logcat -b all -c || true
   adb shell am start -n "$ACT" --es ndm_demo 1 --es ndm_screen "$screen" >/dev/null
   sleep "$wait"
   adb exec-out screencap -p > "shots/android-$name.png"
   echo "android-$name.png $(stat -c %s "shots/android-$name.png") bytes"
+  # A crash fails the run and shows why.
+  if adb logcat -b crash -d | grep -q "$PKG"; then
+    echo "The app crashed on the $screen screen:"; adb logcat -b crash -d | tail -60; exit 1
+  fi
 }
 shot main downloads 10
 shot detail detail 10
