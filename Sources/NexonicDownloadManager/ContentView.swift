@@ -377,7 +377,7 @@ struct DetailPane: View {
                     Text(speed(bps))
                     if !eta.isEmpty { Text("\(eta) left") }
                     if item.siteVideo == true {
-                    Text(item.audioOnly == true ? "Video site · sound only" : "Video site · best quality")
+                    Text("Video site · " + SiteVideo.choiceText(audioOnly: item.audioOnly, maxHeight: item.maxHeight))
                 } else if item.isStream == true {
                     Text("Video pieces: \(item.streamDone ?? 0) of \(item.streamTotal ?? 0)")
                 } else {

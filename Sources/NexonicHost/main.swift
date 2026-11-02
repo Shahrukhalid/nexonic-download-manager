@@ -2,7 +2,7 @@ import Foundation
 import NexonicCore
 
 // Browser helper (native messaging) and the `ndm` command line: both hand downloads to the app through the inbox.
-let version = "0.6.2"
+let version = "0.6.3"
 
 func openApp(_ url: String) {
     let p = Process()
@@ -40,6 +40,35 @@ func reply(_ object: [String: Any]) {
     if let data = try? NativeMessaging.encode(object) { output.write(data) }
 }
 
+/// The picture qualities a video site offers for one link, looked up with the video engine shipped next to this helper.
+func qualities(_ m: [String: Any]) -> [String: Any] {
+    guard let url = DownloadJob(url: m["url"] as? String ?? "").validURL, SiteVideo.isSupported(url) else {
+        return ["ok": false, "error": "Not a video site link"]
+    }
+    let fm = FileManager.default
+    let tools = [SiteVideoTools.ytdlp.path, SiteVideoTools.bundled?.appendingPathComponent("yt-dlp").path].compactMap { $0 }
+    guard let tool = tools.first(where: fm.isExecutableFile(atPath:)) else { return ["ok": false, "error": "The video engine is missing"] }
+    let args = SiteVideo.infoArguments(url: url, quickJS: SiteVideoTools.quickJS, audioOnly: false, referrer: m["referrer"] as? String,
+                                       cookies: m["cookies"] as? String, userAgent: m["userAgent"] as? String, username: nil, password: nil)
+    guard let prepared = try? SiteVideo.prepare(args, proxy: nil) else { return ["ok": false, "error": "Could not prepare the lookup"] }
+    defer { if let f = prepared.configFile { try? fm.removeItem(at: f) } }
+    let p = Process()
+    p.executableURL = URL(fileURLWithPath: tool)
+    p.arguments = prepared.args
+    let out = Pipe()
+    p.standardOutput = out
+    p.standardError = FileHandle.nullDevice
+    guard (try? p.run()) != nil else { return ["ok": false, "error": "The video engine could not start"] }
+    let timer = DispatchWorkItem { if p.isRunning { p.terminate() } }  // the browser stops waiting after 45 s
+    DispatchQueue.global().asyncAfter(deadline: .now() + 40, execute: timer)
+    let data = out.fileHandleForReading.readDataToEndOfFile()
+    p.waitUntilExit()
+    timer.cancel()
+    guard p.terminationStatus == 0, let c = SiteVideo.choices(data) else { return ["ok": false, "error": "The video could not be looked up"] }
+    return ["ok": true, "title": c.title, "soundSize": c.soundSize ?? 0,
+            "qualities": c.video.prefix(12).map { ["height": $0.height, "size": $0.size ?? 0] }]
+}
+
 while let message = try? NativeMessaging.read(from: input) {
     switch message["type"] as? String {
     case "ping":
@@ -56,6 +85,7 @@ while let message = try? NativeMessaging.read(from: input) {
         if let stream = message["stream"] as? Bool, stream { job.stream = true }
         if let site = message["site"] as? Bool, site { job.site = true }
         if let audio = message["audioOnly"] as? Bool, audio { job.audioOnly = true }
+        if let h = (message["maxHeight"] as? NSNumber)?.intValue, (100...10_000).contains(h) { job.maxHeight = h }
         if let size = (message["size"] as? NSNumber)?.int64Value, size > 0 { job.size = size }
         if let browser = message["browser"] as? Bool, browser { job.fromBrowser = true }
         guard job.validURL != nil else {
@@ -69,6 +99,8 @@ while let message = try? NativeMessaging.read(from: input) {
         } catch {
             reply(["ok": false, "error": error.localizedDescription])
         }
+    case "qualities":
+        reply(qualities(message))
     case "open":
         openApp("nexonicdm://show")
         reply(["ok": true])

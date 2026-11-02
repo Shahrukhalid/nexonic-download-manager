@@ -53,7 +53,7 @@ public static class HelpWindows
         ("Saving Videos", new[]
         {
             ("From a website", "Click the video button the extension shows on the page, or paste the page link into Add URL. Videos are saved in the best available quality as .mp4."),
-            ("Sound only", "Tick Sound only in the Add window to save just the audio."),
+            ("Quality", "The download window and the Download this video button list the qualities the video is offered in. Pick one, or Sound only to save just the audio."),
             ("Streamed video", "Streams (.m3u8) are found by the extension, downloaded in parallel and joined into one .mp4. Copy-protected services are not supported."),
         }),
         ("Queues and Scheduler", new[]

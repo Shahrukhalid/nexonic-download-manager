@@ -114,16 +114,93 @@ public enum SiteVideo {
     /// The command that looks a video up without downloading it (prints its details as JSON). The saved JSON is
     /// handed to `arguments(infoJSON:)`, so the download starts right away instead of looking the video up again.
     public static func infoArguments(url: URL, quickJS: String?, audioOnly: Bool, referrer: String?, cookies: String?,
-                                     userAgent: String?, username: String?, password: String?) -> [String] {
+                                     userAgent: String?, username: String?, password: String?, maxHeight: Int? = nil) -> [String] {
         var a = ["--ignore-config", "--no-playlist", "--no-colors", "-J", "--js-runtimes", "node"]
         if let quickJS { a += ["--js-runtimes", "quickjs:\(quickJS)"] }
-        a += audioOnly ? ["-f", "ba[ext=m4a]/ba/b"] : ["-f", "bv*+ba/b", "-S", "res,fps,hdr:12,vcodec:avc,acodec:m4a", "--merge-output-format", "mp4/mkv"]
+        a += format(audioOnly: audioOnly, maxHeight: maxHeight)
         if let referrer, !referrer.isEmpty { a += ["--referer", referrer] }
         if let userAgent, !userAgent.isEmpty { a += ["--user-agent", userAgent] }
         if let cookies, !cookies.isEmpty { a += ["--add-header", "Cookie:\(cookies)"] }
         if let username, !username.isEmpty { a += ["--username", username, "--password", password ?? ""] }
         a += ["--", url.absoluteString]
         return a
+    }
+
+    /// Which picture and sound to fetch. Highest resolution and frame rate first (no higher than `maxHeight` when one
+    /// was chosen); at equal quality prefer formats every player opens.
+    public static func format(audioOnly: Bool, maxHeight: Int?) -> [String] {
+        if audioOnly { return ["-f", "ba[ext=m4a]/ba/b"] }
+        let res = maxHeight.map { $0 > 0 ? "res:\($0)" : "res" } ?? "res"
+        return ["-f", "bv*+ba/b", "-S", "\(res),fps,hdr:12,vcodec:avc,acodec:m4a", "--merge-output-format", "mp4/mkv"]
+    }
+
+    /// One picture quality a video is offered in.
+    public struct Quality: Equatable, Sendable {
+        public var height: Int  // the picture's shorter side: 1080 for 1080p, also for upright videos
+        public var size: Int64?  // picture and sound together, approximate
+        public init(height: Int, size: Int64?) { self.height = height; self.size = size }
+    }
+
+    /// The qualities a video is offered in (best first) and the size of its sound alone.
+    public struct Choices: Equatable, Sendable {
+        public var title: String
+        public var video: [Quality]
+        public var soundSize: Int64?
+    }
+
+    /// Reads the qualities on offer from the JSON printed by `infoArguments` (the video's own list of formats).
+    public static func choices(_ data: Data) -> Choices? {
+        guard let o = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { return nil }
+        let formats = (o["formats"] as? [[String: Any]]) ?? [o]
+        let duration = (o["duration"] as? NSNumber)?.doubleValue ?? 0
+        func num(_ f: [String: Any], _ k: String) -> Double? { (f[k] as? NSNumber)?.doubleValue }
+        func size(_ f: [String: Any]) -> Int64? {
+            if let s = num(f, "filesize") ?? num(f, "filesize_approx"), s > 0 { return Int64(s) }
+            if let t = num(f, "tbr"), t > 0, duration > 0 { return Int64(t * 125 * duration) }  // kbit/s × seconds
+            return nil
+        }
+        var best: [Int: (rank: Double, size: Int64?, withSound: Bool)] = [:]
+        var soundRank = -1.0
+        var soundSize: Int64?
+        for f in formats {
+            let v = f["vcodec"] as? String, a = f["acodec"] as? String
+            let hasSound = a != nil && a != "none"
+            if v == "none" {  // sound only (storyboard pictures have neither and are skipped)
+                guard hasSound else { continue }
+                let rank = (a!.hasPrefix("mp4a") ? 1e6 : 0) + (num(f, "abr") ?? num(f, "tbr") ?? 0)
+                if rank > soundRank { soundRank = rank; soundSize = size(f) }
+                continue
+            }
+            let h = Int(num(f, "height") ?? 0), w = Int(num(f, "width") ?? 0)
+            let side = w > 0 && h > 0 ? min(w, h) : h
+            guard side >= 100 else { continue }
+            // The format the download picks at this height: widely playable (H.264) first, then the highest bitrate.
+            let rank = ((v ?? "").hasPrefix("avc") ? 1e6 : 0) + (num(f, "tbr") ?? 0)
+            if let b = best[side], b.rank >= rank { continue }
+            best[side] = (rank, size(f), hasSound)
+        }
+        let video = best.keys.sorted(by: >).map { h -> Quality in
+            let b = best[h]!
+            return Quality(height: h, size: b.size.map { $0 + (b.withSound ? 0 : soundSize ?? 0) })
+        }
+        return Choices(title: (o["title"] as? String) ?? "", video: video, soundSize: soundSize)
+    }
+
+    /// "1080p", "2160p (4K)".
+    public static func qualityName(_ height: Int) -> String {
+        switch height {
+        case 4320: return "4320p (8K)"
+        case 2160: return "2160p (4K)"
+        case 1440: return "1440p (2K)"
+        default: return "\(height)p"
+        }
+    }
+
+    /// What a video download is set to save, for lists and windows.
+    public static func choiceText(audioOnly: Bool?, maxHeight: Int?) -> String {
+        if audioOnly == true { return "sound only" }
+        if let h = maxHeight, h > 0 { return "up to \(qualityName(h))" }
+        return "best quality"
     }
 
     /// Title, file type and size from the JSON printed by `infoArguments`.
@@ -194,7 +271,7 @@ public enum SiteVideo {
     /// The command for one video. `folder` gets the finished file, `temp` the partial one (so it can resume).
     public static func arguments(url: URL, folder: String, temp: String, ffmpeg: String?, quickJS: String?, audioOnly: Bool,
                                  referrer: String?, cookies: String?, userAgent: String?, username: String?, password: String?,
-                                 speedLimitKBps: Int, infoJSON: String? = nil) -> [String] {
+                                 speedLimitKBps: Int, infoJSON: String? = nil, maxHeight: Int? = nil) -> [String] {
         var a = [
             "--ignore-config", "--no-playlist", "--progress", "--newline", "--no-colors", "--no-mtime", "--continue",
             "--progress-template", "download:\(progressTag) %(progress.downloaded_bytes)s %(progress.total_bytes)s %(progress.total_bytes_estimate)s %(progress.speed)s %(info.format_id)s %(info.height)s %(info.vcodec)s",
@@ -206,12 +283,7 @@ public enum SiteVideo {
         ]
         if let quickJS { a += ["--js-runtimes", "quickjs:\(quickJS)"] }
         if let ffmpeg { a += ["--ffmpeg-location", (ffmpeg as NSString).deletingLastPathComponent] }  // folder: ffmpeg and ffprobe
-        if audioOnly {
-            a += ["-f", "ba[ext=m4a]/ba/b"]
-        } else {
-            // Highest resolution and frame rate first; at equal quality prefer formats every player opens.
-            a += ["-f", "bv*+ba/b", "-S", "res,fps,hdr:12,vcodec:avc,acodec:m4a", "--merge-output-format", "mp4/mkv"]
-        }
+        a += format(audioOnly: audioOnly, maxHeight: maxHeight)
         if let referrer, !referrer.isEmpty { a += ["--referer", referrer] }
         if let userAgent, !userAgent.isEmpty { a += ["--user-agent", userAgent] }
         if let cookies, !cookies.isEmpty { a += ["--add-header", "Cookie:\(cookies)"] }
@@ -343,7 +415,8 @@ public final class SiteVideoTransfer: Downloader, @unchecked Sendable {
             prepared = try SiteVideo.prepare(SiteVideo.arguments(url: r.url, folder: folder.path, temp: temp.path, ffmpeg: FFmpeg.path,
                                               quickJS: SiteVideoTools.quickJS, audioOnly: r.audioOnly == true, referrer: r.referrer,
                                               cookies: r.cookies, userAgent: r.userAgent, username: r.username, password: r.password,
-                                              speedLimitKBps: speedLimitKBps, infoJSON: r.infoJSON), proxy: proxy)
+                                              speedLimitKBps: speedLimitKBps, infoJSON: r.infoJSON,
+                                              maxHeight: r.audioOnly == true ? nil : r.maxHeight), proxy: proxy)
         } catch {
             return fail("The video engine's private settings could not be written: \(error.localizedDescription)")
         }

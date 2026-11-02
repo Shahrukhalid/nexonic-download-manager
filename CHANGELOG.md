@@ -1,3 +1,9 @@
+## 0.6.3
+
+- **Pick the video quality:** the Download this video button and the download window list the qualities each video
+  is offered in (for example 2160p (4K), 1080p, 720p, 480p), with the approximate size, plus Sound only. The list is
+  read from the video itself; the best one is chosen by default. The downloads list shows the chosen quality.
+
 ## 0.6.2
 
 - **Security:** cookies and logins are only ever sent to the download's own server (not to video pieces on other

@@ -60,6 +60,8 @@ public sealed class DownloadRecord
     public string? InfoJson { get; set; }
     // Added in 0.6.2: the file's ETag or Last-Modified when the download started, so a changed file is never resumed into
     public string? Validator { get; set; }
+    // Added in 0.6.3: the highest picture quality chosen for a video (null = the best on offer)
+    public int? MaxHeight { get; set; }
     // Added in 0.6.0: the picture and sound pieces of a video, and the step after downloading (joining them)
     public List<VideoPart>? VideoParts { get; set; }
     public string? VideoStep { get; set; }

@@ -2,7 +2,7 @@ using System.Diagnostics;
 using Nexonic.Core;
 
 // Browser helper (native messaging) and the ndm command line: both hand downloads to the app through the inbox.
-const string Version = "0.6.2";
+const string Version = "0.6.3";
 
 if (CommandLineTool.IsCommand(args))
 {
@@ -30,6 +30,41 @@ void StartApp()
     try { Process.Start(new ProcessStartInfo(app, "--inbox") { UseShellExecute = false }); } catch { }
 }
 
+// The picture qualities a video site offers for one link, looked up with the video engine shipped next to this helper.
+static object Qualities(System.Text.Json.Nodes.JsonNode msg)
+{
+    string? Text(string k) => msg[k] is System.Text.Json.Nodes.JsonValue v && v.TryGetValue<string>(out var s) ? s : null;
+    var url = Text("url") ?? "";
+    if (!new DownloadJob(url).IsValid || !SiteVideo.IsSupported(url)) return new { ok = false, error = "Not a video site link" };
+    var tool = new[] { SiteVideoTools.YtDlp, Path.Combine(AppContext.BaseDirectory, OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp") }
+        .FirstOrDefault(File.Exists);
+    if (tool == null) return new { ok = false, error = "The video engine is missing" };
+    try
+    {
+        var (args, configFile) = SiteVideo.Prepare(
+            SiteVideo.InfoArguments(url, SiteVideoTools.QuickJs, false, Text("referrer"), Text("cookies"), Text("userAgent"), null, null), null);
+        using var cleanup = new ConfigCleanup(configFile);
+        var psi = new ProcessStartInfo(tool)
+        {
+            CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true,
+            StandardOutputEncoding = System.Text.Encoding.UTF8,
+        };
+        psi.Environment["PYTHONIOENCODING"] = "utf-8";
+        foreach (var a in args) psi.ArgumentList.Add(a);
+        using var p = Process.Start(psi)!;
+        p.ErrorDataReceived += (_, _) => { };
+        p.BeginErrorReadLine();
+        var read = p.StandardOutput.ReadToEndAsync();
+        if (!p.WaitForExit(40_000)) { try { p.Kill(true); } catch { } }  // the browser stops waiting after 45 s
+        var json = read.Wait(5_000) ? read.Result : "";
+        var c = p.HasExited && p.ExitCode == 0 ? SiteVideo.ParseChoices(json) : null;
+        if (c == null) return new { ok = false, error = "The video could not be looked up" };
+        return new { ok = true, title = c.Title, soundSize = c.SoundSize ?? 0,
+                     qualities = c.Video.Take(12).Select(q => new { height = q.Height, size = q.Size ?? 0 }).ToList() };
+    }
+    catch (Exception e) { return new { ok = false, error = e.Message }; }
+}
+
 while (NativeMessaging.Read(input) is { } msg)
 {
     var type = msg["type"]?.GetValue<string>();
@@ -46,6 +81,7 @@ while (NativeMessaging.Read(input) is { } msg)
                 msg["cookies"]?.GetValue<string>(),
                 msg["userAgent"]?.GetValue<string>()) { Start = msg["later"]?.GetValue<bool>() == true ? false : null, Stream = msg["stream"]?.GetValue<bool>() == true ? true : null,
                   Site = msg["site"]?.GetValue<bool>() == true ? true : null, AudioOnly = msg["audioOnly"]?.GetValue<bool>() == true ? true : null,
+                  MaxHeight = msg["maxHeight"] is System.Text.Json.Nodes.JsonValue hv && hv.TryGetValue<double>(out var mh) && mh >= 100 && mh <= 10000 ? (int)mh : null,
                   Size = msg["size"] is System.Text.Json.Nodes.JsonValue sv && sv.TryGetValue<double>(out var sz) && sz > 0 ? (long)sz : null,
                   FromBrowser = msg["browser"]?.GetValue<bool>() == true ? true : null };
             if (!job.IsValid)
@@ -63,6 +99,9 @@ while (NativeMessaging.Read(input) is { } msg)
             {
                 NativeMessaging.Write(output, new { ok = false, error = e.Message });
             }
+            break;
+        case "qualities":
+            NativeMessaging.Write(output, Qualities(msg));
             break;
         case "open":
             StartApp();

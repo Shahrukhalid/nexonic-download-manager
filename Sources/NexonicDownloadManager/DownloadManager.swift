@@ -142,6 +142,7 @@ final class DownloadManager: ObservableObject {
         if site {
             record.siteVideo = true
             record.audioOnly = (job.audioOnly ?? o.audioOnly) ? true : nil
+            record.maxHeight = record.audioOnly == true ? nil : job.maxHeight
             record.infoJSON = job.infoJSON
         }
         record.queueID = job.queue.map(queueID(named:)) ?? o.queueID

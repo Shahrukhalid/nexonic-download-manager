@@ -1,20 +1,23 @@
 import {
   DEFAULTS, HOST, addMedia, cookieHeader, header, isMedia, isStreamPlaylist, isVideoSite, isWebLink, nameFromUrl, shouldTakeOver, sortMedia,
-  summarizePlaylist, titleToName,
+  qualityMenu, summarizePlaylist, titleToName,
 } from "./helpers.js";
 
 async function settings() {
   return { ...DEFAULTS, ...(await chrome.storage.sync.get(Object.keys(DEFAULTS))) };
 }
 
+async function cookiesFor(url) {
+  try {
+    return cookieHeader(await chrome.cookies.getAll({ url }));
+  } catch (_) {
+    return ""; // no cookie access for this address
+  }
+}
+
 async function send(url, extra = {}) {
   if (!isWebLink(url)) return false;  // nothing else is ever sent to the app (or gets cookies looked up)
-  let cookies = "";
-  try {
-    cookies = cookieHeader(await chrome.cookies.getAll({ url }));
-  } catch (_) {
-    /* no cookie access for this address */
-  }
+  const cookies = await cookiesFor(url);
   const message = { type: "download", url, cookies, userAgent: navigator.userAgent, ...extra };
   try {
     // A helper that doesn't answer within a few seconds counts as unreachable, so the browser keeps the download.
@@ -29,6 +32,25 @@ async function send(url, extra = {}) {
     await chrome.action.setBadgeText({ text: "!" });
     return false;
   }
+}
+
+// ---- Qualities of a video-site video (looked up by the app's helper with its video engine) ----
+
+const lookups = new Map(); // link -> { at, items }, so opening the menu again is instant
+
+async function qualities(url, referrer) {
+  if (!isWebLink(url) || !isVideoSite(url)) return qualityMenu(null);
+  const now = Date.now();
+  for (const [u, l] of lookups) if (now - l.at > 10 * 60000) lookups.delete(u);
+  if (lookups.has(url)) return lookups.get(url).items;
+  const message = { type: "qualities", url, referrer, cookies: await cookiesFor(url), userAgent: navigator.userAgent };
+  const reply = await Promise.race([
+    chrome.runtime.sendNativeMessage(HOST, message).catch(() => null),
+    new Promise((resolve) => setTimeout(() => resolve(null), 45000)),
+  ]);
+  const items = qualityMenu(reply);
+  if (reply && reply.ok) lookups.set(url, { at: now, items });
+  return items;
 }
 
 // ---- Browser downloads go to the app ----
@@ -201,7 +223,10 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
         // One link the user picked (video button, popup, page menu): the app shows its download window.
         const extra = { referrer, later: !!msg.later, browser: true };
         if (msg.stream) Object.assign(extra, { stream: true, fileName: msg.fileName });
-        else if (msg.site) Object.assign(extra, { site: true, audioOnly: !!msg.audioOnly });
+        else if (msg.site) {
+          Object.assign(extra, { site: true, audioOnly: !!msg.audioOnly });
+          if (Number.isInteger(msg.maxHeight) && msg.maxHeight >= 100 && !msg.audioOnly) extra.maxHeight = msg.maxHeight;
+        }
         else if (msg.fileName) extra.fileName = msg.fileName;
         return { ok: await send(msg.url, extra) };
       }
@@ -210,6 +235,8 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
         for (const url of msg.urls || []) if (await send(url, { referrer, later: !!msg.later })) sent++;
         return { ok: sent > 0, sent };
       }
+      case "site-qualities":
+        return { items: await qualities(msg.url, referrer) };
       case "media-list":
         return { media: await mediaOf(tabId) };
       case "page-links":

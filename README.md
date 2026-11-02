@@ -79,8 +79,8 @@ still shows the old icon, quit the app and open it again (on Mac, restarting the
 
 - **Fast downloads** that split each file into parts and download them at the same time.
 - **Pause and resume**, even after a restart. Expired links can be refreshed without starting over.
-- **Videos from YouTube, Instagram, Facebook, X, TikTok and 1,000+ sites**, in the best quality (up to 4K/8K) or sound
-  only.
+- **Videos from YouTube, Instagram, Facebook, X, TikTok and 1,000+ sites**, in the quality you pick (the
+  qualities each video offers are listed, up to 4K/8K) or sound only.
 - **Download this video** button on any web page, and streamed video saved as one `.mp4`.
 - **Browser integration** for Chrome, Edge, Brave, Opera and Firefox: click a download link (or the video button on a
   page) and a compact download window

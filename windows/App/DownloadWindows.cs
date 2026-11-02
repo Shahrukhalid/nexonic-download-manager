@@ -89,7 +89,7 @@ public static class DownloadWindows
             grid.Children.Add(value);
             rowIndex++;
         }
-        var size = new TextBlock { VerticalAlignment = VerticalAlignment.Center, Text = job.Size is long s ? Nexonic.App.Row.Bytes(s) : site ? "Finding the best quality…" : "Checking…" };
+        var size = new TextBlock { VerticalAlignment = VerticalAlignment.Center, Text = job.Size is long s ? Nexonic.App.Row.Bytes(s) : site ? "Finding the qualities on offer…" : "Checking…" };
         AddRow("Size", size);
         var category = new TextBlock { VerticalAlignment = VerticalAlignment.Center, Text = FileCategories.Of(name.Text).ToString() };
         AddRow("Category", category);
@@ -109,8 +109,34 @@ public static class DownloadWindows
         var queue = new ComboBox { DisplayMemberPath = "Name", ItemsSource = m.Queues.ToList(), Margin = new Thickness(0, 3, 0, 3), HorizontalAlignment = HorizontalAlignment.Left, MinWidth = 200 };
         queue.SelectedItem = m.Queues.FirstOrDefault(q => q.Id == (job.Queue ?? DownloadQueue.MainId)) ?? m.Queues.First();
         AddRow("Queue", queue);
-        var audio = new CheckBox { Content = "Sound only", IsChecked = job.AudioOnly == true, Margin = new Thickness(0, 3, 0, 3) };
-        if (site) AddRow("Video", audio);
+        // Quality: 0 = best, -1 = sound only, otherwise the highest picture height. Filled in when the video is looked up.
+        var quality = new ComboBox { Margin = new Thickness(0, 3, 0, 3), HorizontalAlignment = HorizontalAlignment.Left, MinWidth = 200 };
+        SiteVideo.Choices? offered = null;
+        long? bestSize = null;
+        var looked = false;
+        int Chosen() => quality.SelectedItem is ComboBoxItem { Tag: int t } ? t : 0;
+        void ShowSize()
+        {
+            if (!looked) return;
+            var q = Chosen();
+            long? known = q == 0 ? bestSize : q == -1 ? offered?.SoundSize : offered?.Video.FirstOrDefault(v => v.Height == q)?.Size;
+            size.Text = known is long bytes ? Nexonic.App.Row.Bytes(bytes) : "Size known when the download starts";
+        }
+        void FillQualities(int keep)
+        {
+            var first = offered?.Video.FirstOrDefault();
+            if (keep > 0 && keep == first?.Height) keep = 0;  // that is the best on offer
+            var lower = offered?.Video.Skip(1).Select(q => q.Height).ToList() ?? new List<int>();
+            if (keep > 0 && !lower.Contains(keep)) lower.Add(keep);
+            quality.Items.Clear();
+            quality.Items.Add(new ComboBoxItem { Content = first != null ? $"Best ({SiteVideo.QualityName(first.Height)})" : "Best available", Tag = 0 });
+            foreach (var h in lower.OrderByDescending(x => x)) quality.Items.Add(new ComboBoxItem { Content = SiteVideo.QualityName(h), Tag = h });
+            quality.Items.Add(new ComboBoxItem { Content = "Sound only", Tag = -1 });
+            quality.SelectedItem = quality.Items.Cast<ComboBoxItem>().First(i => (int)i.Tag == keep);
+        }
+        FillQualities(job.AudioOnly == true ? -1 : job.MaxHeight ?? 0);
+        quality.SelectionChanged += (_, _) => ShowSize();
+        if (site) AddRow("Quality", quality);
         root.Children.Add(grid);
 
         var never = new CheckBox { Content = "Don't show this window; start browser downloads right away", Margin = new Thickness(0, 12, 0, 0), FontSize = 11 };
@@ -133,9 +159,13 @@ public static class DownloadWindows
                     Folder = folder.Text.Trim().Length > 0 ? folder.Text.Trim() : null,
                     QueueId = (queue.SelectedItem as DownloadQueue)?.Id ?? DownloadQueue.MainId,
                     Start = go,
-                    AudioOnly = audio.IsChecked == true,
+                    AudioOnly = Chosen() == -1,
                 };
-                var id = m.Add(job with { FileName = name.Text.Trim().Length > 0 ? name.Text.Trim() : null, Start = go, InfoJson = infoPath }, o);
+                var id = m.Add(job with
+                {
+                    FileName = name.Text.Trim().Length > 0 ? name.Text.Trim() : null, Start = go, InfoJson = infoPath,
+                    AudioOnly = Chosen() == -1, MaxHeight = Chosen() > 0 ? Chosen() : null,
+                }, o);
                 if (go && id is Guid g && m.Settings.ShowProgressWindow && m.Rows.FirstOrDefault(r => r.Record.Id == g) is { } row)
                     ShowProgress(m, row);
             }
@@ -151,7 +181,15 @@ public static class DownloadWindows
         w.Show();
         w.Activate();
 
-        if (site) _ = LookUpVideoAsync(job, size, name, p => infoPath = p, m.Settings.Proxy);
+        if (site) _ = LookUpVideoAsync(job, size, name, (path, found, total) =>
+        {
+            infoPath = path;
+            offered = found;
+            bestSize = total;
+            looked = true;
+            FillQualities(Chosen());
+            ShowSize();
+        }, m.Settings.Proxy);
         else if (job.Size is null && job.Stream != true) _ = ProbeAsync(m, job, size, name);
     }
 
@@ -159,9 +197,10 @@ public static class DownloadWindows
     /// Looks the video up while the window is open (title, size, best quality). The details are saved and reused, so the
     /// download starts at once instead of looking the video up again.
     /// </summary>
-    static async Task LookUpVideoAsync(DownloadJob job, TextBlock size, TextBox name, Action<string> found, ProxySettings proxy)
+    static async Task LookUpVideoAsync(DownloadJob job, TextBlock size, TextBox name, Action<string, SiteVideo.Choices?, long?> found,
+        ProxySettings proxy)
     {
-        size.Text = "Finding the best quality…";
+        size.Text = "Finding the qualities on offer…";
         var path = Path.Combine(AppPaths.Parts, $"info-{Guid.NewGuid():N}.json");
         var result = await Task.Run(() =>
         {
@@ -193,11 +232,10 @@ public static class DownloadWindows
         });
         if (result.Item1 is not { } info)
         {
-            size.Text = "Best quality (size known when the download starts)";
+            size.Text = "Size known when the download starts";
             return;
         }
-        found(path);
-        size.Text = info.Size is long s ? Nexonic.App.Row.Bytes(s) : "Best quality";
+        found(path, SiteVideo.ParseChoices(result.Item2), info.Size);
         if (string.IsNullOrEmpty(job.FileName)) name.Text = FileNames.Sanitize($"{info.Title}.{info.Ext}");
     }
 
@@ -393,7 +431,7 @@ public static class DownloadWindows
             if (!plain)
             {
                 segCaption.Text = r.SiteVideo == true
-                    ? (r.AudioOnly == true ? "Video site · sound only" : "Video site · best quality, picture and sound joined") + $"\nSave to: {r.Folder}"
+                    ? ("Video site · " + SiteVideo.ChoiceText(r.AudioOnly, r.MaxHeight) + ", picture and sound joined") + $"\nSave to: {r.Folder}"
                     : r.IsStream == true ? $"Streamed video · pieces: {r.StreamDone ?? 0} of {r.StreamTotal ?? 0}, joined into one .mp4" : "";
                 segCaption.Visibility = segCaption.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
                 return;

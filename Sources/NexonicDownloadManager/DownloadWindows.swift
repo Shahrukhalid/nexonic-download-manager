@@ -56,8 +56,17 @@ struct DownloadInfoView: View {
     @State private var queueID = DownloadQueue.mainID
     @State private var size: Int64?
     @State private var checking = false
-    @State private var audioOnly = false
+    @State private var quality = 0  // 0 = best, -1 = sound only, otherwise the highest picture height
+    @State private var choices: SiteVideo.Choices?
+    @State private var bestSize: Int64?
     @State private var infoPath: String?
+
+    /// Qualities below the best one (the best is its own row), plus one chosen in the browser before the lookup finished.
+    private var lowerQualities: [Int] {
+        var h = (choices?.video.dropFirst().map(\.height)) ?? []
+        if quality > 0, !h.contains(quality) { h.append(quality) }
+        return h.sorted(by: >)
+    }
 
     private var url: URL? { job.validURL }
     private var isSiteVideo: Bool { job.site == true || (url.map(SiteVideo.isSupported) ?? false) }
@@ -77,8 +86,8 @@ struct DownloadInfoView: View {
             Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
                 GridRow {
                     Text("Size").foregroundStyle(.secondary)
-                    if checking { HStack(spacing: 6) { ProgressView().controlSize(.small); Text(isSiteVideo ? "Finding the best quality…" : "Checking…") } }
-                    else { Text(size.map(bytes) ?? (isSiteVideo ? "Best quality (size known when the download starts)" : "Unknown")) }
+                    if checking { HStack(spacing: 6) { ProgressView().controlSize(.small); Text(isSiteVideo ? "Finding the qualities on offer…" : "Checking…") } }
+                    else { Text(size.map(bytes) ?? (isSiteVideo ? "Size known when the download starts" : "Unknown")) }
                 }
                 GridRow {
                     Text("Category").foregroundStyle(.secondary)
@@ -101,8 +110,14 @@ struct DownloadInfoView: View {
                 }
                 if isSiteVideo {
                     GridRow {
-                        Text("Video").foregroundStyle(.secondary)
-                        Toggle("Sound only", isOn: $audioOnly)
+                        Text("Quality").foregroundStyle(.secondary)
+                        Picker("", selection: $quality) {
+                            Text(choices?.video.first.map { "Best (\(SiteVideo.qualityName($0.height)))" } ?? "Best available").tag(0)
+                            ForEach(lowerQualities, id: \.self) { h in Text(SiteVideo.qualityName(h)).tag(h) }
+                            Text("Sound only").tag(-1)
+                        }
+                        .labelsHidden().frame(maxWidth: 220, alignment: .leading)
+                        .onChange(of: quality) { _ in showSize() }
                     }
                 }
             }
@@ -125,7 +140,7 @@ struct DownloadInfoView: View {
 
     private func setUp() {
         folder = manager.settings.folder
-        audioOnly = job.audioOnly ?? false
+        quality = job.audioOnly == true ? -1 : (job.maxHeight ?? 0)
         if let n = job.fileName, !n.isEmpty { name = FileNames.sanitize(n) }
         else if let url { name = isSiteVideo ? "Video from \(url.host ?? "site")" : FileNames.fromURL(url) }
         size = job.size
@@ -154,21 +169,36 @@ struct DownloadInfoView: View {
             p.standardOutput = out
             p.standardError = FileHandle.nullDevice
             var info: SiteVideo.Info?
+            var offered: SiteVideo.Choices?
             if prepared != nil, (try? p.run()) != nil {
                 let data = out.fileHandleForReading.readDataToEndOfFile()
                 p.waitUntilExit()
                 if p.terminationStatus == 0, let i = SiteVideo.info(data), (try? data.write(to: URL(fileURLWithPath: path))) != nil {
                     info = i
+                    offered = SiteVideo.choices(data)
                 }
             }
-            let found = info
+            let found = info, foundChoices = offered
             Task { @MainActor in
                 checking = false
                 guard let found else { return }
                 infoPath = path
-                size = found.size
+                bestSize = found.size
+                choices = foundChoices
+                if quality > 0, quality == foundChoices?.video.first?.height { quality = 0 }  // that is the best on offer
+                showSize()
                 if !fromJob { name = FileNames.sanitize("\(found.title).\(found.ext)") }
             }
+        }
+    }
+
+    /// The size of the chosen quality, when the video's details tell it.
+    private func showSize() {
+        guard choices != nil || bestSize != nil else { return }
+        switch quality {
+        case 0: size = bestSize
+        case -1: size = choices?.soundSize
+        default: size = choices?.video.first { $0.height == quality }?.size
         }
     }
 
@@ -200,13 +230,14 @@ struct DownloadInfoView: View {
         var job = job
         job.fileName = name.trimmingCharacters(in: .whitespaces).isEmpty ? nil : name
         job.start = start
-        job.audioOnly = audioOnly ? true : nil
+        job.audioOnly = quality == -1 ? true : nil
+        job.maxHeight = quality > 0 ? quality : nil
         job.infoJSON = infoPath
         var o = DownloadManager.AddOptions()
         o.folder = folder
         o.queueID = queueID
         o.start = start
-        o.audioOnly = audioOnly
+        o.audioOnly = quality == -1
         let id = manager.add(job, options: o)
         if start, let id, manager.settings.showProgressWindow { ProgressWindow.show(id, manager: manager) }
         close()
@@ -324,7 +355,7 @@ struct DownloadProgressView: View {
                         .font(.caption).foregroundStyle(.secondary)
                 } else if item.siteVideo == true {
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(item.audioOnly == true ? "Video site · sound only" : "Video site · best quality, picture and sound joined")
+                        Text("Video site · " + SiteVideo.choiceText(audioOnly: item.audioOnly, maxHeight: item.maxHeight) + ", picture and sound joined")
                         Text("Save to: \(item.folder.path)").lineLimit(1).truncationMode(.middle)
                         if let path = item.savedPath { Text("Saved as: \((path as NSString).lastPathComponent)").lineLimit(1) }
                     }

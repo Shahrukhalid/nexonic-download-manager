@@ -17,6 +17,7 @@ public struct DownloadJob: Codable, Equatable, Sendable {
     public var stream: Bool?
     public var site: Bool?
     public var audioOnly: Bool?
+    public var maxHeight: Int?  // highest picture quality chosen for a video (nil = best)
     // From the browser extension: the size the browser reported and whether the user clicked the link (shows the download window)
     public var size: Int64?
     public var fromBrowser: Bool?

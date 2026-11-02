@@ -116,12 +116,11 @@ public static class SiteVideo
     /// Arguments(infoJson), so the download starts right away instead of looking the video up again.
     /// </summary>
     public static List<string> InfoArguments(string url, string? quickJs, bool audioOnly, string? referrer, string? cookies,
-        string? userAgent, string? username, string? password)
+        string? userAgent, string? username, string? password, int? maxHeight = null)
     {
         var a = new List<string> { "--ignore-config", "--no-playlist", "--no-colors", "-J", "--js-runtimes", "node", "--encoding", "utf-8" };
         if (quickJs != null) a.AddRange(new[] { "--js-runtimes", $"quickjs:{quickJs}" });
-        if (audioOnly) a.AddRange(new[] { "-f", "ba[ext=m4a]/ba/b" });
-        else a.AddRange(new[] { "-f", "bv*+ba/b", "-S", "res,fps,hdr:12,vcodec:avc,acodec:m4a", "--merge-output-format", "mp4/mkv" });
+        a.AddRange(Format(audioOnly, maxHeight));
         if (!string.IsNullOrEmpty(referrer)) a.AddRange(new[] { "--referer", referrer });
         if (!string.IsNullOrEmpty(userAgent)) a.AddRange(new[] { "--user-agent", userAgent });
         if (!string.IsNullOrEmpty(cookies)) a.AddRange(new[] { "--add-header", $"Cookie:{cookies}" });
@@ -130,6 +129,88 @@ public static class SiteVideo
         a.Add(url);
         return a;
     }
+
+    /// <summary>
+    /// Which picture and sound to fetch. Highest resolution and frame rate first (no higher than maxHeight when one was
+    /// chosen); at equal quality prefer formats every player opens.
+    /// </summary>
+    public static string[] Format(bool audioOnly, int? maxHeight)
+    {
+        if (audioOnly) return new[] { "-f", "ba[ext=m4a]/ba/b" };
+        var res = maxHeight is int h && h > 0 ? $"res:{h}" : "res";
+        return new[] { "-f", "bv*+ba/b", "-S", $"{res},fps,hdr:12,vcodec:avc,acodec:m4a", "--merge-output-format", "mp4/mkv" };
+    }
+
+    /// <summary>One picture quality a video is offered in. Height is the picture's shorter side (1080 for 1080p, also for upright videos); Size is picture and sound together, approximate.</summary>
+    public sealed record Quality(int Height, long? Size);
+
+    /// <summary>The qualities a video is offered in (best first) and the size of its sound alone.</summary>
+    public sealed record Choices(string Title, List<Quality> Video, long? SoundSize);
+
+    /// <summary>Reads the qualities on offer from the JSON printed by InfoArguments (the video's own list of formats).</summary>
+    public static Choices? ParseChoices(string json)
+    {
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            var o = doc.RootElement;
+            if (o.ValueKind != System.Text.Json.JsonValueKind.Object) return null;
+            static double? Num(System.Text.Json.JsonElement e, string k) =>
+                e.TryGetProperty(k, out var v) && v.ValueKind == System.Text.Json.JsonValueKind.Number ? v.GetDouble() : null;
+            static string? Str(System.Text.Json.JsonElement e, string k) =>
+                e.TryGetProperty(k, out var v) && v.ValueKind == System.Text.Json.JsonValueKind.String ? v.GetString() : null;
+            var duration = Num(o, "duration") ?? 0;
+            long? Size(System.Text.Json.JsonElement f)
+            {
+                if ((Num(f, "filesize") ?? Num(f, "filesize_approx")) is double s && s > 0) return (long)s;
+                if (Num(f, "tbr") is double t && t > 0 && duration > 0) return (long)(t * 125 * duration);  // kbit/s × seconds
+                return null;
+            }
+            var formats = o.TryGetProperty("formats", out var fs) && fs.ValueKind == System.Text.Json.JsonValueKind.Array
+                ? fs.EnumerateArray().ToList() : new List<System.Text.Json.JsonElement> { o };
+            var best = new Dictionary<int, (double Rank, long? Size, bool WithSound)>();
+            double soundRank = -1;
+            long? soundSize = null;
+            foreach (var f in formats)
+            {
+                if (f.ValueKind != System.Text.Json.JsonValueKind.Object) continue;
+                var v = Str(f, "vcodec");
+                var a = Str(f, "acodec");
+                var hasSound = a != null && a != "none";
+                if (v == "none")  // sound only (storyboard pictures have neither and are skipped)
+                {
+                    if (!hasSound) continue;
+                    var r = (a!.StartsWith("mp4a") ? 1e6 : 0) + (Num(f, "abr") ?? Num(f, "tbr") ?? 0);
+                    if (r > soundRank) { soundRank = r; soundSize = Size(f); }
+                    continue;
+                }
+                int h = (int)(Num(f, "height") ?? 0), w = (int)(Num(f, "width") ?? 0);
+                var side = w > 0 && h > 0 ? Math.Min(w, h) : h;
+                if (side < 100) continue;
+                // The format the download picks at this height: widely playable (H.264) first, then the highest bitrate.
+                var rank = ((v ?? "").StartsWith("avc") ? 1e6 : 0) + (Num(f, "tbr") ?? 0);
+                if (best.TryGetValue(side, out var b) && b.Rank >= rank) continue;
+                best[side] = (rank, Size(f), hasSound);
+            }
+            var video = best.Keys.OrderByDescending(k => k)
+                .Select(k => new Quality(k, best[k].Size is long s ? s + (best[k].WithSound ? 0 : soundSize ?? 0) : null)).ToList();
+            return new Choices(Str(o, "title") ?? "", video, soundSize);
+        }
+        catch { return null; }
+    }
+
+    /// <summary>"1080p", "2160p (4K)".</summary>
+    public static string QualityName(int height) => height switch
+    {
+        4320 => "4320p (8K)",
+        2160 => "2160p (4K)",
+        1440 => "1440p (2K)",
+        _ => $"{height}p",
+    };
+
+    /// <summary>What a video download is set to save, for lists and windows.</summary>
+    public static string ChoiceText(bool? audioOnly, int? maxHeight) =>
+        audioOnly == true ? "sound only" : maxHeight is int h && h > 0 ? $"up to {QualityName(h)}" : "best quality";
 
     /// <summary>Title, file type and size from the JSON printed by InfoArguments.</summary>
     public static Info? ParseInfo(string json)
@@ -217,7 +298,8 @@ public static class SiteVideo
 
     /// <summary>The command for one video. folder gets the finished file, temp the partial one (so it can resume).</summary>
     public static List<string> Arguments(string url, string folder, string temp, string? ffmpeg, string? quickJs, bool audioOnly,
-        string? referrer, string? cookies, string? userAgent, string? username, string? password, int speedLimitKBps, string? infoJson = null)
+        string? referrer, string? cookies, string? userAgent, string? username, string? password, int speedLimitKBps, string? infoJson = null,
+        int? maxHeight = null)
     {
         var a = new List<string>
         {
@@ -232,8 +314,7 @@ public static class SiteVideo
         };
         if (quickJs != null) a.AddRange(new[] { "--js-runtimes", $"quickjs:{quickJs}" });
         if (ffmpeg != null) a.AddRange(new[] { "--ffmpeg-location", Path.GetDirectoryName(ffmpeg)! }); // folder: ffmpeg and ffprobe
-        if (audioOnly) a.AddRange(new[] { "-f", "ba[ext=m4a]/ba/b" });
-        else a.AddRange(new[] { "-f", "bv*+ba/b", "-S", "res,fps,hdr:12,vcodec:avc,acodec:m4a", "--merge-output-format", "mp4/mkv" });
+        a.AddRange(Format(audioOnly, maxHeight));
         if (!string.IsNullOrEmpty(referrer)) a.AddRange(new[] { "--referer", referrer });
         if (!string.IsNullOrEmpty(userAgent)) a.AddRange(new[] { "--user-agent", userAgent });
         if (!string.IsNullOrEmpty(cookies)) a.AddRange(new[] { "--add-header", $"Cookie:{cookies}" });
@@ -376,7 +457,7 @@ public sealed class SiteVideoTransfer : IDownloader
         {
             (args, configFile) = SiteVideo.Prepare(SiteVideo.Arguments(Record.Url, folder, Temp, FFmpeg.Path, SiteVideoTools.QuickJs,
                 Record.AudioOnly == true, Record.Referrer, Record.Cookies, Record.UserAgent, Record.Username, Record.Password,
-                speedLimitKBps, Record.InfoJson), proxy);
+                speedLimitKBps, Record.InfoJson, Record.AudioOnly == true ? null : Record.MaxHeight), proxy);
         }
         catch (Exception e)  // never fall back to cookies and passwords on the command line
         {

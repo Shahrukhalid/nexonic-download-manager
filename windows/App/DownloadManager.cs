@@ -140,6 +140,7 @@ public sealed class DownloadManager
             SiteVideo = site ? true : null,
             AudioOnly = site && (job.AudioOnly ?? o.AudioOnly) ? true : null,
             InfoJson = site ? job.InfoJson : null,
+            MaxHeight = site && !(job.AudioOnly ?? o.AudioOnly) ? job.MaxHeight : null,
         };
         Rows.Insert(0, new Row(rec, QueueName));
         Schedule();

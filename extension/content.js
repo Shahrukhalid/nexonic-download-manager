@@ -29,6 +29,7 @@
   const list = root.querySelector("ul");
   let target = null;
   let hideTimer = 0;
+  let lookup = 0;
 
   const label = (m) =>
     m.kind === "stream"
@@ -77,7 +78,7 @@
   function send(m) {
     const msg = { type: "send-link", url: m.url, referrer: location.href };
     if (m.kind === "stream") Object.assign(msg, { stream: true, fileName: m.name });
-    if (m.kind === "site") Object.assign(msg, { site: true, audioOnly: !!m.audioOnly });
+    if (m.kind === "site") Object.assign(msg, { site: true, audioOnly: !!m.audioOnly, maxHeight: m.maxHeight || 0 });
     chrome.runtime.sendMessage(msg, (r) => {
       button.textContent = r && r.ok ? "Sent to Nexonic" : "Open Nexonic first";
       setTimeout(hide, 1500);
@@ -88,15 +89,26 @@
     e.preventDefault();
     e.stopPropagation();
     if (onVideoSite && target) {
-      list.textContent = "";
+      // The qualities this video is offered in, looked up by the app (a few seconds the first time).
       const link = postLink(target);
-      for (const [label, audioOnly] of [["Video, best quality", false], ["Sound only", true]]) {
-        const li = document.createElement("li");
-        li.textContent = label;
-        li.onclick = () => send({ url: link, kind: "site", audioOnly });
-        list.appendChild(li);
-      }
+      const asked = ++lookup;
+      list.textContent = "";
+      const wait = document.createElement("li");
+      wait.className = "note";
+      wait.textContent = "Finding the qualities…";
+      list.appendChild(wait);
       list.hidden = false;
+      chrome.runtime.sendMessage({ type: "site-qualities", url: link }, (r) => {
+        if (asked !== lookup) return; // the menu was opened again for another video
+        list.textContent = "";
+        const items = (r && r.items) || [{ label: "Video, best quality", maxHeight: 0 }, { label: "Sound only", audioOnly: true }];
+        for (const it of items) {
+          const li = document.createElement("li");
+          li.textContent = it.label;
+          li.onclick = () => send({ url: link, kind: "site", audioOnly: !!it.audioOnly, maxHeight: it.maxHeight });
+          list.appendChild(li);
+        }
+      });
       return;
     }
     const src = target && (target.currentSrc || target.src);

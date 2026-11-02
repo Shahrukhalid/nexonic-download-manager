@@ -50,7 +50,7 @@ enum HelpContent {
         ]),
         HelpTopic(id: "video", title: "Saving Videos", symbol: "play.rectangle", sections: [
             HelpSection(heading: "From a website", text: "Click the video button the extension shows on the page, or paste the page link into Add URL. Videos are saved in the best available quality as .mp4."),
-            HelpSection(heading: "Sound only", text: "Choose Sound only in the Add window to save just the audio."),
+            HelpSection(heading: "Quality", text: "The download window and the Download this video button list the qualities the video is offered in. Pick one, or Sound only to save just the audio."),
             HelpSection(heading: "Streamed video", text: "Streams (.m3u8) are found by the extension, downloaded in parallel and joined into one .mp4. Copy-protected services are not supported."),
         ]),
         HelpTopic(id: "queues", title: "Queues and Scheduler", symbol: "calendar.badge.clock", sections: [
