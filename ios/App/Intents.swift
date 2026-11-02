@@ -37,7 +37,8 @@ struct DownloadWithNexonicIntent: AppIntent {
         }
         if started == 0 { return .result(value: 0, dialog: "No file or video to download was found.") }
         let what = started == 1 ? "1 download" : "\(started) downloads"
-        return .result(value: started, dialog: startNow ? "\(what) started in Nexonic." : "\(what) saved for later in Nexonic.")
+        let text = startNow ? "\(what) started in Nexonic." : "\(what) saved for later in Nexonic."
+        return .result(value: started, dialog: "\(text)")
     }
 }
 
