@@ -187,8 +187,10 @@ public static class SiteVideo
                 int h = (int)(Num(f, "height") ?? 0), w = (int)(Num(f, "width") ?? 0);
                 var side = w > 0 && h > 0 ? Math.Min(w, h) : h;
                 if (side < 100) continue;
-                // The format the download picks at this height: widely playable (H.264) first, then the highest bitrate.
-                var rank = ((v ?? "").StartsWith("avc") ? 1e6 : 0) + (Num(f, "tbr") ?? 0);
+                // The format the download picks at this height, in the same order as Format: frame rate, HDR, widely
+                // playable (H.264), then the highest bitrate.
+                var hdr = (Str(f, "dynamic_range") ?? "SDR") != "SDR" ? 1.0 : 0;
+                var rank = Math.Round(Num(f, "fps") ?? 0) * 1e9 + hdr * 1e8 + ((v ?? "").StartsWith("avc") ? 1e7 : 0) + Math.Min(Num(f, "tbr") ?? 0, 9e6);
                 if (best.TryGetValue(side, out var b) && b.Rank >= rank) continue;
                 best[side] = (rank, Size(f), hasSound);
             }

@@ -40,6 +40,16 @@ func reply(_ object: [String: Any]) {
     if let data = try? NativeMessaging.encode(object) { output.write(data) }
 }
 
+/// The proxy set in the app, so lookups take the same route as downloads. Its password is read from the Keychain only
+/// when the proxy needs a login. The settings file is only read here, never changed.
+func savedProxy() -> ProxySettings? {
+    guard let data = try? Data(contentsOf: AppPaths.settings), var s = try? JSONDecoder().decode(AppSettings.self, from: data) else {
+        return nil
+    }
+    if !s.proxy.username.isEmpty, s.proxy.password.isEmpty, let p = KeychainStore().read()?[Secrets.proxyKey] { s.proxy.password = p }
+    return s.proxy
+}
+
 /// The picture qualities a video site offers for one link, looked up with the video engine shipped next to this helper.
 func qualities(_ m: [String: Any]) -> [String: Any] {
     guard let url = DownloadJob(url: m["url"] as? String ?? "").validURL, SiteVideo.isSupported(url) else {
@@ -50,7 +60,7 @@ func qualities(_ m: [String: Any]) -> [String: Any] {
     guard let tool = tools.first(where: fm.isExecutableFile(atPath:)) else { return ["ok": false, "error": "The video engine is missing"] }
     let args = SiteVideo.infoArguments(url: url, quickJS: SiteVideoTools.quickJS, audioOnly: false, referrer: m["referrer"] as? String,
                                        cookies: m["cookies"] as? String, userAgent: m["userAgent"] as? String, username: nil, password: nil)
-    guard let prepared = try? SiteVideo.prepare(args, proxy: nil) else { return ["ok": false, "error": "Could not prepare the lookup"] }
+    guard let prepared = try? SiteVideo.prepare(args, proxy: savedProxy()) else { return ["ok": false, "error": "Could not prepare the lookup"] }
     defer { if let f = prepared.configFile { try? fm.removeItem(at: f) } }
     let p = Process()
     p.executableURL = URL(fileURLWithPath: tool)

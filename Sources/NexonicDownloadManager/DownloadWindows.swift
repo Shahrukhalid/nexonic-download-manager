@@ -183,7 +183,7 @@ struct DownloadInfoView: View {
                 checking = false
                 guard let found else { return }
                 infoPath = path
-                bestSize = found.size
+                bestSize = found.size ?? foundChoices?.video.first?.size  // estimated from the bitrate when not given
                 choices = foundChoices
                 if quality > 0, quality == foundChoices?.video.first?.height { quality = 0 }  // that is the best on offer
                 showSize()

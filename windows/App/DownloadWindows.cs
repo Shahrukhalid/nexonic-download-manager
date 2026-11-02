@@ -185,7 +185,7 @@ public static class DownloadWindows
         {
             infoPath = path;
             offered = found;
-            bestSize = total;
+            bestSize = total ?? found?.Video.FirstOrDefault()?.Size;  // estimated from the bitrate when not given
             looked = true;
             FillQualities(Chosen());
             ShowSize();

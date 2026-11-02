@@ -174,8 +174,10 @@ public enum SiteVideo {
             let h = Int(num(f, "height") ?? 0), w = Int(num(f, "width") ?? 0)
             let side = w > 0 && h > 0 ? min(w, h) : h
             guard side >= 100 else { continue }
-            // The format the download picks at this height: widely playable (H.264) first, then the highest bitrate.
-            let rank = ((v ?? "").hasPrefix("avc") ? 1e6 : 0) + (num(f, "tbr") ?? 0)
+            // The format the download picks at this height, in the same order as `format`: frame rate, HDR, widely
+            // playable (H.264), then the highest bitrate.
+            let hdr = ((f["dynamic_range"] as? String) ?? "SDR") != "SDR" ? 1.0 : 0
+            let rank = (num(f, "fps") ?? 0).rounded() * 1e9 + hdr * 1e8 + ((v ?? "").hasPrefix("avc") ? 1e7 : 0) + min(num(f, "tbr") ?? 0, 9e6)
             if let b = best[side], b.rank >= rank { continue }
             best[side] = (rank, size(f), hasSound)
         }

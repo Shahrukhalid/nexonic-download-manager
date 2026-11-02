@@ -25,6 +25,16 @@ final class QualityTests: XCTestCase {
         XCTAssertNil(SiteVideo.choices(Data("not json".utf8)))
     }
 
+    func testSizeDescribesTheFormatTheDownloadPicks() throws {
+        // Frame rate comes before codec when the download chooses, so 60 fps VP9 beats 30 fps H.264 at the same size.
+        let json = #"{"duration": 10, "formats": [{"vcodec": "avc1", "acodec": "none", "width": 1920, "height": 1080, "fps": 30, "filesize": 100},"#
+            + #"{"vcodec": "vp9", "acodec": "none", "width": 1920, "height": 1080, "fps": 60, "filesize": 150},"#
+            + #"{"vcodec": "avc1", "acodec": "none", "width": 1280, "height": 720, "fps": 30, "filesize": 50},"#
+            + #"{"vcodec": "vp9", "acodec": "none", "width": 1280, "height": 720, "fps": 30, "filesize": 40}]}"#
+        let c = try XCTUnwrap(SiteVideo.choices(Data(json.utf8)))
+        XCTAssertEqual(c.video.map(\.size), [150, 50])  // 1080p: the 60 fps one; 720p: same frame rate, so H.264
+    }
+
     func testChosenQualityLimitsThePicture() {
         XCTAssertEqual(SiteVideo.format(audioOnly: false, maxHeight: 720)[3], "res:720,fps,hdr:12,vcodec:avc,acodec:m4a")
         XCTAssertEqual(SiteVideo.format(audioOnly: false, maxHeight: nil)[3], "res,fps,hdr:12,vcodec:avc,acodec:m4a")

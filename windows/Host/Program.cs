@@ -30,6 +30,17 @@ void StartApp()
     try { Process.Start(new ProcessStartInfo(app, "--inbox") { UseShellExecute = false }); } catch { }
 }
 
+// The proxy set in the app (its password decrypted for this Windows user), so lookups take the same route as downloads.
+// The settings file is only read here, never changed.
+static ProxySettings? SavedProxy()
+{
+    try
+    {
+        return File.Exists(AppPaths.Settings) ? Secrets.DeserializeOpened<AppSettings>(File.ReadAllText(AppPaths.Settings))?.Proxy : null;
+    }
+    catch { return null; }
+}
+
 // The picture qualities a video site offers for one link, looked up with the video engine shipped next to this helper.
 static object Qualities(System.Text.Json.Nodes.JsonNode msg)
 {
@@ -42,7 +53,7 @@ static object Qualities(System.Text.Json.Nodes.JsonNode msg)
     try
     {
         var (args, configFile) = SiteVideo.Prepare(
-            SiteVideo.InfoArguments(url, SiteVideoTools.QuickJs, false, Text("referrer"), Text("cookies"), Text("userAgent"), null, null), null);
+            SiteVideo.InfoArguments(url, SiteVideoTools.QuickJs, false, Text("referrer"), Text("cookies"), Text("userAgent"), null, null), SavedProxy());
         using var cleanup = new ConfigCleanup(configFile);
         var psi = new ProcessStartInfo(tool)
         {

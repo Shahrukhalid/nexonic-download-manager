@@ -29,6 +29,22 @@ public class QualityTests
     }
 
     [Fact]
+    public void SizeDescribesTheFormatTheDownloadPicks()
+    {
+        // Frame rate comes before codec when the download chooses, so 60 fps VP9 beats 30 fps H.264 at the same size.
+        const string json = """
+        {"duration": 10, "formats": [
+          {"vcodec": "avc1", "acodec": "none", "width": 1920, "height": 1080, "fps": 30, "filesize": 100},
+          {"vcodec": "vp9", "acodec": "none", "width": 1920, "height": 1080, "fps": 60, "filesize": 150},
+          {"vcodec": "avc1", "acodec": "none", "width": 1280, "height": 720, "fps": 30, "filesize": 50},
+          {"vcodec": "vp9", "acodec": "none", "width": 1280, "height": 720, "fps": 30, "filesize": 40}
+        ]}
+        """;
+        var c = SiteVideo.ParseChoices(json)!;
+        Assert.Equal(new long?[] { 150, 50 }, c.Video.Select(q => q.Size));  // 1080p: the 60 fps one; 720p: same frame rate, so H.264
+    }
+
+    [Fact]
     public void ChosenQualityLimitsThePicture()
     {
         Assert.Equal("res:720,fps,hdr:12,vcodec:avc,acodec:m4a", SiteVideo.Format(false, 720)[3]);
