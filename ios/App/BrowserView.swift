@@ -167,6 +167,7 @@ struct BrowserView: View {
             if let u = model.browserURL { browser.web.load(URLRequest(url: u)); model.browserURL = nil } else { browser.startIfNeeded() }
         }
         .onChange(of: model.browserURL) { _, u in if let u { browser.web.load(URLRequest(url: u)); model.browserURL = nil } }
+        .onChange(of: model.demoShowFound) { _, show in if show { browser.showFound = true; model.demoShowFound = false } }
         .sheet(isPresented: $browser.showFound) {
             NavigationStack {
                 List(browser.found) { c in

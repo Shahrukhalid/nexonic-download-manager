@@ -13,6 +13,8 @@ final class AppModel {
     var toast: String?
     var browserURL: URL?
     var selection: UUID?
+    /// Screenshots: open Found on this page once the page has loaded.
+    var demoShowFound = false
 
     @ObservationIgnored private var observer: ChangeObserver?
     @ObservationIgnored private var timer: Timer?

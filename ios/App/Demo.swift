@@ -25,6 +25,7 @@ enum Demo {
             case "browser", "found":
                 model.tab = .browser
                 model.browserURL = URL(string: "http://127.0.0.1:8098/page.html")
+                if screen == "found" { DispatchQueue.main.asyncAfter(deadline: .now() + 6) { model.demoShowFound = true } }
             case "settings": model.tab = .settings
             case "setup": model.showSetup = true
             default: break

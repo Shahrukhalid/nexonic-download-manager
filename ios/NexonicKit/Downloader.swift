@@ -35,7 +35,8 @@ public final class Downloader: NSObject, URLSessionDownloadDelegate {
         self.identifier = identifier
         super.init()
         let config = URLSessionConfiguration.background(withIdentifier: identifier)
-        config.sharedContainerIdentifier = AppGroup.id
+        // The Share extension's downloads finish in the shared folder; without the App Group iOS would refuse the session.
+        if AppGroup.available { config.sharedContainerIdentifier = AppGroup.id }
         config.sessionSendsLaunchEvents = true
         config.isDiscretionary = false
         config.httpCookieStorage = HTTPCookieStorage.shared // cookies are sent only to their own domains
@@ -148,7 +149,19 @@ public final class Downloader: NSObject, URLSessionDownloadDelegate {
         guard let error = error as NSError? else { return }
         if error.code == NSURLErrorCancelled { return } // paused or removed
         if let data = error.userInfo[NSURLSessionDownloadTaskResumeData] as? Data { Store.shared.saveResumeData(data, for: id) }
-        Store.shared.update(id) { $0.status = .failed; $0.error = error.localizedDescription }
+        Store.shared.update(id) { $0.status = .failed; $0.error = Downloader.message(error) }
+    }
+
+    /// A short, useful message instead of iOS's generic ones.
+    static func message(_ error: NSError) -> String {
+        switch error.code {
+        case NSURLErrorNotConnectedToInternet, NSURLErrorNetworkConnectionLost: return "No internet connection. Tap Try Again when you're online."
+        case NSURLErrorTimedOut: return "The server didn't answer in time. Tap Try Again."
+        case NSURLErrorCannotFindHost, NSURLErrorCannotConnectToHost: return "Could not reach the server."
+        case NSURLErrorAppTransportSecurityRequiresSecureConnection: return "This server needs a secure (https) link."
+        case NSURLErrorServerCertificateUntrusted, NSURLErrorSecureConnectionFailed: return "The server's secure connection can't be trusted."
+        default: return "The download stopped (\(error.code)). Tap Try Again."
+        }
     }
 
     /// Logins go only to the download's own server, and only over https when the download is https.

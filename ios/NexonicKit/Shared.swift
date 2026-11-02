@@ -13,6 +13,9 @@ public enum AppGroup {
         return url
     }
 
+    /// True when this build has the App Group (signed builds); unsigned test builds don't.
+    public static var available: Bool { FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: id) != nil }
+
     public static var defaults: UserDefaults { UserDefaults(suiteName: id) ?? .standard }
 }
 

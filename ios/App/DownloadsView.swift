@@ -36,6 +36,7 @@ struct DownloadsView: View {
     @State private var view: ListView = .all
     @State private var category: FileCategory?
     @State private var query = ""
+    @State private var column: NavigationSplitViewColumn = .sidebar
 
     private var shown: [DownloadJob] {
         model.jobs.filter { view.includes($0) && (category == nil || $0.category == category)
@@ -44,7 +45,7 @@ struct DownloadsView: View {
 
     var body: some View {
         @Bindable var model = model
-        NavigationSplitView {
+        NavigationSplitView(preferredCompactColumn: $column) {
             List(selection: $model.selection) {
                 Section {
                     Picker("Show", selection: $view) {
@@ -102,6 +103,8 @@ struct DownloadsView: View {
             else { ContentUnavailableView("Select a download", systemImage: "arrow.down.circle") }
         }
         .sheet(isPresented: Binding(get: { model.showPaste }, set: { model.showPaste = $0 })) { PasteView() }
+        // On iPhone, a download opened from code (a notification, or the screenshots) shows its details.
+        .onChange(of: model.selection) { _, id in if id != nil { column = .detail } }
     }
 }
 
