@@ -53,6 +53,8 @@ jobs:
           (cd "$(dirname "$APP")" && zip -qry "$GITHUB_WORKSPACE/out/Nexonic-simulator.app.zip" Nexonic.app)
           ls -la out
       - name: Screenshots (iPhone and iPad)
+        timeout-minutes: 30
+        continue-on-error: true
         run: |
           nohup python3 scripts/demo-server.py 8099 >/dev/null 2>&1 &
           mkdir -p /tmp/demo-page && sed 's#{{FILES}}#http://127.0.0.1:8099#g' android/demo/page.html > /tmp/demo-page/page.html

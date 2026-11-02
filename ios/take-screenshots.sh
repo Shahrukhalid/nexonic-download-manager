@@ -6,7 +6,13 @@ APP="$1"          # path to Nexonic.app built for the simulator
 BUNDLE=com.nexonic.downloadmanager
 mkdir -p shots
 # Every simulator command prints what it does and gives up after a time limit, so nothing can hang the run.
-run() { local t=$1; shift; echo "+ $*"; perl -e 'alarm shift; exec @ARGV' "$t" "$@" || echo "  (failed or timed out after ${t}s)"; }
+run() {
+  local t=$1; shift; echo "+ $*"
+  # Runs the command in its own process group and kills the whole group (including simctl's helpers) at the time limit.
+  perl -e 'my $t=shift; my $pid=fork; if(!$pid){setpgrp(0,0); exec @ARGV; exit 127}
+    local $SIG{ALRM}=sub{kill "KILL",-$pid; print "  (timed out after ${t}s)\n"; exit 124}; alarm $t; waitpid($pid,0); exit($?>>8)' "$t" "$@" \
+    || echo "  (failed: $?)"
+}
 device() { xcrun simctl list devices available -j | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];print(next(x['udid'] for r in sorted(d,reverse=True) for x in d[r] if x['name'].startswith('$1')))"; }
 shoot() {
   local sim=$1 prefix=$2; shift 2
@@ -28,9 +34,7 @@ shoot() {
 }
 # Use the iPhone simulator the tests already started ($SIM from the workflow); a cold first boot takes 10+ minutes on CI.
 IPHONE="${SIM:-$(device 'iPhone 16 Pro')}"
-# Start booting the iPad now, so it's ready when the iPhone pictures are done.
 IPAD=$(device 'iPad Pro 13' || device 'iPad Air' || true)
-if [ -n "$IPAD" ]; then (xcrun simctl boot "$IPAD" >/dev/null 2>&1 &); fi
 shoot "$IPHONE" ios \
   main:downloads:light:8 detail:detail:light:8 add:add:light:9 browser:browser:light:12 found:found:light:13 setup:setup:light:6 main-dark:downloads:dark:8
 # The iPad can be slow to boot on CI: give it 8 minutes, and never block the run.
