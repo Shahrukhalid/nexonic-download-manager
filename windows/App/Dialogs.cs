@@ -477,7 +477,7 @@ public static class Dialogs
         var conn = Box(general, "Connections per download (1-32)", s.Connections.ToString());
         var active = Box(general, "Downloads at the same time (main queue)", s.MaxActive.ToString());
         var folder = Box(general, "Save to folder", s.Folder);
-        var sort = Tick(general, "Sort into category folders (Video, Music, Documents…)", s.SortIntoCategoryFolders);
+        var sort = Tick(general, "Put each type in its own folder (Video, Music, Documents, Programs, Compressed, Images)", s.SortIntoCategoryFolders);
         var notify = Tick(general, "Notifications", s.Notifications);
         var updates = Tick(general, "Check for updates when the app opens", s.CheckForUpdates);
         general.Children.Add(new TextBlock { Text = "Browser downloads", FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 14, 0, 0) });

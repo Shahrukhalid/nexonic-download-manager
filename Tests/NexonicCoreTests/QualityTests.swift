@@ -48,3 +48,27 @@ final class QualityTests: XCTestCase {
         XCTAssertEqual(SiteVideo.choiceText(audioOnly: nil, maxHeight: nil), "best quality")
     }
 }
+
+/// Pasted links: several at once, and the real file behind Google Images and other redirect links.
+final class LinksTests: XCTestCase {
+    func testGoogleImagesGivesThePicture() {
+        let imgres = "https://www.google.com/imgres?q=desk%20wallpaper&imgurl=https%3A%2F%2Fstatic0.example.com%2Fuploads%2Fdesk-at-night.jpg%3Fw%3D1600%26h%3D900&imgrefurl=https%3A%2F%2Fwww.example.com%2Fpost%2F&docid=abc"
+        XCTAssertEqual(DownloadJob(url: imgres).validURL?.absoluteString, "https://static0.example.com/uploads/desk-at-night.jpg?w=1600&h=900")
+        XCTAssertEqual(Links.unwrap(URL(string: "https://www.google.com/url?q=https://example.com/a.zip&sa=D")!).absoluteString, "https://example.com/a.zip")
+        XCTAssertEqual(Links.unwrap(URL(string: "https://example.com/plain.zip")!).absoluteString, "https://example.com/plain.zip")
+        XCTAssertEqual(Links.unwrap(URL(string: "https://www.google.com/imgres?imgurl=javascript:alert(1)")!).host, "www.google.com")
+    }
+
+    func testSeveralLinksPastedTogether() {
+        XCTAssertEqual(Links.split("https://a.example/1.jpg, https://b.example/2.jpg\n https://c.example/x,y.zip"),
+                       ["https://a.example/1.jpg", "https://b.example/2.jpg", "https://c.example/x,y.zip"])
+    }
+
+    func testCategoryFolders() throws {
+        XCTAssertEqual(FileCategory.video.folder, "Video")
+        XCTAssertNil(FileCategory.other.folder)  // stays in the download folder
+        XCTAssertTrue(AppSettings().sortIntoCategoryFolders)
+        let old = try JSONDecoder().decode(AppSettings.self, from: Data(#"{"sortIntoCategoryFolders": false}"#.utf8))
+        XCTAssertTrue(old.sortIntoCategoryFolders)  // the earlier setting no longer turns it off
+    }
+}

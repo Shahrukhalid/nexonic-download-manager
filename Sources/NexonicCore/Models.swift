@@ -212,7 +212,9 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var maxActive: Int = 3
     public var speedLimitKBps: Int = 0
     public var folder: URL = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)[0]
-    public var sortIntoCategoryFolders: Bool = false
+    /// Each type in its own folder (Video, Music, Documents…), like IDM. On by default since 0.6.6 (saved under a new
+    /// name, so earlier installs get it too).
+    public var sortIntoCategoryFolders: Bool = true
     public var notifications: Bool = true
     public var monitorClipboard: Bool = true
     public var clipboardTypes: String = FileTypes.defaultList
@@ -233,7 +235,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public init() {}
 
     enum CodingKeys: String, CodingKey {
-        case connections, maxActive, speedLimitKBps, folder, sortIntoCategoryFolders, notifications, monitorClipboard,
+        case connections, maxActive, speedLimitKBps, folder, sortIntoCategoryFolders = "categoryFolders", notifications, monitorClipboard,
              clipboardTypes, proxy, showCompleteDialog, playSound, markDownloads, scanEnabled, scanCommand,
              showDownloadDialog, showProgressWindow, bringToFrontOnBrowserDownload, checkForUpdates, skippedVersion
     }

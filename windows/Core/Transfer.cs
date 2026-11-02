@@ -255,7 +255,7 @@ public sealed class Transfer : IDownloader
     void Join()
     {
         var folder = Record.Folder;
-        if (sortIntoCategories) folder = Path.Combine(folder, Record.Category.ToString());
+        if (sortIntoCategories && FileCategories.Folder(Record.Category) is { } sub) folder = Path.Combine(folder, sub);
         Directory.CreateDirectory(folder);
         var target = FileNames.Unique(Record.FileName, folder);
         using (var output = new FileStream(target, FileMode.CreateNew))

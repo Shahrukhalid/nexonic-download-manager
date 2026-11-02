@@ -33,10 +33,11 @@ public struct DownloadJob: Codable, Equatable, Sendable {
 
     /// Only plain web links are accepted.
     public var validURL: URL? {
-        guard let u = URL(string: url), let scheme = u.scheme?.lowercased(), ["http", "https"].contains(scheme), u.host != nil else {
+        guard let u = URL(string: url.trimmingCharacters(in: .whitespacesAndNewlines)), let scheme = u.scheme?.lowercased(),
+              ["http", "https"].contains(scheme), u.host != nil else {
             return nil
         }
-        return u
+        return Links.unwrap(u)  // e.g. a Google Images result: the picture itself, not Google's page
     }
 }
 

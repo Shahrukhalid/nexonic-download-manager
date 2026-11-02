@@ -106,7 +106,7 @@ final class DownloadManager: ObservableObject {
     }
 
     func add(links text: String, options: AddOptions = AddOptions()) {
-        let lines = text.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        let lines = Links.split(text)
         for line in lines {
             var job = DownloadJob(url: line)
             if lines.count == 1, let n = options.fileName, !n.isEmpty { job.fileName = n }

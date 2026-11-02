@@ -17,7 +17,7 @@ struct SettingsView: View {
                         Button("Choose…") { if let u = chooseFolder(manager.settings.folder) { manager.settings.folder = u } }
                     }
                 }
-                Toggle("Sort into category folders (Video, Music, Documents…)", isOn: $manager.settings.sortIntoCategoryFolders)
+                Toggle("Put each type in its own folder (Video, Music, Documents, Programs, Compressed, Images)", isOn: $manager.settings.sortIntoCategoryFolders)
                 Toggle("Notifications", isOn: $manager.settings.notifications)
                 HStack {
                     Toggle("Check for updates when the app opens", isOn: $manager.settings.checkForUpdates)

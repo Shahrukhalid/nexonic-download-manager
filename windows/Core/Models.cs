@@ -164,7 +164,10 @@ public sealed class AppSettings
     public int MaxActive { get; set; } = 3;
     public int SpeedLimitKBps { get; set; }
     public string Folder { get; set; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
-    public bool SortIntoCategoryFolders { get; set; }
+    /// <summary>Each type in its own folder (Video, Music, Documents…), like IDM. On by default since 0.6.6 (saved under a
+    /// new name, so earlier installs get it too).</summary>
+    [System.Text.Json.Serialization.JsonPropertyName("CategoryFolders")]
+    public bool SortIntoCategoryFolders { get; set; } = true;
     public bool Notifications { get; set; } = true;
     public bool MonitorClipboard { get; set; } = true;
     public string ClipboardTypes { get; set; } = FileTypes.DefaultList;

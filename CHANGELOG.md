@@ -5,6 +5,12 @@
   list keeps the files unless you tick "Also move the downloaded files to the Trash".
 - **Download this video** in the browser shows *Video, best quality* and *Sound only* at once again (no waiting).
   The app's download window still lets you pick another quality.
+- **Categories like IDM:** files are sorted by type automatically. All Downloads, Unfinished and Finished each open
+  into Compressed, Documents, Music, Video, Programs, Images and General, and each type is saved in its own folder
+  (Downloads/Video, Downloads/Music…; General files stay in Downloads). On for everyone; turn it off in Settings.
+- **Pasted image links from Google Images** now download the picture itself instead of Google's page (also Google
+  result links, Facebook and Reddit redirect links). Several links pasted on one line, separated by commas, are added
+  one by one.
 - **Updates:** only one update can run at a time. Checking for updates while one is downloading shows its progress
   instead of starting a second download.
 

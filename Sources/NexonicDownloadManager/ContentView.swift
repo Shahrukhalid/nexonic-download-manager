@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 
 enum SidebarFilter: Hashable {
     case all, active, unfinished, finished, category(FileCategory), queue(String)
+    case unfinishedIn(FileCategory), finishedIn(FileCategory)  // IDM-style: a type inside Unfinished or Finished
 
     @MainActor func title(_ m: DownloadManager) -> String {
         switch self {
@@ -12,7 +13,9 @@ enum SidebarFilter: Hashable {
         case .active: return "In Progress"
         case .unfinished: return "Unfinished"
         case .finished: return "Finished"
-        case .category(let c): return c.rawValue
+        case .category(let c): return c.label
+        case .unfinishedIn(let c): return "Unfinished · \(c.label)"
+        case .finishedIn(let c): return "Finished · \(c.label)"
         case .queue(let id): return m.queueName(id)
         }
     }
@@ -24,9 +27,16 @@ enum SidebarFilter: Hashable {
         case .unfinished: return r.status != .finished
         case .finished: return r.status == .finished
         case .category(let c): return r.category == c
+        case .unfinishedIn(let c): return r.status != .finished && r.category == c
+        case .finishedIn(let c): return r.status == .finished && r.category == c
         case .queue(let id): return r.queue == id
         }
     }
+}
+
+extension FileCategory {
+    /// Name in the sidebar: files of no particular type are "General", as in IDM.
+    var label: String { self == .other ? "General" : rawValue }
 }
 
 enum Sheet: Identifiable {
@@ -53,6 +63,19 @@ struct ContentView: View {
     @State private var selection = Set<UUID>()
     @State private var sheet: Sheet?
     @State private var search = ""
+    @State private var openAll = true
+    @State private var openUnfinished = false
+    @State private var openFinished = false
+
+    private func row(_ f: SidebarFilter) -> some View {
+        Label(f.title(manager), systemImage: icon(f)).badge(count(f)).tag(f)
+    }
+
+    private func categoryRows(_ make: @escaping (FileCategory) -> SidebarFilter) -> some View {
+        ForEach(FileCategory.allCases, id: \.self) { c in
+            Label(c.label, systemImage: c.symbol).badge(count(make(c))).tag(make(c))
+        }
+    }
 
     private var shown: [DownloadRecord] {
         let q = search.trimmingCharacters(in: .whitespaces).lowercased()
@@ -69,15 +92,18 @@ struct ContentView: View {
     var body: some View {
         NavigationSplitView {
             List(selection: $filter) {
+                // Like IDM: each list opens into the file types it holds (sorted automatically by file type).
                 Section("Downloads") {
-                    ForEach([SidebarFilter.all, .active, .unfinished, .finished], id: \.self) { f in
-                        Label(f.title(manager), systemImage: icon(f)).badge(count(f)).tag(f)
-                    }
-                }
-                Section("Categories") {
-                    ForEach(FileCategory.allCases, id: \.self) { c in
-                        Label(c.rawValue, systemImage: c.symbol).badge(count(.category(c))).tag(SidebarFilter.category(c))
-                    }
+                    DisclosureGroup(isExpanded: $openAll) {
+                        categoryRows(SidebarFilter.category)
+                    } label: { row(.all) }
+                    row(.active)
+                    DisclosureGroup(isExpanded: $openUnfinished) {
+                        categoryRows(SidebarFilter.unfinishedIn)
+                    } label: { row(.unfinished) }
+                    DisclosureGroup(isExpanded: $openFinished) {
+                        categoryRows(SidebarFilter.finishedIn)
+                    } label: { row(.finished) }
                 }
                 Section("Queues") {
                     ForEach(manager.queues) { q in
@@ -320,7 +346,7 @@ struct ContentView: View {
         case .active: return "arrow.down.circle"
         case .unfinished: return "clock"
         case .finished: return "checkmark.circle"
-        case .category(let c): return c.symbol
+        case .category(let c), .unfinishedIn(let c), .finishedIn(let c): return c.symbol
         case .queue: return "list.bullet"
         }
     }

@@ -51,22 +51,26 @@ public partial class MainWindow : Window
             Content = text.ToUpperInvariant(), IsEnabled = false, FontSize = 11, FontWeight = FontWeights.SemiBold,
             Foreground = Brushes.Gray, Margin = new Thickness(4, 8, 0, 2),
         });
-        void Entry(string text, string key)
+        void Entry(string text, string key, int indent = 0)
         {
             var row = new DockPanel { LastChildFill = true, MinWidth = 150 };
             var count = new TextBlock { Text = CountFor(key), Foreground = Brushes.Gray, FontSize = 11, Margin = new Thickness(8, 0, 4, 0), VerticalAlignment = VerticalAlignment.Center };
             DockPanel.SetDock(count, Dock.Right);
             row.Children.Add(count);
             row.Children.Add(new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center });
-            Sidebar.Items.Add(new ListBoxItem { Content = row, Tag = key, Padding = new Thickness(14, 5, 4, 5), HorizontalContentAlignment = HorizontalAlignment.Stretch });
+            Sidebar.Items.Add(new ListBoxItem { Content = row, Tag = key, Padding = new Thickness(14 + indent * 16, 5, 4, 5), HorizontalContentAlignment = HorizontalAlignment.Stretch });
         }
+        // Like IDM: each list opens into the file types it holds (sorted automatically by file type).
+        static string Label(string c) => c == nameof(FileCategory.Other) ? "General" : c;
+        void Types(string prefix) { foreach (var c in Enum.GetNames<FileCategory>()) Entry(Label(c), prefix + c, 1); }
         Header("Downloads");
         Entry("All Downloads", "all");
+        Types("cat:");
         Entry("In Progress", "active");
         Entry("Unfinished", "unfinished");
+        Types("ucat:");
         Entry("Finished", "finished");
-        Header("Categories");
-        foreach (var c in Enum.GetNames<FileCategory>()) Entry(c, "cat:" + c);
+        Types("fcat:");
         Header("Queues");
         foreach (var q in manager.Queues) Entry((q.Running ? "▶ " : "⏸ ") + q.Name, "queue:" + q.Id);
         Sidebar.SelectedItem = Sidebar.Items.OfType<ListBoxItem>().FirstOrDefault(i => (string?)i.Tag == filter)
@@ -81,6 +85,8 @@ public partial class MainWindow : Window
         "unfinished" => r.Status != DownloadStatus.Finished,
         "finished" => r.Status == DownloadStatus.Finished,
         _ when f.StartsWith("cat:") => r.Category.ToString() == f[4..],
+        _ when f.StartsWith("ucat:") => r.Status != DownloadStatus.Finished && r.Category.ToString() == f[5..],
+        _ when f.StartsWith("fcat:") => r.Status == DownloadStatus.Finished && r.Category.ToString() == f[5..],
         _ when f.StartsWith("queue:") => r.Queue == f[6..],
         _ => true,
     };

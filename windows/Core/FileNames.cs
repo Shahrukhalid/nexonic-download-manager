@@ -66,6 +66,9 @@ public enum FileCategory { Compressed, Documents, Music, Video, Programs, Images
 
 public static class FileCategories
 {
+    /// <summary>The subfolder of the download folder for this type, like IDM. Files of no particular type stay in the folder.</summary>
+    public static string? Folder(FileCategory c) => c == FileCategory.Other ? null : c.ToString();
+
     static readonly Dictionary<FileCategory, string[]> Map = new()
     {
         [FileCategory.Compressed] = new[] { "zip", "rar", "7z", "gz", "tgz", "bz2", "xz", "tar", "zst" },

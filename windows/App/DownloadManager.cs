@@ -90,11 +90,11 @@ public sealed class DownloadManager
     public int AddLinks(string text, AddOptions? o = null)
     {
         o ??= new AddOptions();
-        var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var lines = Links.Split(text);
         var n = 0;
         foreach (var line in lines)
         {
-            var job = new DownloadJob(line, lines.Length == 1 && !string.IsNullOrWhiteSpace(o.FileName) ? o.FileName : null);
+            var job = new DownloadJob(line, lines.Count == 1 && !string.IsNullOrWhiteSpace(o.FileName) ? o.FileName : null);
             if (job.IsValid) { Add(job, o); n++; }
         }
         return n;
@@ -103,6 +103,7 @@ public sealed class DownloadManager
     public Guid? Add(DownloadJob job, AddOptions? o = null)
     {
         if (!job.IsValid) return null;
+        job = job with { Url = Links.Unwrap(job.Url) };  // e.g. a Google Images result: the picture itself, not Google's page
         o ??= new AddOptions();
         var site = job.Site == true || (Nexonic.Core.SiteVideo.IsSupported(job.Url) && job.Stream != true);
         var stream = !site && (job.Stream == true || HLS.IsPlaylistUrl(job.Url));

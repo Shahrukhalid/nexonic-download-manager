@@ -48,6 +48,7 @@ public static class DownloadWindows
 
     public static void ShowInfo(DownloadManager m, DownloadJob job)
     {
+        job = job with { Url = Links.Unwrap(job.Url) };  // e.g. a Google Images result: the picture itself
         if (infoWindows.TryGetValue(job.Url, out var open)) { open.Activate(); return; }
         var uri = new Uri(job.Url);
         var site = job.Site == true || Nexonic.Core.SiteVideo.IsSupported(job.Url);

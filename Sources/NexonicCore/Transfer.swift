@@ -322,7 +322,7 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
               !record.segments.isEmpty, record.segments.allSatisfy(\.isComplete) else { return }
         do {
             var folder = record.folder
-            if sortIntoCategories { folder.appendPathComponent(record.category.rawValue, isDirectory: true) }
+            if sortIntoCategories, let sub = record.category.folder { folder.appendPathComponent(sub, isDirectory: true) }
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
             let target = FileNames.unique(record.fileName, in: folder)
             FileManager.default.createFile(atPath: target.path, contents: nil)
