@@ -101,4 +101,8 @@ test("quality menu lists what the video offers, best first", async () => {
   // an older app or a failed lookup: the two choices from before
   for (const r of [null, { ok: false }, { ok: true, qualities: "x" }])
     assert.deepEqual(qualityMenu(r).map((m) => m.label), ["Video, best quality", "Sound only"]);
+  // an app older than 0.6.3: a note first, so it's clear why there are no qualities
+  const old = qualityMenu({ ok: false, error: "Unknown message" });
+  assert.equal(old[0].note, true);
+  assert.deepEqual(old.slice(1).map((m) => m.label), ["Video, best quality", "Sound only"]);
 });

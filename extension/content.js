@@ -105,6 +105,12 @@
         for (const it of items) {
           const li = document.createElement("li");
           li.textContent = it.label;
+          if (it.note) {
+            li.className = "note";
+            li.style.whiteSpace = "normal";
+            list.appendChild(li);
+            continue;
+          }
           li.onclick = () => send({ url: link, kind: "site", audioOnly: !!it.audioOnly, maxHeight: it.maxHeight });
           list.appendChild(li);
         }

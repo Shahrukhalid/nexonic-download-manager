@@ -199,7 +199,11 @@ export function qualityMenu(reply) {
     maxHeight: i === 0 ? 0 : q.height,  // the best one is sent as "best", so the app never picks lower by mistake
     audioOnly: false,
   }));
-  if (!items.length) items.push({ label: "Video, best quality", maxHeight: 0, audioOnly: false });
+  if (!items.length) {
+    // An app older than 0.6.3 doesn't know the lookup: say so, instead of silently offering only two choices.
+    if (reply && reply.error === "Unknown message") items.push({ label: "Update the Nexonic app to choose a quality", note: true });
+    items.push({ label: "Video, best quality", maxHeight: 0, audioOnly: false });
+  }
   items.push({ label: `Sound only${about(reply && reply.ok ? reply.soundSize : 0)}`, maxHeight: 0, audioOnly: true });
   return items;
 }
