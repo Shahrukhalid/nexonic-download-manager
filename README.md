@@ -2,7 +2,7 @@
 
 # Nexonic Download Manager
 
-**Free, open-source download manager for Mac and Windows: an alternative to Internet Download Manager (IDM).**
+**Free, open-source download manager for Mac, Windows and Android: an alternative to Internet Download Manager (IDM).**
 
 Download faster, pause and resume anytime, and save videos from YouTube, Instagram, Facebook, X (Twitter), TikTok and
 1,000+ other sites in the best quality.
@@ -10,6 +10,7 @@ Download faster, pause and resume anytime, and save videos from YouTube, Instagr
 [![Latest release](https://img.shields.io/github/v/release/Shahrukhalid/nexonic-download-manager?label=download)](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest)
 ![macOS 13+](https://img.shields.io/badge/macOS-13%2B-black)
 ![Windows 10+](https://img.shields.io/badge/Windows-10%2B-0078D6)
+![Android 10+](https://img.shields.io/badge/Android-10%2B-3DDC84)
 [![MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Website](https://img.shields.io/badge/website-online-2563eb)](https://shahrukhalid.github.io/nexonic-download-manager/)
 
@@ -24,6 +25,7 @@ Download faster, pause and resume anytime, and save videos from YouTube, Instagr
 | **Mac** (macOS 13+, Apple silicon and Intel) | [NexonicDownloadManager-Mac.dmg](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Mac.dmg) |
 | **Windows** 10 / 11 | [NexonicDownloadManager-Windows-Setup.exe](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Setup.exe) |
 | Windows, no install | [NexonicDownloadManager-Windows-Portable.zip](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Portable.zip) |
+| **Android** 10+ (phones and tablets) | [NexonicDownloadManager-Android.apk](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android.apk) |
 | Chrome, Edge, Brave, Opera extension | [NexonicExtension-Chrome.zip](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicExtension-Chrome.zip) |
 | Firefox add-on | [NexonicAddon-Firefox.xpi](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicAddon-Firefox.xpi) |
 
@@ -63,6 +65,15 @@ curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | 
 
 1. Run the Setup file. If Windows says "Windows protected your PC", click **More info → Run anyway**.
 2. Read the Terms of Use, choose **I accept the agreement** and follow the steps.
+
+**Android**
+
+1. Download `NexonicDownloadManager-Android.apk` on the phone and open it.
+2. If Android asks, allow your browser or Files app to **install unknown apps**, then tap **Install**.
+3. Open Nexonic and allow notifications, so downloads keep running with the screen off.
+4. To download from Chrome or another browser: **Share → Download with Nexonic**. Or browse with Nexonic's built-in browser.
+
+Updates install over the old version; your downloads list is kept.
 
 **Browser** (open the app once first):
 
@@ -115,6 +126,10 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
 - **Updates inside the app:** a new version shows up when you open the app, with what's new and Update Now, Remind
   Me Later or Skip This Version.
 - **Same app on Mac and Windows**, light and dark mode, no account, no tracking.
+- **Android app** with the same download engine: up to 32 connections, pause and resume, queues, scheduler, Wi-Fi only,
+  speed limit, a built-in browser that catches downloads and lists the videos and files on a page, and
+  **Share → Download with Nexonic** from Chrome or any app. Files are saved in *Download/Nexonic*.
+  Details and Android limits: [android/README.md](android/README.md).
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/mac-info.png" alt="Download window that opens when a link is clicked in the browser" width="440">
@@ -165,6 +180,7 @@ right to, and respect copyright and each site's terms.
 git clone https://github.com/Shahrukhalid/nexonic-download-manager.git && cd nexonic-download-manager
 UNIVERSAL=0 bash scripts/build-app.sh     # Mac
 pwsh windows/build.ps1                    # Windows (.NET 8 SDK, Inno Setup 6)
+gradle -p android assembleDebug           # Android (JDK 17, Android SDK)
 ```
 
 ## License

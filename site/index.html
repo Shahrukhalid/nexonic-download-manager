@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nexonic Download Manager: free IDM alternative for Mac and Windows</title>
-<meta name="description" content="Free, open-source download manager for Mac and Windows. Up to 32 connections per file, pause and resume, scheduler and queues, browser extension, and video downloads up to 8K. No ads, no account.">
+<title>Nexonic Download Manager: free IDM alternative for Mac, Windows and Android</title>
+<meta name="description" content="Free, open-source download manager for Mac, Windows and Android. Up to 32 connections per file, pause and resume, scheduler and queues, browser extension, and video downloads up to 8K. No ads, no account.">
 <meta name="keywords" content="download manager, free download manager, IDM alternative, IDM for Mac, download accelerator, Mac download manager, Windows download manager, video downloader, browser extension, open source">
 <link rel="canonical" href="https://shahrukhalid.github.io/nexonic-download-manager/">
 <link rel="icon" type="image/png" href="favicon.png">
@@ -12,14 +12,14 @@
 <meta name="theme-color" content="#0b1220">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Nexonic Download Manager">
-<meta property="og:title" content="Nexonic Download Manager: free IDM alternative for Mac and Windows">
+<meta property="og:title" content="Nexonic Download Manager: free IDM alternative for Mac, Windows and Android">
 <meta property="og:description" content="Faster downloads with up to 32 connections, pause and resume, scheduler, browser integration and video downloads. Free and open source.">
 <meta property="og:url" content="https://shahrukhalid.github.io/nexonic-download-manager/">
 <meta property="og:image" content="https://shahrukhalid.github.io/nexonic-download-manager/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Nexonic Download Manager: free IDM alternative for Mac and Windows">
+<meta name="twitter:title" content="Nexonic Download Manager: free IDM alternative for Mac, Windows and Android">
 <meta name="twitter:description" content="Up to 32 connections per file, pause and resume, scheduler, browser extension and video downloads. Free and open source.">
 <meta name="twitter:image" content="https://shahrukhalid.github.io/nexonic-download-manager/og.png">
 <script type="application/ld+json">
@@ -28,7 +28,7 @@
   "@type": "SoftwareApplication",
   "name": "Nexonic Download Manager",
   "applicationCategory": "UtilitiesApplication",
-  "operatingSystem": "macOS 13 or later, Windows 10, Windows 11",
+  "operatingSystem": "macOS 13 or later, Windows 10, Windows 11, Android 10 or later",
   "softwareVersion": "__VERSION__",
   "description": "Free, open-source download manager for Mac and Windows with multi-connection downloads, pause and resume, scheduler, queues, browser integration and video downloads.",
   "url": "https://shahrukhalid.github.io/nexonic-download-manager/",
@@ -47,6 +47,7 @@
   "mainEntity": [
     {"@type": "Question", "name": "Is Nexonic Download Manager free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. It is free and open source under the MIT license, with no ads, no account and no tracking."}},
     {"@type": "Question", "name": "Is there an IDM alternative for Mac?", "acceptedAnswer": {"@type": "Answer", "text": "Nexonic Download Manager is a native Mac app (macOS 13 or later, Apple silicon and Intel) with IDM-style features: multi-connection downloads, pause and resume, a scheduler, queues and a browser extension."}},
+    {"@type": "Question", "name": "Is there an Android app?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The Android app (Android 10 or later) has the same download engine, a built-in browser that catches downloads and lists videos and files on a page, and Share, Download with Nexonic from Chrome or any app."}},
     {"@type": "Question", "name": "Does it work with Chrome and Firefox?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The browser extension works with Chrome, Edge, Brave, Opera and Firefox and hands downloads to the app."}},
     {"@type": "Question", "name": "Can it download videos?", "acceptedAnswer": {"@type": "Answer", "text": "It saves videos from 1,000+ sites in the quality you pick, up to 4K/8K, or sound only, and streamed video as one .mp4 file. Copy-protected services are not supported, and you should only download what you have the right to save."}},
     {"@type": "Question", "name": "How do I update the app?", "acceptedAnswer": {"@type": "Answer", "text": "The app checks for updates when it opens and shows what is new, with Update Now, Remind Me Later or Skip This Version. Every update is checked against its SHA-256 before it is installed."}}
@@ -118,7 +119,7 @@ section h2{font-size:38px;line-height:1.15;letter-spacing:-.02em;margin:0 0 12px
 p.sub{color:var(--muted);text-align:center;max-width:700px;margin:0 auto 44px;font-size:17px}
 
 /* downloads */
-.dl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.dl-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
 .dl{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow);display:flex;flex-direction:column;position:relative}
 .dl.rec{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft),var(--shadow)}
 .dl .tag{position:absolute;top:-11px;left:22px;background:var(--brand);color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;display:none}
@@ -260,6 +261,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
   <symbol id="i-puzzle" viewBox="0 0 24 24"><path d="M10 3h4v3a2 2 0 1 0 4 0V3h3v7h-3a2 2 0 1 0 0 4h3v7h-7v-3a2 2 0 1 0-4 0v3H3v-7h3a2 2 0 1 0 0-4H3V3z"/></symbol>
   <symbol id="i-gh" viewBox="0 0 24 24"><path d="M9 19c-4 1.5-4-2-6-2.5m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12 12 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></symbol>
   <symbol id="i-apple" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></symbol>
   <symbol id="i-win" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M9 20h6M12 16v4"/></symbol>
 </svg>
 
@@ -267,7 +269,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
   <div class="wrap">
     <a class="brand" href="./"><img src="icon.png" alt="" width="30" height="30">Nexonic Download Manager</a>
     <div class="links">
-      <a href="#features">Features</a><a href="#videos">Videos</a><a href="#screenshots">Screenshots</a><a href="#install">Install</a><a href="#faq">FAQ</a>
+      <a href="#features">Features</a><a href="#videos">Videos</a><a href="#android">Android</a><a href="#screenshots">Screenshots</a><a href="#install">Install</a><a href="#faq">FAQ</a>
       <a href="https://github.com/Shahrukhalid/nexonic-download-manager">GitHub</a>
       <a class="navdl" href="#download">Download</a>
     </div>
@@ -279,10 +281,10 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
     <div class="hero-grid">
       <div>
         <a class="pill" href="#whats-new"><span class="dot"></span><b>Version __VERSION__</b> is out · see what's new</a>
-        <h1>The free download manager <span>for Mac and Windows</span></h1>
+        <h1>The free download manager <span>for Mac, Windows and Android</span></h1>
         <p class="lead">Download up to 32 times in parallel, pause and resume anytime, schedule downloads for the night and save videos from 1,000+ sites in the quality you pick. No ads, no account, no tracking.</p>
         <div class="btns">
-          <a class="btn primary lg" id="hero-dl" href="#download"><svg class="i"><use href="#i-dl"/></svg><span class="t"><span id="hero-dl-label">Download free</span><small id="hero-dl-sub">Mac and Windows · v__VERSION__</small></span></a>
+          <a class="btn primary lg" id="hero-dl" href="#download"><svg class="i"><use href="#i-dl"/></svg><span class="t"><span id="hero-dl-label">Download free</span><small id="hero-dl-sub">Mac, Windows and Android · v__VERSION__</small></span></a>
           <a class="btn glass lg" id="hero-ext" href="#extension"><svg class="i"><use href="#i-puzzle"/></svg><span class="t"><span id="hero-ext-label">Get the browser extension</span><small>Chrome, Edge, Brave, Opera, Firefox</small></span></a>
         </div>
         <p class="meta">Also for <a href="#download" id="hero-other">Windows</a> · <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest">All files and release notes</a> · <a href="https://github.com/Shahrukhalid/nexonic-download-manager">Source code</a></p>
@@ -307,7 +309,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
   <div class="wrap">
     <div><b>32</b><span>connections per file</span></div>
     <div><b>1,000+</b><span>video sites, up to 8K</span></div>
-    <div><b>5</b><span>browsers supported</span></div>
+    <div><b>3</b><span>platforms: Mac, Windows, Android</span></div>
     <div><b>$0</b><span>no ads, no account</span></div>
   </div>
 </div>
@@ -318,8 +320,8 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
   <div class="wrap">
     <span class="eyebrow">Download</span>
     <h2>Get Nexonic Download Manager</h2>
-    <p class="sub">Version __VERSION__. Everything is included: the video engine, ffmpeg and the command-line tool. Nothing else to install.</p>
-    <p class="mobile-note" id="mobile-note">Nexonic Download Manager runs on Mac and Windows computers. Open this page on your computer to download it.</p>
+    <p class="sub">Version __VERSION__. Everything is included: on Mac and Windows the video engine, ffmpeg and the command-line tool. Nothing else to install.</p>
+    <p class="mobile-note" id="mobile-note">The iPhone and iPad version is in development. Nexonic runs today on Mac, Windows and Android.</p>
 
     <div class="dl-grid">
       <div class="dl" id="card-mac">
@@ -342,6 +344,18 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
         <ul>
           <li><svg class="i"><use href="#i-check"/></svg>Installer adds the <code>ndm</code> command</li>
           <li><svg class="i"><use href="#i-check"/></svg>Portable version runs from any folder</li>
+        </ul>
+      </div>
+      <div class="dl" id="card-android">
+        <span class="tag">Recommended for you</span>
+        <div class="os"><div class="logo"><svg class="i"><use href="#i-phone"/></svg></div><h3>Android</h3></div>
+        <p class="req">Android 10 or later · phones and tablets</p>
+        <a class="btn primary" href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android.apk"><svg class="i"><use href="#i-dl"/></svg>Download for Android (.apk)</a>
+        <a class="btn outline" href="#install-android">How to install</a>
+        <ul>
+          <li><svg class="i"><use href="#i-check"/></svg>Built-in browser catches downloads and videos</li>
+          <li><svg class="i"><use href="#i-check"/></svg>Share → Download with Nexonic from Chrome or any app</li>
+          <li><svg class="i"><use href="#i-check"/></svg>Signed app, same version as Mac and Windows</li>
         </ul>
       </div>
       <div class="dl" id="extension">
@@ -452,6 +466,23 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
   </div>
 </section>
 
+<section id="android">
+  <div class="wrap">
+    <span class="eyebrow">Android</span>
+    <h2>Nexonic on your phone</h2>
+    <p class="sub">A native Android app with the same download engine as the desktop apps. No account, no ads, no tracking.</p>
+    <div class="f-grid">
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-globe"/></svg></div><h3>Built-in browser</h3><p>Browse as usual: downloads open the Nexonic download window, long-press any link or image to save it, and <b>Found on this page</b> lists the videos, music and files on the page.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-dl"/></svg></div><h3>Share from Chrome</h3><p>In Chrome or any other app, tap <b>Share → Download with Nexonic</b>. Several links at once and batch patterns work too.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-bolt"/></svg></div><h3>Fast and resumable</h3><p>Up to 32 connections per file, pause and resume even after a restart, retries, refresh expired links.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-clock"/></svg></div><h3>Runs in the background</h3><p>A progress notification with Pause all, queues, a daily scheduler, Wi-Fi only and a speed limit.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-folder"/></svg></div><h3>Files you can find</h3><p>Saved in <b>Download/Nexonic</b>, sorted by type, visible in the Files app. Open, share or delete from the app.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-lock"/></svg></div><h3>Private</h3><p>Cookies and passwords are encrypted on the phone and sent only to their own site. Third-party cookies are blocked in the browser.</p></div>
+    </div>
+    <p class="dl-note">Chrome for Android doesn't run desktop extensions, so Nexonic uses the share menu and its own browser instead. Streaming video and the desktop video engine are not on Android yet. <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/android/README.md">Details</a>.</p>
+  </div>
+</section>
+
 <section id="screenshots">
   <div class="wrap">
     <span class="eyebrow">Screenshots</span>
@@ -512,6 +543,15 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
           <li>Unzip <code>NexonicExtension-Chrome.zip</code>.</li>
           <li>Open the extensions page (<code>chrome://extensions</code>, <code>edge://extensions</code>…) and turn on <b>Developer mode</b>.</li>
           <li>Click <b>Load unpacked</b> and pick the unzipped folder. Restart the browser.</li>
+        </ol>
+      </div>
+      <div class="panel" id="install-android">
+        <h3><svg class="i"><use href="#i-phone"/></svg>Android</h3>
+        <ol>
+          <li>Download <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android.apk">NexonicDownloadManager-Android.apk</a> on the phone and open it.</li>
+          <li>If Android asks, allow your browser or Files app to <b>install unknown apps</b>, then tap <b>Install</b>.</li>
+          <li>Open Nexonic and allow notifications, so downloads keep running with the screen off.</li>
+          <li>In Chrome: <b>Share → Download with Nexonic</b>, or use the built-in browser.</li>
         </ol>
       </div>
       <div class="panel">
@@ -594,6 +634,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
     <div class="faq">
       <details><summary>Is it really free?</summary><p>Yes. Nexonic Download Manager is free and open source under the MIT license, with no ads, no account, no trial and no tracking.</p></details>
       <details><summary>Is this an IDM alternative for Mac?</summary><p>Yes. It is a native Mac app with IDM-style features: multi-connection downloads, pause and resume, categories, a scheduler, queues and browser integration. It is not affiliated with Internet Download Manager.</p></details>
+      <details><summary>Is there an Android or iPhone app?</summary><p>Yes for Android 10 and later: <a href="#android">see what it does</a> and <a href="#install-android">how to install it</a>. The iPhone and iPad version is in development.</p></details>
       <details><summary>Which browsers work?</summary><p>Chrome, Edge, Brave and Opera through the extension, and Firefox through the add-on. Open the app once, then install the extension and restart the browser.</p></details>
       <details><summary>The browser doesn't hand over downloads. What do I do?</summary><p>Open the app once so it can register with your browsers, then restart the browser. If the app can't be reached, the browser keeps the download, so nothing is lost.</p></details>
       <details><summary>macOS says it can't verify the app. What do I do?</summary><p>That's expected: the app is free and not sold through Apple, so macOS asks once. Follow the three steps in <a href="#first-launch">First launch on Mac</a>, or install with the one-line Terminal command and there is no warning.</p></details>
@@ -610,10 +651,11 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
   <div class="wrap">
     <div class="cta">
       <h2>Download faster, starting today</h2>
-      <p>Free for Mac and Windows, with the browser extension for Chrome, Edge, Brave, Opera and Firefox.</p>
+      <p>Free for Mac, Windows and Android, with the browser extension for Chrome, Edge, Brave, Opera and Firefox.</p>
       <div class="btns">
         <a class="btn primary lg" href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Mac.dmg"><svg class="i"><use href="#i-apple"/></svg>Download for Mac</a>
         <a class="btn primary lg" href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Setup.exe"><svg class="i"><use href="#i-win"/></svg>Download for Windows</a>
+        <a class="btn primary lg" href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android.apk"><svg class="i"><use href="#i-phone"/></svg>Download for Android</a>
         <a class="btn glass lg" href="#extension"><svg class="i"><use href="#i-puzzle"/></svg>Browser extension</a>
       </div>
       <p class="meta" style="margin-bottom:0">If it saves you time, please <a href="https://github.com/Shahrukhalid/nexonic-download-manager">star it on GitHub</a> so others can find it.</p>
@@ -627,11 +669,12 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
     <div class="foot">
       <div>
         <a class="brand" href="./"><img src="icon.png" alt="" width="28" height="28">Nexonic Download Manager</a>
-        <p style="margin:0;max-width:340px">Free, open-source download manager for Mac and Windows. Made by <a href="https://www.shahrukhalid.com" style="display:inline;color:var(--brand)">Shahrukh Khalid</a>.</p>
+        <p style="margin:0;max-width:340px">Free, open-source download manager for Mac, Windows and Android. Made by <a href="https://www.shahrukhalid.com" style="display:inline;color:var(--brand)">Shahrukh Khalid</a>.</p>
       </div>
       <div><h4>Download</h4>
         <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Mac.dmg">Mac</a>
         <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Setup.exe">Windows</a>
+        <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android.apk">Android</a>
         <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicExtension-Chrome.zip">Chrome extension</a>
         <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicAddon-Firefox.xpi">Firefox add-on</a>
       </div>
@@ -657,14 +700,16 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
 <script>
 (function(){
   var base='https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/';
-  var ua=navigator.userAgent, mobile=/iPhone|iPad|iPod|Android/i.test(ua);
+  var ua=navigator.userAgent, mobile=/iPhone|iPad|iPod|Android/i.test(ua), android=/Android/i.test(ua);
   var mac=/Macintosh|Mac OS X/.test(ua)&&!mobile&&!(navigator.maxTouchPoints>1), win=/Windows/.test(ua);
   var ff=/Firefox\//.test(ua);
   var dl=document.getElementById('hero-dl'), lab=document.getElementById('hero-dl-label'), sub=document.getElementById('hero-dl-sub'), other=document.getElementById('hero-other');
   if(mac){dl.href=base+'NexonicDownloadManager-Mac.dmg';lab.textContent='Download for Mac';sub.textContent='macOS 13+ · Apple silicon and Intel';other.textContent='Windows';other.href=base+'NexonicDownloadManager-Windows-Setup.exe';document.getElementById('card-mac').classList.add('rec');}
   else if(win){dl.href=base+'NexonicDownloadManager-Windows-Setup.exe';lab.textContent='Download for Windows';sub.textContent='Windows 10 and 11 · 64-bit';other.textContent='Mac';other.href=base+'NexonicDownloadManager-Mac.dmg';document.getElementById('card-win').classList.add('rec');}
-  else{other.textContent='Mac and Windows';if(mobile)document.getElementById('mobile-note').style.display='block';}
-  if(ff){var a=document.getElementById('ext-firefox'),b=document.getElementById('ext-chrome');a.className='btn primary';b.className='btn outline';a.insertBefore(b.querySelector('svg'),a.firstChild);a.parentNode.insertBefore(a,b);document.getElementById('hero-ext').href=a.href;document.getElementById('hero-ext-label').textContent='Add to Firefox';}
+  else if(android){dl.href=base+'NexonicDownloadManager-Android.apk';lab.textContent='Download for Android';sub.textContent='Android 10 or later · v'+document.querySelector('.pill b').textContent.replace(/[^0-9.]/g,'');other.textContent='Mac and Windows';other.href='#download';document.getElementById('card-android').classList.add('rec');}
+  else{other.textContent='Mac, Windows and Android';if(mobile)document.getElementById('mobile-note').style.display='block';}
+  if(android){var he=document.getElementById('hero-ext');he.href='#android';document.getElementById('hero-ext-label').textContent='How it works on Android';he.querySelector('small').textContent='Built-in browser and Share from Chrome';}
+  if(ff&&!mobile){var a=document.getElementById('ext-firefox'),b=document.getElementById('ext-chrome');a.className='btn primary';b.className='btn outline';a.insertBefore(b.querySelector('svg'),a.firstChild);a.parentNode.insertBefore(a,b);document.getElementById('hero-ext').href=a.href;document.getElementById('hero-ext-label').textContent='Add to Firefox';}
   if(sub.textContent.indexOf('__')>-1)sub.textContent='Mac and Windows';
 
   document.querySelectorAll('.copy').forEach(function(btn){btn.addEventListener('click',function(){

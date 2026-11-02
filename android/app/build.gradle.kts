@@ -12,8 +12,11 @@ android {
         applicationId = "com.nexonic.downloadmanager"
         minSdk = 29
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        // Same version as the Mac and Windows apps (VERSION at the repository root), e.g. 0.6.7 -> code 607.
+        val version = rootProject.file("../VERSION").readText().trim()
+        val (major, minor, patch) = version.split(".").map { it.takeWhile(Char::isDigit).ifEmpty { "0" }.toInt() }
+        versionCode = major * 10000 + minor * 100 + patch
+        versionName = version
     }
 
     // Release signing comes from the environment (GitHub secrets); keys are never stored in the repository.

@@ -1,0 +1,62 @@
+name: Android release
+# Adds the signed Android app to the release of the same tag. Runs next to the Mac/Windows Release workflow
+# (which it does not change) and waits until that workflow has created the release.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to add the Android app to (e.g. v0.6.8)"
+        required: true
+permissions:
+  contents: write
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.11.1"
+      - name: Signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.NDM_ANDROID_KEYSTORE_B64 }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then echo "The NDM_ANDROID_* secrets are missing: no unsigned app is published."; exit 1; fi
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "NDM_ANDROID_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+      - name: Tests and signed release build
+        env:
+          NDM_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.NDM_ANDROID_KEYSTORE_PASSWORD }}
+          NDM_ANDROID_KEY_ALIAS: nexonic
+          NDM_ANDROID_KEY_PASSWORD: ${{ secrets.NDM_ANDROID_KEY_PASSWORD }}
+        run: gradle -p android --no-daemon testDebugUnitTest assembleRelease
+      - name: Check the signature and version
+        run: |
+          set -euo pipefail
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          cp android/app/build/outputs/apk/release/app-release.apk NexonicDownloadManager-Android.apk
+          "$BT/apksigner" verify --print-certs NexonicDownloadManager-Android.apk | grep "certificate SHA-256"
+          "$BT/aapt2" dump badging NexonicDownloadManager-Android.apk | grep "^package" | grep -q "versionName='$(cat VERSION)'"
+      - name: Add it to the release (waits for the Release workflow to create it)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in $(seq 1 60); do
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              gh release upload "$TAG" NexonicDownloadManager-Android.apk --clobber
+              echo "Added NexonicDownloadManager-Android.apk to $TAG"; exit 0
+            fi
+            sleep 30
+          done
+          echo "The release $TAG was not created within 30 minutes"; exit 1

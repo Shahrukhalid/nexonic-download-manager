@@ -29,5 +29,6 @@ Native Android app (Kotlin, Jetpack Compose), Android 10 or later. Same download
 gradle -p android testDebugUnitTest assembleDebug   # JDK 17 and the Android SDK
 ```
 
-The *Android* GitHub Actions workflow runs the tests and builds `NexonicDownloadManager-Android-debug.apk` (installable) and a release APK.
+The *Android* GitHub Actions workflow runs the tests and builds `NexonicDownloadManager-Android-debug.apk` and the signed release APK on every change.
+When a version tag (`v*`) is pushed, the *Android release* workflow builds the signed app and adds `NexonicDownloadManager-Android.apk` to that release, next to the Mac and Windows files; the download links on the website and in the README always fetch it. The app's version comes from `VERSION`, like the desktop apps.
 The release APK is signed when these repository secrets are set: `NDM_ANDROID_KEYSTORE_B64`, `NDM_ANDROID_KEYSTORE_PASSWORD`, `NDM_ANDROID_KEY_ALIAS`, `NDM_ANDROID_KEY_PASSWORD`. `setup-android-signing.sh` creates the key on your own computer (with `openssl`) and sets the secrets with `gh`. Keys are never stored in the repository. Back up the key folder: every update must be signed with the same key.
