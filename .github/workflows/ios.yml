@@ -4,9 +4,9 @@ name: iOS
 on:
   push:
     branches: [main, feature/mobile-platforms]
-    paths: ["ios/**", "Sources/NexonicCore/**", "android/demo/page.html", ".github/workflows/ios.yml"]
+    paths: ["ios/**", "mac/Sources/NexonicCore/**", "android/demo/page.html", ".github/workflows/ios.yml"]
   pull_request:
-    paths: ["ios/**", "Sources/NexonicCore/**", ".github/workflows/ios.yml"]
+    paths: ["ios/**", "mac/Sources/NexonicCore/**", ".github/workflows/ios.yml"]
   workflow_dispatch:
 permissions:
   contents: write
@@ -18,7 +18,7 @@ jobs:
     runs-on: macos-15
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Xcode project
         run: |
           brew list xcodegen >/dev/null 2>&1 || brew install -q xcodegen
@@ -61,12 +61,12 @@ jobs:
           nohup python3 -m http.server 8098 --bind 127.0.0.1 --directory /tmp/demo-page >/dev/null 2>&1 &
           sleep 1
           bash ios/take-screenshots.sh "$APP"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: NexonicDownloadManager-iOS
           path: out/*
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: shots-ios

@@ -10,13 +10,13 @@ jobs:
     runs-on: macos-15
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/cache@v4
         with:
           path: .ffmpeg-cache/mac
           key: ffmpeg-mac-${{ hashFiles('scripts/build-ffmpeg.sh') }}
       - name: Tests
-        run: swift test
+        run: swift test --package-path mac
       - name: Build the app
         run: UNIVERSAL=0 bash scripts/build-app.sh
       - name: Check the bundle
@@ -46,7 +46,7 @@ jobs:
           popd
           plutil -lint "build/Nexonic Download Manager.app/Contents/Info.plist"
           python3 scripts/host-ping.py "build/Nexonic Download Manager.app/Contents/MacOS/nexonic-host"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: nexonic-download-manager
           path: build/*.dmg
@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/cache@v4
         id: cache
         with:
@@ -62,13 +62,13 @@ jobs:
           key: ffmpeg-windows-${{ hashFiles('scripts/build-ffmpeg.sh') }}
       - if: steps.cache.outputs.cache-hit != 'true'
         run: sudo apt-get install -y -qq mingw-w64 && bash scripts/build-ffmpeg.sh windows .ffmpeg-cache/windows
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ffmpeg-windows
           path: .ffmpeg-cache/windows
       - name: Video engine for Windows
         run: bash scripts/fetch-video-tools.sh windows .tools-cache/windows
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: tools-windows
           path: .tools-cache/windows
@@ -77,7 +77,7 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v4
         with:
           name: ffmpeg-windows
@@ -116,15 +116,15 @@ jobs:
           $s.Write([BitConverter]::GetBytes($body.Length), 0, 4); $s.Write($body, 0, $body.Length); $s.Close()
           $out = $p.StandardOutput.ReadToEnd(); $p.WaitForExit()
           if ($out -notmatch '"ok":true') { throw "no ping answer: $out" }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: nexonic-download-manager-windows
           path: build/*.exe
   extension:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - run: node --test

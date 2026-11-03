@@ -9,13 +9,13 @@ jobs:
     runs-on: macos-15
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/cache@v4
         with:
           path: .ffmpeg-cache/mac
           key: ffmpeg-mac-${{ hashFiles('scripts/build-ffmpeg.sh') }}
       - name: Tests
-        run: swift test
+        run: swift test --package-path mac
       - name: Build (Apple silicon and Intel)
         run: bash scripts/build-app.sh
       - name: Check the app before anything is published (every tool present, runs, and is built for both chips)
@@ -70,7 +70,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/cache@v4
         id: cache
         with:
@@ -78,13 +78,13 @@ jobs:
           key: ffmpeg-windows-${{ hashFiles('scripts/build-ffmpeg.sh') }}
       - if: steps.cache.outputs.cache-hit != 'true'
         run: sudo apt-get install -y -qq mingw-w64 && bash scripts/build-ffmpeg.sh windows .ffmpeg-cache/windows
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ffmpeg-windows
           path: .ffmpeg-cache/windows
       - name: Video engine for Windows
         run: bash scripts/fetch-video-tools.sh windows .tools-cache/windows
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: tools-windows
           path: .tools-cache/windows
@@ -104,7 +104,7 @@ jobs:
       DOTNET_CLI_TELEMETRY_OPTOUT: 1
       AVALONIA_TELEMETRY_OPTOUT: 1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
@@ -138,7 +138,7 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v4
         with:
           name: ffmpeg-windows

@@ -1,6 +1,6 @@
 import Foundation
 
-/// The desktop apps' network rules (Sources/NexonicCore/Transfer.swift `Network`), for iOS.
+/// The desktop apps' network rules (mac/Sources/NexonicCore/Transfer.swift `Network`), for iOS.
 public enum Net {
     static func port(_ u: URL) -> Int { u.port ?? (u.scheme?.lowercased() == "https" ? 443 : 80) }
 

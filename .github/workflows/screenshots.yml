@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ["Sources/**", "windows/App/**", "packaging/**", ".github/workflows/screenshots.yml"]
+    paths: ["mac/Sources/**", "windows/App/**", "packaging/**", ".github/workflows/screenshots.yml"]
 permissions:
   contents: write
 concurrency:
@@ -15,7 +15,7 @@ jobs:
     runs-on: macos-15
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/cache@v4
         with:
           path: .ffmpeg-cache/mac
@@ -36,7 +36,7 @@ jobs:
             sleep 1; kill "$pid" 2>/dev/null || true
           done
           ls -la shots
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: shots-mac
           path: shots/*.png
@@ -44,7 +44,7 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
@@ -65,7 +65,7 @@ jobs:
           }
           Stop-Process $server -ErrorAction SilentlyContinue
           Get-ChildItem shots
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: shots-windows
           path: shots/*.png
@@ -74,7 +74,7 @@ jobs:
     if: always() && (needs.mac.result == 'success' || needs.windows.result == 'success')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v4
         with:
           pattern: shots-*

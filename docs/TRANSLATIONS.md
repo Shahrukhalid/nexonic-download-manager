@@ -41,8 +41,8 @@ The Mac and iPhone apps share `packaging/Localizations/<code>.lproj/Localizable.
 system language; pick a different one per app in System Settings → General →
 Language & Region → Applications (Mac) or Settings → Nexonic → Language
 (iPhone and iPad). Keys are the English text; anything missing stays in English.
-`swift test` checks that every language has the English keys. When a language
+`swift test --package-path mac` checks that every language has the English keys. When a language
 has been reviewed, replace its first-line comment and update
-`Tests/NexonicCoreTests/LocalizationTests.swift`.
+`mac/Tests/NexonicCoreTests/LocalizationTests.swift`.
 
 The Android app is English only for now.

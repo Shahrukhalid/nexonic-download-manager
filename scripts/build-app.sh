@@ -9,8 +9,8 @@ APP="build/Nexonic Download Manager.app"
 ARCHS=()
 if [ "${UNIVERSAL:-1}" != "0" ] && xcodebuild -version >/dev/null 2>&1; then ARCHS=(--arch arm64 --arch x86_64); fi
 
-swift build -c release ${ARCHS[@]+"${ARCHS[@]}"}
-BIN="$(swift build -c release ${ARCHS[@]+"${ARCHS[@]}"} --show-bin-path)"
+swift build --package-path mac -c release ${ARCHS[@]+"${ARCHS[@]}"}
+BIN="$(swift build --package-path mac -c release ${ARCHS[@]+"${ARCHS[@]}"} --show-bin-path)"
 
 rm -rf build && mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 python3 scripts/build-extensions.py

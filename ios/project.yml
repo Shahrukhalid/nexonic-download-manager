@@ -21,10 +21,10 @@ targets:
     sources:
       - path: NexonicKit
       # Shared with the Mac and Windows apps' rules (plain Foundation, unchanged).
-      - path: ../Sources/NexonicCore/FileNames.swift
-      - path: ../Sources/NexonicCore/FileCategory.swift
-      - path: ../Sources/NexonicCore/Links.swift
-      - path: ../Sources/NexonicCore/BatchPattern.swift
+      - path: ../mac/Sources/NexonicCore/FileNames.swift
+      - path: ../mac/Sources/NexonicCore/FileCategory.swift
+      - path: ../mac/Sources/NexonicCore/Links.swift
+      - path: ../mac/Sources/NexonicCore/BatchPattern.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nexonic.downloadmanager.kit

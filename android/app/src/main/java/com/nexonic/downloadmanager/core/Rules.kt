@@ -11,7 +11,7 @@ data class Segment(val id: Int, val start: Long, var end: Long, var written: Lon
     val isComplete: Boolean get() = end >= 0 && written >= length
 }
 
-/** Same rules as the desktop apps (Sources/NexonicCore/SegmentPlanner.swift). */
+/** Same rules as the desktop apps (mac/Sources/NexonicCore/SegmentPlanner.swift). */
 object SegmentPlanner {
     const val MIN_SEGMENT: Long = 512 * 1024
     const val MIN_SPLIT: Long = 1L shl 20

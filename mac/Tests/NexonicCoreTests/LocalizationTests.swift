@@ -3,7 +3,7 @@ import XCTest
 /// The Mac and iPhone apps share packaging/Localizations. Every language must have exactly the English keys.
 final class LocalizationTests: XCTestCase {
     private let root = URL(fileURLWithPath: #filePath)
-        .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         .appendingPathComponent("packaging/Localizations")
 
     private func table(_ code: String) throws -> [String: String] {

@@ -1,7 +1,7 @@
 # Nexonic Download Manager for iPhone and iPad
 
 Native SwiftUI app for iOS and iPadOS 17 or later, with a Share extension and a Shortcuts action. It shares the Mac and
-Windows apps' rules for file names, categories, links and batch patterns (`Sources/NexonicCore`).
+Windows apps' rules for file names, categories, links and batch patterns (`mac/Sources/NexonicCore`).
 
 ## Download with one tap
 

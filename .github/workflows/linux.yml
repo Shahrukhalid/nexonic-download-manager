@@ -22,7 +22,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 50
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
@@ -45,7 +45,7 @@ jobs:
         run: bash linux/packaging/build.sh ${{ matrix.arch }} .ffmpeg-cache/linux-${{ matrix.arch }} .tools-cache/linux-${{ matrix.arch }}
       - name: Check the app and the packages
         run: bash linux/packaging/check.sh ${{ matrix.arch }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: linux-${{ matrix.arch }}
