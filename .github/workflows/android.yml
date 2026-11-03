@@ -36,7 +36,10 @@ jobs:
           NDM_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.NDM_ANDROID_KEYSTORE_PASSWORD }}
           NDM_ANDROID_KEY_ALIAS: nexonic # not a secret; as a secret GitHub would hide every "nexonic" in the logs
           NDM_ANDROID_KEY_PASSWORD: ${{ secrets.NDM_ANDROID_KEY_PASSWORD }}
-        run: gradle -p android --no-daemon assembleDebug assembleRelease
+        run: |
+          # Separately: release builds make one APK per processor type, debug builds one APK for all.
+          gradle -p android --no-daemon assembleDebug
+          gradle -p android --no-daemon assembleRelease
       - name: Check the APKs
         run: |
           set -e
