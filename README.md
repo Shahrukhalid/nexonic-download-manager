@@ -26,6 +26,7 @@ Download faster, pause and resume anytime, and save videos from YouTube, Instagr
 | **Mac** (macOS 13+, Apple silicon and Intel) | [NexonicDownloadManager-Mac.dmg](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Mac.dmg) |
 | **Windows** 10 / 11 | [NexonicDownloadManager-Windows-Setup.exe](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Setup.exe) |
 | Windows, no install | [NexonicDownloadManager-Windows-Portable.zip](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Portable.zip) |
+| **iPhone, iPad** (free shortcut for file links) | [Save-with-Nexonic.shortcut](https://shahrukhalid.github.io/nexonic-download-manager/Save-with-Nexonic.shortcut) |
 | **Android** 10+ (phones and tablets) | [NexonicDownloadManager-Android.apk](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android.apk) |
 | Android, older 32-bit phones | [NexonicDownloadManager-Android-32bit.apk](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android-32bit.apk) |
 | Chrome, Edge, Brave, Opera extension | [NexonicExtension-Chrome.zip](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicExtension-Chrome.zip) |
@@ -77,7 +78,14 @@ curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | 
 
 Updates install over the old version; your downloads list is kept.
 
-**iPhone and iPad** (in testing, not on the App Store yet)
+**iPhone and iPad: free shortcut, works today**
+
+[**Get the "Save with Nexonic" shortcut**](https://shahrukhalid.github.io/nexonic-download-manager/Save-with-Nexonic.shortcut): open the link in Safari on the iPhone or iPad and tap
+**Add Shortcut**. Then share a link to a file (a .mp4, .mp3, .pdf or .zip address) to **Save with Nexonic** and pick where
+to keep it in the Files app; with nothing shared, it uses the copied link. Videos from YouTube, Facebook, Instagram and
+other sites need the Nexonic app below.
+
+**iPhone and iPad app** (in testing, not on the App Store yet)
 
 Install it with Xcode on your own device (free Apple ID): see [ios/README.md](ios/README.md). Then set up the one-tap
 download once:
