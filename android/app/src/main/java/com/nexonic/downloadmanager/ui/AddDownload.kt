@@ -145,7 +145,9 @@ fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
         else name = name.substringBeforeLast('.', name) + "." + p.choices[i].ext
     }
 
-    val canAdd = links.isNotEmpty() && !(single != null && isVideo && page == null)
+    // A video can be added right away: while the page is still being read it downloads in the best quality and is named
+    // after the video; problems then show on the download itself. Only a page that has no video can't be added.
+    val canAdd = links.isNotEmpty() && !(single != null && isVideo && page == null && !reading)
 
     fun add(startNow: Boolean) {
         if (links.isEmpty()) return
@@ -154,11 +156,11 @@ fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
         links.forEach { u ->
             val same = single != null
             // Several links: video pages get the best quality, named after the video.
-            val video = if (same) choice?.takeIf { isVideo } else if (VideoPages.isVideoSite(u)) VideoPages.best else null
+            val video = if (same && isVideo) choice ?: VideoPages.best else if (VideoPages.isVideoSite(u)) VideoPages.best else null
             Downloads.add(
                 NewDownload(
                     url = u,
-                    fileName = if (same && name.isNotBlank()) name else if (video != null) VideoPages.AUTO_NAME else FileNames.fromUrl(u),
+                    fileName = if (same && name.isNotBlank() && (video == null || page != null)) name else if (video != null) VideoPages.AUTO_NAME else FileNames.fromUrl(u),
                     size = if (video != null) video.size else if (same) probe?.size ?: offer?.size?.takeIf { it >= 0 } else null,
                     resumable = if (same) probe?.resumable ?: false else false,
                     referer = offer?.referer, userAgent = offer?.userAgent,
@@ -232,7 +234,7 @@ fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
                     }
                     if (reading) Row(verticalAlignment = Alignment.CenterVertically) {
                         CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp); Spacer(Modifier.width(8.dp))
-                        Text("Finding the video… (the first time takes a few seconds)", style = MaterialTheme.typography.bodySmall)
+                        Text("Finding the video… You can start now: it downloads in the best quality.", style = MaterialTheme.typography.bodySmall)
                     }
                     problem?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                 }

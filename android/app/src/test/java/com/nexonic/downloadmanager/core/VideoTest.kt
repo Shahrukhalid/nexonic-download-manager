@@ -74,4 +74,14 @@ class VideoTest {
         assertTrue(m.startsWith("The video engine could not start"))
         assertTrue(m.contains("NoClassDefFoundError: s2.e"))
     }
+
+    @Test fun progressLines() {
+        val (t, sp) = VideoPages.parseProgress("[download]  45.3% of ~  12.50MiB at    1.25MiB/s ETA 00:10 (frag 3/20)")
+        assertEquals((12.5 * 1048576).toLong(), t)
+        assertEquals((1.25 * 1048576).toLong(), sp)
+        val (t2, sp2) = VideoPages.parseProgress("[download] 100% of 3.00KiB in 00:00:01")
+        assertEquals(3072L, t2)
+        assertEquals(null, sp2)
+        assertEquals(null to null, VideoPages.parseProgress("[info] Downloading webpage"))
+    }
 }

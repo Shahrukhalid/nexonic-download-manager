@@ -11,6 +11,7 @@ import com.nexonic.downloadmanager.core.Job
 import com.nexonic.downloadmanager.core.VideoChoice
 import com.nexonic.downloadmanager.core.VideoPages
 import com.nexonic.downloadmanager.video.VideoJob
+import com.nexonic.downloadmanager.video.VideoEngine
 import com.nexonic.downloadmanager.core.Links
 import com.nexonic.downloadmanager.core.SpeedLimiter
 import com.nexonic.downloadmanager.core.Transfer
@@ -118,6 +119,12 @@ object Downloads {
         _items.value = listOf(item) + _items.value
         persist()
         if (startNow) pump()
+        // Added before its page was read: find the video's title in the background and show it in the list.
+        if (d.video != null && name == VideoPages.AUTO_NAME) Thread({
+            runCatching { VideoEngine.read(d.url, d.userAgent, d.referer) }.getOrNull()?.title?.let { title ->
+                update(id) { if (it.fileName == VideoPages.AUTO_NAME && it.status != Status.COMPLETE) it.copy(fileName = VideoPages.fileName(title, it.videoExt ?: "mp4")) else it }
+            }
+        }, "nexonic-video-title").start()
         return id
     }
 
@@ -228,16 +235,17 @@ object Downloads {
         var lastTime = System.currentTimeMillis()
         val job = VideoJob(
             id, item.url, choice, videoDir(id), settings.speedLimitKB, item.userAgent, item.referer,
-            onProgress = { percent, _ ->
+            onProgress = { percent, _, total, speed ->
                 update(id, save = false) {
                     if (it.status != Status.DOWNLOADING) return@update it
-                    val size = it.size
+                    // yt-dlp reports the size of the part it is downloading (video, then sound) and its speed.
+                    val size = total?.takeIf { t -> t > 0 } ?: it.size
                     val written = if (size != null && size > 0) (size * percent / 100).toLong() else it.written
                     val now = System.currentTimeMillis()
-                    val speed = if (now - lastTime >= 1000) ((written - lastBytes) * 1000 / (now - lastTime)).coerceAtLeast(0).also {
+                    val measured = if (now - lastTime >= 1000) ((written - lastBytes) * 1000 / (now - lastTime)).coerceAtLeast(0).also {
                         lastBytes = written; lastTime = now
                     } else it.speed
-                    it.copy(written = written, speed = speed)
+                    it.copy(written = written, size = size, speed = speed ?: measured)
                 }
             },
             onDone = { file ->

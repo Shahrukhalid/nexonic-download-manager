@@ -132,6 +132,22 @@ object VideoPages {
             "please report it (" + kind + (d?.let { ": $it" } ?: "") + ")."
     }
 
+    private val sizeRe = Regex("""of\s+~?\s*([\d.]+)\s*([KMGT]?i?B)""")
+    private val speedRe = Regex("""at\s+~?\s*([\d.]+)\s*([KMGT]?i?B)/s""")
+
+    private fun bytes(n: String, unit: String): Long? {
+        val v = n.toDoubleOrNull() ?: return null
+        val m = when (unit.uppercase().replace("I", "")) { "B" -> 1.0; "KB" -> 1024.0; "MB" -> 1048576.0; "GB" -> 1073741824.0; "TB" -> 1099511627776.0; else -> return null }
+        return (v * m).toLong()
+    }
+
+    /** Total size and speed from a yt-dlp progress line ("[download] 45.3% of ~ 12.34MiB at 1.23MiB/s ETA 00:10"). */
+    fun parseProgress(line: String): Pair<Long?, Long?> {
+        val total = sizeRe.find(line)?.let { bytes(it.groupValues[1], it.groupValues[2]) }
+        val speed = speedRe.find(line)?.let { bytes(it.groupValues[1], it.groupValues[2]) }
+        return total to speed
+    }
+
     /** yt-dlp's error text, shortened to something useful for the user. */
     fun friendlyError(raw: String?): String {
         val line = raw.orEmpty().lines().map { it.trim() }.lastOrNull { it.startsWith("ERROR:") }?.removePrefix("ERROR:")?.trim()

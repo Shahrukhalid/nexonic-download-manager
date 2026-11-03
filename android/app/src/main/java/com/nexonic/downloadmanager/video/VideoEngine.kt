@@ -121,7 +121,7 @@ object VideoEngine {
      * yt-dlp keeps its .part files, so a paused download continues where it stopped.
      */
     fun download(id: String, url: String, choice: VideoChoice, dir: File, rateKB: Long, userAgent: String?, referer: String?,
-                 progress: (Float, Long) -> Unit): File {
+                 progress: (Float, Long, Long?, Long?) -> Unit): File {
         ensure()
         dir.mkdirs()
         val req = base(resolve(url), userAgent, referer).apply {
@@ -132,7 +132,9 @@ object VideoEngine {
             if (rateKB > 0) addOption("--limit-rate", "${rateKB}K")
         }
         try {
-            YoutubeDL.getInstance().execute(req, id, false) { p, eta, _ -> if (p >= 0) progress(p, eta) }
+            YoutubeDL.getInstance().execute(req, id, false) { p, eta, line ->
+                if (p >= 0) { val (total, speed) = VideoPages.parseProgress(line); progress(p, eta, total, speed) }
+            }
         } catch (e: YoutubeDL.CanceledException) {
             throw e
         } catch (e: Exception) {
@@ -182,7 +184,8 @@ class VideoJob(
     private val rateKB: Long,
     private val userAgent: String?,
     private val referer: String?,
-    private val onProgress: (Float, Long) -> Unit,
+    /** Percent, seconds left, total bytes and bytes per second (when yt-dlp reports them). */
+    private val onProgress: (Float, Long, Long?, Long?) -> Unit,
     private val onDone: (File) -> Unit,
     private val onFail: (String) -> Unit,
 ) : Job {
@@ -191,8 +194,8 @@ class VideoJob(
     override fun start() {
         Thread({
             try {
-                val file = VideoEngine.download(id.toString(), url, choice, dir, rateKB, userAgent, referer) { p, eta ->
-                    if (!stopped.get()) onProgress(p, eta)
+                val file = VideoEngine.download(id.toString(), url, choice, dir, rateKB, userAgent, referer) { p, eta, total, speed ->
+                    if (!stopped.get()) onProgress(p, eta, total, speed)
                 }
                 if (!stopped.get()) onDone(file)
             } catch (e: Throwable) {

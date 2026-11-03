@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 
 package com.nexonic.downloadmanager.ui
 
@@ -68,6 +68,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.material.icons.outlined.SelectAll
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -108,6 +113,11 @@ fun DownloadsScreen(items: List<DownloadItem>, ui: UiState, onOpenBrowser: () ->
     var searching by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
     val waitingForWifi by Downloads.waitingForWifi.collectAsState()
+    // Long-press a download to select it; then tap others to add them. Actions apply to every selected download.
+    var selected by remember { mutableStateOf(setOf<Long>()) }
+    var confirmRemove by remember { mutableStateOf(false) }
+    val selecting = selected.isNotEmpty()
+    androidx.activity.compose.BackHandler(enabled = selecting) { selected = emptySet() }
 
     val inView = items.filter {
         when (view) {
@@ -122,7 +132,24 @@ fun DownloadsScreen(items: List<DownloadItem>, ui: UiState, onOpenBrowser: () ->
 
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
-            if (searching) {
+            if (selecting) {
+                val chosen = items.filter { it.id in selected }
+                TopAppBar(
+                    navigationIcon = { IconButton(onClick = { selected = emptySet() }) { Icon(Icons.Outlined.Close, "Cancel selection") } },
+                    title = { Text("${selected.size} selected", fontWeight = FontWeight.SemiBold) },
+                    actions = {
+                        IconButton(onClick = { selected = if (selected.size == shown.size) emptySet() else shown.map { it.id }.toSet() }) {
+                            Icon(Icons.Outlined.SelectAll, if (selected.size == shown.size) "Deselect all" else "Select all")
+                        }
+                        if (chosen.any { it.isActive }) IconButton(onClick = { chosen.filter { it.isActive }.forEach { Downloads.pause(it.id) } }) { Icon(Icons.Outlined.Pause, "Pause") }
+                        if (chosen.any { it.status in listOf(Status.PAUSED, Status.LATER, Status.FAILED) }) IconButton(onClick = {
+                            chosen.filter { it.status in listOf(Status.PAUSED, Status.LATER, Status.FAILED) }.forEach { Downloads.retry(it.id) }
+                        }) { Icon(Icons.Outlined.PlayArrow, "Start") }
+                        if (chosen.size == 1) IconButton(onClick = { ui.detailId = chosen.first().id; selected = emptySet() }) { Icon(Icons.Outlined.Info, "Details") }
+                        IconButton(onClick = { confirmRemove = true }) { Icon(Icons.Outlined.Delete, "Delete") }
+                    },
+                )
+            } else if (searching) {
                 TopAppBar(title = {
                     OutlinedTextField(query, { query = it }, placeholder = { Text("Search downloads") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 }, actions = { IconButton(onClick = { searching = false; query = "" }) { Icon(Icons.Outlined.Close, "Close search") } })
@@ -160,15 +187,44 @@ fun DownloadsScreen(items: List<DownloadItem>, ui: UiState, onOpenBrowser: () ->
                 Empty(items.isEmpty(), onAdd = { ui.addText = "" }, onOpenBrowser = onOpenBrowser)
             } else {
                 LazyColumn(Modifier.fillMaxSize(), contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 96.dp)) {
-                    items(shown, key = { it.id }) { item -> DownloadRow(item) { ui.detailId = item.id } }
+                    items(shown, key = { it.id }) { item ->
+                        DownloadRow(
+                            item, selected = item.id in selected, selecting = selecting,
+                            onClick = { if (selecting) selected = selected.toggle(item.id) else ui.detailId = item.id },
+                            onLongClick = { selected = selected.toggle(item.id) },
+                        )
+                    }
                 }
             }
         }
-        FloatingActionButton(onClick = { ui.addText = "" }, modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp)) {
+        if (!selecting) FloatingActionButton(onClick = { ui.addText = "" }, modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp)) {
             Icon(Icons.Outlined.Add, "Add download")
         }
     }
+
+    if (confirmRemove) {
+        val chosen = items.filter { it.id in selected }
+        var alsoFiles by remember { mutableStateOf(false) }
+        AlertDialog(
+            onDismissRequest = { confirmRemove = false },
+            title = { Text(if (chosen.size == 1) "Remove this download?" else "Remove ${chosen.size} downloads?") },
+            text = {
+                Column {
+                    Text("They are removed from the list.", style = MaterialTheme.typography.bodyMedium)
+                    if (chosen.any { it.status == Status.COMPLETE && it.contentUri != null }) Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(alsoFiles, { alsoFiles = it }); Text("Also delete the downloaded files")
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { chosen.forEach { Downloads.remove(it.id, alsoFiles) }; selected = emptySet(); confirmRemove = false }) { Text("Remove") }
+            },
+            dismissButton = { TextButton(onClick = { confirmRemove = false }) { Text("Cancel") } },
+        )
+    }
 }
+
+private fun Set<Long>.toggle(id: Long): Set<Long> = if (id in this) this - id else this + id
 
 @Composable
 private fun Empty(nothing: Boolean, onAdd: () -> Unit, onOpenBrowser: () -> Unit) {
@@ -204,11 +260,18 @@ fun statusText(item: DownloadItem): String = when (item.status) {
 }
 
 @Composable
-fun DownloadRow(item: DownloadItem, onClick: () -> Unit) {
+fun DownloadRow(item: DownloadItem, selected: Boolean = false, selecting: Boolean = false, onLongClick: () -> Unit = {}, onClick: () -> Unit) {
     val color = categoryColor(item.category)
-    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(42.dp).clip(RoundedCornerShape(11.dp)).background(color.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
-            Icon(categoryIcon(item.category), null, tint = color)
+    Row(
+        Modifier.fillMaxWidth()
+            .background(if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.16f) else Color.Transparent)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(42.dp).clip(RoundedCornerShape(11.dp)).background(if (selected) MaterialTheme.colorScheme.primary else color.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
+            if (selected) Icon(Icons.Outlined.Check, "Selected", tint = MaterialTheme.colorScheme.onPrimary)
+            else Icon(categoryIcon(item.category), null, tint = color)
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
@@ -225,7 +288,7 @@ fun DownloadRow(item: DownloadItem, onClick: () -> Unit) {
             )
         }
         Spacer(Modifier.width(4.dp))
-        when (item.status) {
+        if (!selecting) when (item.status) {
             Status.DOWNLOADING, Status.QUEUED -> IconButton(onClick = { Downloads.pause(item.id) }) { Icon(Icons.Outlined.Pause, "Pause") }
             Status.PAUSED, Status.LATER -> IconButton(onClick = { Downloads.resume(item.id) }) { Icon(Icons.Outlined.PlayArrow, "Resume") }
             Status.FAILED -> IconButton(onClick = { Downloads.retry(item.id) }) { Icon(Icons.Outlined.Refresh, "Try again") }
