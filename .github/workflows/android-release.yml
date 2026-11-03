@@ -45,17 +45,23 @@ jobs:
         run: |
           set -euo pipefail
           BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
-          cp android/app/build/outputs/apk/release/app-release.apk NexonicDownloadManager-Android.apk
-          "$BT/apksigner" verify --print-certs NexonicDownloadManager-Android.apk | grep "certificate SHA-256"
-          "$BT/aapt2" dump badging NexonicDownloadManager-Android.apk | grep "^package" | grep -q "versionName='$(cat VERSION)'"
+          R=android/app/build/outputs/apk/release
+          # arm64 for almost every phone; -32bit for older phones.
+          cp $R/app-arm64-v8a-release.apk NexonicDownloadManager-Android.apk
+          cp $R/app-armeabi-v7a-release.apk NexonicDownloadManager-Android-32bit.apk
+          for f in NexonicDownloadManager-Android.apk NexonicDownloadManager-Android-32bit.apk; do
+            "$BT/apksigner" verify --print-certs $f | grep "certificate SHA-256"
+            "$BT/aapt2" dump badging $f | grep "^package" | grep -q "versionName='$(cat VERSION)'"
+          done
+          ls -la NexonicDownloadManager-Android*.apk
       - name: Add it to the release (waits for the Release workflow to create it)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           for i in $(seq 1 60); do
             if gh release view "$TAG" >/dev/null 2>&1; then
-              gh release upload "$TAG" NexonicDownloadManager-Android.apk --clobber
-              echo "Added NexonicDownloadManager-Android.apk to $TAG"; exit 0
+              gh release upload "$TAG" NexonicDownloadManager-Android.apk NexonicDownloadManager-Android-32bit.apk --clobber
+              echo "Added the Android APKs to $TAG"; exit 0
             fi
             sleep 30
           done

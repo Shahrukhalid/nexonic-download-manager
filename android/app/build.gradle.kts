@@ -21,6 +21,18 @@ android {
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64") }
     }
 
+    // The engine is about 50 MB per processor type, so the release is one APK per type: arm64 (almost every phone)
+    // and 32-bit ARM (older phones). Debug builds stay a single APK for every type (emulators, screenshots).
+    val releaseBuild = gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }
+    splits {
+        abi {
+            isEnable = releaseBuild
+            reset()
+            include("arm64-v8a", "armeabi-v7a")
+            isUniversalApk = false
+        }
+    }
+
     // Release signing comes from the environment (GitHub secrets); keys are never stored in the repository.
     val keystore = System.getenv("NDM_ANDROID_KEYSTORE")
     signingConfigs {

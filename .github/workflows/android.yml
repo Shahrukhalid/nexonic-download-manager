@@ -41,9 +41,15 @@ jobs:
         run: |
           set -e
           mkdir -p out
-          cp android/app/build/outputs/apk/debug/app-debug.apk out/NexonicDownloadManager-Android-debug.apk
-          rel=$(ls android/app/build/outputs/apk/release/*.apk | head -1)
-          cp "$rel" out/NexonicDownloadManager-Android-release$( [[ "$rel" == *unsigned* ]] && echo -unsigned ).apk
+          DBG=android/app/build/outputs/apk/debug/app-debug.apk
+          R=android/app/build/outputs/apk/release
+          ls -la $R
+          # One release APK per processor type: arm64 (almost every phone) and 32-bit ARM (older phones).
+          for abi in arm64-v8a armeabi-v7a; do
+            rel=$(ls $R/app-$abi-release*.apk | head -1)
+            name=NexonicDownloadManager-Android$( [ $abi = armeabi-v7a ] && echo -32bit )
+            cp "$rel" out/$name-release$( [[ "$rel" == *unsigned* ]] && echo -unsigned ).apk
+          done
           BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
           AAPT="$BT/aapt2"
           if ls out/*release.apk >/dev/null 2>&1; then
@@ -52,8 +58,8 @@ jobs:
           else
             echo "Release APK is unsigned: set the NDM_ANDROID_* secrets (android/setup-android-signing.sh)."
           fi
-          "$AAPT" dump badging out/NexonicDownloadManager-Android-debug.apk | grep -E "^package|sdkVersion|targetSdk"
-          "$AAPT" dump permissions out/NexonicDownloadManager-Android-debug.apk
+          "$AAPT" dump badging $DBG | grep -E "^package|sdkVersion|targetSdk|native-code"
+          "$AAPT" dump permissions $DBG
           ls -la out
           sha256sum out/*.apk
       - name: Test results
