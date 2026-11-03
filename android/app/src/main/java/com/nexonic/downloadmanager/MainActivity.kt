@@ -94,7 +94,9 @@ class MainActivity : ComponentActivity() {
             }
             Intent.ACTION_VIEW -> {
                 val u = intent.dataString
-                if (u != null && Links.isWebLink(u)) { ui.tab = Tab.BROWSER; browser.go(u) }
+                val shared = u?.let { Links.fromNexonicLink(it) }.orEmpty()
+                if (shared.isNotEmpty()) { ui.tab = Tab.DOWNLOADS; ui.addText = shared.joinToString("\n") }  // a QR code from the desktop app
+                else if (u != null && Links.isWebLink(u)) { ui.tab = Tab.BROWSER; browser.go(u) }
             }
         }
         if (intent.getBooleanExtra("startLater", false)) Downloads.startLater()

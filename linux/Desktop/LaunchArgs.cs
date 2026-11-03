@@ -16,7 +16,7 @@ public static class LaunchArgs
         foreach (var arg in args)
         {
             if (arg.StartsWith("--", StringComparison.Ordinal)) continue;
-            if (arg.StartsWith("nexonic:", StringComparison.OrdinalIgnoreCase) && FromScheme(arg) is { } u) links.Add(u);
+            if (arg.StartsWith("nexonic:", StringComparison.OrdinalIgnoreCase)) links.AddRange(FromScheme(arg));
             else if (new DownloadJob(arg).IsValid) links.Add(arg);
             else if (arg.StartsWith("file://", StringComparison.OrdinalIgnoreCase) && Uri.TryCreate(arg, UriKind.Absolute, out var f)) links.AddRange(LinksIn(f.LocalPath));
             else if (arg.StartsWith('/')) links.AddRange(LinksIn(arg));
@@ -25,18 +25,21 @@ public static class LaunchArgs
         return links.Take(MaxLinks).ToList();
     }
 
-    /// <summary>nexonic://add?url=https%3A%2F%2F… (or nexonic:https://…).</summary>
-    public static string? FromScheme(string arg)
+    /// <summary>nexonic://add?url=https%3A%2F%2F…&amp;url=… (the QR codes' links) or nexonic:https://….</summary>
+    public static List<string> FromScheme(string arg)
     {
-        if (!Uri.TryCreate(arg, UriKind.Absolute, out var u)) return null;
+        var found = new List<string>();
+        if (!Uri.TryCreate(arg, UriKind.Absolute, out var u)) return found;
         foreach (var part in u.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
             if (part.StartsWith("url=", StringComparison.OrdinalIgnoreCase))
             {
                 var link = Uri.UnescapeDataString(part[4..].Replace('+', ' '));
-                return new DownloadJob(link).IsValid ? link : null;
+                if (new DownloadJob(link).IsValid) found.Add(link);
             }
+        if (found.Count > 0) return found;
         var rest = arg[(arg.IndexOf(':') + 1)..].TrimStart('/');
-        return new DownloadJob(rest).IsValid ? rest : null;
+        if (new DownloadJob(rest).IsValid) found.Add(rest);
+        return found;
     }
 
     /// <summary>The links in a small file: a .url/.desktop shortcut (URL= line) or text with one link per line.</summary>

@@ -281,6 +281,9 @@ struct ContentView: View {
                 }
             }
         }
+        Button(ids.count == 1 ? "Show QR Code…" : "Show QR Code for \(ids.count) Downloads…") {
+            QrWindow.show(manager.items.filter { ids.contains($0.id) }.map(\.url))
+        }
         Menu("Move to Queue") {
             ForEach(manager.queues) { q in
                 Button(q.name) { moveTo(ids, q.id) }

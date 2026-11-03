@@ -598,6 +598,7 @@ public sealed class MainWindow : Window
         Item("Refresh Link…", () => { if (One is { } r) _ = Dialogs.RefreshLink(this, manager, r); });
         Item("Properties…", () => { if (One is { } r) _ = Dialogs.Properties(this, manager, r); });
         Item("Copy Link", () => { if (One is { } r) _ = Clipboard?.SetTextAsync(r.Record.Url); });
+        Item("Show QR Code…", () => { if (Selected.Count > 0) _ = Dialogs.ShowQr(this, Selected.Select(r => r.Record.Url).ToList()); });
         menu.Items.Add(moveMenu);
         menu.Items.Add(new Separator());
         Item("Delete…", () => _ = ConfirmRemove(Selected, toTrash: false));

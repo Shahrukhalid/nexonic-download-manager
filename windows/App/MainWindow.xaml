@@ -159,6 +159,7 @@
               <MenuItem Header="Refresh Link…" Click="OnRefreshLink" />
               <MenuItem Header="Properties…" Click="OnProperties" />
               <MenuItem Header="Copy Link" Click="OnCopyLink" />
+              <MenuItem Header="Show QR Code…" Click="OnShowQr" />
               <MenuItem x:Name="MoveMenu" Header="Move to Queue" />
               <Separator />
               <MenuItem Header="Delete…" Click="OnRemove" />

@@ -141,6 +141,20 @@ object Links {
             .map { unwrap(it) }
             .distinct()
 
+    /**
+     * The download links in a nexonic:// link (what the desktop app's QR codes hold):
+     * nexonic://add?url=https%3A%2F%2F…&url=… . Only web links are kept; nothing else in it is used.
+     */
+    fun fromNexonicLink(link: String): List<String> {
+        val u = runCatching { URI(link.trim()) }.getOrNull() ?: return emptyList()
+        if (!u.scheme.equals("nexonic", true)) return emptyList()
+        val query = u.rawQuery ?: return emptyList()
+        return query.split("&").mapNotNull {
+            if (it.substringBefore('=') != "url") null
+            else runCatching { URLDecoder.decode(it.substringAfter('=', ""), "UTF-8") }.getOrNull()
+        }.filter { isWebLink(it) }.distinct().take(200)
+    }
+
     fun isWebLink(url: String): Boolean {
         val u = runCatching { URI(url) }.getOrNull() ?: return false
         val s = u.scheme?.lowercase(Locale.ROOT)

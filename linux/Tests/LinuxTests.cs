@@ -219,3 +219,13 @@ public class LaunchArgsTests
         Assert.Equal(new[] { "https://example.com/file.zip", "https://example.com/d.mp4", "https://example.com/a.zip", "https://example.com/b.zip", "https://example.com/c.iso" }, links);
     }
 }
+
+public class SchemeTests
+{
+    [Fact]
+    public void QrLinksWithSeveralDownloads()
+    {
+        Assert.Equal(new[] { "https://example.com/a.zip", "https://example.com/b.zip" },
+            LaunchArgs.FromScheme("nexonic://add?url=https%3A%2F%2Fexample.com%2Fa.zip&url=https%3A%2F%2Fexample.com%2Fb.zip&url=file%3A%2F%2F%2Fx"));
+    }
+}

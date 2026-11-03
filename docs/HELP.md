@@ -11,6 +11,7 @@ The same guide is built into the app: **Help → Nexonic Download Manager Help**
 - [Batch and Site Grabber](#batch-and-site-grabber)
 - [Speed and Settings](#speed-and-settings)
 - [Site Settings, Backup and Network](#site-settings-backup-and-network)
+- [Download on Your Phone](#download-on-your-phone)
 - [Command Line](#command-line)
 - [Troubleshooting](#troubleshooting)
 - [Keyboard Shortcuts](#keyboard-shortcuts)
@@ -77,6 +78,13 @@ Connection are on Windows and Linux.*
   it on another computer. Passwords and cookies are never put in a backup. **Export Links** saves every link as text.
 - **Advanced network** (Options → Connection): smallest part size, tries, timeouts, DNS over HTTPS, and
   **Check the Connection** to see how long the name lookup and the connection take.
+
+## Download on Your Phone
+
+Right-click one or more downloads and choose **Show QR Code**. Scan the code with your phone's camera: the Nexonic app
+on the phone (Android now; iPhone when its app is released) opens with the links in its Add window. Only the links are
+in the code, never cookies or passwords, so downloads that need you to be signed in may not work on the phone. About
+10–20 links fit in one code.
 
 ## Command Line
 

@@ -13,5 +13,6 @@
     <ProjectReference Include="..\Desktop\Desktop.csproj" />
     <!-- Shared download-core tests that also run on Linux. -->
     <Compile Include="..\..\windows\Tests\ProfilesTests.cs" Link="ProfilesTests.cs" />
+    <Compile Include="..\..\windows\Tests\QrTests.cs" Link="QrTests.cs" />
   </ItemGroup>
 </Project>

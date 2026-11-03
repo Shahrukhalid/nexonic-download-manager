@@ -34,6 +34,13 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
             </intent-filter>
+            <!-- nexonic://add?url=… links, for example from a QR code shown by the desktop app. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="nexonic" android:host="add" />
+            </intent-filter>
             <!-- "Open with": web links open in the built-in browser. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

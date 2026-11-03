@@ -112,4 +112,11 @@ class RulesTest {
         assertEquals("2m 5s", Format.eta(125))
         assertEquals("more than 99 days", Format.eta(100L * 86400))
     }
+
+    @Test fun linksFromDesktopQrCodes() {
+        val l = Links.fromNexonicLink("nexonic://add?url=https%3A%2F%2Fexample.com%2Fa.zip&url=https%3A%2F%2Fexample.com%2Fb.iso&url=file%3A%2F%2F%2Fetc%2Fpasswd&x=1")
+        assertEquals(listOf("https://example.com/a.zip", "https://example.com/b.iso"), l)
+        assertTrue(Links.fromNexonicLink("https://example.com/?url=https%3A%2F%2Fx.com%2Fa").isEmpty())
+        assertTrue(Links.fromNexonicLink("nexonic://add").isEmpty())
+    }
 }

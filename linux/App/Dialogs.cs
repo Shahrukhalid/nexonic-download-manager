@@ -706,6 +706,38 @@ public static class Dialogs
         _ => "Firefox",
     };
 
+    // ---- QR code ----
+
+    /// <summary>The downloads as a QR code: the phone's camera opens them in Nexonic on Android or iPhone.</summary>
+    public static async Task ShowQr(Window owner, List<string> urls)
+    {
+        var (link, count) = ShareLinks.Link(urls);
+        if (count == 0) return;
+        var f = new Form(owner, "Download on Your Phone", 400);
+        f.Body.Children.Add(new QrView(QrCode.Encode(link)) { Width = 300, Height = 300, Margin = new Thickness(0, 4, 0, 8), HorizontalAlignment = HorizontalAlignment.Center });
+        f.Note(count == 1 ? "Scan with your phone's camera to download this file with the Nexonic app on your phone."
+                          : $"Scan with your phone's camera to download these {count} files with the Nexonic app on your phone.");
+        if (count < urls.Count) f.Note($"Only the first {count} of {urls.Count} links fit in one code.");
+        f.Note("Only the links are shared: no cookies or passwords. Downloads that need you to be signed in may not work on the phone.");
+        f.AddButton("Close", f.Close, isDefault: true, isCancel: true);
+        await f.Show();
+    }
+
+    /// <summary>Draws a QR code on white, with a quiet zone, at whole-pixel module sizes.</summary>
+    sealed class QrView(QrCode qr) : Control
+    {
+        public override void Render(DrawingContext dc)
+        {
+            var size = Math.Min(Bounds.Width, Bounds.Height);
+            dc.FillRectangle(Brushes.White, new Rect(0, 0, size, size));
+            var module = Math.Floor(size / (qr.Size + 8));
+            var offset = Math.Floor((size - module * qr.Size) / 2);
+            for (var y = 0; y < qr.Size; y++)
+                for (var x = 0; x < qr.Size; x++)
+                    if (qr[x, y]) dc.FillRectangle(Brushes.Black, new Rect(offset + x * module, offset + y * module, module, module));
+        }
+    }
+
     // ---- Download complete ----
 
     public static void Complete(DownloadManager m, DownloadRecord r)
