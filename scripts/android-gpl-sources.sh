@@ -13,7 +13,14 @@ TERMUX_COMMIT=8ddd9a7fc8e06330545487d81bb7591cb40f1aa6
 WORK="$(mktemp -d)"
 ROOT="$WORK/Android-GPL-Sources"
 mkdir -p "$ROOT/upstream"
-get() { curl -fsSL --retry 4 -o "$2" "$1"; }
+get() { # the URL, then known mirrors for hosts that are often down
+  curl -fsSL --retry 4 -o "$2" "$1" && return 0
+  case "$1" in
+    *fossies.org/*/lzo-*) curl -fsSL --retry 4 -o "$2" "https://www.oberhumer.com/opensource/lzo/download/$(basename "$1" .tar.xz).tar.gz" ;;
+    *downloads.sourceforge.net/project/*) curl -fsSL --retry 4 -o "$2" "https://master.dl.sourceforge.net/project/${1#*downloads.sourceforge.net/project/}?viasf=1" ;;
+    *) return 1 ;;
+  esac
+}
 
 # 1. youtubedl-android at the released tag (GPL-3.0).
 [ -n "${DRY:-}" ] || git -c advice.detachedHead=false clone -q --depth 1 --branch "$YTDL_TAG" https://github.com/yausername/youtubedl-android.git "$ROOT/youtubedl-android"
@@ -48,6 +55,11 @@ queue=(ffmpeg python)
 while [ ${#queue[@]} -gt 0 ]; do
   name="${queue[0]}"; queue=("${queue[@]:1}")
   [ -n "${seen[$name]:-}" ] && continue; seen[$name]=1
+  # libc++ comes from the Android NDK (LLVM, Apache-2.0 with LLVM exception, not GPL); its recipe downloads the whole
+  # NDK, which is a toolchain, not source. Point to it instead of copying it.
+  case "$name" in libc++|ndk-sysroot|ndk-multilib)
+    echo "$name: Android NDK (LLVM libc++, Apache-2.0 WITH LLVM-exception), source at https://github.com/llvm/llvm-project" >> "$ROOT/COMPONENTS.txt"; continue ;;
+  esac
   d="$(dir_of "$name")"
   [ -n "$d" ] && [ -n "${seen[dir:$d]:-}" ] && continue
   [ -n "$d" ] && seen[dir:$d]=1
