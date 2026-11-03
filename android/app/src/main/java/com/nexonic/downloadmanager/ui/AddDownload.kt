@@ -50,6 +50,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.nexonic.downloadmanager.browser.Offer
+import com.nexonic.downloadmanager.core.tr
 import com.nexonic.downloadmanager.core.BatchPattern
 import com.nexonic.downloadmanager.core.DownloadRequest
 import com.nexonic.downloadmanager.core.FileCategory
@@ -181,13 +182,13 @@ fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).navigationBarsPadding(),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(if (isVideo) "Download video" else "Download file", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+            Text(tr(if (isVideo) "Download video" else "Download file"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
 
             if (offer == null) {
                 OutlinedTextField(
                     value = input, onValueChange = { input = it },
-                    label = { Text("Links (one or more)") },
-                    placeholder = { Text("https://…") },
+                    label = { Text(tr("Links (one or more)")) },
+                    placeholder = { Text(tr("https://…")) },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 90.dp),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
                     trailingIcon = {
@@ -195,13 +196,13 @@ fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
                             val clip = context.getSystemService(android.content.ClipboardManager::class.java)
                                 ?.primaryClip?.getItemAt(0)?.coerceToText(context)?.toString().orEmpty()
                             if (clip.isNotBlank()) input = clip
-                        }) { Icon(Icons.Outlined.ContentPaste, "Paste") }
+                        }) { Icon(Icons.Outlined.ContentPaste, tr("Paste")) }
                     },
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text("Batch pattern", style = MaterialTheme.typography.bodyMedium)
-                        Text("file[01-50].jpg makes 50 links", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(tr("Batch pattern"), style = MaterialTheme.typography.bodyMedium)
+                        Text(tr("file[01-50].jpg makes 50 links"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Switch(checked = batch, onCheckedChange = { batch = it })
                 }
@@ -213,17 +214,17 @@ fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
                 single != null && isVideo -> {
                     OutlinedTextField(
                         value = name, onValueChange = { name = it; nameEdited = true },
-                        label = { Text("File name") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
+                        label = { Text(tr("File name")) }, singleLine = true, modifier = Modifier.fillMaxWidth(),
                     )
                     page?.let { p ->
-                        Text("Quality", fontWeight = FontWeight.SemiBold)
+                        Text(tr("Quality"), fontWeight = FontWeight.SemiBold)
                         p.choices.forEachIndexed { i, c ->
                             Row(
                                 Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).clickable { choose(i) }.padding(vertical = 2.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 RadioButton(selected = pick == i, onClick = { choose(i) })
-                                Text(c.label, modifier = Modifier.weight(1f))
+                                Text(tr(c.label), modifier = Modifier.weight(1f))
                                 c.size?.let { Text(Format.size(it), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }
                             }
                         }
@@ -234,14 +235,14 @@ fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
                     }
                     if (reading) Row(verticalAlignment = Alignment.CenterVertically) {
                         CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp); Spacer(Modifier.width(8.dp))
-                        Text("Finding the video… You can start now: it downloads in the best quality.", style = MaterialTheme.typography.bodySmall)
+                        Text(tr("Finding the video… You can start now: it downloads in the best quality."), style = MaterialTheme.typography.bodySmall)
                     }
                     problem?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                 }
                 single != null -> {
                     OutlinedTextField(
                         value = name, onValueChange = { name = it; nameEdited = true },
-                        label = { Text("File name") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
+                        label = { Text(tr("File name")) }, singleLine = true, modifier = Modifier.fillMaxWidth(),
                     )
                     val category = FileCategory.of(name)
                     InfoRow("Size", when {
@@ -256,7 +257,7 @@ fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
                     offer?.quality?.let { InfoRow("Quality", it) }
                     if (probing) Row(verticalAlignment = Alignment.CenterVertically) {
                         CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp); Spacer(Modifier.width(8.dp))
-                        Text("Asking the server…", style = MaterialTheme.typography.bodySmall)
+                        Text(tr("Asking the server…"), style = MaterialTheme.typography.bodySmall)
                     }
                     problem?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                 }
@@ -267,22 +268,22 @@ fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
                         if (links.size > 8) Text("and ${links.size - 8} more", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-                input.isNotBlank() -> Text("No web link found. Links start with http:// or https://", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                input.isNotBlank() -> Text(tr("No web link found. Links start with http:// or https://"), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             }
 
-            TextButton(onClick = { showLogin = !showLogin }) { Text(if (showLogin) "Hide login" else "Needs a login?") }
+            TextButton(onClick = { showLogin = !showLogin }) { Text(tr(if (showLogin) "Hide login" else "Needs a login?")) }
             if (showLogin) {
-                OutlinedTextField(user, { user = it }, label = { Text("User name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(password, { password = it }, label = { Text("Password") }, singleLine = true,
+                OutlinedTextField(user, { user = it }, label = { Text(tr("User name")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(password, { password = it }, label = { Text(tr("Password")) }, singleLine = true,
                     visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
-                Text("Sent only to this site, and kept encrypted on this phone.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(tr("Sent only to this site, and kept encrypted on this phone."), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                TextButton(onClick = { onDone(null) }) { Text("Cancel") }
+                TextButton(onClick = { onDone(null) }) { Text(tr("Cancel")) }
                 Spacer(Modifier.weight(1f))
-                OutlinedButton(onClick = { add(false) }, enabled = canAdd) { Text("Later") }
-                Button(onClick = { add(true) }, enabled = canAdd) { Text("Start download") }
+                OutlinedButton(onClick = { add(false) }, enabled = canAdd) { Text(tr("Later")) }
+                Button(onClick = { add(true) }, enabled = canAdd) { Text(tr("Start download")) }
             }
             Spacer(Modifier.height(12.dp))
         }
@@ -292,7 +293,7 @@ fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
 @Composable
 fun InfoRow(label: String, value: String) {
     Row(Modifier.fillMaxWidth()) {
-        Box(Modifier.width(96.dp)) { Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium) }
-        Text(value, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        Box(Modifier.width(96.dp)) { Text(tr(label), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium) }
+        Text(tr(value), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
     }
 }

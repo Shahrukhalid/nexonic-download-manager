@@ -17,6 +17,7 @@ import com.nexonic.downloadmanager.browser.Browser
 import com.nexonic.downloadmanager.browser.Offer
 import com.nexonic.downloadmanager.core.Links
 import com.nexonic.downloadmanager.data.Downloads
+import com.nexonic.downloadmanager.core.Translations
 import com.nexonic.downloadmanager.service.Notifier
 import com.nexonic.downloadmanager.service.Scheduler
 import com.nexonic.downloadmanager.service.canNotify
@@ -26,6 +27,7 @@ import com.nexonic.downloadmanager.ui.NexonicTheme
 class NexonicApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        Translations.use(resources.configuration.locales[0].language) { runCatching { assets.open(it).bufferedReader().use { r -> r.readText() } }.getOrNull() }
         Downloads.init(this)
         Notifier.channels(this)
         Scheduler.apply(this)
@@ -57,6 +59,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        Translations.use(resources.configuration.locales[0].language) { runCatching { assets.open(it).bufferedReader().use { r -> r.readText() } }.getOrNull() }
         Downloads.init(this)
         browser = Browser(this,
             onOffer = { offer ->

@@ -32,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.nexonic.downloadmanager.Tab
+import com.nexonic.downloadmanager.core.tr
 import com.nexonic.downloadmanager.UiState
 import com.nexonic.downloadmanager.browser.Browser
 import com.nexonic.downloadmanager.browser.Offer
@@ -49,7 +50,7 @@ fun App(ui: UiState, browser: Browser) {
     val active = items.count { it.status == Status.DOWNLOADING || it.status == Status.QUEUED }
 
     LaunchedEffect(ui.message) {
-        ui.message?.let { snackbar.showSnackbar(it); ui.message = null }
+        ui.message?.let { snackbar.showSnackbar(tr(it)); ui.message = null }
     }
     BackHandler(enabled = ui.tab != Tab.DOWNLOADS) {
         if (ui.tab == Tab.BROWSER && browser.view.canGoBack()) browser.back() else ui.tab = Tab.DOWNLOADS
@@ -64,15 +65,15 @@ fun App(ui: UiState, browser: Browser) {
                     icon = {
                         BadgedBox(badge = { if (active > 0) Badge { Text("$active") } }) { Icon(Icons.Outlined.Download, null) }
                     },
-                    label = { Text("Downloads") },
+                    label = { Text(tr("Downloads")) },
                 )
                 NavigationBarItem(
                     selected = ui.tab == Tab.BROWSER, onClick = { ui.tab = Tab.BROWSER; browser.startIfNeeded() },
-                    icon = { Icon(Icons.Outlined.Language, null) }, label = { Text("Browser") },
+                    icon = { Icon(Icons.Outlined.Language, null) }, label = { Text(tr("Browser")) },
                 )
                 NavigationBarItem(
                     selected = ui.tab == Tab.SETTINGS, onClick = { ui.tab = Tab.SETTINGS },
-                    icon = { Icon(Icons.Outlined.Settings, null) }, label = { Text("Settings") },
+                    icon = { Icon(Icons.Outlined.Settings, null) }, label = { Text(tr("Settings")) },
                 )
             }
         },
@@ -101,17 +102,17 @@ fun App(ui: UiState, browser: Browser) {
         val context = LocalContext.current
         AlertDialog(
             onDismissRequest = { ui.longPress = null },
-            title = { Text(if (image) "Image" else "Link", maxLines = 1) },
+            title = { Text(tr(if (image) "Image" else "Link"), maxLines = 1) },
             text = { Text(offer.url, maxLines = 4) },
             confirmButton = {
-                TextButton(onClick = { ui.longPress = null; ui.addOffer = offer }) { Text(if (image) "Download image" else "Download link") }
+                TextButton(onClick = { ui.longPress = null; ui.addOffer = offer }) { Text(tr(if (image) "Download image" else "Download link")) }
             },
             dismissButton = {
                 TextButton(onClick = {
                     ui.longPress = null
                     copy(context, offer.url)
                     ui.message = "Link copied"
-                }) { Text("Copy link") }
+                }) { Text(tr("Copy link")) }
             },
         )
     }
@@ -123,7 +124,7 @@ fun App(ui: UiState, browser: Browser) {
 }
 
 fun copy(context: Context, text: String) {
-    context.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(ClipData.newPlainText("link", text))
+    context.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(ClipData.newPlainText(tr("link"), text))
 }
 
 /** Adds a browser download without asking (when "Ask before downloading" is off). */

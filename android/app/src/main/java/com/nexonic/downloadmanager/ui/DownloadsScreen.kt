@@ -85,6 +85,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.nexonic.downloadmanager.UiState
+import com.nexonic.downloadmanager.core.tr
 import com.nexonic.downloadmanager.core.FileCategory
 import com.nexonic.downloadmanager.core.Format
 import com.nexonic.downloadmanager.core.Links
@@ -135,47 +136,47 @@ fun DownloadsScreen(items: List<DownloadItem>, ui: UiState, onOpenBrowser: () ->
             if (selecting) {
                 val chosen = items.filter { it.id in selected }
                 TopAppBar(
-                    navigationIcon = { IconButton(onClick = { selected = emptySet() }) { Icon(Icons.Outlined.Close, "Cancel selection") } },
+                    navigationIcon = { IconButton(onClick = { selected = emptySet() }) { Icon(Icons.Outlined.Close, tr("Cancel selection")) } },
                     title = { Text("${selected.size} selected", fontWeight = FontWeight.SemiBold) },
                     actions = {
                         IconButton(onClick = { selected = if (selected.size == shown.size) emptySet() else shown.map { it.id }.toSet() }) {
-                            Icon(Icons.Outlined.SelectAll, if (selected.size == shown.size) "Deselect all" else "Select all")
+                            Icon(Icons.Outlined.SelectAll, tr(if (selected.size == shown.size) "Deselect all" else "Select all"))
                         }
-                        if (chosen.any { it.isActive }) IconButton(onClick = { chosen.filter { it.isActive }.forEach { Downloads.pause(it.id) } }) { Icon(Icons.Outlined.Pause, "Pause") }
+                        if (chosen.any { it.isActive }) IconButton(onClick = { chosen.filter { it.isActive }.forEach { Downloads.pause(it.id) } }) { Icon(Icons.Outlined.Pause, tr("Pause")) }
                         if (chosen.any { it.status in listOf(Status.PAUSED, Status.LATER, Status.FAILED) }) IconButton(onClick = {
                             chosen.filter { it.status in listOf(Status.PAUSED, Status.LATER, Status.FAILED) }.forEach { Downloads.retry(it.id) }
-                        }) { Icon(Icons.Outlined.PlayArrow, "Start") }
-                        if (chosen.size == 1) IconButton(onClick = { ui.detailId = chosen.first().id; selected = emptySet() }) { Icon(Icons.Outlined.Info, "Details") }
-                        IconButton(onClick = { confirmRemove = true }) { Icon(Icons.Outlined.Delete, "Delete") }
+                        }) { Icon(Icons.Outlined.PlayArrow, tr("Start")) }
+                        if (chosen.size == 1) IconButton(onClick = { ui.detailId = chosen.first().id; selected = emptySet() }) { Icon(Icons.Outlined.Info, tr("Details")) }
+                        IconButton(onClick = { confirmRemove = true }) { Icon(Icons.Outlined.Delete, tr("Delete")) }
                     },
                 )
             } else if (searching) {
                 TopAppBar(title = {
-                    OutlinedTextField(query, { query = it }, placeholder = { Text("Search downloads") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                }, actions = { IconButton(onClick = { searching = false; query = "" }) { Icon(Icons.Outlined.Close, "Close search") } })
+                    OutlinedTextField(query, { query = it }, placeholder = { Text(tr("Search downloads")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                }, actions = { IconButton(onClick = { searching = false; query = "" }) { Icon(Icons.Outlined.Close, tr("Close search")) } })
             } else {
                 TopAppBar(
-                    title = { Text("Downloads", fontWeight = FontWeight.SemiBold) },
+                    title = { Text(tr("Downloads"), fontWeight = FontWeight.SemiBold) },
                     actions = {
-                        IconButton(onClick = { searching = true }) { Icon(Icons.Outlined.Search, "Search") }
-                        if (running > 0) IconButton(onClick = { Downloads.pauseAll() }) { Icon(Icons.Outlined.Pause, "Pause all") }
-                        else if (later > 0) IconButton(onClick = { Downloads.startAll() }) { Icon(Icons.Outlined.PlayArrow, "Start all") }
+                        IconButton(onClick = { searching = true }) { Icon(Icons.Outlined.Search, tr("Search")) }
+                        if (running > 0) IconButton(onClick = { Downloads.pauseAll() }) { Icon(Icons.Outlined.Pause, tr("Pause all")) }
+                        else if (later > 0) IconButton(onClick = { Downloads.startAll() }) { Icon(Icons.Outlined.PlayArrow, tr("Start all")) }
                     },
                 )
             }
             SecondaryTabRow(selectedTabIndex = view.ordinal) {
                 View.entries.forEach { v ->
                     val count = items.count { when (v) { View.ALL -> true; View.UNFINISHED -> it.status != Status.COMPLETE; View.FINISHED -> it.status == Status.COMPLETE } }
-                    Tab(selected = view == v, onClick = { view = v }, text = { Text("${v.label} ($count)") })
+                    Tab(selected = view == v, onClick = { view = v }, text = { Text("${tr(v.label)} ($count)") })
                 }
             }
             Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = category == null, onClick = { category = null }, label = { Text("All types") })
+                FilterChip(selected = category == null, onClick = { category = null }, label = { Text(tr("All types")) })
                 FileCategory.entries.forEach { c ->
                     val n = inView.count { it.category == c }
                     if (n > 0 || category == c) FilterChip(
                         selected = category == c, onClick = { category = if (category == c) null else c },
-                        label = { Text("${c.label} $n") },
+                        label = { Text("${tr(c.label)} $n") },
                         leadingIcon = { Icon(categoryIcon(c), null, Modifier.size(18.dp)) },
                     )
                 }
@@ -198,7 +199,7 @@ fun DownloadsScreen(items: List<DownloadItem>, ui: UiState, onOpenBrowser: () ->
             }
         }
         if (!selecting) FloatingActionButton(onClick = { ui.addText = "" }, modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp)) {
-            Icon(Icons.Outlined.Add, "Add download")
+            Icon(Icons.Outlined.Add, tr("Add download"))
         }
     }
 
@@ -210,16 +211,16 @@ fun DownloadsScreen(items: List<DownloadItem>, ui: UiState, onOpenBrowser: () ->
             title = { Text(if (chosen.size == 1) "Remove this download?" else "Remove ${chosen.size} downloads?") },
             text = {
                 Column {
-                    Text("They are removed from the list.", style = MaterialTheme.typography.bodyMedium)
+                    Text(tr("They are removed from the list."), style = MaterialTheme.typography.bodyMedium)
                     if (chosen.any { it.status == Status.COMPLETE && it.contentUri != null }) Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(alsoFiles, { alsoFiles = it }); Text("Also delete the downloaded files")
+                        Checkbox(alsoFiles, { alsoFiles = it }); Text(tr("Also delete the downloaded files"))
                     }
                 }
             },
             confirmButton = {
-                TextButton(onClick = { chosen.forEach { Downloads.remove(it.id, alsoFiles) }; selected = emptySet(); confirmRemove = false }) { Text("Remove") }
+                TextButton(onClick = { chosen.forEach { Downloads.remove(it.id, alsoFiles) }; selected = emptySet(); confirmRemove = false }) { Text(tr("Remove")) }
             },
-            dismissButton = { TextButton(onClick = { confirmRemove = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { confirmRemove = false }) { Text(tr("Cancel")) } },
         )
     }
 }
@@ -229,19 +230,19 @@ private fun Set<Long>.toggle(id: Long): Set<Long> = if (id in this) this - id el
 @Composable
 private fun Empty(nothing: Boolean, onAdd: () -> Unit, onOpenBrowser: () -> Unit) {
     Column(Modifier.fillMaxSize().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Text(if (nothing) "No downloads yet" else "Nothing here", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Text(tr(if (nothing) "No downloads yet" else "Nothing here"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(8.dp))
         Text(
-            if (nothing) "Paste a link, share one from Chrome with \"Download with Nexonic\", or browse with the built-in browser."
-            else "No downloads match.",
+            if (nothing) tr("Paste a link, share one from Chrome with \"Download with Nexonic\", or browse with the built-in browser.")
+            else tr("No downloads match."),
             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )
         if (nothing) {
             Spacer(Modifier.height(20.dp))
-            Button(onClick = onAdd) { Icon(Icons.Outlined.Add, null); Spacer(Modifier.width(6.dp)); Text("Add a link") }
+            Button(onClick = onAdd) { Icon(Icons.Outlined.Add, null); Spacer(Modifier.width(6.dp)); Text(tr("Add a link")) }
             Spacer(Modifier.height(8.dp))
-            OutlinedButton(onClick = onOpenBrowser) { Icon(Icons.Outlined.Language, null); Spacer(Modifier.width(6.dp)); Text("Open the browser") }
+            OutlinedButton(onClick = onOpenBrowser) { Icon(Icons.Outlined.Language, null); Spacer(Modifier.width(6.dp)); Text(tr("Open the browser")) }
         }
     }
 }
@@ -252,11 +253,11 @@ fun statusText(item: DownloadItem): String = when (item.status) {
         Format.speed(item.speed),
         Format.eta(item.etaSeconds).let { if (it.isEmpty()) "" else "$it left" },
     ).filter { it.isNotEmpty() }.joinToString(" · ")
-    Status.QUEUED -> "Waiting"
-    Status.PAUSED -> "Paused" + (item.size?.let { " · ${Format.size(item.written)} of ${Format.size(it)}" } ?: "")
-    Status.LATER -> "Download later" + (item.size?.let { " · ${Format.size(it)}" } ?: "")
+    Status.QUEUED -> tr("Waiting")
+    Status.PAUSED -> tr("Paused") + (item.size?.let { " · ${Format.size(item.written)} of ${Format.size(it)}" } ?: "")
+    Status.LATER -> tr("Download later") + (item.size?.let { " · ${Format.size(it)}" } ?: "")
     Status.COMPLETE -> Format.size(item.size ?: item.written) + " · " + DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(item.finishedAt ?: item.addedAt))
-    Status.FAILED -> item.error ?: "Failed"
+    Status.FAILED -> item.error ?: tr("Failed")
 }
 
 @Composable
@@ -270,7 +271,7 @@ fun DownloadRow(item: DownloadItem, selected: Boolean = false, selecting: Boolea
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.size(42.dp).clip(RoundedCornerShape(11.dp)).background(if (selected) MaterialTheme.colorScheme.primary else color.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
-            if (selected) Icon(Icons.Outlined.Check, "Selected", tint = MaterialTheme.colorScheme.onPrimary)
+            if (selected) Icon(Icons.Outlined.Check, tr("Selected"), tint = MaterialTheme.colorScheme.onPrimary)
             else Icon(categoryIcon(item.category), null, tint = color)
         }
         Spacer(Modifier.width(12.dp))
@@ -289,9 +290,9 @@ fun DownloadRow(item: DownloadItem, selected: Boolean = false, selecting: Boolea
         }
         Spacer(Modifier.width(4.dp))
         if (!selecting) when (item.status) {
-            Status.DOWNLOADING, Status.QUEUED -> IconButton(onClick = { Downloads.pause(item.id) }) { Icon(Icons.Outlined.Pause, "Pause") }
-            Status.PAUSED, Status.LATER -> IconButton(onClick = { Downloads.resume(item.id) }) { Icon(Icons.Outlined.PlayArrow, "Resume") }
-            Status.FAILED -> IconButton(onClick = { Downloads.retry(item.id) }) { Icon(Icons.Outlined.Refresh, "Try again") }
+            Status.DOWNLOADING, Status.QUEUED -> IconButton(onClick = { Downloads.pause(item.id) }) { Icon(Icons.Outlined.Pause, tr("Pause")) }
+            Status.PAUSED, Status.LATER -> IconButton(onClick = { Downloads.resume(item.id) }) { Icon(Icons.Outlined.PlayArrow, tr("Resume")) }
+            Status.FAILED -> IconButton(onClick = { Downloads.retry(item.id) }) { Icon(Icons.Outlined.Refresh, tr("Try again")) }
             Status.COMPLETE -> {}
         }
     }
@@ -341,7 +342,7 @@ fun DetailSheet(item: DownloadItem, onDismiss: () -> Unit, message: (String) -> 
             item.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
 
             item.state?.takeIf { it.segments.size > 1 && it.size != null && item.status != Status.COMPLETE }?.let { st ->
-                Text("Progress by connection", style = MaterialTheme.typography.labelLarge)
+                Text(tr("Progress by connection"), style = MaterialTheme.typography.labelLarge)
                 val track = MaterialTheme.colorScheme.surfaceVariant
                 val fill = MaterialTheme.colorScheme.primary
                 Canvas(Modifier.fillMaxWidth().height(14.dp).clip(RoundedCornerShape(4.dp))) {
@@ -359,17 +360,17 @@ fun DetailSheet(item: DownloadItem, onDismiss: () -> Unit, message: (String) -> 
 
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 when (item.status) {
-                    Status.DOWNLOADING, Status.QUEUED -> FilledTonalButton(onClick = { Downloads.pause(item.id) }) { Text("Pause") }
-                    Status.PAUSED, Status.LATER -> Button(onClick = { Downloads.resume(item.id) }) { Text("Resume") }
-                    Status.FAILED -> Button(onClick = { Downloads.retry(item.id) }) { Text("Try again") }
+                    Status.DOWNLOADING, Status.QUEUED -> FilledTonalButton(onClick = { Downloads.pause(item.id) }) { Text(tr("Pause")) }
+                    Status.PAUSED, Status.LATER -> Button(onClick = { Downloads.resume(item.id) }) { Text(tr("Resume")) }
+                    Status.FAILED -> Button(onClick = { Downloads.retry(item.id) }) { Text(tr("Try again")) }
                     Status.COMPLETE -> {
-                        Button(onClick = { open(context, item, message) }) { Text("Open") }
-                        FilledTonalButton(onClick = { share(context, item, message) }) { Text("Share") }
+                        Button(onClick = { open(context, item, message) }) { Text(tr("Open")) }
+                        FilledTonalButton(onClick = { share(context, item, message) }) { Text(tr("Share")) }
                     }
                 }
-                if (item.status != Status.COMPLETE) OutlinedButton(onClick = { refresh = true }) { Text("Refresh link") }
-                OutlinedButton(onClick = { copy(context, item.url); message("Link copied") }) { Text("Copy link") }
-                OutlinedButton(onClick = { confirmDelete = true }) { Text("Delete") }
+                if (item.status != Status.COMPLETE) OutlinedButton(onClick = { refresh = true }) { Text(tr("Refresh link")) }
+                OutlinedButton(onClick = { copy(context, item.url); message("Link copied") }) { Text(tr("Copy link")) }
+                OutlinedButton(onClick = { confirmDelete = true }) { Text(tr("Delete")) }
             }
             Spacer(Modifier.height(16.dp))
         }
@@ -379,36 +380,36 @@ fun DetailSheet(item: DownloadItem, onDismiss: () -> Unit, message: (String) -> 
         var alsoFile by remember { mutableStateOf(false) }
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text("Remove from the list?") },
+            title = { Text(tr("Remove from the list?")) },
             text = {
                 Column {
                     Text(item.fileName, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     if (item.status == Status.COMPLETE && item.contentUri != null) Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(alsoFile, { alsoFile = it }); Text("Also delete the downloaded file")
+                        Checkbox(alsoFile, { alsoFile = it }); Text(tr("Also delete the downloaded file"))
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { confirmDelete = false; onDismiss(); Downloads.remove(item.id, alsoFile) }) { Text("Remove") } },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
+            confirmButton = { TextButton(onClick = { confirmDelete = false; onDismiss(); Downloads.remove(item.id, alsoFile) }) { Text(tr("Remove")) } },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(tr("Cancel")) } },
         )
     }
     if (refresh) {
         AlertDialog(
             onDismissRequest = { refresh = false },
-            title = { Text("Refresh link") },
+            title = { Text(tr("Refresh link")) },
             text = {
                 Column {
-                    Text("Paste a fresh link to the same file. The download continues where it stopped.", style = MaterialTheme.typography.bodySmall)
+                    Text(tr("Paste a fresh link to the same file. The download continues where it stopped."), style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(newLink, { newLink = it }, singleLine = true, placeholder = { Text("https://…") })
+                    OutlinedTextField(newLink, { newLink = it }, singleLine = true, placeholder = { Text(tr("https://…")) })
                 }
             },
             confirmButton = {
                 TextButton(enabled = Links.isWebLink(newLink.trim()), onClick = {
                     Downloads.refreshLink(item.id, newLink.trim(), null); refresh = false; message("Link updated")
-                }) { Text("Continue") }
+                }) { Text(tr("Continue")) }
             },
-            dismissButton = { TextButton(onClick = { refresh = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { refresh = false }) { Text(tr("Cancel")) } },
         )
     }
 }
@@ -417,12 +418,12 @@ private fun open(context: android.content.Context, item: DownloadItem, message: 
     val uri = item.contentUri?.let { Uri.parse(it) } ?: return message("The file is not available")
     val type = context.contentResolver.getType(uri) ?: "*/*"
     val intent = Intent(Intent.ACTION_VIEW).setDataAndType(uri, type).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    runCatching { context.startActivity(Intent.createChooser(intent, "Open with")) }.onFailure { message("No app can open this file") }
+    runCatching { context.startActivity(Intent.createChooser(intent, tr("Open with"))) }.onFailure { message("No app can open this file") }
 }
 
 private fun share(context: android.content.Context, item: DownloadItem, message: (String) -> Unit) {
     val uri = item.contentUri?.let { Uri.parse(it) } ?: return message("The file is not available")
     val intent = Intent(Intent.ACTION_SEND).setType(context.contentResolver.getType(uri) ?: "*/*")
         .putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    runCatching { context.startActivity(Intent.createChooser(intent, "Share")) }
+    runCatching { context.startActivity(Intent.createChooser(intent, tr("Share"))) }
 }

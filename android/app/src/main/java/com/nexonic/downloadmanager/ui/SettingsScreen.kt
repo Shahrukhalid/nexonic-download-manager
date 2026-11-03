@@ -3,6 +3,7 @@
 package com.nexonic.downloadmanager.ui
 
 import com.nexonic.downloadmanager.video.VideoEngine
+import com.nexonic.downloadmanager.core.tr
 
 import android.content.Intent
 import android.net.Uri
@@ -89,7 +90,7 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
     LaunchedEffect(Unit) { engineVersion = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { VideoEngine.version() } }
 
     Column(Modifier.fillMaxSize()) {
-        TopAppBar(title = { Text("Settings", fontWeight = FontWeight.SemiBold) })
+        TopAppBar(title = { Text(tr("Settings"), fontWeight = FontWeight.SemiBold) })
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)) {
             Section("Downloads")
             Text("Connections per download: ${connections.toInt()}", style = MaterialTheme.typography.bodyLarge)
@@ -101,7 +102,7 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
             OutlinedTextField(
                 value = limit,
                 onValueChange = { v -> limit = v.filter { it.isDigit() }.take(7); Downloads.setSpeedLimit(limit.toLongOrNull() ?: 0) },
-                label = { Text("Speed limit (KB/s, empty = no limit)") },
+                label = { Text(tr("Speed limit (KB/s, empty = no limit)")) },
                 singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
             )
@@ -110,14 +111,14 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
             }
             Toggle("Ask before downloading", "Show the download window when the browser starts a download.", ask) { ask = it; s.askBeforeDownload = it }
             Toggle("Folders by type", "Save into Nexonic/Video, /Music, /Documents…", folders) { folders = it; s.categoryFolders = it }
-            Text("Save to", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp))
+            Text(tr("Save to"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp))
             Hint(if (treeName.isEmpty()) "Downloads/Nexonic on this phone" else treeName)
             Row {
-                TextButton(onClick = { pickFolder.launch(null) }) { Text("Choose folder (SD card, USB…)") }
+                TextButton(onClick = { pickFolder.launch(null) }) { Text(tr("Choose folder (SD card, USB…)")) }
                 if (treeName.isNotEmpty()) TextButton(onClick = {
                     s.saveTree?.let { old -> runCatching { context.contentResolver.releasePersistableUriPermission(Uri.parse(old), Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION) } }
                     s.saveTree = null; s.saveTreeName = ""; treeName = ""
-                }) { Text("Use Downloads") }
+                }) { Text(tr("Use Downloads")) }
             }
 
             Section("Notifications")
@@ -126,19 +127,19 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
             Hint("While downloads run, Android shows one quiet notification with their progress and Pause all; it can't be turned off while the app downloads in the background.")
             TextButton(onClick = {
                 runCatching { context.startActivity(Intent(SystemSettings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(SystemSettings.EXTRA_APP_PACKAGE, context.packageName)) }
-            }) { Text("Sounds and other notification settings") }
+            }) { Text(tr("Sounds and other notification settings")) }
 
             Section("Scheduler")
             Toggle("Start downloads kept for later", "Every day at ${"%02d:%02d".format(minutes / 60, minutes % 60)}", schedule) {
                 schedule = it; s.scheduleEnabled = it; Scheduler.apply(context)
             }
             if (schedule) {
-                TextButton(onClick = { pickTime = true }) { Text("Change time") }
+                TextButton(onClick = { pickTime = true }) { Text(tr("Change time")) }
                 if (!Scheduler.canExact(context) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     Hint("Android may delay scheduled downloads or ask you to tap a notification. Allow alarms for exact timing.")
                     TextButton(onClick = {
                         runCatching { context.startActivity(Intent(SystemSettings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${context.packageName}"))) }
-                    }) { Text("Allow alarms") }
+                    }) { Text(tr("Allow alarms")) }
                 }
             }
 
@@ -146,11 +147,11 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
             Toggle("Block third-party cookies", "Sites can't track you across other sites.", block3p) {
                 block3p = it; s.blockThirdPartyCookies = it; browser.applyPrivacy()
             }
-            Text("Search engine: " + com.nexonic.downloadmanager.core.SearchEngines.of(engine).name, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp))
-            TextButton(onClick = { pickEngine = true }) { Text("Change search engine") }
+            Text(tr("Search engine: ") + com.nexonic.downloadmanager.core.SearchEngines.of(engine).name, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp))
+            TextButton(onClick = { pickEngine = true }) { Text(tr("Change search engine")) }
             if (pickEngine) AlertDialog(
                 onDismissRequest = { pickEngine = false },
-                title = { Text("Search engine") },
+                title = { Text(tr("Search engine")) },
                 text = {
                     Column {
                         com.nexonic.downloadmanager.core.SearchEngines.all.forEach { e ->
@@ -162,17 +163,17 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
                         }
                     }
                 },
-                confirmButton = { TextButton(onClick = { pickEngine = false }) { Text("Close") } },
+                confirmButton = { TextButton(onClick = { pickEngine = false }) { Text(tr("Close")) } },
             )
             OutlinedTextField(home, { home = it; if (com.nexonic.downloadmanager.core.Links.isWebLink(it)) s.homePage = it },
-                label = { Text("Home page") }, singleLine = true, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
-            TextButton(onClick = { browser.clearData(); message("Browser data cleared") }) { Text("Clear cookies, cache and history") }
-            TextButton(onClick = { confirmClear = true }) { Text("Clear finished downloads from the list") }
+                label = { Text(tr("Home page")) }, singleLine = true, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
+            TextButton(onClick = { browser.clearData(); message("Browser data cleared") }) { Text(tr("Clear cookies, cache and history")) }
+            TextButton(onClick = { confirmClear = true }) { Text(tr("Clear finished downloads from the list")) }
             Hint("No account, no ads, no tracking. Cookies and passwords for downloads are encrypted on this phone and sent only to their own site.")
 
             Section("Video engine")
             Hint("Saves videos from YouTube, Facebook, Instagram, TikTok, X and 1,000+ other sites (yt-dlp with ffmpeg, like the desktop apps). It updates itself once a day.")
-            Text("Version: " + (engineVersion ?: "starting…"), style = MaterialTheme.typography.bodyMedium)
+            Text(tr("Version: ") + (engineVersion ?: "starting…"), style = MaterialTheme.typography.bodyMedium)
             TextButton(enabled = !updating, onClick = {
                 updating = true
                 Thread {
@@ -183,14 +184,14 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
                         message(if (result.isSuccess) (if (result.getOrNull() == "ALREADY_UP_TO_DATE") "The video engine is up to date" else "Video engine updated") else "Could not update now. Try again later.")
                     }
                 }.start()
-            }) { Text(if (updating) "Checking…" else "Update video engine") }
+            }) { Text(tr(if (updating) "Checking…" else "Update video engine")) }
 
             Section("About")
             Text("Nexonic Download Manager ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodyLarge)
             Hint("Free and open source (MIT) by Shahrukh Khalid.")
-            TextButton(onClick = { openLink(context, "https://shahrukhalid.github.io/nexonic-download-manager/") }) { Text("Website") }
-            TextButton(onClick = { openLink(context, "https://github.com/Shahrukhalid/nexonic-download-manager") }) { Text("Source code and help") }
-            TextButton(onClick = { openLink(context, "https://github.com/Shahrukhalid/nexonic-download-manager/issues/new") }) { Text("Report a problem") }
+            TextButton(onClick = { openLink(context, "https://shahrukhalid.github.io/nexonic-download-manager/") }) { Text(tr("Website")) }
+            TextButton(onClick = { openLink(context, "https://github.com/Shahrukhalid/nexonic-download-manager") }) { Text(tr("Source code and help")) }
+            TextButton(onClick = { openLink(context, "https://github.com/Shahrukhalid/nexonic-download-manager/issues/new") }) { Text(tr("Report a problem")) }
             Hint("Only download what you have the right to save. Copy-protected services are not supported.")
             Spacer(Modifier.height(32.dp))
         }
@@ -200,23 +201,23 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
         val state = rememberTimePickerState(initialHour = minutes / 60, initialMinute = minutes % 60)
         AlertDialog(
             onDismissRequest = { pickTime = false },
-            title = { Text("Start at") },
+            title = { Text(tr("Start at")) },
             text = { TimePicker(state) },
             confirmButton = {
                 TextButton(onClick = {
                     minutes = state.hour * 60 + state.minute; s.scheduleMinutes = minutes; Scheduler.apply(context); pickTime = false
-                }) { Text("Save") }
+                }) { Text(tr("Save")) }
             },
-            dismissButton = { TextButton(onClick = { pickTime = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { pickTime = false }) { Text(tr("Cancel")) } },
         )
     }
     if (confirmClear) {
         AlertDialog(
             onDismissRequest = { confirmClear = false },
-            title = { Text("Clear finished downloads?") },
-            text = { Text("They are removed from the list. The files stay in your Downloads folder.") },
-            confirmButton = { TextButton(onClick = { Downloads.clearFinished(); confirmClear = false; message("List cleared") }) { Text("Clear") } },
-            dismissButton = { TextButton(onClick = { confirmClear = false }) { Text("Cancel") } },
+            title = { Text(tr("Clear finished downloads?")) },
+            text = { Text(tr("They are removed from the list. The files stay in your Downloads folder.")) },
+            confirmButton = { TextButton(onClick = { Downloads.clearFinished(); confirmClear = false; message("List cleared") }) { Text(tr("Clear")) } },
+            dismissButton = { TextButton(onClick = { confirmClear = false }) { Text(tr("Cancel")) } },
         )
     }
 }
@@ -228,20 +229,20 @@ private fun openLink(context: android.content.Context, url: String) {
 @Composable
 private fun Section(title: String) {
     Spacer(Modifier.height(20.dp))
-    Text(title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+    Text(tr(title), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
     HorizontalDivider(Modifier.padding(top = 6.dp, bottom = 10.dp))
 }
 
 @Composable
 private fun Hint(text: String) {
-    Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(tr(text), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
 @Composable
 private fun Toggle(title: String, subtitle: String, value: Boolean, onChange: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth().clickable { onChange(!value) }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(tr(title), style = MaterialTheme.typography.bodyLarge)
             Hint(subtitle)
         }
         Switch(value, onChange)

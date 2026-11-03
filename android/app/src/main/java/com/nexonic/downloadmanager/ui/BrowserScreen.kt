@@ -48,6 +48,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.platform.LocalContext
 import com.nexonic.downloadmanager.data.BookmarkStore
+import com.nexonic.downloadmanager.core.tr
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -97,14 +98,14 @@ fun BrowserScreen(browser: Browser, ui: UiState) {
             Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 4.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = { browser.back() }, enabled = canBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Back") }
-            IconButton(onClick = { browser.forward() }, enabled = canForward) { Icon(Icons.AutoMirrored.Outlined.ArrowForward, "Forward") }
+            IconButton(onClick = { browser.back() }, enabled = canBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, tr("Back")) }
+            IconButton(onClick = { browser.forward() }, enabled = canForward) { Icon(Icons.AutoMirrored.Outlined.ArrowForward, tr("Forward")) }
             OutlinedTextField(
                 value = if (editing) address else displayAddress(url),
                 onValueChange = { address = it },
                 singleLine = true,
-                leadingIcon = if (!editing && url.startsWith("https://")) ({ Icon(Icons.Outlined.Lock, "Secure", Modifier.size(16.dp)) }) else null,
-                placeholder = { Text("Search or type an address") },
+                leadingIcon = if (!editing && url.startsWith("https://")) ({ Icon(Icons.Outlined.Lock, tr("Secure"), Modifier.size(16.dp)) }) else null,
+                placeholder = { Text(tr("Search or type an address")) },
                 textStyle = MaterialTheme.typography.bodyMedium,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Go),
                 keyboardActions = KeyboardActions(onGo = { browser.go(address); editing = false; focus.clearFocus() }),
@@ -113,8 +114,8 @@ fun BrowserScreen(browser: Browser, ui: UiState) {
                     if (f.isFocused && !editing) { editing = true; address = url } else if (!f.isFocused) editing = false
                 },
             )
-            if (progress in 1..99) IconButton(onClick = { browser.stop() }) { Icon(Icons.Outlined.Close, "Stop") }
-            else IconButton(onClick = { browser.reload() }) { Icon(Icons.Outlined.Refresh, "Reload") }
+            if (progress in 1..99) IconButton(onClick = { browser.stop() }) { Icon(Icons.Outlined.Close, tr("Stop")) }
+            else IconButton(onClick = { browser.reload() }) { Icon(Icons.Outlined.Refresh, tr("Reload")) }
             IconButton(onClick = { showBookmarks = true }) {
                 Icon(if (saved) Icons.Outlined.Bookmark else Icons.Outlined.BookmarkBorder, "Bookmarks and home page")
             }
@@ -132,7 +133,7 @@ fun BrowserScreen(browser: Browser, ui: UiState) {
                 ExtendedFloatingActionButton(
                     onClick = { ui.addText = url },
                     icon = { Icon(Icons.Outlined.Download, null) },
-                    text = { Text("Download this video") },
+                    text = { Text(tr("Download this video")) },
                     modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
                 )
             } else if (found.isNotEmpty()) {
@@ -152,10 +153,10 @@ fun BrowserScreen(browser: Browser, ui: UiState) {
         ModalBottomSheet(onDismissRequest = { showBookmarks = false }, sheetState = sheet) {
             Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 24.dp)) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("Bookmarks", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                    Text(tr("Bookmarks"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                     if (com.nexonic.downloadmanager.core.Links.isWebLink(url)) {
-                        if (saved) TextButton(onClick = { update(com.nexonic.downloadmanager.core.Bookmarks.remove(bookmarks, url)) }) { Text("Remove this page") }
-                        else TextButton(onClick = { update(com.nexonic.downloadmanager.core.Bookmarks.add(bookmarks, url, title)) }) { Text("Add this page") }
+                        if (saved) TextButton(onClick = { update(com.nexonic.downloadmanager.core.Bookmarks.remove(bookmarks, url)) }) { Text(tr("Remove this page")) }
+                        else TextButton(onClick = { update(com.nexonic.downloadmanager.core.Bookmarks.add(bookmarks, url, title)) }) { Text(tr("Add this page")) }
                     }
                 }
                 Row(
@@ -164,7 +165,7 @@ fun BrowserScreen(browser: Browser, ui: UiState) {
                 ) {
                     Icon(Icons.Outlined.Home, null)
                     Spacer(Modifier.width(12.dp))
-                    Text("Home page", fontWeight = FontWeight.Medium)
+                    Text(tr("Home page"), fontWeight = FontWeight.Medium)
                 }
                 if (bookmarks.isEmpty()) Text(
                     "No bookmarks yet. Open a page and choose Add this page.",
@@ -192,7 +193,7 @@ fun BrowserScreen(browser: Browser, ui: UiState) {
         ModalBottomSheet(onDismissRequest = { ui.showFound = false }, sheetState = sheet) {
             Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 24.dp)) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
-                Text("Found on this page", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                Text(tr("Found on this page"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                 Text(
                     "Videos, music and files on ${browser.host()}. Streaming and copy-protected video can't be saved.",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -226,8 +227,8 @@ private fun FoundRow(f: Found, onDownload: () -> Unit) {
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(f.name, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Medium)
-            Text(listOfNotNull(f.kind, f.label).joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+            Text(listOfNotNull(tr(f.kind), f.label).joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
         }
-        FilledTonalButton(onClick = onDownload) { Text("Download") }
+        FilledTonalButton(onClick = onDownload) { Text(tr("Download")) }
     }
 }

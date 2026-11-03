@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <application
+        android:localeConfig="@xml/locales_config"
         android:name=".NexonicApp"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"

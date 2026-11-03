@@ -21,6 +21,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.nexonic.downloadmanager.MainActivity
+import com.nexonic.downloadmanager.core.tr
 import com.nexonic.downloadmanager.R
 import com.nexonic.downloadmanager.core.Format
 import com.nexonic.downloadmanager.data.DownloadItem
@@ -104,8 +105,8 @@ object Notifier {
 
     fun channels(context: Context) {
         val nm = context.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(CH_PROGRESS, "Downloads in progress", NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) })
-        nm.createNotificationChannel(NotificationChannel(CH_DONE, "Finished downloads", NotificationManager.IMPORTANCE_DEFAULT))
+        nm.createNotificationChannel(NotificationChannel(CH_PROGRESS, tr("Downloads in progress"), NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) })
+        nm.createNotificationChannel(NotificationChannel(CH_DONE, tr("Finished downloads"), NotificationManager.IMPORTANCE_DEFAULT))
     }
 
     private fun openApp(context: Context, id: Long = 0): PendingIntent =
@@ -117,7 +118,7 @@ object Notifier {
         val size = active.sumOf { it.size ?: 0 }
         val written = active.sumOf { it.written }
         val title = when (active.size) {
-            0 -> "Preparing downloads"
+            0 -> tr("Preparing downloads")
             1 -> active[0].fileName
             else -> "Downloading ${active.size} files"
         }
@@ -135,7 +136,7 @@ object Notifier {
             .setSilent(true)
             .setProgress(100, if (size > 0) (written * 100 / size).toInt() else 0, size <= 0)
             .setContentIntent(openApp(context))
-            .addAction(0, "Pause all", pause)
+            .addAction(0, tr("Pause all"), pause)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .build()
     }
@@ -145,7 +146,7 @@ object Notifier {
         val open = item.contentUri?.let { uri ->
             val view = Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(uri), context.contentResolver.getType(Uri.parse(uri)) ?: "*/*")
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-            PendingIntent.getActivity(context, item.id.toInt(), Intent.createChooser(view, "Open with").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            PendingIntent.getActivity(context, item.id.toInt(), Intent.createChooser(view, tr("Open with")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         } ?: openApp(context, item.id)
         val n = NotificationCompat.Builder(context, CH_DONE)
@@ -163,7 +164,7 @@ object Notifier {
         val n = NotificationCompat.Builder(context, CH_DONE)
             .setSmallIcon(R.drawable.ic_stat_download)
             .setContentTitle(item.fileName)
-            .setContentText(item.error ?: "Download failed")
+            .setContentText(item.error ?: tr("Download failed"))
             .setContentIntent(openApp(context, item.id))
             .setAutoCancel(true)
             .build()
@@ -174,7 +175,7 @@ object Notifier {
         if (!canNotify(context)) return
         val n = NotificationCompat.Builder(context, CH_DONE)
             .setSmallIcon(R.drawable.ic_stat_download)
-            .setContentTitle("Scheduled downloads are ready")
+            .setContentTitle(tr("Scheduled downloads are ready"))
             .setContentText("Tap to start them now.")
             .setContentIntent(PendingIntent.getActivity(context, 7, Intent(context, MainActivity::class.java).putExtra("startLater", true),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
