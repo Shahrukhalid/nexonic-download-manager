@@ -37,6 +37,8 @@ cp -R "$ROOT/build/extension-chrome" "$APP/Extension"
 cp "$ROOT/build/NexonicFirefoxAddon-$VERSION.xpi" "$APP/Firefox Add-on.xpi"
 cp "$PKG/nexonic-download-manager.png" "$APP/"
 cp "$ROOT/LICENSE" "$APP/LICENSE.txt"
+cp "$ROOT/LICENSE-MIT" "$APP/LICENSE-MIT.txt"
+cp "$ROOT/LICENSE-APACHE" "$APP/LICENSE-APACHE.txt"
 cp "$ROOT/TERMS.md" "$APP/TERMS.md"
 cat "$ROOT/packaging/THIRD-PARTY-NOTICES.txt" "$PKG/LINUX-NOTICES.txt" > "$APP/THIRD-PARTY-NOTICES.txt"
 cp "$FF"/NOTICE-video-tools-1.txt "$TOOLS"/NOTICE-video-tools-2.txt "$APP/" 2>/dev/null || true
@@ -116,7 +118,7 @@ Name: nexonic-download-manager
 Version: $VERSION
 Release: 1
 Summary: Fast download manager with queues, a scheduler and video downloads
-License: MIT
+License: MIT OR Apache-2.0
 URL: https://github.com/Shahrukhalid/nexonic-download-manager
 AutoReqProv: no
 Requires: fontconfig

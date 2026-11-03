@@ -6,7 +6,7 @@
     <LangVersion>latest</LangVersion>
     <Company>Nexonic</Company>
     <Product>Nexonic Download Manager</Product>
-    <Copyright>© 2026 Shahrukh Khalid. MIT License.</Copyright>
+    <Copyright>© 2026 Shahrukh Khalid. MIT OR Apache-2.0.</Copyright>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 </Project>

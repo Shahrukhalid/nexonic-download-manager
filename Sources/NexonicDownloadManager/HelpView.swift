@@ -148,7 +148,7 @@ struct AboutView: View {
             Divider().padding(.vertical, 4)
             HStack(spacing: 4) {
                 Text("© 2026 \(AppLinks.author).")
-                Link("MIT License", destination: AppLinks.license)
+                Link("License: MIT or Apache-2.0", destination: AppLinks.license)
                 Text("·")
                 Link("Terms of Use", destination: AppLinks.terms)
             }

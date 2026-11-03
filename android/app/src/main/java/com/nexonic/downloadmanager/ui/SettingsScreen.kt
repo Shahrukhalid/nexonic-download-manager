@@ -188,7 +188,7 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
 
             Section("About")
             Text("Nexonic Download Manager ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodyLarge)
-            Hint("Free and open source (MIT) by Shahrukh Khalid.")
+            Hint("Free and open source (MIT or Apache-2.0) by Shahrukh Khalid.")
             TextButton(onClick = { openLink(context, "https://shahrukhalid.github.io/nexonic-download-manager/") }) { Text(tr("Website")) }
             TextButton(onClick = { openLink(context, "https://github.com/Shahrukhalid/nexonic-download-manager") }) { Text(tr("Source code and help")) }
             TextButton(onClick = { openLink(context, "https://github.com/Shahrukhalid/nexonic-download-manager/issues/new") }) { Text(tr("Report a problem")) }

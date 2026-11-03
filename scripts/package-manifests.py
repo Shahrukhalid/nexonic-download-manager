@@ -59,7 +59,7 @@ PublisherUrl: https://www.shahrukhalid.com
 PublisherSupportUrl: https://github.com/{REPO}/issues
 PackageName: Nexonic Download Manager
 PackageUrl: https://github.com/{REPO}
-License: MIT
+License: MIT OR Apache-2.0
 LicenseUrl: https://github.com/{REPO}/blob/main/LICENSE
 ShortDescription: Free, open-source download manager with video downloads.
 Description: {json.dumps(DESCRIPTION)}
@@ -81,7 +81,7 @@ scoop = {
     "version": VERSION,
     "description": DESCRIPTION,
     "homepage": f"https://github.com/{REPO}",
-    "license": "MIT",
+    "license": "MIT OR Apache-2.0",
     "architecture": {"64bit": {
         "url": f"{BASE}/NexonicDownloadManager-Windows-Portable.zip",
         "hash": sha["NexonicDownloadManager-Windows-Portable.zip"],

@@ -82,7 +82,7 @@
 "Login" = "تسجيل الدخول";
 "Login for this download" = "تسجيل الدخول لهذا التنزيل";
 "Login…" = "تسجيل الدخول…";
-"MIT License" = "ترخيص MIT";
+"License: MIT or Apache-2.0" = "الترخيص: MIT أو Apache-2.0";
 "Made by" = "من تطوير";
 "Mark files as downloaded so macOS checks them when first opened" = "وسم الملفات كمنزّلة ليتحقق منها macOS عند فتحها أول مرة";
 "More" = "المزيد";

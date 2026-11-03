@@ -82,7 +82,7 @@
 "Login" = "Anmeldung";
 "Login for this download" = "Anmeldung für diesen Download";
 "Login…" = "Anmeldung…";
-"MIT License" = "MIT-Lizenz";
+"License: MIT or Apache-2.0" = "Lizenz: MIT oder Apache-2.0";
 "Made by" = "Entwickelt von";
 "Mark files as downloaded so macOS checks them when first opened" = "Dateien als heruntergeladen markieren, damit macOS sie beim ersten Öffnen prüft";
 "More" = "Mehr";

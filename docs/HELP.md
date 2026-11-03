@@ -122,4 +122,4 @@ in the code, never cookies or passwords, so downloads that need you to be signed
 - [Latest version and release notes](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest)
 - [Terms of Use and License Agreement](../TERMS.md)
 
-Made by [Shahrukh Khalid](https://www.shahrukhalid.com) · [GitHub](https://github.com/Shahrukhalid) · MIT License
+Made by [Shahrukh Khalid](https://www.shahrukhalid.com) · [GitHub](https://github.com/Shahrukhalid) · MIT OR Apache-2.0

@@ -4,7 +4,7 @@ TERMS OF USE AND LICENSE AGREEMENT
 Please read these terms before installing or using Nexonic Download Manager ("the Software"). By installing, copying or using the Software you agree to these terms. If you do not agree, do not install or use it.
 
 1. LICENSE
-The Software is free and open-source, made by Shahrukh Khalid and released under the MIT License (full text below). You may use, copy, modify and share it, for personal or commercial purposes, free of charge, as long as the copyright notice and the license are kept.
+The Software is free and open-source, made by Shahrukh Khalid and released under the MIT License or the Apache License 2.0, at your option (the MIT text is below; the Apache text is in LICENSE-APACHE and at https://www.apache.org/licenses/LICENSE-2.0). You may use, copy, modify and share it, for personal or commercial purposes, free of charge, as long as the copyright notice and the chosen license are kept.
 
 2. YOUR RESPONSIBILITY
 The Software is a tool that downloads files and media that you point it to. You alone are responsible for what you download and how you use it. You agree to:

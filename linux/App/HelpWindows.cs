@@ -155,7 +155,7 @@ public static class HelpWindows
         p.Children.Add(new StackPanel
         {
             Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Spacing = 8,
-            Children = { new TextBlock { Text = $"© 2026 {Author}.", FontSize = 11, Opacity = 0.7, VerticalAlignment = VerticalAlignment.Center }, Ui.Link("MIT License", License), Ui.Link("Terms of Use", Terms) },
+            Children = { new TextBlock { Text = $"© 2026 {Author}.", FontSize = 11, Opacity = 0.7, VerticalAlignment = VerticalAlignment.Center }, Ui.Link("License: MIT or Apache-2.0", License), Ui.Link("Terms of Use", Terms) },
         });
         var w = new Window
         {

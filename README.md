@@ -13,7 +13,7 @@ Download faster, pause and resume anytime, and save videos from YouTube, Instagr
 ![Linux](https://img.shields.io/badge/Linux-x64%20%7C%20ARM64-FCC624)
 ![Android 10+](https://img.shields.io/badge/Android-10%2B-3DDC84)
 ![iOS 17+ (testing)](https://img.shields.io/badge/iPhone%20%26%20iPad-testing-555555)
-[![MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](LICENSE)
 [![Website](https://img.shields.io/badge/website-online-2563eb)](https://shahrukhalid.github.io/nexonic-download-manager/)
 
 <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/mac-main.png" alt="Nexonic Download Manager" width="880">
@@ -230,8 +230,13 @@ cd ios && NDM_VERSION=$(cat ../VERSION) xcodegen   # iPhone/iPad (Xcode 16, Xcod
 
 ## License
 
-[MIT](LICENSE) © 2026 Shahrukh Khalid. Not affiliated with Internet Download Manager or any of the sites mentioned;
+Licensed under either of the [MIT License](LICENSE-MIT) or the [Apache License 2.0](LICENSE-APACHE), at your option.
+© 2026 Shahrukh Khalid. Not affiliated with Internet Download Manager or any of the sites mentioned;
 their names belong to their owners.
+
+Unless you explicitly state otherwise, any contribution you submit for inclusion is dual licensed as above,
+without any additional terms or conditions. Third-party components keep their own licenses
+([notices](packaging/THIRD-PARTY-NOTICES.txt)).
 
 Made by **[Shahrukh Khalid](https://www.shahrukhalid.com)** · [GitHub](https://github.com/Shahrukhalid). If this app
 saves you time, please ⭐ star the repo so others can find it.

@@ -16,7 +16,7 @@
   <key>LSApplicationCategoryType</key><string>public.app-category.utilities</string>
   <key>NSHighResolutionCapable</key><true/>
   <key>NSAppleEventsUsageDescription</key><string>Used to shut down the Mac when a download queue finishes, if you choose that in the Scheduler.</string>
-  <key>NSHumanReadableCopyright</key><string>© 2026 Shahrukh Khalid. MIT License.</string>
+  <key>NSHumanReadableCopyright</key><string>© 2026 Shahrukh Khalid. MIT OR Apache-2.0.</string>
   <key>LSMultipleInstancesProhibited</key><true/>
   <key>CFBundleURLTypes</key>
   <array>

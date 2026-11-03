@@ -164,7 +164,7 @@ public static class HelpWindows
         p.Children.Add(new Separator { Margin = new Thickness(0, 14, 0, 10) });
         var legal = new TextBlock { HorizontalAlignment = HorizontalAlignment.Center, Foreground = Brushes.Gray, FontSize = 11 };
         legal.Inlines.Add(new Run($"© 2026 {Author}.  "));
-        legal.Inlines.Add(Link("MIT License", License));
+        legal.Inlines.Add(Link("License: MIT or Apache-2.0", License));
         legal.Inlines.Add(new Run("  ·  "));
         legal.Inlines.Add(Link("Terms of Use", Terms));
         p.Children.Add(legal);

@@ -2,7 +2,7 @@
     "version": "0.7.0",
     "description": "Free, open-source download manager: up to 32 connections per file, pause and resume, queues and a scheduler, batch download, site grabber, browser extension and videos from YouTube and 1,000+ other sites.",
     "homepage": "https://github.com/Shahrukhalid/nexonic-download-manager",
-    "license": "MIT",
+    "license": "MIT OR Apache-2.0",
     "architecture": {
         "64bit": {
             "url": "https://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v0.7.0/NexonicDownloadManager-Windows-Portable.zip",
