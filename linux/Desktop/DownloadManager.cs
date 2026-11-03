@@ -23,7 +23,7 @@ public sealed class AddOptions
 /// The window calls <see cref="Tick"/> twice a second and hands copied text to <see cref="OfferClipboard"/>;
 /// <c>post</c> runs work on the UI thread.
 /// </summary>
-public sealed class DownloadManager
+public sealed partial class DownloadManager
 {
     public ObservableCollection<Row> Rows { get; } = new();
     public ObservableCollection<DownloadQueue> Queues { get; } = new();

@@ -572,6 +572,22 @@ public static class Dialogs
                        "Load unpacked and pick the Extension folder (Open the Extension Folder shows it).");
         Hint(browsers, "Firefox: open \"Firefox Add-on.xpi\" from the same folder with Firefox. Firefox installs add-ons that are signed; see the README.");
         Hint(browsers, "Command line: open a new terminal and type ndm help. Example: ndm https://example.com/file.zip --queue Night");
+        Heading(browsers, "Automation");
+        var auto = s.Automation;
+        var apiOn = Tick(browsers, "Let programs on this computer control downloads (local API)", auto.Enabled);
+        var apiPort = Box(browsers, "Port", auto.Port.ToString());
+        var apiKey = Box(browsers, "API key (programs send it as Authorization: Bearer <key>)", auto.Key);
+        apiKey.IsReadOnly = true;
+        var keyButtons = new WrapPanel { Margin = new Thickness(0, 6, 0, 0) };
+        var newKey = new Button { Content = "New Key", Margin = new Thickness(0, 0, 6, 0) };
+        newKey.Click += (_, _) => apiKey.Text = AutomationSettings.NewKey();
+        var copyKey = new Button { Content = "Copy Key" };
+        copyKey.Click += (_, _) => { if (!string.IsNullOrEmpty(apiKey.Text)) _ = f.Window.Clipboard?.SetTextAsync(apiKey.Text); };
+        keyButtons.Children.Add(newKey);
+        keyButtons.Children.Add(copyKey);
+        browsers.Children.Add(keyButtons);
+        Hint(browsers, (m.ApiProblem.Length > 0 ? m.ApiProblem + " " : "") +
+                       "Only this computer can connect (127.0.0.1), and only with the key. Add, pause, resume and remove downloads and start or stop queues; see docs/API.md. The key is saved encrypted and never in backups.");
         Heading(browsers, "Remove from this computer");
         Hint(browsers, "Removes the browser helper, the ndm command and the menu entry this app added for your user. Your downloads and settings stay.");
         var remove = new Button { Content = "Remove Desktop Integration…", Margin = new Thickness(0, 8, 0, 0) };
@@ -619,7 +635,16 @@ public static class Dialogs
                 ConnectTimeoutSeconds = Ui.Number(connectTimeout.Text, 30), ReadTimeoutSeconds = Ui.Number(readTimeout.Text, 60), DnsOverHttps = doh.Text ?? "",
             }.Clamped();
             s.HostProfiles = profiles;
+            var apiPortNumber = Ui.Number(apiPort.Text, -1);
+            if (apiOn.IsChecked == true && apiPortNumber is < 1024 or > 65535) { error.Text = "The automation port must be between 1024 and 65535."; return; }
+            var keyText = apiKey.Text ?? "";
+            s.Automation = new AutomationSettings
+            {
+                Enabled = apiOn.IsChecked == true, Port = apiPortNumber is >= 1024 and <= 65535 ? apiPortNumber : 47812,
+                Key = keyText.Length >= 16 ? keyText : apiOn.IsChecked == true ? AutomationSettings.NewKey() : "",
+            };
             m.ApplySettings(s);
+            m.ApplyAutomation();
             prefs.Theme = theme.SelectedIndex switch { 1 => "light", 2 => "dark", _ => "system" };
             prefs.Save();
             App.ApplyTheme(prefs);

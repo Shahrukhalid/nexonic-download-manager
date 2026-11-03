@@ -71,7 +71,8 @@ public static class Secrets
                     if (o[name] is JsonValue v && v.TryGetValue<string>(out var s)) o[name] = f(s);
                 if (o["Proxy"] is JsonObject proxy && proxy["Password"] is JsonValue pv && pv.TryGetValue<string>(out var ps))
                     proxy["Password"] = f(ps);
-                if (o["HostProfiles"] is JsonArray profiles) Walk(profiles, f);  // each site's login and proxy password
+                if (o["HostProfiles"] is JsonArray profiles) Walk(profiles, f);
+                if (o["Automation"] is JsonObject auto && auto["Key"] is JsonValue kv && kv.TryGetValue<string>(out var ks)) auto["Key"] = f(ks);  // each site's login and proxy password
                 break;
         }
     }

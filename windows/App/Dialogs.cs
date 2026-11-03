@@ -612,6 +612,22 @@ public static class Dialogs
         browsers.Children.Add(openFolder);
         Hint(browsers, "Firefox: drag \"Firefox Add-on.xpi\" from the app's folder onto a Firefox window. Firefox installs add-ons that are signed; see the README for signing your copy.");
         Hint(browsers, "Command line: open a new terminal and type ndm help. Example: ndm https://example.com/file.zip --queue Night");
+        browsers.Children.Add(new TextBlock { Text = "Automation", FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 14, 0, 0) });
+        var auto = s.Automation;
+        var apiOn = Tick(browsers, "Let programs on this computer control downloads (local API)", auto.Enabled);
+        var apiPort = Box(browsers, "Port", auto.Port.ToString());
+        var apiKey = Box(browsers, "API key (programs send it as Authorization: Bearer <key>)", auto.Key);
+        apiKey.IsReadOnly = true;
+        var keyButtons = new WrapPanel { Margin = new Thickness(0, 6, 0, 0) };
+        var newKey = new Button { Content = "New Key", Padding = new Thickness(12, 3, 12, 3), Margin = new Thickness(0, 0, 6, 0) };
+        newKey.Click += (_, _) => apiKey.Text = AutomationSettings.NewKey();
+        var copyKey = new Button { Content = "Copy Key", Padding = new Thickness(12, 3, 12, 3) };
+        copyKey.Click += (_, _) => { if (apiKey.Text.Length > 0) Clipboard.SetText(apiKey.Text); };
+        keyButtons.Children.Add(newKey);
+        keyButtons.Children.Add(copyKey);
+        browsers.Children.Add(keyButtons);
+        Hint(browsers, (m.ApiProblem.Length > 0 ? m.ApiProblem + " " : "") +
+                       "Only this computer can connect (127.0.0.1), and only with the key. Add, pause, resume and remove downloads and start or stop queues; see docs/API.md. The key is saved encrypted and never in backups.");
 
         var error = f.Note("");
         error.Foreground = Brushes.Firebrick;
@@ -649,7 +665,15 @@ public static class Dialogs
                 ConnectTimeoutSeconds = Number(connectTimeout.Text, 30), ReadTimeoutSeconds = Number(readTimeout.Text, 60), DnsOverHttps = doh.Text,
             }.Clamped();
             s.HostProfiles = profiles;
+            var apiPortNumber = Number(apiPort.Text, -1);
+            if (apiOn.IsChecked == true && apiPortNumber is < 1024 or > 65535) { error.Text = "The automation port must be between 1024 and 65535."; return; }
+            s.Automation = new AutomationSettings
+            {
+                Enabled = apiOn.IsChecked == true, Port = apiPortNumber is >= 1024 and <= 65535 ? apiPortNumber : 47812,
+                Key = apiKey.Text.Length >= 16 ? apiKey.Text : apiOn.IsChecked == true ? AutomationSettings.NewKey() : "",
+            };
             m.ApplySettings(s);
+            m.ApplyAutomation();
             f.Close();
         }, isDefault: true);
         f.Show();

@@ -76,6 +76,7 @@ public sealed class App : Application
         // The inbox was read when the manager started; links handed over before that open now.
         m.CollectInbox();
         CreateTray(m);
+        m.ApplyAutomation(f => Dispatcher.UIThread.InvokeAsync(f).GetTask());
         Single?.Listen(why => Dispatcher.UIThread.Post(() =>
         {
             m.CollectInbox();

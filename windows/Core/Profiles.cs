@@ -203,6 +203,7 @@ public static class Backup
         };
         var s = file.Settings!;
         s.Proxy.Password = "";
+        s.Automation.Key = "";
         foreach (var p in s.HostProfiles) { p.Password = null; if (p.Proxy != null) p.Proxy.Password = ""; }
         foreach (var r in file.Downloads)
         {

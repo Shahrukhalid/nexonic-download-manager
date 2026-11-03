@@ -176,6 +176,8 @@ public sealed class AppSettings
     public NetworkOptions Network { get; set; } = new();
     /// <summary>Settings for downloads from particular websites.</summary>
     public List<HostProfile> HostProfiles { get; set; } = new();
+    /// <summary>Optional local automation API (off by default).</summary>
+    public AutomationSettings Automation { get; set; } = new();
     public bool ShowCompleteDialog { get; set; } = true;
     public bool PlaySound { get; set; } = true;
     public bool MarkDownloads { get; set; } = true;

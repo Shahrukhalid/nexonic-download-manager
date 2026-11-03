@@ -22,7 +22,7 @@ public sealed class AddOptions
 }
 
 /// <summary>Queues, scheduler, persistence and after-download actions (UI thread only).</summary>
-public sealed class DownloadManager
+public sealed partial class DownloadManager
 {
     public ObservableCollection<Row> Rows { get; } = new();
     public ObservableCollection<DownloadQueue> Queues { get; } = new();

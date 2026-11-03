@@ -65,6 +65,7 @@ public partial class App : Application
         };
         manager.ClipboardLink += link => window.ShowAdd(link);
         manager.QuitRequested += () => Quit(manager);
+        manager.ApplyAutomation(f => Dispatcher.InvokeAsync(f).Task);
         Demo.Start(manager, window);
         Updater.Start(manager);
         _ = ListenAsync(manager);
