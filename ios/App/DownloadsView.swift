@@ -104,6 +104,7 @@ struct DownloadsView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button { model.showPaste = true } label: { Label("Add", systemImage: "plus") }
+                    .keyboardShortcut("n", modifiers: .command)  // iPad with a keyboard
             }
             ToolbarItem(placement: .topBarLeading) {
                 Menu {

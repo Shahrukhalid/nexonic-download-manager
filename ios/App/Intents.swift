@@ -42,6 +42,54 @@ struct DownloadWithNexonicIntent: AppIntent {
     }
 }
 
+/// "Pause Nexonic Downloads": stops every running download (they continue later where they stopped).
+struct PauseAllDownloadsIntent: AppIntent {
+    static var title: LocalizedStringResource = "Pause Nexonic Downloads"
+    static var description = IntentDescription("Pauses every download that is running in Nexonic.")
+    static var openAppWhenRun = false
+
+    func perform() async throws -> some IntentResult & ReturnsValue<Int> & ProvidesDialog {
+        let active = Store.shared.load().filter(\.isActive)
+        for job in active { Downloader.shared(job.sessionID ?? Downloader.appSessionID).pause(job.id) }
+        let text = active.isEmpty ? "Nothing is downloading." : active.count == 1 ? "1 download paused." : "\(active.count) downloads paused."
+        return .result(value: active.count, dialog: "\(text)")
+    }
+}
+
+/// "Resume Nexonic Downloads": starts paused, failed and saved-for-later downloads.
+struct ResumeAllDownloadsIntent: AppIntent {
+    static var title: LocalizedStringResource = "Resume Nexonic Downloads"
+    static var description = IntentDescription("Starts the paused, failed and saved-for-later downloads in Nexonic.")
+    static var openAppWhenRun = false
+
+    func perform() async throws -> some IntentResult & ReturnsValue<Int> & ProvidesDialog {
+        let waiting = Store.shared.load().filter { $0.status == .paused || $0.status == .failed || $0.status == .later }
+        for job in waiting {
+            var j = job
+            j.status = .queued
+            Downloader.shared(Downloader.appSessionID).start(j)
+        }
+        let text = waiting.isEmpty ? "Nothing is waiting." : waiting.count == 1 ? "1 download started." : "\(waiting.count) downloads started."
+        return .result(value: waiting.count, dialog: "\(text)")
+    }
+}
+
+/// "Nexonic Download Status": how many downloads are running, waiting and finished.
+struct DownloadStatusIntent: AppIntent {
+    static var title: LocalizedStringResource = "Nexonic Download Status"
+    static var description = IntentDescription("Tells how many downloads are running, waiting and finished in Nexonic.")
+    static var openAppWhenRun = false
+
+    func perform() async throws -> some IntentResult & ReturnsValue<String> & ProvidesDialog {
+        let jobs = Store.shared.load()
+        let running = jobs.filter(\.isActive).count
+        let waiting = jobs.filter { $0.status == .paused || $0.status == .later || $0.status == .failed }.count
+        let done = jobs.filter { $0.status == .complete }.count
+        let text = "\(running) running, \(waiting) waiting, \(done) finished."
+        return .result(value: text, dialog: "\(text)")
+    }
+}
+
 struct NexonicShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
@@ -49,6 +97,24 @@ struct NexonicShortcuts: AppShortcutsProvider {
             phrases: ["Download with \(.applicationName)", "Save a link with \(.applicationName)"],
             shortTitle: "Download Link",
             systemImageName: "arrow.down.circle"
+        )
+        AppShortcut(
+            intent: PauseAllDownloadsIntent(),
+            phrases: ["Pause \(.applicationName) downloads", "Pause downloads in \(.applicationName)"],
+            shortTitle: "Pause All",
+            systemImageName: "pause.circle"
+        )
+        AppShortcut(
+            intent: ResumeAllDownloadsIntent(),
+            phrases: ["Resume \(.applicationName) downloads", "Start downloads in \(.applicationName)"],
+            shortTitle: "Resume All",
+            systemImageName: "play.circle"
+        )
+        AppShortcut(
+            intent: DownloadStatusIntent(),
+            phrases: ["\(.applicationName) download status", "How are my \(.applicationName) downloads"],
+            shortTitle: "Download Status",
+            systemImageName: "list.bullet.circle"
         )
     }
 }
