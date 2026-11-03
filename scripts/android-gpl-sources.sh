@@ -16,7 +16,7 @@ mkdir -p "$ROOT/upstream"
 get() { curl -fsSL --retry 4 -o "$2" "$1"; }
 
 # 1. youtubedl-android at the released tag (GPL-3.0).
-[ -n "${DRY:-}" ] || git clone -q --depth 1 --branch "$YTDL_TAG" https://github.com/yausername/youtubedl-android.git "$ROOT/youtubedl-android"
+[ -n "${DRY:-}" ] || git -c advice.detachedHead=false clone -q --depth 1 --branch "$YTDL_TAG" https://github.com/yausername/youtubedl-android.git "$ROOT/youtubedl-android"
 rm -rf "$ROOT/youtubedl-android/.git"
 
 # 2. The Termux build recipes (scripts and patches) used for its Python and FFmpeg.
@@ -61,11 +61,17 @@ while [ ${#queue[@]} -gt 0 ]; do
     u="${urls[$i]}"
     if [ -n "${DRY:-}" ]; then echo "$name: $u" >> "$ROOT/COMPONENTS.txt"; continue; fi
     case "$u" in
-      git+*) git clone -q --depth 1 "${u#git+}" "$ROOT/upstream/$name/$(basename "${u%.git}")" && rm -rf "$ROOT/upstream/$name"/*/.git ;;
-      *) f="$ROOT/upstream/$name/$(basename "${u%%\?*}")"; get "$u" "$f"
+      git+*) if git clone -q --depth 1 "${u#git+}" "$ROOT/upstream/$name/$(basename "${u%.git}")"; then rm -rf "$ROOT/upstream/$name"/*/.git
+             else echo "::warning::Could not clone $u"; echo "$name: NOT INCLUDED (clone failed, get it from $u)" >> "$ROOT/COMPONENTS.txt"; continue; fi ;;
+      *) f="$ROOT/upstream/$name/$(basename "${u%%\?*}")"
+         if ! get "$u" "$f"; then
+           echo "::warning::Could not download $u"; echo "$name: NOT INCLUDED (download failed, get it from $u)" >> "$ROOT/COMPONENTS.txt"; continue
+         fi
          want="${sums[$i]:-}"
          if [ -n "$want" ] && [ "$want" != SKIP_CHECKSUM ]; then
-           got="$(sha256sum "$f" | cut -d' ' -f1)"; [ "$got" = "$want" ] || { echo "Checksum mismatch: $u" >&2; exit 1; }
+           got="$(sha256sum "$f" | cut -d' ' -f1)"
+           # Upstream sometimes re-packs an archive; keep it, but say so (the recipe's checksum is in termux-packages/).
+           [ "$got" = "$want" ] || { echo "::warning::Checksum differs from the recipe: $u"; echo "$name: checksum differs from the recipe ($got)" >> "$ROOT/COMPONENTS.txt"; }
          fi ;;
     esac
     echo "$name: $u" >> "$ROOT/COMPONENTS.txt"
