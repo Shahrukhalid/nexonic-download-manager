@@ -47,7 +47,7 @@
   "mainEntity": [
     {"@type": "Question", "name": "Is Nexonic Download Manager free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. It is free and open source under the MIT license, with no ads, no account and no tracking."}},
     {"@type": "Question", "name": "Is there an IDM alternative for Mac?", "acceptedAnswer": {"@type": "Answer", "text": "Nexonic Download Manager is a native Mac app (macOS 13 or later, Apple silicon and Intel) with IDM-style features: multi-connection downloads, pause and resume, a scheduler, queues and a browser extension."}},
-    {"@type": "Question", "name": "Is there an Android app?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The Android app (Android 10 or later) has the same download engine, a built-in browser that catches downloads and lists videos and files on a page, and Share, Download with Nexonic from Chrome or any app."}},
+    {"@type": "Question", "name": "Is there an Android app?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The Android app (Android 10 or later) has the same download engine and video engine as the desktop apps: videos from YouTube, Facebook, Instagram, TikTok and 1,000+ sites, a built-in browser that catches downloads, and Share, Download with Nexonic from Chrome or any app."}},
     {"@type": "Question", "name": "Does it work with Chrome and Firefox?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The browser extension works with Chrome, Edge, Brave, Opera and Firefox and hands downloads to the app."}},
     {"@type": "Question", "name": "Can it download videos?", "acceptedAnswer": {"@type": "Answer", "text": "It saves videos from 1,000+ sites in the quality you pick, up to 4K/8K, or sound only, and streamed video as one .mp4 file. Copy-protected services are not supported, and you should only download what you have the right to save."}},
     {"@type": "Question", "name": "How do I update the app?", "acceptedAnswer": {"@type": "Answer", "text": "The app checks for updates when it opens and shows what is new, with Update Now, Remind Me Later or Skip This Version. Every update is checked against its SHA-256 before it is installed."}}
@@ -361,10 +361,12 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
         <a class="btn primary" href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android.apk"><svg class="i"><use href="#i-dl"/></svg>Download for Android (.apk)</a>
         <a class="btn outline" href="#install-android">How to install</a>
         <ul>
+          <li><svg class="i"><use href="#i-check"/></svg>Videos from YouTube, Facebook, Instagram, TikTok and 1,000+ sites</li>
           <li><svg class="i"><use href="#i-check"/></svg>Built-in browser catches downloads and videos</li>
           <li><svg class="i"><use href="#i-check"/></svg>Share → Download with Nexonic from Chrome or any app</li>
           <li><svg class="i"><use href="#i-check"/></svg>Signed app, same version as Mac and Windows</li>
         </ul>
+        <p class="req">Older 32-bit phone? <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android-32bit.apk">Get the 32-bit version</a>.</p>
       </div>
       <div class="dl" id="extension">
         <span class="tag">Recommended for you</span>
@@ -485,6 +487,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <img src="img/android-detail.png" alt="Download details with every connection" width="1080" height="2400" loading="lazy" data-zoom>
     </div>
     <div class="f-grid">
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-dl"/></svg></div><h3>Videos from 1,000+ sites</h3><p>Share or paste a YouTube, Facebook, Instagram, TikTok or X link and pick the quality, up to 4K, or sound only. Same video engine as the desktop apps, updated automatically.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-globe"/></svg></div><h3>Built-in browser</h3><p>Browse as usual: downloads open the Nexonic download window, long-press any link or image to save it, and <b>Found on this page</b> lists the videos, music and files on the page.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-dl"/></svg></div><h3>Share from Chrome</h3><p>In Chrome or any other app, tap <b>Share → Download with Nexonic</b>. Several links at once and batch patterns work too.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-bolt"/></svg></div><h3>Fast and resumable</h3><p>Up to 32 connections per file, pause and resume even after a restart, retries, refresh expired links.</p></div>
@@ -492,7 +495,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <div class="f"><div class="ic"><svg class="i"><use href="#i-folder"/></svg></div><h3>Files you can find</h3><p>Saved in <b>Download/Nexonic</b>, sorted by type, visible in the Files app. Open, share or delete from the app.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-lock"/></svg></div><h3>Private</h3><p>Cookies and passwords are encrypted on the phone and sent only to their own site. Third-party cookies are blocked in the browser.</p></div>
     </div>
-    <p class="dl-note">Chrome for Android doesn't run desktop extensions, so Nexonic uses the share menu and its own browser instead. Streaming video and the desktop video engine are not on Android yet. <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/android/README.md">Details</a>.</p>
+    <p class="dl-note">Chrome for Android doesn't run desktop extensions, so Nexonic uses the share menu and its own browser instead. Only download what you have the right to save; copy-protected services are not supported. <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/android/README.md">Details</a>.</p>
   </div>
 </section>
 
@@ -613,6 +616,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
         <ol>
           <li>Download <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android.apk">NexonicDownloadManager-Android.apk</a> on the phone and open it.</li>
           <li>If Android asks, allow your browser or Files app to <b>install unknown apps</b>, then tap <b>Install</b>.</li>
+          <li>Older 32-bit phone (Android says the app isn't compatible)? Use <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android-32bit.apk">NexonicDownloadManager-Android-32bit.apk</a>.</li>
           <li>Open Nexonic and allow notifications, so downloads keep running with the screen off.</li>
           <li>In Chrome: <b>Share → Download with Nexonic</b>, or use the built-in browser.</li>
         </ol>
@@ -681,7 +685,8 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
     <h2>Recent releases</h2>
     <p class="sub">The full history is in the <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/CHANGELOG.md">changelog</a> and on the <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases">releases page</a>.</p>
     <div class="rel">
-      <article><h3>0.6.8 <small>Latest</small></h3><ul><li>New Android app: built-in browser, Share → Nexonic, fast downloads that resume.</li><li>iPhone and iPad app in testing.</li></ul></article>
+      <article><h3>0.6.9 <small>Latest</small></h3><ul><li>Android saves videos from YouTube, Facebook, Instagram, TikTok and 1,000+ sites, with quality choices.</li><li>Smaller Android download, plus a version for older 32-bit phones.</li></ul></article>
+      <article><h3>0.6.8</h3><ul><li>New Android app: built-in browser, Share → Nexonic, fast downloads that resume.</li><li>iPhone and iPad app in testing.</li></ul></article>
       <article><h3>0.6.7</h3><ul><li>Clear message when a video needs you to be signed in, with what to do next.</li></ul></article>
       <article><h3>0.6.6</h3><ul><li>Select All, and a confirmation before deleting.</li><li>Automatic categories with their own folders, like IDM.</li><li>Google Images, Facebook and Reddit redirect links download the real file; paste several links separated by commas.</li></ul></article>
       <article><h3>0.6.5</h3><ul><li>Update checks work on busy shared networks.</li><li>Step-by-step pictures for the first launch on Mac.</li></ul></article>

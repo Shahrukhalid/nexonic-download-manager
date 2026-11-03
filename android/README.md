@@ -19,7 +19,7 @@ Native Android app (Kotlin, Jetpack Compose), Android 10 or later. Same download
 ## Limits on Android
 
 - Chrome for Android does not run desktop extensions. Use the built-in browser, or *Share → Download with Nexonic* from Chrome.
-- Streaming video (HLS `.m3u8`, DASH) and site video extraction (the desktop video engine) are not available yet. The desktop engine's programs can't run on Android. Direct video and audio files work.
+- Video pages (YouTube, Facebook, Instagram, TikTok and 1,000+ sites) go through the video engine: yt-dlp with Python and ffmpeg, from [youtubedl-android](https://github.com/yausername/youtubedl-android). It updates yt-dlp once a day (Settings → Video engine). It adds about 50 MB, so releases ship one APK per processor type: `NexonicDownloadManager-Android.apk` (64-bit ARM) and `-32bit.apk`. Copy-protected (DRM) video is not supported.
 - Copy-protected video is never supported.
 - Android limits background work. Downloads run as a data-sync foreground service. Android 15 may stop it after several hours; downloads then wait and continue when you open the app. Exact scheduled starts need *Alarms & reminders* permission; without it, Android may delay the start or show a notification to tap.
 

@@ -27,6 +27,7 @@ Download faster, pause and resume anytime, and save videos from YouTube, Instagr
 | **Windows** 10 / 11 | [NexonicDownloadManager-Windows-Setup.exe](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Setup.exe) |
 | Windows, no install | [NexonicDownloadManager-Windows-Portable.zip](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Portable.zip) |
 | **Android** 10+ (phones and tablets) | [NexonicDownloadManager-Android.apk](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android.apk) |
+| Android, older 32-bit phones | [NexonicDownloadManager-Android-32bit.apk](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android-32bit.apk) |
 | Chrome, Edge, Brave, Opera extension | [NexonicExtension-Chrome.zip](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicExtension-Chrome.zip) |
 | Firefox add-on | [NexonicAddon-Firefox.xpi](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicAddon-Firefox.xpi) |
 
@@ -149,7 +150,8 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
 - **Updates inside the app:** a new version shows up when you open the app, with what's new and Update Now, Remind
   Me Later or Skip This Version.
 - **Same app on Mac and Windows**, light and dark mode, no account, no tracking.
-- **Android app** with the same download engine: up to 32 connections, pause and resume, queues, scheduler, Wi-Fi only,
+- **Android app** with the same download and video engines: videos from YouTube, Facebook, Instagram, TikTok and
+  1,000+ sites with quality choices, up to 32 connections, pause and resume, queues, scheduler, Wi-Fi only,
   speed limit, a built-in browser that catches downloads and lists the videos and files on a page, and
   **Share → Download with Nexonic** from Chrome or any app. Files are saved in *Download/Nexonic*.
   Details and Android limits: [android/README.md](android/README.md).

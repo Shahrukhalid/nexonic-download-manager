@@ -1,3 +1,13 @@
+## 0.6.9
+
+- **Android: videos from YouTube, Facebook, Instagram, TikTok, X and 1,000+ other sites.** Share or paste a video
+  link and pick the quality (up to 4K, or sound only). Before, these links saved the web page instead of the video.
+  It uses the same video engine as the Mac and Windows apps, which updates itself once a day.
+- Android: **Download this video** button in the built-in browser on video pages.
+- Android: two downloads now. `NexonicDownloadManager-Android.apk` fits almost every phone (64-bit);
+  `NexonicDownloadManager-Android-32bit.apk` is for older phones.
+- Mac and Windows apps are unchanged.
+
 ## 0.6.8
 
 - **New: Android app.** Built-in browser that finds the videos, music and files on a page, Share → Nexonic from any
