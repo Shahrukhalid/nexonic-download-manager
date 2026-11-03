@@ -65,7 +65,10 @@ jobs:
           CLASSES=$("$AN" dex packages --defined-only "$REL")
           for cls in org.apache.commons.compress.archivers.zip.ExtraFieldUtils org.apache.commons.compress.archivers.zip.AsiExtraField \
                      com.yausername.youtubedl_android.YoutubeDL com.yausername.youtubedl_android.mapper.VideoInfo com.yausername.ffmpeg.FFmpeg; do
-            echo "$CLASSES" | grep -q " $cls$" || { echo "R8 removed or renamed $cls: the video engine would break"; exit 1; }
+            # The class name is the last column of apkanalyzer's list.
+            echo "$CLASSES" | awk '{print $NF}' | grep -qx "$cls" || {
+              echo "R8 removed or renamed $cls: the video engine would break"
+              echo "$CLASSES" | grep -i "commons\|yausername" | head -5; exit 1; }
           done
           echo "Video engine classes are intact in the release APK."
           if ls out/*release.apk >/dev/null 2>&1; then
