@@ -26,7 +26,6 @@ Download faster, pause and resume anytime, and save videos from YouTube, Instagr
 | **Mac** (macOS 13+, Apple silicon and Intel) | [NexonicDownloadManager-Mac.dmg](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Mac.dmg) |
 | **Windows** 10 / 11 | [NexonicDownloadManager-Windows-Setup.exe](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Setup.exe) |
 | Windows, no install | [NexonicDownloadManager-Windows-Portable.zip](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Portable.zip) |
-| **iPhone, iPad** (free shortcut for file links) | [Save-with-Nexonic.shortcut](https://shahrukhalid.github.io/nexonic-download-manager/Save-with-Nexonic.shortcut) |
 | **Android** 10+ (phones and tablets) | [NexonicDownloadManager-Android.apk](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android.apk) |
 | Android, older 32-bit phones | [NexonicDownloadManager-Android-32bit.apk](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android-32bit.apk) |
 | Chrome, Edge, Brave, Opera extension | [NexonicExtension-Chrome.zip](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicExtension-Chrome.zip) |
@@ -78,14 +77,7 @@ curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | 
 
 Updates install over the old version; your downloads list is kept.
 
-**iPhone and iPad: free shortcut, works today**
-
-[**Get the "Save with Nexonic" shortcut**](https://shahrukhalid.github.io/nexonic-download-manager/Save-with-Nexonic.shortcut): open the link in Safari on the iPhone or iPad and tap
-**Add Shortcut**. Then share a link to a file (a .mp4, .mp3, .pdf or .zip address) to **Save with Nexonic** and pick where
-to keep it in the Files app; with nothing shared, it uses the copied link. Videos from YouTube, Facebook, Instagram and
-other sites need the Nexonic app below.
-
-**iPhone and iPad app** (in testing, not on the App Store yet)
+**iPhone and iPad** (in testing, not on the App Store yet)
 
 Install it with Xcode on your own device (free Apple ID): see [ios/README.md](ios/README.md). Then set up the one-tap
 download once:
@@ -97,13 +89,7 @@ download once:
 | <img src="docs/img/ios-share-3.svg" alt="Step 3: add Download with Nexonic to Favorites" width="400"> | <img src="docs/img/ios-share-4.svg" alt="Step 4: Share, Download with Nexonic" width="400"> |
 | **3. Tap Edit, then +** next to **Download with Nexonic**, and drag it to the top. | **4. Share → Download with Nexonic**, pick the quality, tap **Download Now**. |
 
-This works as soon as the app is installed; no Shortcut is needed. Optional, for Siri and automations: the
-**Download with Nexonic** action is already in the Shortcuts app.
-
-| | |
-|---|---|
-| <img src="docs/img/ios-shortcut-1.svg" alt="Shortcuts: add the action" width="400"> | <img src="docs/img/ios-shortcut-2.svg" alt="Show in Share Sheet" width="400"> |
-| **1. Shortcuts → +**, add **Download with Nexonic**, set Links to **Shortcut Input**. | **2. Tap ⓘ** and turn on **Show in Share Sheet**. |
+This works as soon as the app is installed.
 
 Files go to **Files › On My iPhone/iPad › Nexonic**. The same guide is in the app: Settings → Set Up Download Shortcut.
 
