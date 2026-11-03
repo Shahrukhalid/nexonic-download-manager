@@ -169,6 +169,7 @@ public class HardeningTests
 }
 
 /// <summary>Secrets saved encrypted, old plain lists still load, unreadable lists are kept.</summary>
+[Collection("Secrets")]
 public class StorageTests
 {
     sealed class Failing : ISecretProtector

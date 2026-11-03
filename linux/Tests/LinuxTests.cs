@@ -144,6 +144,7 @@ public class SingleInstanceTests
     }
 }
 
+[Collection("Secrets")]
 public class KeyringTests
 {
     /// <summary>A keyring in memory that answers like secret-tool.</summary>

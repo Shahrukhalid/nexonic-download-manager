@@ -3,6 +3,8 @@ using Xunit;
 
 namespace Nexonic.Tests;
 
+// Tests that swap the app-wide secret protector run one at a time.
+[Collection("Secrets")]
 public class ProfilesTests
 {
     [Fact]
