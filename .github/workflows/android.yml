@@ -97,6 +97,11 @@ jobs:
             ls "$T"/lib/arm64-v8a
           } > out/android-components.txt
           cat out/android-components.txt
+      - name: GPL source list resolves (the release attaches the full archive)
+        run: |
+          grep -q 'YTDL_TAG='"$(grep -o 'youtubedlAndroid = "[^"]*"' android/app/build.gradle.kts | cut -d'"' -f2)" scripts/android-gpl-sources.sh \
+            || { echo "youtubedl-android version changed: update scripts/android-gpl-sources.sh"; exit 1; }
+          DRY=1 bash scripts/android-gpl-sources.sh "$RUNNER_TEMP/gpl" | tail -3
       - name: Test results
         if: failure()
         uses: actions/upload-artifact@v4
