@@ -1,0 +1,4 @@
+<Project>
+  <!-- Same version, language settings and company details as the Windows app. -->
+  <Import Project="..\windows\Directory.Build.props" />
+</Project>

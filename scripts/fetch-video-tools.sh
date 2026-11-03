@@ -3,6 +3,8 @@
 # runtime yt-dlp needs for some sites).
 #   scripts/fetch-video-tools.sh mac     OUT_DIR   # yt-dlp (universal) + qjs (universal, needs lipo)
 #   scripts/fetch-video-tools.sh windows OUT_DIR   # yt-dlp.exe + qjs.exe
+#   scripts/fetch-video-tools.sh linux-x64   OUT_DIR   # yt-dlp + qjs for 64-bit Intel/AMD Linux
+#   scripts/fetch-video-tools.sh linux-arm64 OUT_DIR   # yt-dlp + qjs for 64-bit ARM Linux
 set -euo pipefail
 TARGET="$1"
 OUT="$(mkdir -p "$2" && cd "$2" && pwd)"
@@ -38,7 +40,21 @@ case "$TARGET" in
     get "$QJ/qjs-windows-x86_64.exe" "$OUT/qjs.exe"
     check "$OUT/qjs.exe" 55a1b69cd4fdb6b0d3f8fdd910d0e89519f5330e408462084140c7b3b964fdae
     ;;
-  *) echo "usage: $0 mac|windows OUT_DIR" >&2; exit 2 ;;
+  linux-x64)
+    get "$YT/yt-dlp_linux" "$OUT/yt-dlp"
+    check "$OUT/yt-dlp" "$(ytsum yt-dlp_linux)"
+    get "$QJ/qjs-linux-x86_64" "$OUT/qjs"
+    check "$OUT/qjs" aae0d428c88bdd30fb490f54e616ebd4009ec279cc2a16ecebf0c3e17f7e76e7
+    chmod +x "$OUT/yt-dlp" "$OUT/qjs"
+    ;;
+  linux-arm64)
+    get "$YT/yt-dlp_linux_aarch64" "$OUT/yt-dlp"
+    check "$OUT/yt-dlp" "$(ytsum yt-dlp_linux_aarch64)"
+    get "$QJ/qjs-linux-aarch64" "$OUT/qjs"
+    check "$OUT/qjs" c1635453aa60a78ebc7f05b2b559e0e9e9eb7d55b4dfc4a6e71a07d9d10b8a89
+    chmod +x "$OUT/yt-dlp" "$OUT/qjs"
+    ;;
+  *) echo "usage: $0 mac|windows|linux-x64|linux-arm64 OUT_DIR" >&2; exit 2 ;;
 esac
 
 cat > "$OUT/NOTICE-video-tools-2.txt" <<TXT

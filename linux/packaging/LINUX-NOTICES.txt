@@ -1,0 +1,11 @@
+The Linux app also includes these open-source parts, used unmodified:
+
+- .NET runtime (MIT License), Copyright (c) .NET Foundation and Contributors: https://github.com/dotnet/runtime
+- Avalonia UI (MIT License), Copyright (c) AvaloniaUI OÜ and contributors: https://github.com/AvaloniaUI/Avalonia
+- SkiaSharp and HarfBuzzSharp (MIT License), Copyright (c) .NET Foundation and Contributors: https://github.com/mono/SkiaSharp
+  (with Skia, BSD 3-Clause License, Copyright (c) Google Inc., and HarfBuzz, Old MIT License)
+- Inter font (SIL Open Font License 1.1), Copyright (c) The Inter Project Authors: https://github.com/rsms/inter
+- Tmds.DBus.Protocol (MIT License), Copyright (c) Tom Deseyn: https://github.com/tmds/Tmds.DBus
+- MicroCom.Runtime (MIT License): https://github.com/kekekeks/MicroCom
+
+The AppImage is started by the AppImage type 2 runtime (MIT License): https://github.com/AppImage/type2-runtime

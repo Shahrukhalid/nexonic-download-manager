@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Nexonic Download Manager for Linux: Avalonia (MIT License) on the shared download core. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>NexonicDownloadManager</AssemblyName>
+    <RootNamespace>Nexonic.App</RootNamespace>
+    <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
+    <!-- Runs on every distribution without depending on its ICU version; texts are English. -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="tray.png" LogicalName="tray.png" />
+    <EmbeddedResource Include="..\packaging\nexonic-download-manager.png" LogicalName="icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Desktop\Desktop.csproj" />
+  </ItemGroup>
+</Project>

@@ -24,10 +24,24 @@ var output = Console.OpenStandardOutput();
 
 void StartApp()
 {
-    var app = Path.Combine(AppContext.BaseDirectory, "NexonicDownloadManager.exe");
+    // Linux AppImage: start the AppImage itself (this helper's copy of it goes away when the helper exits).
+    var appImage = OperatingSystem.IsLinux() ? Environment.GetEnvironmentVariable("APPIMAGE") : null;
+    var app = appImage is { Length: > 0 } && File.Exists(appImage) ? appImage
+        : Path.Combine(AppContext.BaseDirectory, OperatingSystem.IsWindows() ? "NexonicDownloadManager.exe" : "NexonicDownloadManager");
     if (!File.Exists(app)) return;
     // The app is single-instance: a second start only wakes the running one, which then reads the inbox.
-    try { Process.Start(new ProcessStartInfo(app, "--inbox") { UseShellExecute = false }); } catch { }
+    try
+    {
+        if (OperatingSystem.IsWindows()) Process.Start(new ProcessStartInfo(app, "--inbox") { UseShellExecute = false });
+        else
+        {
+            // Detached from the browser's pipes, so the browser never waits on the app.
+            var psi = new ProcessStartInfo("/bin/sh") { UseShellExecute = false };
+            foreach (var a in new[] { "-c", "\"$0\" --inbox </dev/null >/dev/null 2>&1 &", app }) psi.ArgumentList.Add(a);
+            Process.Start(psi)?.WaitForExit(5000);
+        }
+    }
+    catch { }
 }
 
 // The proxy set in the app (its password decrypted for this Windows user), so lookups take the same route as downloads.

@@ -1,0 +1,58 @@
+name: Linux
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+env:
+  DOTNET_NOLOGO: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  AVALONIA_TELEMETRY_OPTOUT: 1
+jobs:
+  linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: ubuntu-22.04
+          - arch: arm64
+            runner: ubuntu-22.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Build and test tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq rpm xvfb xauth imagemagick desktop-file-utils ffmpeg >/dev/null
+      - uses: actions/cache@v4
+        id: ffmpeg
+        with:
+          path: .ffmpeg-cache/linux-${{ matrix.arch }}
+          key: ffmpeg-linux-${{ matrix.arch }}-${{ hashFiles('scripts/build-ffmpeg.sh') }}
+      - if: steps.ffmpeg.outputs.cache-hit != 'true'
+        run: bash scripts/build-ffmpeg.sh linux .ffmpeg-cache/linux-${{ matrix.arch }}
+      - name: Video engine
+        run: bash scripts/fetch-video-tools.sh linux-${{ matrix.arch }} .tools-cache/linux-${{ matrix.arch }}
+      - name: Tests
+        run: dotnet test linux/Tests/Tests.csproj
+      - name: Build the app, AppImage, .deb and .rpm
+        run: bash linux/packaging/build.sh ${{ matrix.arch }} .ffmpeg-cache/linux-${{ matrix.arch }} .tools-cache/linux-${{ matrix.arch }}
+      - name: Check the app and the packages
+        run: bash linux/packaging/check.sh ${{ matrix.arch }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-${{ matrix.arch }}
+          if-no-files-found: ignore
+          path: |
+            build/linux-${{ matrix.arch }}/*.AppImage
+            build/linux-${{ matrix.arch }}/*.deb
+            build/linux-${{ matrix.arch }}/*.rpm
+            build/linux-${{ matrix.arch }}/SHA256SUMS-*.txt
+            build/linux-${{ matrix.arch }}/screenshots/

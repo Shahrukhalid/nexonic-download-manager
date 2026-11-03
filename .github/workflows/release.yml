@@ -88,8 +88,53 @@ jobs:
         with:
           name: tools-windows
           path: .tools-cache/windows
+  linux:
+    needs: release
+    strategy:
+      matrix:
+        include:
+          - arch: x64
+            runner: ubuntu-22.04
+          - arch: arm64
+            runner: ubuntu-22.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 50
+    env:
+      DOTNET_NOLOGO: 1
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      AVALONIA_TELEMETRY_OPTOUT: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Build and test tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq rpm xvfb xauth imagemagick desktop-file-utils ffmpeg >/dev/null
+      - uses: actions/cache@v4
+        id: ffmpeg
+        with:
+          path: .ffmpeg-cache/linux-${{ matrix.arch }}
+          key: ffmpeg-linux-${{ matrix.arch }}-${{ hashFiles('scripts/build-ffmpeg.sh') }}
+      - if: steps.ffmpeg.outputs.cache-hit != 'true'
+        run: bash scripts/build-ffmpeg.sh linux .ffmpeg-cache/linux-${{ matrix.arch }}
+      - name: Video engine
+        run: bash scripts/fetch-video-tools.sh linux-${{ matrix.arch }} .tools-cache/linux-${{ matrix.arch }}
+      - name: Tests
+        run: dotnet test linux/Tests/Tests.csproj
+      - name: Build the app, AppImage, .deb and .rpm
+        run: bash linux/packaging/build.sh ${{ matrix.arch }} .ffmpeg-cache/linux-${{ matrix.arch }} .tools-cache/linux-${{ matrix.arch }}
+      - name: Check the app before it is published (every tool present, packages install, windows open)
+        run: bash linux/packaging/check.sh ${{ matrix.arch }}
+      - name: Add the Linux files to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          O=build/linux-${{ matrix.arch }}
+          gh release upload "$GITHUB_REF_NAME" "$O"/*.AppImage "$O"/*.deb "$O"/*.rpm "$O"/SHA256SUMS-linux-*.txt
   windows:
-    needs: [release, ffmpeg-windows]
+    needs: [release, ffmpeg-windows, linux]
     runs-on: windows-latest
     timeout-minutes: 40
     steps:
@@ -148,7 +193,7 @@ jobs:
             body = (Get-Content CHANGELOG.md -Raw); assets = $assets
           } | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8NoBOM latest.json
           gh release upload $tag latest.json --clobber
-      - name: Publish the release (all Mac and Windows files are attached now)
+      - name: Publish the release (all Mac, Windows and Linux files are attached now)
         env:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh

@@ -216,6 +216,7 @@ right to, and respect copyright and each site's terms.
 git clone https://github.com/Shahrukhalid/nexonic-download-manager.git && cd nexonic-download-manager
 UNIVERSAL=0 bash scripts/build-app.sh     # Mac
 pwsh windows/build.ps1                    # Windows (.NET 8 SDK, Inno Setup 6)
+bash linux/packaging/build.sh x64 FFMPEG_DIR TOOLS_DIR   # Linux AppImage, .deb, .rpm (see docs/LINUX.md)
 gradle -p android assembleDebug           # Android (JDK 17, Android SDK)
 cd ios && NDM_VERSION=$(cat ../VERSION) xcodegen   # iPhone/iPad (Xcode 16, XcodeGen), then open Nexonic.xcodeproj
 ```

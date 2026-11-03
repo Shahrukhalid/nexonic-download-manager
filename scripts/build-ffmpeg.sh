@@ -2,6 +2,7 @@
 # Builds a small LGPL ffmpeg that only re-packs streamed video into .mp4 (no re-encoding), for bundling with the app.
 #   scripts/build-ffmpeg.sh mac      OUT_DIR   # universal (Apple silicon + Intel), run on a Mac
 #   scripts/build-ffmpeg.sh windows  OUT_DIR   # 64-bit .exe, cross-built on Linux with mingw-w64
+#   scripts/build-ffmpeg.sh linux    OUT_DIR   # this Linux machine's processor, linked statically (runs on any distribution)
 #   scripts/build-ffmpeg.sh native   OUT_DIR   # this machine (for testing)
 set -euo pipefail
 TARGET="$1"
@@ -42,11 +43,16 @@ case "$TARGET" in
       --disable-x86asm --extra-ldflags="-static"
     cp "$WORK/win/ffmpeg.exe" "$WORK/win/ffprobe.exe" "$OUT/"
     ;;
+  linux)
+    build linux --disable-x86asm --extra-ldflags=-static
+    cp "$WORK/linux/ffmpeg" "$WORK/linux/ffprobe" "$OUT/"
+    strip "$OUT/ffmpeg" "$OUT/ffprobe" 2>/dev/null || true
+    ;;
   native)
     build native --disable-x86asm
     cp "$WORK/native/ffmpeg" "$WORK/native/ffprobe" "$OUT/"
     ;;
-  *) echo "usage: $0 mac|windows|native OUT_DIR" >&2; exit 2 ;;
+  *) echo "usage: $0 mac|windows|linux|native OUT_DIR" >&2; exit 2 ;;
 esac
 
 cat > "$OUT/NOTICE-video-tools-1.txt" <<TXT

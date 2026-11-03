@@ -1,0 +1,10 @@
+#!/bin/sh
+# Starts the app from the AppImage. "--host" runs the browser helper and the ndm command instead (the small launch
+# scripts the app writes for the browsers and the terminal call the AppImage this way).
+HERE="$(dirname "$(readlink -f "$0")")"
+APP="$HERE/usr/lib/nexonic-download-manager"
+if [ "$1" = "--host" ]; then
+  shift
+  exec "$APP/nexonic-host" "$@"
+fi
+exec "$APP/NexonicDownloadManager" "$@"

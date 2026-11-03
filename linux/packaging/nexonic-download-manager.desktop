@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Nexonic Download Manager
+GenericName=Download Manager
+Comment=Fast downloads with pause and resume, queues, a scheduler and video downloads
+Exec=nexonic-download-manager %U
+Icon=nexonic-download-manager
+Terminal=false
+Categories=Network;FileTransfer;
+Keywords=download;manager;video;queue;resume;
+MimeType=x-scheme-handler/nexonic;text/x-uri;application/x-mswinurl;
+StartupWMClass=NexonicDownloadManager

@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Linux desktop services for the app: download manager, keyring, browser helper registration, desktop integration. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Nexonic.Linux</AssemblyName>
+    <RootNamespace>Nexonic.Linux</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\windows\Core\Core.csproj" />
+  </ItemGroup>
+</Project>

@@ -9,3 +9,6 @@ windows/**/bin/
 windows/**/obj/
 .ffmpeg-cache/
 .tools-cache/
+.appimage-tools/
+linux/**/bin/
+linux/**/obj/

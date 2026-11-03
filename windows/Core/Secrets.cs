@@ -5,7 +5,7 @@ using System.Text.Json.Nodes;
 
 namespace Nexonic.Core;
 
-/// <summary>Encrypts and decrypts short secrets for the current Windows user (DPAPI). Null when it fails.</summary>
+/// <summary>Encrypts and decrypts short secrets for the current user (DPAPI on Windows, the keyring on Linux). Null when it fails.</summary>
 public interface ISecretProtector
 {
     string? Protect(string plain);
@@ -13,20 +13,26 @@ public interface ISecretProtector
 }
 
 /// <summary>
-/// Cookies, download passwords and the proxy password are saved encrypted with Windows DPAPI (only this Windows user on
-/// this computer can read them). Older plain-text values are encrypted the next time the list is saved.
+/// Cookies, download passwords and the proxy password are saved encrypted: with Windows DPAPI, or on Linux with a key kept
+/// in the desktop's keyring (Secret Service). Only this user on this computer can read them. Older plain-text values are
+/// encrypted the next time the list is saved.
 /// </summary>
 public static class Secrets
 {
     public const string Prefix = "dpapi:";
-    public static ISecretProtector? Protector { get; set; } = OperatingSystem.IsWindows() ? new Dpapi() : null;
+    public static ISecretProtector? Protector { get; set; } =
+        OperatingSystem.IsWindows() ? new Dpapi() : OperatingSystem.IsLinux() ? new KeyringProtector() : null;
+
+    /// <summary>Without a protector, secrets are written as they are only where the system has no keyring to offer (never on Linux).</summary>
+    public static bool AllowPlainText { get; set; } = !OperatingSystem.IsLinux();
 
     /// <summary>Field names (as saved) that hold secrets, in download records and in settings.Proxy.</summary>
     static readonly string[] RecordFields = { "Cookies", "Password" };
 
     public static string? Seal(string? plain)
     {
-        if (string.IsNullOrEmpty(plain) || plain.StartsWith(Prefix, StringComparison.Ordinal) || Protector == null) return plain;
+        if (string.IsNullOrEmpty(plain) || plain.StartsWith(Prefix, StringComparison.Ordinal)) return plain;
+        if (Protector == null) return AllowPlainText ? plain : null;
         // Could not encrypt: the secret is not written at all (never plain text). It stays in memory for this session.
         return Protector.Protect(plain) is { } p ? Prefix + p : null;
     }
