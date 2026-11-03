@@ -1,3 +1,12 @@
+## 0.6.8
+
+- **New: Android app.** Built-in browser that finds the videos, music and files on a page, Share → Nexonic from any
+  app, fast multi-connection downloads that resume, queue and schedule, Wi-Fi only, and notifications. Download
+  `NexonicDownloadManager-Android.apk` below (Android 10 or later).
+- **iPhone and iPad app (in testing):** Download with Nexonic in the Share sheet, a Shortcuts/Siri action, background
+  downloads and Files app folders. Not on the App Store yet.
+- Mac and Windows apps are unchanged.
+
 ## 0.6.7
 
 - **Clear message when a video needs you to be signed in** (for example some Vimeo videos): instead of the video

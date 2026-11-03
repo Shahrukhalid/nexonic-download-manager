@@ -2,3 +2,4 @@
 
 **Windows:** if SmartScreen appears, click **More info → Run anyway**.
 
+**Android:** open `NexonicDownloadManager-Android.apk` on your phone and allow installing from your browser or Files app when asked.
