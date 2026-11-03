@@ -2,7 +2,7 @@ using System.Diagnostics;
 using Nexonic.Core;
 
 // Browser helper (native messaging) and the ndm command line: both hand downloads to the app through the inbox.
-const string Version = "0.6.10";
+const string Version = "0.7.0";
 
 if (CommandLineTool.IsCommand(args))
 {

@@ -2,7 +2,7 @@
 
 # Nexonic Download Manager
 
-**Free, open-source download manager for Mac, Windows, Android, iPhone and iPad: an alternative to Internet Download Manager (IDM).**
+**Free, open-source download manager for Mac, Windows, Linux, Android, iPhone and iPad: an alternative to Internet Download Manager (IDM).**
 
 Download faster, pause and resume anytime, and save videos from YouTube, Instagram, Facebook, X (Twitter), TikTok and
 1,000+ other sites in the best quality.
@@ -10,6 +10,7 @@ Download faster, pause and resume anytime, and save videos from YouTube, Instagr
 [![Latest release](https://img.shields.io/github/v/release/Shahrukhalid/nexonic-download-manager?label=download)](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest)
 ![macOS 13+](https://img.shields.io/badge/macOS-13%2B-black)
 ![Windows 10+](https://img.shields.io/badge/Windows-10%2B-0078D6)
+![Linux](https://img.shields.io/badge/Linux-x64%20%7C%20ARM64-FCC624)
 ![Android 10+](https://img.shields.io/badge/Android-10%2B-3DDC84)
 ![iOS 17+ (testing)](https://img.shields.io/badge/iPhone%20%26%20iPad-testing-555555)
 [![MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -26,6 +27,9 @@ Download faster, pause and resume anytime, and save videos from YouTube, Instagr
 | **Mac** (macOS 13+, Apple silicon and Intel) | [NexonicDownloadManager-Mac.dmg](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Mac.dmg) |
 | **Windows** 10 / 11 | [NexonicDownloadManager-Windows-Setup.exe](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Setup.exe) |
 | Windows, no install | [NexonicDownloadManager-Windows-Portable.zip](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Portable.zip) |
+| **Linux**, any distribution (64-bit) | [NexonicDownloadManager-Linux-x86_64.AppImage](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Linux-x86_64.AppImage) |
+| Linux on ARM (64-bit) | [NexonicDownloadManager-Linux-aarch64.AppImage](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Linux-aarch64.AppImage) |
+| Ubuntu, Debian, Mint, Pop!_OS (.deb) and Fedora, openSUSE (.rpm) | [All Linux files](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest) · [Linux guide](docs/LINUX.md) |
 | **Android** 10+ (phones and tablets) | [NexonicDownloadManager-Android.apk](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android.apk) |
 | Android, older 32-bit phones | [NexonicDownloadManager-Android-32bit.apk](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android-32bit.apk) |
 | Chrome, Edge, Brave, Opera extension | [NexonicExtension-Chrome.zip](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicExtension-Chrome.zip) |
@@ -143,7 +147,7 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
 - **Speed limits**, proxy, password-protected downloads and checksum checks.
 - **Updates inside the app:** a new version shows up when you open the app, with what's new and Update Now, Remind
   Me Later or Skip This Version.
-- **Same app on Mac and Windows**, light and dark mode, no account, no tracking.
+- **Same app on Mac, Windows and Linux**, light and dark mode, no account, no tracking.
 - **Android app** with the same download and video engines: videos from YouTube, Facebook, Instagram, TikTok and
   1,000+ sites with quality choices, up to 32 connections, pause and resume, queues, scheduler, Wi-Fi only,
   speed limit, a built-in browser that catches downloads and lists the videos and files on a page, and

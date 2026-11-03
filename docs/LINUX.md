@@ -4,9 +4,8 @@ The Linux app is the same download manager as the Windows app: the same download
 download, site grabber, video downloads, browser extension and `ndm` command, with a window built for Linux desktops
 (GNOME, KDE Plasma, Cinnamon, Xfce and others, on X11 and Wayland).
 
-> Linux downloads are added to the [Releases page](https://github.com/Shahrukhalid/nexonic-download-manager/releases)
-> from the first release that includes them. Until then, every change is built and tested automatically (GitHub
-> Actions, workflow **Linux**), and the test builds can be downloaded from the workflow run.
+Download from the [latest release](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest)
+(Linux is included from version 0.7.0).
 
 ## Which file to download
 

@@ -1,3 +1,16 @@
+## 0.7.0
+
+- **New: Linux app.** The same download manager as on Windows: fast multi-connection downloads that pause and resume,
+  queues and scheduler, batch download, site grabber, videos from YouTube and 1,000+ sites with quality choices,
+  clipboard watching, tray icon, notifications, light and dark mode. Works with Chrome, Chromium, Edge, Brave,
+  Vivaldi, Opera and Firefox, and adds the `ndm` command.
+- Linux downloads: an AppImage for every distribution (updates itself), `.deb` for Ubuntu, Debian, Mint and Pop!_OS,
+  `.rpm` for Fedora and openSUSE, each for 64-bit Intel/AMD and ARM. Passwords and cookies are kept encrypted with
+  your desktop's keyring. See the [Linux guide](docs/LINUX.md).
+- Android: videos are added right away (the page is read in the background), real progress with size and speed for
+  videos, and long-press to select several downloads to pause, start or delete.
+- Mac and Windows apps are unchanged.
+
 ## 0.6.10
 
 - **Android: video downloads work.** In 0.6.9 every video link stopped with an "s2.e" message because a part of the
