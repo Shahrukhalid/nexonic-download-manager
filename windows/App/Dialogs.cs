@@ -480,6 +480,15 @@ public static class Dialogs
         var sort = Tick(general, "Put each type in its own folder (Video, Music, Documents, Programs, Compressed, Images)", s.SortIntoCategoryFolders);
         var notify = Tick(general, "Notifications", s.Notifications);
         var updates = Tick(general, "Check for updates when the app opens", s.CheckForUpdates);
+        general.Children.Add(new TextBlock { Text = "Language", Margin = new Thickness(0, 10, 0, 2) });
+        var languageChoices = new List<string> { "" }.Concat(L.Languages.Select(l => l.Code)).ToList();
+        var language = new ComboBox
+        {
+            ItemsSource = new List<string> { L.T("Same as the system") }.Concat(L.Languages.Select(l => l.Reviewed ? l.Name : l.Name + " (machine translation)")).ToList(),
+            SelectedIndex = Math.Max(0, languageChoices.IndexOf(s.Language)),
+        };
+        general.Children.Add(language);
+        Hint(general, "The new language is used after the app restarts. Translations other than English are machine translations that still need review.");
         general.Children.Add(new TextBlock { Text = "Browser downloads", FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 14, 0, 0) });
         var askDialog = Tick(general, "Show the download window when a link is clicked in the browser", s.ShowDownloadDialog);
         var progressWin = Tick(general, "Show a progress window for each download I start", s.ShowProgressWindow);
@@ -642,6 +651,7 @@ public static class Dialogs
             s.SortIntoCategoryFolders = sort.IsChecked == true;
             s.Notifications = notify.IsChecked == true;
             s.CheckForUpdates = updates.IsChecked == true;
+            s.Language = languageChoices[Math.Max(0, language.SelectedIndex)];
             s.ShowDownloadDialog = askDialog.IsChecked == true;
             s.ShowProgressWindow = progressWin.IsChecked == true;
             s.BringToFrontOnBrowserDownload = toFront.IsChecked == true;

@@ -273,7 +273,7 @@ public sealed partial class DownloadManager
 
     // ---- queues and scheduler ----
 
-    public string QueueName(string id) => Queues.FirstOrDefault(q => q.Id == id)?.Name ?? "Main queue";
+    public string QueueName(string id) => Queues.FirstOrDefault(q => q.Id == id) is { } q ? (q.IsMain ? L.T(q.Name) : q.Name) : L.T("Main queue");
 
     string QueueIdNamed(string name)
     {
@@ -566,14 +566,14 @@ public sealed class Row : System.ComponentModel.INotifyPropertyChanged
     public string TimeLeft => Record.IsActive ? TimeLeftText.Of(Record.Size, Record.Received, SpeedBytes) : "";
     /// <summary>Video sites and streams take a few seconds to look up the best quality before the first byte arrives.</summary>
     public bool PreparingVideo => Record.IsActive && (Record.SiteVideo == true || Record.IsStream == true) && Record.Received == 0;
-    public string Status => PreparingVideo ? "Preparing video…" : Record.Status switch
+    public string Status => PreparingVideo ? L.T("Preparing video…") : Record.Status switch
     {
-        DownloadStatus.Queued => "Queued",
-        DownloadStatus.Probing => "Connecting…",
+        DownloadStatus.Queued => L.T("Queued"),
+        DownloadStatus.Probing => L.T("Connecting…"),
         DownloadStatus.Downloading => $"{Percent:0}%",
-        DownloadStatus.Paused => Record.AwaitingRefresh == true ? "Waiting for link" : "Stopped",
-        DownloadStatus.Finished => Record.ChecksumResult?.Contains("not") == true ? "Checksum failed" : "Complete",
-        _ => "Error",
+        DownloadStatus.Paused => L.T(Record.AwaitingRefresh == true ? "Waiting for link" : "Stopped"),
+        DownloadStatus.Finished => L.T(Record.ChecksumResult?.Contains("not") == true ? "Checksum failed" : "Complete"),
+        _ => L.T("Error"),
     };
     public string Queue => queueName(Record.Queue);
     /// <summary>Status colour (#RRGGBB), the same as the Windows app's.</summary>

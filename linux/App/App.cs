@@ -57,6 +57,8 @@ public sealed class App : Application
         Directory.CreateDirectory(AppPaths.Support);
         Task.Run(() => { try { new Integration().Install(); } catch { } });
         var m = manager = new DownloadManager(a => Dispatcher.UIThread.Post(a));
+        L.Use(m.Settings.Language);
+        Translate.Install();
         var window = MainWindow = new MainWindow(m);
         if (!keyring) window.ShowKeyringWarning();
         // Started by the browser helper: stay in the tray unless the user wants the window for browser downloads.
@@ -118,7 +120,7 @@ public sealed class App : Application
             var menu = new NativeMenu();
             void Item(string header, Action click)
             {
-                var item = new NativeMenuItem { Header = header };
+                var item = new NativeMenuItem { Header = L.T(header) };
                 item.Click += (_, _) => click();
                 menu.Items.Add(item);
             }
@@ -130,7 +132,7 @@ public sealed class App : Application
             var limitItems = new List<(NativeMenuItem Item, int KB)>();
             foreach (var kb in SpeedLimits.Presets)
             {
-                var choice = new NativeMenuItem { Header = SpeedLimits.Title(kb), ToggleType = NativeMenuItemToggleType.Radio, IsChecked = m.Settings.SpeedLimitKBps == kb };
+                var choice = new NativeMenuItem { Header = kb <= 0 ? L.T("No Limit") : SpeedLimits.Title(kb), ToggleType = NativeMenuItemToggleType.Radio, IsChecked = m.Settings.SpeedLimitKBps == kb };
                 var value = kb;
                 choice.Click += (_, _) =>
                 {
@@ -142,7 +144,7 @@ public sealed class App : Application
                 limitItems.Add((choice, kb));
                 limits.Items.Add(choice);
             }
-            menu.Items.Add(new NativeMenuItem { Header = "Speed Limit", Menu = limits });
+            menu.Items.Add(new NativeMenuItem { Header = L.T("Speed Limit"), Menu = limits });
             menu.Items.Add(new NativeMenuItemSeparator());
             Item("Quit", Quit);
             tray = new TrayIcon { Icon = new WindowIcon(s), ToolTipText = "Nexonic Download Manager", Menu = menu, IsVisible = true };

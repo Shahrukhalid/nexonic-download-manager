@@ -178,6 +178,8 @@ public sealed class AppSettings
     public List<HostProfile> HostProfiles { get; set; } = new();
     /// <summary>Optional local automation API (off by default).</summary>
     public AutomationSettings Automation { get; set; } = new();
+    /// <summary>Language code ("ur", "de"…); empty = the system's language.</summary>
+    public string Language { get; set; } = "";
     public bool ShowCompleteDialog { get; set; } = true;
     public bool PlaySound { get; set; } = true;
     public bool MarkDownloads { get; set; } = true;

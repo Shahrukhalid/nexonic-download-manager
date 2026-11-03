@@ -63,18 +63,18 @@ public partial class MainWindow : Window
             Sidebar.Items.Add(new ListBoxItem { Content = row, Tag = key, Padding = new Thickness(14 + indent * 16, 5, 4, 5), HorizontalContentAlignment = HorizontalAlignment.Stretch });
         }
         // Like IDM: each list opens into the file types it holds (sorted automatically by file type).
-        static string Label(string c) => c == nameof(FileCategory.Other) ? "General" : c;
+        static string Label(string c) => L.T(c == nameof(FileCategory.Other) ? "General" : c);
         void Types(string prefix) { foreach (var c in Enum.GetNames<FileCategory>()) Entry(Label(c), prefix + c, 1); }
-        Header("Downloads");
-        Entry("All Downloads", "all");
+        Header(L.T("Downloads"));
+        Entry(L.T("All Downloads"), "all");
         Types("cat:");
-        Entry("In Progress", "active");
-        Entry("Unfinished", "unfinished");
+        Entry(L.T("In Progress"), "active");
+        Entry(L.T("Unfinished"), "unfinished");
         Types("ucat:");
-        Entry("Finished", "finished");
+        Entry(L.T("Finished"), "finished");
         Types("fcat:");
-        Header("Queues");
-        foreach (var q in manager.Queues) Entry((q.Running ? "▶ " : "⏸ ") + q.Name, "queue:" + q.Id);
+        Header(L.T("Queues"));
+        foreach (var q in manager.Queues) Entry((q.Running ? "▶ " : "⏸ ") + (q.IsMain ? L.T(q.Name) : q.Name), "queue:" + q.Id);
         Sidebar.SelectedItem = Sidebar.Items.OfType<ListBoxItem>().FirstOrDefault(i => (string?)i.Tag == filter)
                                ?? Sidebar.Items.OfType<ListBoxItem>().First(i => (string?)i.Tag == "all");
         rebuilding = false;

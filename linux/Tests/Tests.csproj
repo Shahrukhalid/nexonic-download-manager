@@ -15,5 +15,6 @@
     <Compile Include="..\..\windows\Tests\ProfilesTests.cs" Link="ProfilesTests.cs" />
     <Compile Include="..\..\windows\Tests\QrTests.cs" Link="QrTests.cs" />
     <Compile Include="..\..\windows\Tests\LocalApiTests.cs" Link="LocalApiTests.cs" />
+    <Compile Include="..\..\windows\Tests\LocalizationTests.cs" Link="LocalizationTests.cs" />
   </ItemGroup>
 </Project>
