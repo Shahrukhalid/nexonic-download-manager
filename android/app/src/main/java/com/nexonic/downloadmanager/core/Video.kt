@@ -1,0 +1,121 @@
+package com.nexonic.downloadmanager.core
+
+import java.net.URI
+
+/** One stream the video engine found on a page (a simplified yt-dlp format). */
+data class StreamFormat(
+    val height: Int,
+    val hasVideo: Boolean,
+    val hasAudio: Boolean,
+    val ext: String?,
+    val size: Long?,
+)
+
+/** A quality the user can pick in the download window. */
+data class VideoChoice(
+    val label: String,
+    /** yt-dlp format selector. */
+    val selector: String,
+    /** File extension of the result. */
+    val ext: String,
+    val size: Long?,
+    val audioOnly: Boolean = false,
+)
+
+/** Rules for links that are video pages (YouTube, Facebook, Instagram…), the same idea as the desktop apps. */
+object VideoPages {
+    /** Name of a video added without reading its page first; the finished file is named after the video. */
+    const val AUTO_NAME = "video.mp4"
+
+    /** Best quality, for video links added several at a time. */
+    val best = VideoChoice("Best quality", "bv*[ext=mp4]+ba[ext=m4a]/bv*+ba/b", "mp4", null)
+    private val hosts = listOf(
+        "youtube.com", "youtu.be", "facebook.com", "fb.watch", "fb.com", "instagram.com", "tiktok.com",
+        "twitter.com", "x.com", "vimeo.com", "dailymotion.com", "dai.ly", "reddit.com", "redd.it", "twitch.tv",
+        "threads.net", "threads.com", "pinterest.com", "pin.it", "linkedin.com", "snapchat.com", "bilibili.com",
+        "soundcloud.com", "bandcamp.com", "streamable.com", "rumble.com", "ok.ru", "vk.com", "likee.video",
+    )
+
+    private fun host(url: String): String? =
+        runCatching { URI(url.trim()).host?.lowercase()?.removePrefix("www.")?.removePrefix("m.") }.getOrNull()
+
+    /** True for links to sites whose pages hold a video (not a file), so the video engine reads them. */
+    fun isVideoSite(url: String): Boolean {
+        val h = host(url) ?: return false
+        return hosts.any { h == it || h.endsWith(".$it") }
+    }
+
+    /** A page on a video site that can hold a video (not the site's home page). */
+    fun isVideoPage(url: String): Boolean {
+        if (!isVideoSite(url)) return false
+        val u = runCatching { URI(url.trim()) }.getOrNull() ?: return false
+        return (u.path?.trim('/')?.isNotEmpty() == true) || !u.query.isNullOrEmpty()
+    }
+
+    /** A link that answered with a web page instead of a file. */
+    fun isWebPage(contentType: String?): Boolean {
+        val t = contentType?.substringBefore(';')?.trim()?.lowercase() ?: return false
+        return t == "text/html" || t == "application/xhtml+xml"
+    }
+
+    /** Quality choices for the download window: each resolution once, best first, then sound only. */
+    fun choices(formats: List<StreamFormat>, maxChoices: Int = 6): List<VideoChoice> {
+        val bestAudio = formats.filter { it.hasAudio && !it.hasVideo }
+            .maxByOrNull { (if (it.ext == "m4a") 1L shl 40 else 0L) + (it.size ?: 0) }
+        val heights = formats.filter { it.hasVideo && it.height > 0 }.map { it.height }.distinct().sortedDescending()
+        val out = mutableListOf<VideoChoice>()
+        for (h in heights.take(maxChoices)) {
+            val video = formats.filter { it.hasVideo && it.height == h }
+                .maxByOrNull { (if (it.ext == "mp4") 1L shl 40 else 0L) + (it.size ?: 0) }
+            val size = when {
+                video?.size == null -> null
+                video.hasAudio -> video.size
+                else -> video.size + (bestAudio?.size ?: 0)
+            }
+            out += VideoChoice(
+                label = label(h),
+                selector = "bv*[height<=$h][ext=mp4]+ba[ext=m4a]/bv*[height<=$h]+ba/b[height<=$h]/b",
+                ext = "mp4",
+                size = size,
+            )
+        }
+        if (out.isEmpty()) out += VideoChoice("Best quality", "bv*+ba/b", "mp4", formats.firstOrNull { it.hasVideo && it.hasAudio }?.size)
+        if (bestAudio != null || formats.any { it.hasAudio }) {
+            val audioExt = if (bestAudio?.ext == "m4a" || bestAudio == null) "m4a" else bestAudio.ext ?: "m4a"
+            out += VideoChoice("Sound only (${audioExt.uppercase()})", "ba[ext=m4a]/ba/b", audioExt, bestAudio?.size, audioOnly = true)
+        }
+        return out
+    }
+
+    fun label(height: Int): String = when {
+        height >= 4320 -> "8K (${height}p)"
+        height >= 2160 -> "4K (${height}p)"
+        height >= 1440 -> "2K (${height}p)"
+        height >= 1080 -> "Full HD (${height}p)"
+        height >= 720 -> "HD (${height}p)"
+        else -> "${height}p"
+    }
+
+    /** A file name from the video title, with the right extension. */
+    fun fileName(title: String?, ext: String): String {
+        val base = FileNames.sanitize((title ?: "video").take(120)).ifBlank { "video" }.removeSuffix(".$ext")
+        return "$base.$ext"
+    }
+
+    /** yt-dlp's error text, shortened to something useful for the user. */
+    fun friendlyError(raw: String?): String {
+        val line = raw.orEmpty().lines().map { it.trim() }.lastOrNull { it.startsWith("ERROR:") }?.removePrefix("ERROR:")?.trim()
+            ?: raw.orEmpty().lines().lastOrNull { it.isNotBlank() }?.trim().orEmpty()
+        val l = line.lowercase()
+        return when {
+            "unsupported url" in l -> "No video found on this page."
+            "sign in" in l || "login" in l || "log in" in l || "cookies" in l ->
+                "This video needs you to be signed in. Open it in the app's Browser tab, sign in, then download it there."
+            "private" in l -> "This video is private."
+            "not available" in l || "unavailable" in l -> "This video is not available."
+            "unable to download webpage" in l || "network" in l || "timed out" in l -> "Could not reach the site. Check the connection and try again."
+            line.isEmpty() -> "The video could not be read."
+            else -> line.take(200)
+        }
+    }
+}

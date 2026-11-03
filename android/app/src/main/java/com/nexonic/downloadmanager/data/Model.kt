@@ -27,7 +27,11 @@ data class DownloadItem(
     val quality: String? = null,
     val resumable: Boolean = false,
     val state: TransferState? = null,
+    /** Video pages (YouTube, Facebook…): the yt-dlp format selector and the result's extension. */
+    val videoFormat: String? = null,
+    val videoExt: String? = null,
 ) {
+    val isVideo: Boolean get() = videoFormat != null
     val category: FileCategory get() = FileCategory.of(fileName)
     val progress: Float get() = size?.takeIf { it > 0 }?.let { (written.toFloat() / it).coerceIn(0f, 1f) } ?: 0f
     val isActive: Boolean get() = status == Status.DOWNLOADING || status == Status.QUEUED
@@ -41,6 +45,7 @@ data class DownloadItem(
         put("addedAt", addedAt); finishedAt?.let { put("finishedAt", it) }
         contentUri?.let { put("contentUri", it) }; savedPath?.let { put("savedPath", it) }; quality?.let { put("quality", it) }
         put("resumable", resumable)
+        videoFormat?.let { put("videoFormat", it) }; videoExt?.let { put("videoExt", it) }
         state?.let { s ->
             put("state", JSONObject().apply {
                 s.size?.let { put("size", it) }; put("resumable", s.resumable); s.validator?.let { put("validator", it) }
@@ -82,6 +87,8 @@ data class DownloadItem(
                 quality = o.optString("quality").ifEmpty { null },
                 resumable = o.optBoolean("resumable"),
                 state = st,
+                videoFormat = o.optString("videoFormat").ifEmpty { null },
+                videoExt = o.optString("videoExt").ifEmpty { null },
             )
         }
     }

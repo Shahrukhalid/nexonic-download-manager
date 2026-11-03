@@ -2,6 +2,8 @@
 
 package com.nexonic.downloadmanager.ui
 
+import com.nexonic.downloadmanager.video.VideoEngine
+
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -30,6 +32,7 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -62,6 +65,9 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
     var block3p by remember { mutableStateOf(s.blockThirdPartyCookies) }
     var home by remember { mutableStateOf(s.homePage) }
     var confirmClear by remember { mutableStateOf(false) }
+    var engineVersion by remember { mutableStateOf<String?>(null) }
+    var updating by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { engineVersion = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { VideoEngine.version() } }
 
     Column(Modifier.fillMaxSize()) {
         TopAppBar(title = { Text("Settings", fontWeight = FontWeight.SemiBold) })
@@ -109,6 +115,21 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
             TextButton(onClick = { browser.clearData(); message("Browser data cleared") }) { Text("Clear cookies, cache and history") }
             TextButton(onClick = { confirmClear = true }) { Text("Clear finished downloads from the list") }
             Hint("No account, no ads, no tracking. Cookies and passwords for downloads are encrypted on this phone and sent only to their own site.")
+
+            Section("Video engine")
+            Hint("Saves videos from YouTube, Facebook, Instagram, TikTok, X and 1,000+ other sites (yt-dlp with ffmpeg, like the desktop apps). It updates itself once a day.")
+            Text("Version: " + (engineVersion ?: "starting…"), style = MaterialTheme.typography.bodyMedium)
+            TextButton(enabled = !updating, onClick = {
+                updating = true
+                Thread {
+                    val result = runCatching { VideoEngine.updateNow() }
+                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                        updating = false
+                        engineVersion = VideoEngine.version()
+                        message(if (result.isSuccess) (if (result.getOrNull() == "ALREADY_UP_TO_DATE") "The video engine is up to date" else "Video engine updated") else "Could not update now. Try again later.")
+                    }
+                }.start()
+            }) { Text(if (updating) "Checking…" else "Update video engine") }
 
             Section("About")
             Text("Nexonic Download Manager ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodyLarge)

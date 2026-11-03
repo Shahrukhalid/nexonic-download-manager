@@ -1,5 +1,6 @@
 package com.nexonic.downloadmanager
 
+import com.nexonic.downloadmanager.video.VideoEngine
 import android.Manifest
 import android.app.Application
 import android.content.Intent
@@ -28,6 +29,7 @@ class NexonicApp : Application() {
         Downloads.init(this)
         Notifier.channels(this)
         Scheduler.apply(this)
+        VideoEngine.init(this)
     }
 }
 

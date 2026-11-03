@@ -62,6 +62,12 @@ import com.nexonic.downloadmanager.core.ProbeResult
 import com.nexonic.downloadmanager.data.Downloads
 import com.nexonic.downloadmanager.data.NewDownload
 import com.nexonic.downloadmanager.data.Secrets
+import com.nexonic.downloadmanager.core.VideoChoice
+import com.nexonic.downloadmanager.core.VideoPages
+import com.nexonic.downloadmanager.video.VideoEngine
+import com.nexonic.downloadmanager.video.VideoPage
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.RadioButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -84,6 +90,11 @@ fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
     var showLogin by remember { mutableStateOf(false) }
     var user by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    // Video pages (YouTube, Facebook, Instagram, TikTok…): the video engine reads the page instead of saving it.
+    var isVideo by remember { mutableStateOf(false) }
+    var reading by remember { mutableStateOf(false) }
+    var page by remember { mutableStateOf<VideoPage?>(null) }
+    var pick by remember { mutableStateOf(0) }
 
     val links: List<String> = remember(input, batch) {
         val l = if (batch) Links.split(input).flatMap { BatchPattern.expand(it, 2000) }.filter { Links.isWebLink(it) } else Links.split(input)
@@ -93,41 +104,68 @@ fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
 
     // Ask the server for the name and size of a single link.
     LaunchedEffect(single, user, password) {
-        probe = null; problem = null
+        probe = null; problem = null; page = null; isVideo = false; pick = 0
         if (single == null) return@LaunchedEffect
         delay(350)
-        probing = true
-        val req = DownloadRequest(single, offer?.cookies?.takeIf { single == offer?.url }, offer?.referer, offer?.userAgent, user.ifEmpty { null }, password.ifEmpty { null })
-        val result = withContext(Dispatchers.IO) { runCatching { Http.probe(req) } }
-        probing = false
-        result.onSuccess { p ->
-            probe = p
-            if (!nameEdited) name = p.fileName
-        }.onFailure { e ->
-            problem = when {
-                e is HttpStatusException && (e.code == 401 || e.code == 403) -> "The server asks for a login or refused the link (${e.code})."
-                e is HttpStatusException -> "The server answered ${e.code}."
-                else -> "Could not reach the server. You can still add it and try later."
+        if (VideoPages.isVideoSite(single)) {
+            isVideo = true
+        } else {
+            probing = true
+            val req = DownloadRequest(single, offer?.cookies?.takeIf { single == offer?.url }, offer?.referer, offer?.userAgent, user.ifEmpty { null }, password.ifEmpty { null })
+            val result = withContext(Dispatchers.IO) { runCatching { Http.probe(req) } }
+            probing = false
+            result.onSuccess { p ->
+                // A web page is never saved as a file: look for the video on it instead.
+                if (VideoPages.isWebPage(p.contentType)) isVideo = true
+                else { probe = p; if (!nameEdited) name = p.fileName }
+            }.onFailure { e ->
+                problem = when {
+                    e is HttpStatusException && (e.code == 401 || e.code == 403) -> "The server asks for a login or refused the link (${e.code})."
+                    e is HttpStatusException -> "The server answered ${e.code}."
+                    else -> "Could not reach the server. You can still add it and try later."
+                }
+                if (!nameEdited && name.isEmpty()) name = FileNames.fromUrl(single)
             }
-            if (!nameEdited && name.isEmpty()) name = FileNames.fromUrl(single)
+        }
+        if (isVideo) {
+            reading = true
+            val read = withContext(Dispatchers.IO) { runCatching { VideoEngine.read(single, offer?.userAgent, offer?.referer) } }
+            reading = false
+            read.onSuccess { p ->
+                page = p
+                if (!nameEdited) name = VideoPages.fileName(p.title, p.choices.first().ext)
+            }.onFailure { problem = it.message ?: "No video found on this page." }
         }
     }
+
+    fun choose(i: Int) {
+        val p = page ?: return
+        pick = i
+        if (!nameEdited) name = VideoPages.fileName(p.title, p.choices[i].ext)
+        else name = name.substringBeforeLast('.', name) + "." + p.choices[i].ext
+    }
+
+    val canAdd = links.isNotEmpty() && !(single != null && isVideo && page == null)
 
     fun add(startNow: Boolean) {
         if (links.isEmpty()) return
         val secrets = Secrets(cookies = offer?.cookies, user = user.ifEmpty { null }, password = password.ifEmpty { null })
+        val choice: VideoChoice? = page?.choices?.getOrNull(pick)
         links.forEach { u ->
             val same = single != null
+            // Several links: video pages get the best quality, named after the video.
+            val video = if (same) choice?.takeIf { isVideo } else if (VideoPages.isVideoSite(u)) VideoPages.best else null
             Downloads.add(
                 NewDownload(
                     url = u,
-                    fileName = if (same && name.isNotBlank()) name else FileNames.fromUrl(u),
-                    size = if (same) probe?.size ?: offer?.size?.takeIf { it >= 0 } else null,
+                    fileName = if (same && name.isNotBlank()) name else if (video != null) VideoPages.AUTO_NAME else FileNames.fromUrl(u),
+                    size = if (video != null) video.size else if (same) probe?.size ?: offer?.size?.takeIf { it >= 0 } else null,
                     resumable = if (same) probe?.resumable ?: false else false,
                     referer = offer?.referer, userAgent = offer?.userAgent,
                     secrets = if (u == offer?.url || offer == null) secrets else Secrets(),
                     mime = if (same) probe?.contentType ?: offer?.mime else null,
                     quality = offer?.quality,
+                    video = video,
                 ),
                 startNow,
             )
@@ -141,7 +179,7 @@ fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).navigationBarsPadding(),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Download file", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+            Text(if (isVideo) "Download video" else "Download file", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
 
             if (offer == null) {
                 OutlinedTextField(
@@ -170,6 +208,34 @@ fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
             }
 
             when {
+                single != null && isVideo -> {
+                    OutlinedTextField(
+                        value = name, onValueChange = { name = it; nameEdited = true },
+                        label = { Text("File name") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
+                    )
+                    page?.let { p ->
+                        Text("Quality", fontWeight = FontWeight.SemiBold)
+                        p.choices.forEachIndexed { i, c ->
+                            Row(
+                                Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).clickable { choose(i) }.padding(vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                RadioButton(selected = pick == i, onClick = { choose(i) })
+                                Text(c.label, modifier = Modifier.weight(1f))
+                                c.size?.let { Text(Format.size(it), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }
+                            }
+                        }
+                        val audio = p.choices.getOrNull(pick)?.audioOnly == true
+                        val folder = if (audio) "Music" else "Video"
+                        InfoRow("Saved to", "Downloads/Nexonic" + if (Downloads.settings.categoryFolders) "/$folder" else "")
+                        InfoRow("Resume", "Yes")
+                    }
+                    if (reading) Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp); Spacer(Modifier.width(8.dp))
+                        Text("Finding the video… (the first time takes a few seconds)", style = MaterialTheme.typography.bodySmall)
+                    }
+                    problem?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+                }
                 single != null -> {
                     OutlinedTextField(
                         value = name, onValueChange = { name = it; nameEdited = true },
@@ -213,8 +279,8 @@ fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 TextButton(onClick = { onDone(null) }) { Text("Cancel") }
                 Spacer(Modifier.weight(1f))
-                OutlinedButton(onClick = { add(false) }, enabled = links.isNotEmpty()) { Text("Later") }
-                Button(onClick = { add(true) }, enabled = links.isNotEmpty()) { Text("Start download") }
+                OutlinedButton(onClick = { add(false) }, enabled = canAdd) { Text("Later") }
+                Button(onClick = { add(true) }, enabled = canAdd) { Text("Start download") }
             }
             Spacer(Modifier.height(12.dp))
         }

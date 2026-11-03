@@ -7,6 +7,10 @@ import android.os.Handler
 import android.os.Looper
 import com.nexonic.downloadmanager.core.DownloadRequest
 import com.nexonic.downloadmanager.core.FileNames
+import com.nexonic.downloadmanager.core.Job
+import com.nexonic.downloadmanager.core.VideoChoice
+import com.nexonic.downloadmanager.core.VideoPages
+import com.nexonic.downloadmanager.video.VideoJob
 import com.nexonic.downloadmanager.core.Links
 import com.nexonic.downloadmanager.core.SpeedLimiter
 import com.nexonic.downloadmanager.core.Transfer
@@ -31,6 +35,8 @@ data class NewDownload(
     val secrets: Secrets = Secrets(),
     val mime: String? = null,
     val quality: String? = null,
+    /** Set for video pages: the quality picked in the download window. */
+    val video: VideoChoice? = null,
 )
 
 /**
@@ -46,7 +52,7 @@ object Downloads {
         private set
     private val io = Executors.newSingleThreadExecutor()
     private val main = Handler(Looper.getMainLooper())
-    private val transfers = mutableMapOf<Long, Transfer>()
+    private val transfers = mutableMapOf<Long, Job>()
     private val mimes = mutableMapOf<Long, String?>()
     val limiter = SpeedLimiter()
 
@@ -77,6 +83,7 @@ object Downloads {
     }
 
     private fun partFile(id: Long): File = File(app.getExternalFilesDir(null) ?: app.filesDir, "partial/$id.part")
+    private fun videoDir(id: Long): File = File(app.getExternalFilesDir(null) ?: app.filesDir, "partial/video-$id")
 
     @Synchronized private fun update(id: Long, save: Boolean = true, change: (DownloadItem) -> DownloadItem) {
         _items.value = _items.value.map { if (it.id == id) change(it) else it }
@@ -104,8 +111,9 @@ object Downloads {
         mimes[id] = d.mime
         val item = DownloadItem(
             id = id, url = d.url, fileName = name, size = d.size, resumable = d.resumable,
-            referer = d.referer, userAgent = d.userAgent, quality = d.quality,
+            referer = d.referer, userAgent = d.userAgent, quality = d.video?.label ?: d.quality,
             status = if (startNow) Status.QUEUED else Status.LATER,
+            videoFormat = d.video?.selector, videoExt = d.video?.ext,
         )
         _items.value = listOf(item) + _items.value
         persist()
@@ -170,6 +178,7 @@ object Downloads {
         io.execute {
             Thread.sleep(300)
             partFile(id).delete()
+            videoDir(id).deleteRecursively()
             if (deleteFile) item.contentUri?.let { Publisher.delete(app, it) }
         }
         pump()
@@ -212,7 +221,61 @@ object Downloads {
         if (transfers.isNotEmpty()) DownloadService.start(app)
     }
 
+    private fun startVideo(item: DownloadItem) {
+        val id = item.id
+        val choice = VideoChoice(item.quality ?: "", item.videoFormat!!, item.videoExt ?: "mp4", item.size, audioOnly = item.videoExt != "mp4")
+        var lastBytes = item.written
+        var lastTime = System.currentTimeMillis()
+        val job = VideoJob(
+            id, item.url, choice, videoDir(id), settings.speedLimitKB, item.userAgent, item.referer,
+            onProgress = { percent, _ ->
+                update(id, save = false) {
+                    if (it.status != Status.DOWNLOADING) return@update it
+                    val size = it.size
+                    val written = if (size != null && size > 0) (size * percent / 100).toLong() else it.written
+                    val now = System.currentTimeMillis()
+                    val speed = if (now - lastTime >= 1000) ((written - lastBytes) * 1000 / (now - lastTime)).coerceAtLeast(0).also {
+                        lastBytes = written; lastTime = now
+                    } else it.speed
+                    it.copy(written = written, speed = speed)
+                }
+            },
+            onDone = { file ->
+                synchronized(this@Downloads) { transfers.remove(id) }
+                val current = get(id)
+                if (current != null) try {
+                    val ext = file.extension.ifEmpty { current.videoExt ?: "mp4" }
+                    val name = if (current.fileName == VideoPages.AUTO_NAME) FileNames.sanitize(file.name)
+                        else current.fileName.substringBeforeLast('.', current.fileName) + "." + ext
+                    val mime = android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext)
+                    val length = file.length()
+                    val saved = Publisher.publish(app, file, name, mime, settings.categoryFolders)
+                    videoDir(id).deleteRecursively()
+                    update(id) {
+                        it.copy(status = Status.COMPLETE, written = length, size = length, speed = 0,
+                            fileName = saved.name, contentUri = saved.uri.toString(), savedPath = saved.path,
+                            finishedAt = System.currentTimeMillis(), error = null)
+                    }
+                    get(id)?.let { Notifier.finished(app, it) }
+                } catch (e: Exception) {
+                    update(id) { it.copy(status = Status.FAILED, speed = 0, error = "Could not save to Downloads: ${e.message}") }
+                }
+                main.post { pump() }
+            },
+            onFail = { message ->
+                synchronized(this@Downloads) { transfers.remove(id) }
+                update(id) { it.copy(status = Status.FAILED, error = message, speed = 0) }
+                get(id)?.let { Notifier.failed(app, it) }
+                main.post { pump() }
+            },
+        )
+        transfers[id] = job
+        update(id) { it.copy(status = Status.DOWNLOADING, error = null) }
+        job.start()
+    }
+
     private fun startTransfer(item: DownloadItem) {
+        if (item.isVideo) return startVideo(item)
         val id = item.id
         val s = secrets.get(id)
         val request = DownloadRequest(item.url, s.cookies, item.referer, item.userAgent, s.user, s.password)

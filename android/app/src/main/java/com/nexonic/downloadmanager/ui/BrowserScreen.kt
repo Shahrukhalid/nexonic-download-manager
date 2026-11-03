@@ -112,7 +112,15 @@ fun BrowserScreen(browser: Browser, ui: UiState) {
                 factory = { (browser.view.parent as? ViewGroup)?.removeView(browser.view); browser.view },
                 modifier = Modifier.fillMaxSize(),
             )
-            if (found.isNotEmpty()) {
+            if (com.nexonic.downloadmanager.core.VideoPages.isVideoPage(url)) {
+                // Video sites (YouTube, Facebook, Instagram…): the video engine saves the video playing on this page.
+                ExtendedFloatingActionButton(
+                    onClick = { ui.addText = url },
+                    icon = { Icon(Icons.Outlined.Download, null) },
+                    text = { Text("Download this video") },
+                    modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+                )
+            } else if (found.isNotEmpty()) {
                 ExtendedFloatingActionButton(
                     onClick = { ui.showFound = true },
                     icon = { Icon(Icons.Outlined.Download, null) },

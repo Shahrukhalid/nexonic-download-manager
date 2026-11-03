@@ -150,6 +150,12 @@ interface TransferListener {
     fun paused(state: TransferState) {}
 }
 
+/** A running download that can be started and paused (a file [Transfer] or a video download). */
+interface Job {
+    fun start()
+    fun pause()
+}
+
 /**
  * Downloads [request] into [file] with up to [connections] ranges at the same time, like the desktop apps:
  * a connection that finishes takes over half of the largest remaining range; a range that fails is retried and
@@ -163,7 +169,7 @@ class Transfer(
     private val listener: TransferListener,
     private val limiter: SpeedLimiter = SpeedLimiter(),
     private val maxRetries: Int = 6,
-) {
+) : Job {
     private val lock = Any()
     private var state = initial?.copy() ?: TransferState()
     private val stopped = AtomicBoolean(false)
@@ -179,12 +185,12 @@ class Transfer(
 
     private fun alive(g: Int) = !stopped.get() && g == gen
 
-    fun start() {
+    override fun start() {
         Thread({ runCatching { begin() }.onFailure { fail(it.message ?: "Download failed") } }, "nexonic-probe").start()
     }
 
     /** Stops every connection and keeps the progress. */
-    fun pause() {
+    override fun pause() {
         if (!stopped.compareAndSet(false, true)) return
         closeAll()
         listener.paused(snapshot())
