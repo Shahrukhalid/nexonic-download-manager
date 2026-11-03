@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { cookieHeader, extensionOf, isWebLink, shouldTakeOver } from "./helpers.js";
+import { cookieHeader, downloadKey, extensionOf, isWebLink, shouldTakeOver, siteListed, siteOf } from "./helpers.js";
 
 test("only web links go to the app", () => {
   assert.equal(isWebLink("https://example.com/a.zip"), true);
@@ -91,3 +91,20 @@ test("video sites", () => {
   assert.equal(isVideoSite("not a link"), false);
 });
 
+
+test("sites kept in the browser, and pausing", () => {
+  const item = { url: "https://cdn.example.com/a.zip", referrer: "https://www.other.org/page", totalBytes: 50e6 };
+  assert.equal(shouldTakeOver(item, { skipSites: "example.com" }), false);
+  assert.equal(shouldTakeOver(item, { skipSites: "other.org" }), false, "the page the link was on counts too");
+  assert.equal(shouldTakeOver(item, { skipSites: "notexample.com, sample.com" }), true);
+  assert.equal(shouldTakeOver(item, { pausedUntil: 2000, now: 1000 }), false);
+  assert.equal(shouldTakeOver(item, { pausedUntil: 500, now: 1000 }), true);
+  assert.equal(siteListed("https://example.com/x", " *.Example.com:443 "), true);
+  assert.equal(siteListed("not a link", "example.com"), false);
+  assert.equal(siteOf("https://Files.Example.org/path?x"), "files.example.org");
+});
+
+test("the same download is recognized", () => {
+  assert.equal(downloadKey("https://e.com/a.zip#start"), downloadKey("https://e.com/a.zip"));
+  assert.notEqual(downloadKey("https://e.com/a.zip?v=1"), downloadKey("https://e.com/a.zip?v=2"));
+});

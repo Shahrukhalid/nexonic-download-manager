@@ -1,5 +1,5 @@
 import {
-  DEFAULTS, HOST, addMedia, cookieHeader, header, isMedia, isStreamPlaylist, isVideoSite, isWebLink, nameFromUrl, shouldTakeOver, sortMedia,
+  DEFAULTS, HOST, TROUBLESHOOT, addMedia, cookieHeader, downloadKey, header, isMedia, isStreamPlaylist, isVideoSite, isWebLink, nameFromUrl, shouldTakeOver, sortMedia,
   summarizePlaylist, titleToName,
 } from "./helpers.js";
 
@@ -26,12 +26,19 @@ async function send(url, extra = {}) {
       new Promise((resolve) => setTimeout(() => resolve(null), 8000)),
     ]);
     const ok = !!(reply && reply.ok);
-    await chrome.action.setBadgeText({ text: ok ? "" : "!" });
+    await showStatus(ok);
     return ok;
   } catch (_) {
-    await chrome.action.setBadgeText({ text: "!" });
+    await showStatus(false);
     return false;
   }
+}
+
+/** The toolbar button shows "!" and says what to do while the app can't be reached. */
+async function showStatus(ok) {
+  await chrome.action.setBadgeText({ text: ok ? "" : "!" });
+  if (!ok) await chrome.action.setBadgeBackgroundColor({ color: "#cf222e" }).catch(() => {});
+  await chrome.action.setTitle({ title: ok ? "Nexonic Download Manager" : TROUBLESHOOT }).catch(() => {});
 }
 
 // ---- Browser downloads go to the app ----
@@ -46,19 +53,20 @@ chrome.downloads.onCreated.addListener(async (item) => {
     return; // already finished or not pausable
   }
   const url = item.finalUrl || item.url;
+  const key = downloadKey(url);
   const now = Date.now();
   for (const [u, t] of handedOver) if (now - t > 10000) handedOver.delete(u);
-  if (handedOver.has(url)) {
+  if (handedOver.has(key)) {
     // The same link a moment ago (a redirect or a double click): the app already has it.
     await chrome.downloads.cancel(item.id).catch(() => {});
     await chrome.downloads.erase({ id: item.id }).catch(() => {});
     return;
   }
-  handedOver.set(url, now);
+  handedOver.set(key, now);
   const name = item.filename ? item.filename.split(/[\\/]/).pop() : undefined;
   const size = item.totalBytes > 0 ? item.totalBytes : item.fileSize > 0 ? item.fileSize : undefined;
   const ok = await send(url, { referrer: item.referrer || "", fileName: name, size, browser: true });
-  if (!ok) handedOver.delete(url);
+  if (!ok) handedOver.delete(key);
   if (ok) {
     await chrome.downloads.cancel(item.id).catch(() => {});
     await chrome.downloads.erase({ id: item.id }).catch(() => {});
@@ -230,6 +238,7 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
       }
       case "ping": {
         const r = await chrome.runtime.sendNativeMessage(HOST, { type: "ping" }).catch(() => null);
+        await showStatus(!!(r && r.ok));
         return { ok: !!(r && r.ok), version: r && r.version };
       }
       default:

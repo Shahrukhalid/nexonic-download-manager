@@ -2,7 +2,7 @@
 
 export const HOST = "com.nexonic.downloadmanager";
 
-export const DEFAULTS = { enabled: true, minSizeMB: 1, skipTypes: "", videoButton: true };
+export const DEFAULTS = { enabled: true, minSizeMB: 1, skipTypes: "", skipSites: "", pausedUntil: 0, videoButton: true };
 
 export function extensionOf(name) {
   const clean = String(name || "").split(/[?#]/)[0];
@@ -22,8 +22,10 @@ export function parseTypes(text) {
 export function shouldTakeOver(item, settings) {
   const s = { ...DEFAULTS, ...settings };
   if (!s.enabled) return false;
+  if (s.pausedUntil > (s.now ?? Date.now())) return false; // taking over is paused for a while (popup)
   const url = item.finalUrl || item.url || "";
   if (!/^https?:\/\//i.test(url)) return false; // blob:, data:, file: stay in the browser
+  if (siteListed(url, s.skipSites) || siteListed(item.referrer || "", s.skipSites)) return false;
   if (item.byExtensionId) return false;
   const size = item.totalBytes > 0 ? item.totalBytes : item.fileSize > 0 ? item.fileSize : -1;
   if (size >= 0 && size < s.minSizeMB * 1024 * 1024) return false;
@@ -31,6 +33,32 @@ export function shouldTakeOver(item, settings) {
   if (ext && parseTypes(s.skipTypes).includes(ext)) return false;
   return true;
 }
+
+/** "example.com" (or a link) → "example.com"; "*.example.com" → "example.com". */
+export function siteOf(text) {
+  let h = String(text || "").trim().toLowerCase();
+  try { if (h.includes("://")) h = new URL(h).hostname; } catch (_) { return ""; }
+  h = h.split("/")[0].replace(/^\*\./, "").replace(/:\d+$/, "");
+  return h.replace(/^\.+|\.+$/g, "");
+}
+
+/** True when the link's site (or a parent domain of it) is in the list ("example.com, files.other.org"). */
+export function siteListed(url, listText) {
+  let host;
+  try { host = new URL(url).hostname.toLowerCase(); } catch (_) { return false; }
+  return String(listText || "").split(/[\s,]+/).map(siteOf).filter(Boolean)
+    .some((site) => host === site || host.endsWith("." + site));
+}
+
+/** The same download clicked twice (a redirect, a double click): same address without the #part. */
+export function downloadKey(url) {
+  return String(url || "").split("#")[0];
+}
+
+/** What to show when the app could not be reached. */
+export const TROUBLESHOOT =
+  "Nexonic Download Manager is not reachable. Open the app once so it can register with this browser, then restart the browser. " +
+  "Downloads stay in the browser until then.";
 
 /** Only plain web links are handed to the app (never file:, data:, javascript:, chrome: and the like). */
 export function isWebLink(url) {

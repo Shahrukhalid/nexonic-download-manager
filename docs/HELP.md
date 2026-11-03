@@ -33,6 +33,10 @@ The same guide is built into the app: **Help → Nexonic Download Manager Help**
 
 **What it does.** Downloads from the browser are handed to the app automatically. Right-click a link and choose Download with Nexonic, or use the video button that appears on pages with video.
 
+**Keeping a download in the browser.** In the extension's menu: **Pause for 30 minutes**, **Keep downloads from this site in the browser**, or list sites and file types under Settings. Files smaller than the size set there also stay in the browser.
+
+**A red ! on the extension's button** means the app could not be reached. Open the app once so it registers with the browser, then restart the browser; meanwhile downloads stay in the browser.
+
 ## Saving Videos
 
 **From a website.** Click the video button the extension shows on the page, or paste the page link into Add URL. Videos are saved in the best available quality as .mp4.

@@ -1,4 +1,4 @@
-import { DEFAULTS, filterLinks, isVideoSite, qualityLabel } from "./helpers.js";
+import { DEFAULTS, TROUBLESHOOT, filterLinks, isVideoSite, qualityLabel, siteOf } from "./helpers.js";
 
 const $ = (id) => document.getElementById(id);
 const ask = (msg) => chrome.runtime.sendMessage(msg);
@@ -14,6 +14,32 @@ $("enabled").onchange = () => chrome.storage.sync.set({ enabled: $("enabled").ch
 $("video").onchange = () => chrome.storage.sync.set({ videoButton: $("video").checked });
 $("min").onchange = () => chrome.storage.sync.set({ minSizeMB: Math.max(0, Number($("min").value) || 0) });
 $("skip").onchange = () => chrome.storage.sync.set({ skipTypes: $("skip").value });
+$("sites").value = s.skipSites;
+$("sites").onchange = () => chrome.storage.sync.set({ skipSites: $("sites").value });
+
+// Keep downloads in the browser for a while, or always for this site.
+function showPause(until) {
+  const paused = until > Date.now();
+  $("pause").textContent = paused ? "Resume taking over" : "Pause for 30 minutes";
+  $("paused").hidden = !paused;
+  if (paused) $("paused").textContent = `Downloads stay in the browser until ${new Date(until).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}.`;
+}
+showPause(s.pausedUntil);
+$("pause").onclick = async () => {
+  const { pausedUntil = 0 } = await chrome.storage.sync.get("pausedUntil");
+  const until = pausedUntil > Date.now() ? 0 : Date.now() + 30 * 60 * 1000;
+  await chrome.storage.sync.set({ pausedUntil: until });
+  showPause(until);
+};
+const site = tab && /^https?:/i.test(tab.url || "") ? siteOf(tab.url) : "";
+$("thisSite").hidden = !site;
+if (site) $("thisSite").textContent = `Keep downloads from ${site} in the browser`;
+$("thisSite").onclick = async () => {
+  const list = $("sites").value.split(/[\s,]+/).filter(Boolean);
+  if (!list.map(siteOf).includes(site)) list.push(site);
+  $("sites").value = list.join(", ");
+  await chrome.storage.sync.set({ skipSites: $("sites").value });
+};
 
 // Site access (Firefox asks for it separately)
 const all = { origins: ["<all_urls>"] };
@@ -102,5 +128,5 @@ $("later").onclick = () => sendChecked(true);
 
 // App status
 const r = await ask({ type: "ping" });
-$("status").textContent = r && r.ok ? `Connected to the app (${r.version})` : "The app is not reachable. Open it once after installing.";
+$("status").textContent = r && r.ok ? `Connected to the app (${r.version})` : TROUBLESHOOT;
 $("status").className = r && r.ok ? "ok" : "bad";

@@ -26,6 +26,7 @@
 <body>
   <h1>Nexonic Download Manager</h1>
   <div id="status" class="muted">Checking the app…</div>
+  <div class="row"><span id="paused" class="muted" hidden></span><button class="plain" id="pause">Pause for 30 minutes</button></div>
   <div id="access" class="row" hidden><span class="muted">Allow the add-on on all sites to catch downloads.</span><button id="grant">Allow</button></div>
   <div class="row"><input type="text" id="link" placeholder="Paste a link"><button id="send">Add</button></div>
 
@@ -54,6 +55,9 @@
     <div class="row"><label for="min">Smallest file to take over (MB)</label><input type="number" id="min" min="0" style="width:70px"></div>
     <label for="skip" class="muted">Keep these types in the browser</label>
     <input type="text" id="skip" placeholder="e.g. pdf, jpg">
+    <label for="sites" class="muted">Keep downloads from these sites in the browser</label>
+    <input type="text" id="sites" placeholder="e.g. example.com, files.example.org">
+    <button class="plain" id="thisSite" hidden></button>
   </details>
   <script type="module" src="popup.js"></script>
 </body>
