@@ -86,19 +86,8 @@ Updates install over the old version; your downloads list is kept.
 
 **iPhone and iPad** (in testing, not on the App Store yet)
 
-Install it with Xcode on your own device (free Apple ID): see [ios/README.md](ios/README.md). Then set up the one-tap
-download once:
-
-| | |
-|---|---|
-| <img src="docs/img/ios-share-1.svg" alt="Step 1: tap Share" width="400"> | <img src="docs/img/ios-share-2.svg" alt="Step 2: swipe to More" width="400"> |
-| **1. Tap Share** on a page or file link in Safari, Chrome or any app. | **2. Swipe the app row to the end** and tap **More**. |
-| <img src="docs/img/ios-share-3.svg" alt="Step 3: add Download with Nexonic to Favorites" width="400"> | <img src="docs/img/ios-share-4.svg" alt="Step 4: Share, Download with Nexonic" width="400"> |
-| **3. Tap Edit, then +** next to **Download with Nexonic**, and drag it to the top. | **4. Share → Download with Nexonic**, pick the quality, tap **Download Now**. |
-
-This works as soon as the app is installed.
-
-Files go to **Files › On My iPhone/iPad › Nexonic**. The same guide is in the app: Settings → Set Up Download Shortcut.
+Install it with Xcode on your own device (free Apple ID): see [ios/README.md](ios/README.md). Then use
+**Share → Download with Nexonic** from Safari, Chrome or any app. Files go to **Files › On My iPhone/iPad › Nexonic**.
 
 **Browser** (open the app once first):
 
@@ -168,7 +157,6 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
 <p align="center">
   <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/ios-add.png" alt="iPhone: download window" width="200">
   <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/ios-main.png" alt="iPhone: downloads" width="200">
-  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/ios-setup.png" alt="iPhone: Set Up Download Shortcut" width="200">
   <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/ipad-main.png" alt="iPad" width="280">
 </p>
 
