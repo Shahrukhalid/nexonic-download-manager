@@ -56,6 +56,15 @@ final class ProfilesTests: XCTestCase {
         XCTAssertThrowsError(try Backup.parse(Data("{\"format\":\"nexonic-backup-mac\",\"version\":99,\"app\":\"x\",\"created\":0}".utf8)))
     }
 
+    func testBackupFromElsewhereGetsPlainNamesAndWebLinksOnly() throws {
+        var evil = DownloadRecord(url: URL(string: "https://example.com/c.zip")!, folder: URL(fileURLWithPath: "/tmp"))
+        evil.fileName = "../../evil.app"
+        let local = DownloadRecord(url: URL(string: "file:///etc/passwd")!, folder: URL(fileURLWithPath: "/tmp"))
+        let file = try Backup.parse(try Backup.export(settings: AppSettings(), queues: [.main], downloads: [evil, local], app: "1.0"))
+        XCTAssertEqual(file.downloads?.count, 1)
+        XCTAssertFalse(file.downloads?.first?.fileName.contains("/") ?? true)
+    }
+
     func testOptionsAndPartSizes() {
         var n = NetworkOptions(); n.minSegmentKB = 1; n.retries = 0; n.readTimeoutSeconds = 1
         XCTAssertEqual(n.clamped.minSegmentKB, 64)

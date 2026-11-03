@@ -138,8 +138,11 @@ public enum Backup {
     public static func parse(_ data: Data) throws -> File {
         guard var file = try? JSONDecoder().decode(File.self, from: data), file.format == format else { throw Problem.notABackup }
         guard file.version <= version else { throw Problem.newer }
-        file.downloads = Secrets.stripped(file.downloads ?? []).map { r in
+        // A backup is a file from somewhere else: web links only, plain file names, local folders, no secrets.
+        file.downloads = Secrets.stripped(file.downloads ?? []).filter { ["http", "https"].contains($0.url.scheme?.lowercased() ?? "") }.map { r in
             var r = r
+            r.fileName = FileNames.sanitize(r.fileName)
+            if !r.folder.isFileURL { r.folder = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)[0] }
             if r.status != .finished {
                 r.status = .paused
                 r.segments = []
@@ -147,6 +150,14 @@ public enum Backup {
                 r.error = nil
             }
             return r
+        }
+        if var settings = file.settings {
+            settings = Secrets.stripped(settings)
+            for i in settings.hostProfiles.indices {
+                settings.hostProfiles[i].password = nil
+                settings.hostProfiles[i].proxy?.password = ""
+            }
+            file.settings = settings
         }
         return file
     }

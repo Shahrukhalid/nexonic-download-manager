@@ -8,7 +8,7 @@ enum QrWindow {
     static func show(_ urls: [URL]) {
         let (link, count) = ShareLinks.link(urls)
         guard count > 0, let image = image(link) else { return }
-        let view = QrView(image: image, count: count, total: urls.count)
+        let view = QrView(image: image, count: count, total: urls.count, isPrivate: urls.contains(where: ShareLinks.looksPrivate))
         let w = NSWindow(contentViewController: NSHostingController(rootView: view))
         w.title = "Download on Your Phone"
         w.styleMask = [.titled, .closable]
@@ -34,6 +34,7 @@ private struct QrView: View {
     let image: NSImage
     let count: Int
     let total: Int
+    let isPrivate: Bool
 
     var body: some View {
         VStack(spacing: 12) {
@@ -49,6 +50,11 @@ private struct QrView: View {
                 .fixedSize(horizontal: false, vertical: true)
             if count < total {
                 Text("Only the first \(count) of \(total) links fit in one code.").font(.caption).foregroundStyle(.secondary)
+            }
+            if isPrivate {
+                Text("This link seems to include a private access key (for example a token or signature). Anyone who scans the code can use it until it expires, so share it only with your own phone.")
+                    .font(.caption).foregroundStyle(.orange).multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Text("Only the links are shared: no cookies or passwords. Downloads that need you to be signed in may not work on the phone.")
                 .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)

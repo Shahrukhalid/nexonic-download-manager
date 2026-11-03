@@ -224,7 +224,8 @@ public static class Backup
         catch (JsonException) { throw new InvalidDataException("This is not a Nexonic Download Manager backup."); }
         if (file == null || file.Format != Format) throw new InvalidDataException("This is not a Nexonic Download Manager backup.");
         if (file.Version > Version) throw new InvalidDataException("This backup was made by a newer version of the app. Update the app first.");
-        foreach (var r in file.Downloads ?? new())
+        file.Downloads = (file.Downloads ?? new()).Where(r => r != null).ToList();
+        foreach (var r in file.Downloads)
         {
             // Unfinished downloads start again from the beginning (their parts are not in the backup).
             if (r.Status != DownloadStatus.Finished)
@@ -236,7 +237,25 @@ public static class Backup
             }
             r.Cookies = null;
             r.Password = null;
+            // A backup is a file from somewhere else: keep only what a backup made by this app can hold.
+            r.InfoJson = null;
+            r.VideoParts = null;
+            r.VideoStep = null;
+            r.FileName = FileNames.Sanitize(r.FileName ?? "");
+            if (!string.IsNullOrEmpty(r.Folder) && !Path.IsPathFullyQualified(r.Folder)) r.Folder = "";
         }
+        file.Downloads = (file.Downloads ?? new()).Where(r => new DownloadJob(r.Url ?? "").IsValid).ToList();
+        if (file.Settings is { } s)
+        {
+            // Never take secrets or the automation switch from a file: the API stays as it is on this computer.
+            s.Proxy ??= new();
+            s.Network ??= new();
+            s.Proxy.Password = "";
+            s.Automation = new AutomationSettings();
+            s.HostProfiles = (s.HostProfiles ?? new()).Where(p => p != null).ToList();
+            foreach (var p in s.HostProfiles) { p.Password = null; if (p.Proxy != null) p.Proxy.Password = ""; }
+        }
+        file.Queues = (file.Queues ?? new()).Where(q => q != null).ToList();
         return file;
     }
 

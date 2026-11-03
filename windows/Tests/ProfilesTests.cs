@@ -75,6 +75,38 @@ public class ProfilesTests
     }
 
     [Fact]
+    public void ABackupFromElsewhereCannotSetSecretsPathsOrTheApi()
+    {
+        var json = """
+        {"Format":"nexonic-backup","Version":1,
+         "Settings":{"Proxy":null,"Network":null,"HostProfiles":[null,{"Host":"a.com","Password":"p","Proxy":{"Password":"q"}}],
+                     "Automation":{"Enabled":true,"Port":47812,"Key":"attacker-key-0123456789"}},
+         "Queues":[null],
+         "Downloads":[null,
+           {"Url":"https://a.com/f.zip","FileName":"../../evil.exe","Folder":"relative/dir","Status":3,"Password":"x","Cookies":"c","InfoJson":"{}"},
+           {"Url":"file:///etc/passwd","FileName":"p"}]}
+        """;
+        var file = Backup.Parse(json);
+        var s = file.Settings!;
+        Assert.False(s.Automation.Enabled);
+        Assert.Equal("", s.Automation.Key);
+        Assert.NotNull(s.Proxy);
+        Assert.NotNull(s.Network);
+        Assert.Single(s.HostProfiles);
+        Assert.Null(s.HostProfiles[0].Password);
+        Assert.Equal("", s.HostProfiles[0].Proxy!.Password);
+        Assert.Empty(file.Queues!);
+        Assert.Single(file.Downloads!);
+        var r = file.Downloads![0];
+        Assert.Equal(FileNames.Sanitize("../../evil.exe"), r.FileName);
+        Assert.DoesNotContain("/", r.FileName);
+        Assert.Equal("", r.Folder);
+        Assert.Null(r.Password);
+        Assert.Null(r.Cookies);
+        Assert.Null(r.InfoJson);
+    }
+
+    [Fact]
     public void NetworkOptionsAreKeptInRange()
     {
         var o = new NetworkOptions { MinSegmentKB = 1, Retries = 0, ConnectTimeoutSeconds = 9999, ReadTimeoutSeconds = 1, DnsOverHttps = "http://insecure/dns" }.Clamped();

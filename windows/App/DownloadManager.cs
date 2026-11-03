@@ -511,6 +511,7 @@ public sealed partial class DownloadManager
         {
             // Passwords are not in backups: keep the ones saved here.
             s.Proxy.Password = Settings.Proxy.Password;
+            s.Automation = Settings.Automation;
             foreach (var p in s.HostProfiles)
                 if (Settings.HostProfiles.FirstOrDefault(x => HostProfiles.Normalize(x.Host) == HostProfiles.Normalize(p.Host)) is { } mine)
                 {

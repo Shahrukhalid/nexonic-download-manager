@@ -12,4 +12,13 @@ final class ShareLinksTests: XCTestCase {
         XCTAssertLessThanOrEqual(big.count, ShareLinks.maxLength)
         XCTAssertTrue((10..<100).contains(count))
     }
+
+    func testDropsPasswordsAndFlagsPrivateLinks() {
+        let (link, _) = ShareLinks.link([URL(string: "https://me:secret@example.com/f.zip")!])
+        XCTAssertFalse(link.contains("secret"))
+        XCTAssertTrue(ShareLinks.looksPrivate(URL(string: "https://me:secret@example.com/f.zip")!))
+        XCTAssertTrue(ShareLinks.looksPrivate(URL(string: "https://b.s3.amazonaws.com/f.zip?X-Amz-Signature=abc")!))
+        XCTAssertTrue(ShareLinks.looksPrivate(URL(string: "https://cdn.example.com/f.zip?downloadToken=abc")!))
+        XCTAssertFalse(ShareLinks.looksPrivate(URL(string: "https://example.com/f.zip?version=2")!))
+    }
 }

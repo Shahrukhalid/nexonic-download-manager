@@ -339,7 +339,7 @@ public static class ShareLinks
     {
         var sb = new StringBuilder("nexonic://add");
         var n = 0;
-        foreach (var url in urls.Where(u => new DownloadJob(u).IsValid).Distinct())
+        foreach (var url in urls.Where(u => new DownloadJob(u).IsValid).Select(Clean).Distinct())
         {
             var part = (n == 0 ? "?" : "&") + "url=" + Uri.EscapeDataString(url);
             if (sb.Length + part.Length > MaxLength) break;
@@ -347,5 +347,33 @@ public static class ShareLinks
             n++;
         }
         return (n == 0 ? "" : sb.ToString(), n);
+    }
+
+    /// <summary>The link without a user name or password (https://user:pass@host/… → https://host/…).</summary>
+    public static string Clean(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var u) || u.UserInfo.Length == 0) return url;
+        return new UriBuilder(u) { UserName = "", Password = "" }.Uri.AbsoluteUri;
+    }
+
+    static readonly string[] PrivateKeys =
+    [
+        "token", "access_token", "auth", "authorization", "key", "apikey", "api_key", "sig", "signature", "session",
+        "sessionid", "sid", "password", "pass", "secret", "x-amz-signature", "x-amz-credential", "x-goog-signature",
+        "googleaccessid", "se", "sp", "sv", "hdnts", "policy", "key-pair-id", "hmac", "expires",
+    ];
+
+    /// <summary>True when a link seems to carry a private access key (a token or signed-link parameter), so anyone
+    /// who scans the code could use it. The app warns; the user decides.</summary>
+    public static bool LooksPrivate(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var u)) return false;
+        if (u.UserInfo.Length > 0) return true;
+        foreach (var pair in u.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var name = Uri.UnescapeDataString(pair.Split('=')[0]).ToLowerInvariant();
+            if (PrivateKeys.Contains(name) || name.EndsWith("token") || name.EndsWith("signature")) return true;
+        }
+        return false;
     }
 }

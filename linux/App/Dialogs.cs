@@ -753,6 +753,8 @@ public static class Dialogs
         f.Note(count == 1 ? "Scan with your phone's camera to download this file with the Nexonic app on your phone."
                           : $"Scan with your phone's camera to download these {count} files with the Nexonic app on your phone.");
         if (count < urls.Count) f.Note($"Only the first {count} of {urls.Count} links fit in one code.");
+        if (urls.Any(ShareLinks.LooksPrivate))
+            f.Note("This link seems to include a private access key (for example a token or signature). Anyone who scans the code can use it until it expires, so share it only with your own phone.");
         f.Note("Only the links are shared: no cookies or passwords. Downloads that need you to be signed in may not work on the phone.");
         f.AddButton("Close", f.Close, isDefault: true, isCancel: true);
         await f.Show();

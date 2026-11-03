@@ -41,6 +41,8 @@ public interface IDownloadControl
 public sealed class LocalApi : IDisposable
 {
     public const int MaxBody = 64 * 1024;
+    public const int MaxConnections = 8;
+    readonly SemaphoreSlim slots = new(MaxConnections);
     public const int MaxLinks = 200;
     readonly TcpListener listener;
     readonly string key;
@@ -72,7 +74,9 @@ public sealed class LocalApi : IDisposable
             TcpClient client;
             try { client = await listener.AcceptTcpClientAsync(stop.Token); }
             catch { return; }
-            _ = Task.Run(() => Serve(client));
+            // A few requests at a time are plenty for scripts; more are closed at once instead of piling up.
+            if (!slots.Wait(0)) { client.Dispose(); continue; }
+            _ = Task.Run(async () => { try { await Serve(client); } finally { slots.Release(); } });
         }
     }
 

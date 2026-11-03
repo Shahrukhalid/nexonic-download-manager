@@ -38,4 +38,18 @@ public class QrTests
         Assert.InRange(count, 10, 99);
         Assert.Equal(("", 0), ShareLinks.Link(new[] { "not a link" }));
     }
+
+    [Fact]
+    public void ShareLinksDropPasswordsAndFlagPrivateLinks()
+    {
+        var (link, _) = ShareLinks.Link(new[] { "https://me:secret@example.com/f.zip" });
+        Assert.DoesNotContain("secret", link);
+        Assert.Contains(Uri.EscapeDataString("https://example.com/f.zip"), link);
+        Assert.True(ShareLinks.LooksPrivate("https://me:secret@example.com/f.zip"));
+        Assert.True(ShareLinks.LooksPrivate("https://bucket.s3.amazonaws.com/f.zip?X-Amz-Signature=abc&X-Amz-Expires=60"));
+        Assert.True(ShareLinks.LooksPrivate("https://cdn.example.com/f.zip?access_token=abc"));
+        Assert.True(ShareLinks.LooksPrivate("https://cdn.example.com/f.zip?downloadToken=abc"));
+        Assert.False(ShareLinks.LooksPrivate("https://example.com/f.zip?version=2&lang=en"));
+        Assert.False(ShareLinks.LooksPrivate("not a link"));
+    }
 }
