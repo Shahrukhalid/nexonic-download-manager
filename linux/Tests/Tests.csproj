@@ -11,5 +11,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Desktop\Desktop.csproj" />
+    <!-- Shared download-core tests that also run on Linux. -->
+    <Compile Include="..\..\windows\Tests\ProfilesTests.cs" Link="ProfilesTests.cs" />
   </ItemGroup>
 </Project>

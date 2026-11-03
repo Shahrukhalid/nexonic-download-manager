@@ -420,7 +420,9 @@ public sealed class MainWindow : Window
         var active = manager.Rows.Count(r => r.Record.IsActive);
         var queued = manager.Rows.Count(r => r.Record.Status == DownloadStatus.Queued);
         var speed = manager.Rows.Where(r => r.Record.IsActive).Sum(r => r.SpeedBytes);
-        statusLeft.Text = $"{active} downloading   ·   {queued} queued" + (speed > 0 ? $"   ·   {Row.Bytes((long)speed)}/s" : "");
+        var selected = Selected;
+        statusLeft.Text = $"{active} downloading   ·   {queued} queued" + (speed > 0 ? $"   ·   {Row.Bytes((long)speed)}/s" : "")
+            + (selected.Count > 1 ? $"   ·   {selected.Count} selected, {Row.Bytes(selected.Sum(r => r.Record.Size ?? 0))}" : "");
         statusRight.Text = (manager.Settings.SpeedLimitKBps > 0 ? $"Limit {manager.Settings.SpeedLimitKBps} KB/s   ·   " : "")
                            + $"{manager.Queues.Count(q => q.Running)} of {manager.Queues.Count} queues running";
         var isEmpty = view.Count == 0;

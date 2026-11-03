@@ -61,6 +61,7 @@ public sealed class DownloadManager
         if (File.Exists(AppPaths.Settings)) Write(AppPaths.Settings, Settings);
         if (File.Exists(AppPaths.Downloads)) Save();
         limiter.SetLimit(Settings.SpeedLimitKBps * 1024);
+        Network.Options = Settings.Network.Clamped();
         timer.Tick += (_, _) => Tick();
         timer.Start();
         CollectInbox();
@@ -72,6 +73,7 @@ public sealed class DownloadManager
     {
         Settings = s;
         limiter.SetLimit(s.SpeedLimitKBps * 1024);
+        Network.Options = s.Network.Clamped();
         Write(AppPaths.Settings, s);
         Schedule();
     }
@@ -125,18 +127,24 @@ public sealed class DownloadManager
             Schedule();
             return w.Id;
         }
-        var limit = job.SpeedLimitKBps ?? o.SpeedLimitKBps;
+        // Settings for this website (Options → Sites): its folder unless another one was chosen, its login, user agent and limit.
+        var profile = HostProfiles.Match(Settings.HostProfiles, job.Url);
+        var chosenFolder = job.Folder ?? o.Folder;
+        if (profile?.Folder is { Length: > 0 } siteFolder && (chosenFolder == null || chosenFolder == Settings.Folder)) chosenFolder = siteFolder;
+        var limit = job.SpeedLimitKBps ?? (o.SpeedLimitKBps > 0 ? o.SpeedLimitKBps : profile?.SpeedLimitKBps ?? 0);
+        var start = job.Start ?? (profile?.StartAtOnce == false ? false : o.Start);
         var rec = new DownloadRecord
         {
-            Url = job.Url, Referrer = job.Referrer, Cookies = job.Cookies, UserAgent = job.UserAgent,
-            Folder = job.Folder ?? o.Folder ?? Settings.Folder,
+            Url = job.Url, Referrer = job.Referrer, Cookies = job.Cookies, UserAgent = profile?.UserAgent is { Length: > 0 } ua ? ua : job.UserAgent,
+            Folder = chosenFolder ?? Settings.Folder,
             FileName = name,
-            QueueId = job.Queue is { Length: > 0 } qn ? QueueIdNamed(qn) : o.QueueId,
-            Username = job.Username ?? NullIfEmpty(o.Username),
-            Password = job.Password ?? NullIfEmpty(o.Password),
+            QueueId = job.Queue is { Length: > 0 } qn ? QueueIdNamed(qn)
+                : o.QueueId == DownloadQueue.MainId && profile?.QueueName is { Length: > 0 } pq ? QueueIdNamed(pq) : o.QueueId,
+            Username = job.Username ?? NullIfEmpty(o.Username) ?? NullIfEmpty(profile?.Username ?? ""),
+            Password = job.Password ?? NullIfEmpty(o.Password) ?? (job.Username == null && NullIfEmpty(o.Username) == null ? NullIfEmpty(profile?.Password ?? "") : null),
             Checksum = job.Checksum ?? NullIfEmpty(o.Checksum),
             SpeedLimitKBps = limit > 0 ? limit : null,
-            Status = job.Start ?? o.Start ? DownloadStatus.Queued : DownloadStatus.Paused,
+            Status = start ? DownloadStatus.Queued : DownloadStatus.Paused,
             IsStream = stream ? true : null,
             SiteVideo = site ? true : null,
             AudioOnly = site && (job.AudioOnly ?? o.AudioOnly) ? true : null,
@@ -388,11 +396,15 @@ public sealed class DownloadManager
             foreach (var row in Rows.Reverse().Where(r => r.Record.Queue == q.Id && r.Record.Status == DownloadStatus.Queued).ToList())
             {
                 if (slots-- <= 0) break;
+                var profile = HostProfiles.Match(Settings.HostProfiles, row.Record.Url);
+                var proxy = profile?.Proxy ?? Settings.Proxy;
+                var connections = Math.Clamp(profile?.MaxConnections ?? Settings.Connections, 1, 32);
                 IDownloader t = row.Record.SiteVideo == true
-                    ? new SiteVideoTransfer(row.Record, Settings.SortIntoCategoryFolders, Settings.SpeedLimitKBps, Settings.Proxy)
+                    ? new SiteVideoTransfer(row.Record, Settings.SortIntoCategoryFolders, Settings.SpeedLimitKBps, proxy)
                     : row.Record.IsStream == true
-                    ? new StreamTransfer(row.Record, Settings.Connections, limiter, Settings.SortIntoCategoryFolders, Settings.Proxy)
-                    : new Transfer(row.Record, Settings.Connections, limiter, Settings.SortIntoCategoryFolders, Settings.Proxy);
+                    ? new StreamTransfer(row.Record, connections, limiter, Settings.SortIntoCategoryFolders, proxy)
+                    : new Transfer(row.Record, connections, limiter, Settings.SortIntoCategoryFolders, proxy,
+                        TransferOptions.From(Network.Options, profile));
                 transfers[row.Record.Id] = t;
                 row.Record.Status = DownloadStatus.Probing;
                 t.Changed += rec => System.Windows.Application.Current?.Dispatcher.BeginInvoke(() => Changed(row, rec, t));
@@ -476,6 +488,41 @@ public sealed class DownloadManager
             CheckQueuesDone();
         }
         if (ticks % 4 == 0) Save();
+    }
+
+    // ---- backup ----
+
+    /// <summary>Settings, queues and the list as a backup file (passwords and cookies are left out).</summary>
+    public string ExportBackup(string appVersion) => Backup.Export(Settings, Queues, Rows.Select(r => r.Record), appVersion);
+
+    /// <summary>Adds the backup's queues and downloads that are not here yet; optionally takes its settings. Returns how many downloads were added.</summary>
+    public int ImportBackup(string json, bool settingsToo)
+    {
+        var file = Backup.Parse(json);
+        foreach (var q in file.Queues ?? new())
+            if (!Queues.Any(x => x.Id == q.Id) && !q.IsMain) { q.Running = false; Queues.Add(q); }
+        var added = Backup.NewDownloads(file, Rows.Select(r => r.Record));
+        foreach (var r in added.AsEnumerable().Reverse())
+        {
+            if (r.QueueId != null && Queues.All(q => q.Id != r.QueueId)) r.QueueId = null;
+            Rows.Insert(0, new Row(r, QueueName));
+        }
+        if (settingsToo && file.Settings is { } s)
+        {
+            // Passwords are not in backups: keep the ones saved here.
+            s.Proxy.Password = Settings.Proxy.Password;
+            foreach (var p in s.HostProfiles)
+                if (Settings.HostProfiles.FirstOrDefault(x => HostProfiles.Normalize(x.Host) == HostProfiles.Normalize(p.Host)) is { } mine)
+                {
+                    p.Password = mine.Password;
+                    if (p.Proxy != null && mine.Proxy != null) p.Proxy.Password = mine.Proxy.Password;
+                }
+            ApplySettings(s);
+        }
+        SaveQueues();
+        Save();
+        Schedule();
+        return added.Count;
     }
 
     public void Save() => Write(AppPaths.Downloads, Rows.Select(r => r.Record).ToList());

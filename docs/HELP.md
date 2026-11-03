@@ -10,6 +10,7 @@ The same guide is built into the app: **Help → Nexonic Download Manager Help**
 - [Queues and Scheduler](#queues-and-scheduler)
 - [Batch and Site Grabber](#batch-and-site-grabber)
 - [Speed and Settings](#speed-and-settings)
+- [Site Settings, Backup and Network](#site-settings-backup-and-network)
 - [Command Line](#command-line)
 - [Troubleshooting](#troubleshooting)
 - [Keyboard Shortcuts](#keyboard-shortcuts)
@@ -59,6 +60,18 @@ The same guide is built into the app: **Help → Nexonic Download Manager Help**
 **Speed limit.** Set a limit for all downloads in Settings, or for one download in its Properties.
 
 **Proxy and sign-in.** Set a proxy in Settings. For password-protected downloads, add the user name and password in the Add window or under Properties.
+
+## Site Settings, Backup and Network
+
+*Windows and Linux.*
+
+- **Site settings** (Options → Sites): connections, speed limit, tries, timeout, user agent, folder, queue, login and
+  proxy for every download from one website. `example.com` also covers its subdomains. A site's login is only sent to
+  that site, never to a site it redirects to, and is saved encrypted.
+- **Backup** (Options → Backup): export your settings, site settings, queues and downloads list to a file, and import
+  it on another computer. Passwords and cookies are never put in a backup. **Export Links** saves every link as text.
+- **Advanced network** (Options → Connection): smallest part size, tries, timeouts, DNS over HTTPS, and
+  **Check the Connection** to see how long the name lookup and the connection take.
 
 ## Command Line
 

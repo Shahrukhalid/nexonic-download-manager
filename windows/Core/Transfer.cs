@@ -25,8 +25,12 @@ public sealed class Transfer : IDownloader
     string PartsFolder => Path.Combine(AppPaths.Parts, Record.Id.ToString("N"));
     string PartPath(int id) => Path.Combine(PartsFolder, $"{id}.part");
 
-    public Transfer(DownloadRecord record, int connections, SpeedLimiter limiter, bool sortIntoCategories = false, ProxySettings? proxy = null)
+    readonly TransferOptions options;
+
+    public Transfer(DownloadRecord record, int connections, SpeedLimiter limiter, bool sortIntoCategories = false, ProxySettings? proxy = null,
+        TransferOptions? options = null)
     {
+        this.options = options ?? new TransferOptions(Retries: Network.Options.Retries, ReadTimeoutSeconds: Network.Options.ReadTimeoutSeconds);
         Record = record;
         this.connections = Math.Clamp(connections, 1, 32);
         this.limiter = limiter;
@@ -150,7 +154,7 @@ public sealed class Transfer : IDownloader
             lock (Record.Segments)
             {
                 Record.Segments = ranges
-                    ? SegmentPlanner.Plan(size, connections)
+                    ? SegmentPlanner.Plan(size, connections, options.MinSegment)
                     : new() { new Segment { Id = 0, Start = 0, End = size is > 0 ? size.Value - 1 : -1 } };
             }
         }
@@ -179,7 +183,7 @@ public sealed class Transfer : IDownloader
             Segment? added = null;
             lock (Record.Segments)
             {
-                var split = SegmentPlanner.SplitLargest(Record.Segments, Record.Segments.Max(s => s.Id) + 1);
+                var split = SegmentPlanner.SplitLargest(Record.Segments, Record.Segments.Max(s => s.Id) + 1, options.MinSegment);
                 if (split is { } sp)
                 {
                     Record.Segments[sp.Index].End = sp.NewEnd;
@@ -216,12 +220,20 @@ public sealed class Transfer : IDownloader
                 await using var file = new FileStream(PartPath(seg.Id), FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read, 1 << 16, true);
                 file.SetLength(seg.Written);
                 file.Seek(seg.Written, SeekOrigin.Begin);
+                // A connection that stays silent is dropped and tried again instead of waiting forever.
+                using var silent = CancellationTokenSource.CreateLinkedTokenSource(ct);
                 while (true)
                 {
                     long left;
                     lock (Record.Segments) left = seg.Remaining;
                     if (left <= 0) return; // finished (possibly shortened by a split)
-                    var n = await body.ReadAsync(buffer.AsMemory(0, (int)Math.Min(buffer.Length, left)), ct);
+                    int n;
+                    silent.CancelAfter(TimeSpan.FromSeconds(options.ReadTimeoutSeconds));
+                    try { n = await body.ReadAsync(buffer.AsMemory(0, (int)Math.Min(buffer.Length, left)), silent.Token); }
+                    catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+                    {
+                        throw new IOException($"No data received for {options.ReadTimeoutSeconds} seconds");
+                    }
                     if (n == 0)
                     {
                         if (seg.End < 0)
@@ -242,7 +254,7 @@ public sealed class Transfer : IDownloader
                 }
             }
             catch (Exception e) when (e is not FileChangedException && !ct.IsCancellationRequested
-                                      && (attempt < 6 || (Record.AcceptsRanges && seg.Written > writtenAtStart)))
+                                      && (attempt < options.Retries || (Record.AcceptsRanges && seg.Written > writtenAtStart)))
             {
                 await Task.Delay(TimeSpan.FromSeconds(Math.Min(30, Math.Pow(2, attempt - 1))), ct);
             }
@@ -299,6 +311,9 @@ public sealed class Transfer : IDownloader
 
 public static class Network
 {
+    /// <summary>Advanced connection settings from Options (the app sets them when it starts and when they change).</summary>
+    public static NetworkOptions Options { get; set; } = new();
+
     /// <summary>Same server and no step down from https: cookies and logins may be sent there.</summary>
     public static bool SameSite(Uri url, Uri origin) =>
         string.Equals(url.Host, origin.Host, StringComparison.OrdinalIgnoreCase) && url.Port == origin.Port
@@ -376,8 +391,15 @@ public static class Network
             UseCookies = false,
             AutomaticDecompression = DecompressionMethods.None,
             MaxConnectionsPerServer = 32,
-            ConnectTimeout = TimeSpan.FromSeconds(30),
+            ConnectTimeout = TimeSpan.FromSeconds(Math.Clamp(Options.ConnectTimeoutSeconds, 3, 300)),
         };
+        // DNS over HTTPS for direct connections (with a proxy, the proxy looks the name up).
+        var doh = Options.DnsOverHttps.Trim();
+        if (NetworkOptions.DnsOverHttpsUrlOk(doh) && (p.Mode is ProxyMode.None or ProxyMode.System) && (p.Mode == ProxyMode.None || !HasSystemProxy()))
+        {
+            var timeout = h.ConnectTimeout;
+            h.ConnectCallback = (ctx, ct) => DnsOverHttps.ConnectAsync(doh, ctx.DnsEndPoint, timeout, ct);
+        }
         var host = p.Host.Trim();
         switch (p.Mode)
         {
@@ -393,5 +415,11 @@ public static class Network
                 break;
         }
         return h;
+    }
+
+    static bool HasSystemProxy()
+    {
+        try { return HttpClient.DefaultProxy.GetProxy(new Uri("https://example.com")) is { } u && u.Host != "example.com"; }
+        catch { return false; }
     }
 }

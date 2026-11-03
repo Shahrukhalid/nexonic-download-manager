@@ -172,6 +172,10 @@ public sealed class AppSettings
     public bool MonitorClipboard { get; set; } = true;
     public string ClipboardTypes { get; set; } = FileTypes.DefaultList;
     public ProxySettings Proxy { get; set; } = new();
+    /// <summary>Advanced connection settings.</summary>
+    public NetworkOptions Network { get; set; } = new();
+    /// <summary>Settings for downloads from particular websites.</summary>
+    public List<HostProfile> HostProfiles { get; set; } = new();
     public bool ShowCompleteDialog { get; set; } = true;
     public bool PlaySound { get; set; } = true;
     public bool MarkDownloads { get; set; } = true;

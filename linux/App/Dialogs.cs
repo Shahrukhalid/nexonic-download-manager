@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using Nexonic.Core;
 using Nexonic.Linux;
 
@@ -424,6 +425,110 @@ public static class Dialogs
         var ppass = Box(connection, "Proxy password", s.Proxy.Password, password: true);
         Hint(connection, "Proxy changes apply to downloads started afterwards. Passwords and cookies are saved encrypted with a key kept in your " +
                          "desktop's keyring (GNOME Keyring, KWallet); without a keyring they are kept only until the app closes.");
+        Heading(connection, "Advanced");
+        var net = s.Network;
+        var minSeg = Box(connection, "Smallest part of a file in KB (64 or more)", net.MinSegmentKB.ToString());
+        var retries = Box(connection, "Tries per part before a download stops", net.Retries.ToString());
+        var connectTimeout = Box(connection, "Connection timeout in seconds", net.ConnectTimeoutSeconds.ToString());
+        var readTimeout = Box(connection, "Reconnect a part that receives nothing for (seconds)", net.ReadTimeoutSeconds.ToString());
+        var doh = Box(connection, "DNS over HTTPS server (empty = the system's DNS)", net.DnsOverHttps);
+        Hint(connection, "For example " + string.Join(" or ", NetworkOptions.DohServers) + ". Not used through a proxy.");
+        var checkResult = Hint(connection, "");
+        var check = new Button { Content = "Check the Connection", Margin = new Thickness(0, 8, 0, 0) };
+        check.Click += async (_, _) =>
+        {
+            checkResult.Text = "Checking…";
+            var keep = Network.Options;
+            Network.Options = new NetworkOptions { ConnectTimeoutSeconds = Ui.Number(connectTimeout.Text, 30), DnsOverHttps = doh.Text ?? "" }.Clamped();
+            try
+            {
+                var proxy = new ProxySettings { Mode = (ProxyMode)Math.Max(0, mode.SelectedIndex), Host = (host.Text ?? "").Trim(), Port = Ui.Number(port.Text, 8080), Username = (puser.Text ?? "").Trim(), Password = ppass.Text ?? "" };
+                checkResult.Text = string.Join("\n", await NetworkCheck.RunAsync(proxy));
+            }
+            finally { Network.Options = keep; }
+        };
+        connection.Children.Add(check);
+
+        var sites = Tab("Sites");
+        Hint(sites, "Settings used for every download from a website: connections, speed limit, tries, timeout, user agent, folder, queue, login and proxy. " +
+                    "A site also covers its subdomains (example.com covers www.example.com). Logins are only sent to that site and are saved encrypted.");
+        var profiles = s.HostProfiles.Select(Clone).ToList();
+        var siteList = new ListBox { Height = 200, Margin = new Thickness(0, 8, 0, 0) };
+        void FillSites() => siteList.ItemsSource = profiles.Select(p => (p.Enabled ? "" : "(off) ") + HostProfiles.Normalize(p.Host) + Summary(p)).ToList();
+        FillSites();
+        sites.Children.Add(siteList);
+        var siteButtons = new WrapPanel { Margin = new Thickness(0, 8, 0, 0) };
+        void SiteButton(string text, Func<Task> click)
+        {
+            var b = new Button { Content = text, Margin = new Thickness(0, 0, 6, 6) };
+            b.Click += async (_, _) => await click();
+            siteButtons.Children.Add(b);
+        }
+        SiteButton("Add Site…", async () => { if (await EditSite(f.Window, new HostProfile()) is { } p) { profiles.Add(p); FillSites(); } });
+        SiteButton("Edit…", async () =>
+        {
+            var i = siteList.SelectedIndex;
+            if (i >= 0 && await EditSite(f.Window, Clone(profiles[i])) is { } p) { profiles[i] = p; FillSites(); }
+        });
+        SiteButton("Remove", async () =>
+        {
+            var i = siteList.SelectedIndex;
+            if (i < 0 || !await Ui.Confirm(f.Window, "Remove Site", $"Remove the settings for {HostProfiles.Normalize(profiles[i].Host)}?", "Remove")) return;
+            profiles.RemoveAt(i);
+            FillSites();
+        });
+        sites.Children.Add(siteButtons);
+        siteList.DoubleTapped += async (_, _) =>
+        {
+            var i = siteList.SelectedIndex;
+            if (i >= 0 && await EditSite(f.Window, Clone(profiles[i])) is { } p) { profiles[i] = p; FillSites(); }
+        };
+
+        var backup = Tab("Backup");
+        Hint(backup, "A backup holds your settings, site settings, queues and the downloads list. Passwords and cookies are never put in a backup.");
+        var backupResult = Hint(backup, "");
+        var backupButtons = new WrapPanel { Margin = new Thickness(0, 8, 0, 0) };
+        var takeSettings = new CheckBox { Content = "When importing, also take the backup's settings", Margin = new Thickness(0, 8, 0, 0) };
+        void BackupButton(string text, Func<Task> click)
+        {
+            var b = new Button { Content = text, Margin = new Thickness(0, 0, 6, 6) };
+            b.Click += async (_, _) => { try { await click(); } catch (Exception e) { backupResult.Text = e.Message; } };
+            backupButtons.Children.Add(b);
+        }
+        BackupButton("Export Backup…", async () =>
+        {
+            var file = await f.Window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Export Backup", SuggestedFileName = $"nexonic-backup-{DateTime.Now:yyyy-MM-dd}.json", DefaultExtension = "json",
+            });
+            if (file?.TryGetLocalPath() is not { } path) return;
+            await File.WriteAllTextAsync(path, m.ExportBackup(HelpWindows.Version));
+            backupResult.Text = $"Saved {Path.GetFileName(path)}: {m.Rows.Count} downloads, {m.Queues.Count} queues.";
+        });
+        BackupButton("Import Backup…", async () =>
+        {
+            var files = await f.Window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Import Backup", AllowMultiple = false,
+                FileTypeFilter = new[] { new FilePickerFileType("Backup") { Patterns = new[] { "*.json" } } },
+            });
+            if (files.Count == 0 || files[0].TryGetLocalPath() is not { } path) return;
+            var n = m.ImportBackup(await File.ReadAllTextAsync(path), takeSettings.IsChecked == true);
+            backupResult.Text = $"Added {n} download{(n == 1 ? "" : "s")}" + (takeSettings.IsChecked == true ? " and took the backup's settings. Reopen Options to see them." : ".");
+            if (takeSettings.IsChecked == true) f.Close();
+        });
+        BackupButton("Export Links…", async () =>
+        {
+            var file = await f.Window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Export Links", SuggestedFileName = "nexonic-links.txt", DefaultExtension = "txt",
+            });
+            if (file?.TryGetLocalPath() is not { } path) return;
+            await File.WriteAllLinesAsync(path, m.Rows.Select(r => r.Record.Url));
+            backupResult.Text = $"Saved {m.Rows.Count} links to {Path.GetFileName(path)}.";
+        });
+        backup.Children.Add(backupButtons);
+        backup.Children.Add(takeSettings);
 
         var clip = Tab("Clipboard");
         var watch = Tick(clip, "Watch the clipboard for copied download links", s.MonitorClipboard);
@@ -507,6 +612,13 @@ public static class Dialogs
             s.MarkDownloads = mark.IsChecked == true;
             s.ScanEnabled = scan.IsChecked == true;
             s.ScanCommand = (scanCmd.Text ?? "").Trim();
+            if (!string.IsNullOrWhiteSpace(doh.Text) && !NetworkOptions.DnsOverHttpsUrlOk(doh.Text)) { error.Text = "The DNS over HTTPS server must be an https:// address."; return; }
+            s.Network = new NetworkOptions
+            {
+                MinSegmentKB = Ui.Number(minSeg.Text, 512), Retries = Ui.Number(retries.Text, 6),
+                ConnectTimeoutSeconds = Ui.Number(connectTimeout.Text, 30), ReadTimeoutSeconds = Ui.Number(readTimeout.Text, 60), DnsOverHttps = doh.Text ?? "",
+            }.Clamped();
+            s.HostProfiles = profiles;
             m.ApplySettings(s);
             prefs.Theme = theme.SelectedIndex switch { 1 => "light", 2 => "dark", _ => "system" };
             prefs.Save();
@@ -514,6 +626,73 @@ public static class Dialogs
             f.Close();
         }, isDefault: true);
         await f.Show();
+    }
+
+    static HostProfile Clone(HostProfile p) => System.Text.Json.JsonSerializer.Deserialize<HostProfile>(System.Text.Json.JsonSerializer.Serialize(p))!;
+
+    static string Summary(HostProfile p)
+    {
+        var parts = new List<string>();
+        if (p.MaxConnections is int c) parts.Add($"{c} connections");
+        if (p.SpeedLimitKBps is int l and > 0) parts.Add($"{l} KB/s");
+        if (!string.IsNullOrEmpty(p.Folder)) parts.Add("own folder");
+        if (!string.IsNullOrEmpty(p.Username)) parts.Add("login");
+        if (p.Proxy != null) parts.Add("own proxy");
+        return parts.Count > 0 ? "   ·   " + string.Join(", ", parts) : "";
+    }
+
+    static int? Optional(string? text, int min, int max) =>
+        int.TryParse((text ?? "").Trim(), out var n) ? Math.Clamp(n, min, max) : null;
+
+    /// <summary>Edits one site's settings; null when cancelled.</summary>
+    static async Task<HostProfile?> EditSite(Window owner, HostProfile p)
+    {
+        HostProfile? result = null;
+        var f = new Form(owner, "Site Settings", 560);
+        f.Note("Leave a field empty to use the general setting.");
+        var host = f.Text("Website (for example example.com)", p.Host);
+        var enabled = f.Check("Use these settings", p.Enabled);
+        var conns = f.Text("Connections per download (1-32)", p.MaxConnections?.ToString() ?? "");
+        var limit = f.Text("Speed limit in KB/s (0 = none)", p.SpeedLimitKBps?.ToString() ?? "");
+        var tries = f.Text("Tries per part (1-50)", p.Retries?.ToString() ?? "");
+        var timeout = f.Text("Reconnect after this many silent seconds", p.TimeoutSeconds?.ToString() ?? "");
+        var ua = f.Text("User agent (how the app introduces itself to the site)", p.UserAgent ?? "");
+        var (folderRow, folder) = Form.FolderRow(f.Window, p.Folder ?? "");
+        f.Field("Save to (empty = the usual folder)", folderRow);
+        var queue = f.Text("Queue (name; empty = the one chosen when adding)", p.QueueName ?? "");
+        var later = f.Check("Add downloads from this site stopped (start them yourself or with a queue)", p.StartAtOnce == false);
+        var user = f.Text("User name", p.Username ?? "");
+        var pass = f.Text("Password", p.Password ?? "", password: true);
+        var ownProxy = f.Check("Use its own proxy", p.Proxy != null);
+        var proxyMode = new ComboBox { ItemsSource = Enum.GetValues<ProxyMode>().Select(ProxySettings.Title).ToList(), SelectedIndex = (int)(p.Proxy?.Mode ?? ProxyMode.None), MinWidth = 220 };
+        f.Field("Proxy", proxyMode);
+        var proxyHost = f.Text("Proxy address", p.Proxy?.Host ?? "");
+        var proxyPort = f.Text("Port", (p.Proxy?.Port ?? 8080).ToString());
+        var error = f.Error();
+        f.AddButton("Cancel", f.Close, isCancel: true);
+        f.AddButton("OK", () =>
+        {
+            var h = HostProfiles.Normalize(host.Text);
+            if (h.Length == 0 || Uri.CheckHostName(h) == UriHostNameType.Unknown) { error.Text = "Enter the website's address, for example example.com."; return; }
+            result = new HostProfile
+            {
+                Host = h, Enabled = enabled.IsChecked == true,
+                MaxConnections = Optional(conns.Text, 1, 32), SpeedLimitKBps = Optional(limit.Text, 0, 10_000_000),
+                Retries = Optional(tries.Text, 1, 50), TimeoutSeconds = Optional(timeout.Text, 5, 3600),
+                UserAgent = string.IsNullOrWhiteSpace(ua.Text) ? null : ua.Text.Trim(),
+                Folder = string.IsNullOrWhiteSpace(folder.Text) ? null : folder.Text.Trim(),
+                QueueName = string.IsNullOrWhiteSpace(queue.Text) ? null : queue.Text.Trim(),
+                StartAtOnce = later.IsChecked == true ? false : null,
+                Username = string.IsNullOrWhiteSpace(user.Text) ? null : user.Text.Trim(),
+                Password = string.IsNullOrEmpty(pass.Text) ? null : pass.Text,
+                Proxy = ownProxy.IsChecked == true
+                    ? new ProxySettings { Mode = (ProxyMode)Math.Max(0, proxyMode.SelectedIndex), Host = (proxyHost.Text ?? "").Trim(), Port = Ui.Number(proxyPort.Text, 8080), Password = p.Proxy?.Password ?? "", Username = p.Proxy?.Username ?? "" }
+                    : null,
+            };
+            f.Close();
+        }, isDefault: true);
+        await f.Show();
+        return result;
     }
 
     static string BrowserName(string folder) => folder switch
