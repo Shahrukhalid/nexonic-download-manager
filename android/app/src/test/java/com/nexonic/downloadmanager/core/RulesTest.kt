@@ -119,4 +119,24 @@ class RulesTest {
         assertTrue(Links.fromNexonicLink("https://example.com/?url=https%3A%2F%2Fx.com%2Fa").isEmpty())
         assertTrue(Links.fromNexonicLink("nexonic://add").isEmpty())
     }
+
+    @Test fun searchEngines() {
+        assertEquals("https://duckduckgo.com/?q=nexonic+download", SearchEngines.url(null, " nexonic download "))
+        assertEquals("https://www.google.com/search?q=a%26b", SearchEngines.url("google", "a&b"))
+        assertEquals("DuckDuckGo", SearchEngines.of("unknown").name)
+        assertEquals(6, SearchEngines.all.map { it.id }.distinct().size)
+    }
+
+    @Test fun bookmarksKeepOnePerAddressNewestFirst() {
+        var list = Bookmarks.add(emptyList(), "https://a.com/", "A")
+        list = Bookmarks.add(list, "https://b.com/", "")
+        list = Bookmarks.add(list, "https://a.com/", "A again")
+        list = Bookmarks.add(list, "javascript:alert(1)", "bad")
+        assertEquals(listOf("https://a.com/", "https://b.com/"), list.map { it.url })
+        assertEquals("https://b.com/", list[1].title)
+        val back = Bookmarks.parse(Bookmarks.format(list) + "not a link\tx\n")
+        assertEquals(list, back)
+        assertTrue(Bookmarks.remove(list, "https://a.com/").none { it.url == "https://a.com/" })
+        assertEquals("", Bookmarks.format(emptyList()))
+    }
 }

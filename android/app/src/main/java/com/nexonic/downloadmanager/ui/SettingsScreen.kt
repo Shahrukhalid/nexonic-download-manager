@@ -64,6 +64,25 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
     var pickTime by remember { mutableStateOf(false) }
     var block3p by remember { mutableStateOf(s.blockThirdPartyCookies) }
     var home by remember { mutableStateOf(s.homePage) }
+    var engine by remember { mutableStateOf(s.searchEngine) }
+    var pickEngine by remember { mutableStateOf(false) }
+    var notifyDone by remember { mutableStateOf(s.notifyFinished) }
+    var notifyFail by remember { mutableStateOf(s.notifyFailed) }
+    var treeName by remember { mutableStateOf(if (s.saveTree != null) s.saveTreeName else "") }
+    val pickFolder = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri != null) {
+            val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            val kept = runCatching { context.contentResolver.takePersistableUriPermission(uri, flags) }.isSuccess
+            if (kept) {
+                s.saveTree?.let { old -> if (old != uri.toString()) runCatching { context.contentResolver.releasePersistableUriPermission(Uri.parse(old), flags) } }
+                val name = Uri.decode(uri.lastPathSegment.orEmpty()).substringAfterLast(':').ifEmpty { "Chosen folder" }
+                val volume = Uri.decode(uri.lastPathSegment.orEmpty()).substringBefore(':')
+                s.saveTree = uri.toString()
+                s.saveTreeName = if (volume == "primary") name else "$name (SD card or USB)"
+                treeName = s.saveTreeName
+            } else message("This folder can't be used. Choose another one.")
+        }
+    }
     var confirmClear by remember { mutableStateOf(false) }
     var engineVersion by remember { mutableStateOf<String?>(null) }
     var updating by remember { mutableStateOf(false) }
@@ -90,7 +109,24 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
                 wifiOnly = it; s.wifiOnly = it; Downloads.pump()
             }
             Toggle("Ask before downloading", "Show the download window when the browser starts a download.", ask) { ask = it; s.askBeforeDownload = it }
-            Toggle("Folders by type", "Save into Downloads/Nexonic/Video, /Music, /Documents…", folders) { folders = it; s.categoryFolders = it }
+            Toggle("Folders by type", "Save into Nexonic/Video, /Music, /Documents…", folders) { folders = it; s.categoryFolders = it }
+            Text("Save to", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp))
+            Hint(if (treeName.isEmpty()) "Downloads/Nexonic on this phone" else treeName)
+            Row {
+                TextButton(onClick = { pickFolder.launch(null) }) { Text("Choose folder (SD card, USB…)") }
+                if (treeName.isNotEmpty()) TextButton(onClick = {
+                    s.saveTree?.let { old -> runCatching { context.contentResolver.releasePersistableUriPermission(Uri.parse(old), Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION) } }
+                    s.saveTree = null; s.saveTreeName = ""; treeName = ""
+                }) { Text("Use Downloads") }
+            }
+
+            Section("Notifications")
+            Toggle("When a download finishes", "A notification you can tap to open the file.", notifyDone) { notifyDone = it; s.notifyFinished = it }
+            Toggle("When a download fails", "Says what went wrong.", notifyFail) { notifyFail = it; s.notifyFailed = it }
+            Hint("While downloads run, Android shows one quiet notification with their progress and Pause all; it can't be turned off while the app downloads in the background.")
+            TextButton(onClick = {
+                runCatching { context.startActivity(Intent(SystemSettings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(SystemSettings.EXTRA_APP_PACKAGE, context.packageName)) }
+            }) { Text("Sounds and other notification settings") }
 
             Section("Scheduler")
             Toggle("Start downloads kept for later", "Every day at ${"%02d:%02d".format(minutes / 60, minutes % 60)}", schedule) {
@@ -110,6 +146,24 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
             Toggle("Block third-party cookies", "Sites can't track you across other sites.", block3p) {
                 block3p = it; s.blockThirdPartyCookies = it; browser.applyPrivacy()
             }
+            Text("Search engine: " + com.nexonic.downloadmanager.core.SearchEngines.of(engine).name, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp))
+            TextButton(onClick = { pickEngine = true }) { Text("Change search engine") }
+            if (pickEngine) AlertDialog(
+                onDismissRequest = { pickEngine = false },
+                title = { Text("Search engine") },
+                text = {
+                    Column {
+                        com.nexonic.downloadmanager.core.SearchEngines.all.forEach { e ->
+                            Row(Modifier.fillMaxWidth().clickable { engine = e.id; s.searchEngine = e.id; pickEngine = false }.padding(vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically) {
+                                androidx.compose.material3.RadioButton(selected = engine == e.id, onClick = { engine = e.id; s.searchEngine = e.id; pickEngine = false })
+                                Text(e.name)
+                            }
+                        }
+                    }
+                },
+                confirmButton = { TextButton(onClick = { pickEngine = false }) { Text("Close") } },
+            )
             OutlinedTextField(home, { home = it; if (com.nexonic.downloadmanager.core.Links.isWebLink(it)) s.homePage = it },
                 label = { Text("Home page") }, singleLine = true, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
             TextButton(onClick = { browser.clearData(); message("Browser data cleared") }) { Text("Clear cookies, cache and history") }

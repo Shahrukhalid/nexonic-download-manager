@@ -141,7 +141,7 @@ object Notifier {
     }
 
     fun finished(context: Context, item: DownloadItem) {
-        if (!canNotify(context)) return
+        if (!canNotify(context) || !Downloads.settings.notifyFinished) return
         val open = item.contentUri?.let { uri ->
             val view = Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(uri), context.contentResolver.getType(Uri.parse(uri)) ?: "*/*")
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -159,7 +159,7 @@ object Notifier {
     }
 
     fun failed(context: Context, item: DownloadItem) {
-        if (!canNotify(context)) return
+        if (!canNotify(context) || !Downloads.settings.notifyFailed) return
         val n = NotificationCompat.Builder(context, CH_DONE)
             .setSmallIcon(R.drawable.ic_stat_download)
             .setContentTitle(item.fileName)

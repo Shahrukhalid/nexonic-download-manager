@@ -257,7 +257,7 @@ object Downloads {
                         else current.fileName.substringBeforeLast('.', current.fileName) + "." + ext
                     val mime = android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext)
                     val length = file.length()
-                    val saved = Publisher.publish(app, file, name, mime, settings.categoryFolders)
+                    val saved = Publisher.publish(app, file, name, mime, settings.categoryFolders, settings.saveTree)
                     videoDir(id).deleteRecursively()
                     update(id) {
                         it.copy(status = Status.COMPLETE, written = length, size = length, speed = 0,
@@ -303,7 +303,7 @@ object Downloads {
                 synchronized(this@Downloads) { transfers.remove(id) }
                 val current = get(id) ?: return
                 try {
-                    val saved = Publisher.publish(app, partFile(id), current.fileName, mimes[id], settings.categoryFolders)
+                    val saved = Publisher.publish(app, partFile(id), current.fileName, mimes[id], settings.categoryFolders, settings.saveTree)
                     update(id) {
                         it.copy(status = Status.COMPLETE, written = state.written, size = state.size ?: state.written, speed = 0,
                             fileName = saved.name, contentUri = saved.uri.toString(), savedPath = saved.path,

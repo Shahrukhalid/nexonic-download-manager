@@ -26,7 +26,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material.icons.outlined.Bookmark
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Lock
@@ -41,6 +44,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.LocalContext
+import com.nexonic.downloadmanager.data.BookmarkStore
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -73,6 +80,12 @@ fun BrowserScreen(browser: Browser, ui: UiState) {
     val canBack by browser.canBack.collectAsState()
     val canForward by browser.canForward.collectAsState()
     val found by browser.found.collectAsState()
+    val title by browser.title.collectAsState()
+    val context = LocalContext.current
+    val store = remember { BookmarkStore(context) }
+    var bookmarks by remember { mutableStateOf(store.load()) }
+    var showBookmarks by remember { mutableStateOf(false) }
+    val saved = bookmarks.any { it.url == url }
     var address by remember { mutableStateOf(url) }
     var editing by remember { mutableStateOf(false) }
     val focus = LocalFocusManager.current
@@ -102,7 +115,9 @@ fun BrowserScreen(browser: Browser, ui: UiState) {
             )
             if (progress in 1..99) IconButton(onClick = { browser.stop() }) { Icon(Icons.Outlined.Close, "Stop") }
             else IconButton(onClick = { browser.reload() }) { Icon(Icons.Outlined.Refresh, "Reload") }
-            IconButton(onClick = { browser.go(Downloads.settings.homePage) }) { Icon(Icons.Outlined.Home, "Home") }
+            IconButton(onClick = { showBookmarks = true }) {
+                Icon(if (saved) Icons.Outlined.Bookmark else Icons.Outlined.BookmarkBorder, "Bookmarks and home page")
+            }
         }
         if (progress in 1..99) LinearProgressIndicator(progress = { progress / 100f }, modifier = Modifier.fillMaxWidth().height(2.dp))
         else Spacer(Modifier.height(2.dp))
@@ -127,6 +142,47 @@ fun BrowserScreen(browser: Browser, ui: UiState) {
                     text = { Text("${found.size} found") },
                     modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
                 )
+            }
+        }
+    }
+
+    if (showBookmarks) {
+        val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        fun update(list: List<com.nexonic.downloadmanager.core.Bookmarks.Bookmark>) { bookmarks = list; store.save(list) }
+        ModalBottomSheet(onDismissRequest = { showBookmarks = false }, sheetState = sheet) {
+            Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 24.dp)) {
+                Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("Bookmarks", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                    if (com.nexonic.downloadmanager.core.Links.isWebLink(url)) {
+                        if (saved) TextButton(onClick = { update(com.nexonic.downloadmanager.core.Bookmarks.remove(bookmarks, url)) }) { Text("Remove this page") }
+                        else TextButton(onClick = { update(com.nexonic.downloadmanager.core.Bookmarks.add(bookmarks, url, title)) }) { Text("Add this page") }
+                    }
+                }
+                Row(
+                    Modifier.fillMaxWidth().clickable { showBookmarks = false; browser.go(Downloads.settings.homePage) }.padding(horizontal = 20.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Outlined.Home, null)
+                    Spacer(Modifier.width(12.dp))
+                    Text("Home page", fontWeight = FontWeight.Medium)
+                }
+                if (bookmarks.isEmpty()) Text(
+                    "No bookmarks yet. Open a page and choose Add this page.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                )
+                bookmarks.forEach { b ->
+                    Row(
+                        Modifier.fillMaxWidth().clickable { showBookmarks = false; browser.go(b.url) }.padding(start = 20.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(b.title, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Medium)
+                            Text(displayAddress(b.url), maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        IconButton(onClick = { update(com.nexonic.downloadmanager.core.Bookmarks.remove(bookmarks, b.url)) }) { Icon(Icons.Outlined.Delete, "Remove ${b.title}") }
+                    }
+                }
             }
         }
     }

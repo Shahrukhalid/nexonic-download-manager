@@ -287,3 +287,39 @@ object BatchPattern {
         return items.flatMap { expand(before + it + after, limit) }.take(limit)
     }
 }
+
+/** Search engines for the address bar of the built-in browser (Settings → Browser). */
+object SearchEngines {
+    data class Engine(val id: String, val name: String, val pattern: String)
+
+    val all = listOf(
+        Engine("duckduckgo", "DuckDuckGo", "https://duckduckgo.com/?q=%s"),
+        Engine("google", "Google", "https://www.google.com/search?q=%s"),
+        Engine("bing", "Bing", "https://www.bing.com/search?q=%s"),
+        Engine("brave", "Brave Search", "https://search.brave.com/search?q=%s"),
+        Engine("startpage", "Startpage", "https://www.startpage.com/do/search?q=%s"),
+        Engine("ecosia", "Ecosia", "https://www.ecosia.org/search?q=%s"),
+    )
+
+    fun of(id: String?): Engine = all.firstOrNull { it.id == id } ?: all[0]
+
+    fun url(id: String?, query: String): String = of(id).pattern.replace("%s", java.net.URLEncoder.encode(query.trim(), "UTF-8"))
+}
+
+/** Saved pages of the built-in browser, kept as lines of "address<TAB>title". Newest first, one entry per address. */
+object Bookmarks {
+    data class Bookmark(val url: String, val title: String)
+
+    fun parse(text: String): List<Bookmark> = text.lines().mapNotNull { line ->
+        val url = line.substringBefore('\t').trim()
+        if (!Links.isWebLink(url)) null else Bookmark(url, line.substringAfter('\t', "").trim().ifEmpty { url })
+    }.distinctBy { it.url }
+
+    fun format(list: List<Bookmark>): String =
+        list.joinToString("\n") { it.url + "\t" + it.title.replace('\t', ' ').replace('\n', ' ') } + if (list.isEmpty()) "" else "\n"
+
+    fun add(list: List<Bookmark>, url: String, title: String): List<Bookmark> =
+        if (!Links.isWebLink(url)) list else listOf(Bookmark(url, title.trim().ifEmpty { url })) + list.filter { it.url != url }
+
+    fun remove(list: List<Bookmark>, url: String): List<Bookmark> = list.filter { it.url != url }
+}

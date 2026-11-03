@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
 import android.os.Environment
+import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
@@ -128,11 +129,78 @@ class Settings(context: Context) {
     var scheduleMinutes: Int get() = p.getInt("scheduleMinutes", 2 * 60); set(v) = p.edit().putInt("scheduleMinutes", v.coerceIn(0, 24 * 60 - 1)).apply()
     var blockThirdPartyCookies: Boolean get() = p.getBoolean("block3p", true); set(v) = p.edit().putBoolean("block3p", v).apply()
     var homePage: String get() = p.getString("home", "https://duckduckgo.com/") ?: "https://duckduckgo.com/"; set(v) = p.edit().putString("home", v).apply()
+    var searchEngine: String get() = p.getString("searchEngine", "duckduckgo") ?: "duckduckgo"; set(v) = p.edit().putString("searchEngine", v).apply()
+    var notifyFinished: Boolean get() = p.getBoolean("notifyFinished", true); set(v) = p.edit().putBoolean("notifyFinished", v).apply()
+    var notifyFailed: Boolean get() = p.getBoolean("notifyFailed", true); set(v) = p.edit().putBoolean("notifyFailed", v).apply()
+    /** A folder chosen with the system picker (SD card, USB drive…); null = the phone's Downloads folder. */
+    var saveTree: String? get() = p.getString("saveTree", null); set(v) = p.edit().putString("saveTree", v).apply()
+    var saveTreeName: String get() = p.getString("saveTreeName", "") ?: ""; set(v) = p.edit().putString("saveTreeName", v).apply()
+}
+
+/** The browser's bookmarks (bookmarks.txt in the app's private folder). */
+class BookmarkStore(context: Context) {
+    private val file = File(context.filesDir, "bookmarks.txt")
+
+    fun load(): List<com.nexonic.downloadmanager.core.Bookmarks.Bookmark> =
+        runCatching { com.nexonic.downloadmanager.core.Bookmarks.parse(file.readText()) }.getOrDefault(emptyList())
+
+    fun save(list: List<com.nexonic.downloadmanager.core.Bookmarks.Bookmark>) {
+        runCatching { file.writeAtomically(com.nexonic.downloadmanager.core.Bookmarks.format(list)) }
+    }
 }
 
 /** Finished files go to the phone's public Downloads folder (Download/Nexonic/<type>), visible in the Files app. */
 object Publisher {
     data class Saved(val uri: Uri, val name: String, val path: String)
+
+    /** Into the folder chosen in Settings (SD card, USB…) when it is still available, else into Downloads. */
+    fun publish(context: Context, source: File, fileName: String, mime: String?, categoryFolders: Boolean, tree: String?): Saved {
+        val treeUri = tree?.let { Uri.parse(it) }
+        val allowed = treeUri != null && context.contentResolver.persistedUriPermissions.any { it.uri == treeUri && it.isWritePermission }
+        return if (allowed) publishToTree(context, treeUri!!, source, fileName, mime, categoryFolders)
+        else publish(context, source, fileName, mime, categoryFolders)
+    }
+
+    private fun mimeOf(fileName: String, mime: String?): String =
+        mime?.substringBefore(';')?.trim()?.takeIf { it.contains('/') && it != "application/octet-stream" }
+            ?: android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileName.substringAfterLast('.', "").lowercase())
+            ?: "application/octet-stream"
+
+    /** Saves into a folder the user picked with the system file picker (works for SD cards and USB drives). */
+    private fun publishToTree(context: Context, tree: Uri, source: File, fileName: String, mime: String?, categoryFolders: Boolean): Saved {
+        val resolver = context.contentResolver
+        var dir = DocumentsContract.buildDocumentUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))
+        var path = Downloads.settings.saveTreeName.ifEmpty { "Chosen folder" }
+        if (categoryFolders) FileCategory.of(fileName).folder?.let { sub ->
+            dir = childFolder(resolver, tree, dir, sub)
+            path += "/$sub"
+        }
+        val doc = DocumentsContract.createDocument(resolver, dir, mimeOf(fileName, mime), fileName)
+            ?: throw IllegalStateException("The chosen folder is not available. Choose it again in Settings.")
+        try {
+            resolver.openOutputStream(doc, "w")!!.use { out -> source.inputStream().use { it.copyTo(out, 256 * 1024) } }
+        } catch (e: Exception) {
+            runCatching { DocumentsContract.deleteDocument(resolver, doc) }
+            throw e
+        }
+        var name = fileName
+        resolver.query(doc, arrayOf(DocumentsContract.Document.COLUMN_DISPLAY_NAME), null, null, null)?.use { c ->
+            if (c.moveToFirst()) name = c.getString(0) ?: fileName
+        }
+        source.delete()
+        return Saved(doc, name, "$path/$name")
+    }
+
+    private fun childFolder(resolver: android.content.ContentResolver, tree: Uri, parent: Uri, name: String): Uri {
+        val children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, DocumentsContract.getDocumentId(parent))
+        val cols = arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_DISPLAY_NAME, DocumentsContract.Document.COLUMN_MIME_TYPE)
+        resolver.query(children, cols, null, null, null)?.use { c ->
+            while (c.moveToNext())
+                if (c.getString(1) == name && c.getString(2) == DocumentsContract.Document.MIME_TYPE_DIR)
+                    return DocumentsContract.buildDocumentUriUsingTree(tree, c.getString(0))
+        }
+        return DocumentsContract.createDocument(resolver, parent, DocumentsContract.Document.MIME_TYPE_DIR, name) ?: parent
+    }
 
     fun publish(context: Context, source: File, fileName: String, mime: String?, categoryFolders: Boolean): Saved {
         val folder = buildString {
@@ -164,6 +232,10 @@ object Publisher {
     }
 
     fun delete(context: Context, uri: String) {
-        runCatching { context.contentResolver.delete(Uri.parse(uri), null, null) }
+        val u = Uri.parse(uri)
+        runCatching {
+            if (DocumentsContract.isDocumentUri(context, u)) DocumentsContract.deleteDocument(context.contentResolver, u)
+            else context.contentResolver.delete(u, null, null)
+        }
     }
 }

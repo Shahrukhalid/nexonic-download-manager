@@ -201,7 +201,7 @@ class Browser(context: Context, private val onOffer: (Offer) -> Unit, private va
         val target = when {
             Links.isWebLink(text) -> text
             !text.contains(' ') && text.contains('.') && !text.contains("://") -> "https://$text"
-            else -> "https://duckduckgo.com/?q=" + URLEncoder.encode(text, "UTF-8")
+            else -> com.nexonic.downloadmanager.core.SearchEngines.url(Downloads.settings.searchEngine, text)
         }
         started = true
         view.loadUrl(target)
