@@ -231,13 +231,16 @@ public struct AppSettings: Codable, Equatable, Sendable {
     // Added in 0.6.0: in-app updates
     public var checkForUpdates: Bool = true
     public var skippedVersion: String = ""
+    // Added in 0.7.1: advanced connection settings and settings per website
+    public var network = NetworkOptions()
+    public var hostProfiles: [HostProfile] = []
 
     public init() {}
 
     enum CodingKeys: String, CodingKey {
         case connections, maxActive, speedLimitKBps, folder, sortIntoCategoryFolders = "categoryFolders", notifications, monitorClipboard,
              clipboardTypes, proxy, showCompleteDialog, playSound, markDownloads, scanEnabled, scanCommand,
-             showDownloadDialog, showProgressWindow, bringToFrontOnBrowserDownload, checkForUpdates, skippedVersion
+             showDownloadDialog, showProgressWindow, bringToFrontOnBrowserDownload, checkForUpdates, skippedVersion, network, hostProfiles
     }
 
     /// Missing keys keep their defaults, so settings from older versions still load.
@@ -264,6 +267,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
             ?? d.bringToFrontOnBrowserDownload
         checkForUpdates = try c.decodeIfPresent(Bool.self, forKey: .checkForUpdates) ?? d.checkForUpdates
         skippedVersion = try c.decodeIfPresent(String.self, forKey: .skippedVersion) ?? d.skippedVersion
+        network = try c.decodeIfPresent(NetworkOptions.self, forKey: .network) ?? d.network
+        hostProfiles = try c.decodeIfPresent([HostProfile].self, forKey: .hostProfiles) ?? d.hostProfiles
     }
 }
 

@@ -63,7 +63,8 @@ The same guide is built into the app: **Help → Nexonic Download Manager Help**
 
 ## Site Settings, Backup and Network
 
-*Windows and Linux.*
+*Windows, Linux and Mac. On Mac they are under Settings → Sites, Backup and Connection; DNS over HTTPS and Check the
+Connection are on Windows and Linux.*
 
 - **Site settings** (Options → Sites): connections, speed limit, tries, timeout, user agent, folder, queue, login and
   proxy for every download from one website. `example.com` also covers its subdomains. A site's login is only sent to

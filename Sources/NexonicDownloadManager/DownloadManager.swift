@@ -134,9 +134,15 @@ final class DownloadManager: ObservableObject {
             schedule()
             return items[i].id
         }
-        let folder = job.folder.map { URL(fileURLWithPath: $0, isDirectory: true) } ?? o.folder ?? settings.folder
+        // Settings for this website (Settings → Sites): its folder unless another one was chosen, its login, user agent and limit.
+        let profile = HostProfiles.match(settings.hostProfiles, url)
+        var folder = job.folder.map { URL(fileURLWithPath: $0, isDirectory: true) } ?? o.folder ?? settings.folder
+        if let siteFolder = profile?.folder, !siteFolder.isEmpty, job.folder == nil, o.folder == nil || o.folder == settings.folder {
+            folder = URL(fileURLWithPath: siteFolder, isDirectory: true)
+        }
+        let agent = (profile?.userAgent).flatMap { $0.isEmpty ? nil : $0 } ?? job.userAgent
         var record = DownloadRecord(url: url, folder: folder, fileName: name, referrer: job.referrer,
-                                    cookies: job.cookies, userAgent: job.userAgent)
+                                    cookies: job.cookies, userAgent: agent)
         if stream { record.isStream = true }
         if site {
             record.siteVideo = true
@@ -144,13 +150,16 @@ final class DownloadManager: ObservableObject {
             record.maxHeight = record.audioOnly == true ? nil : job.maxHeight
             record.infoJSON = job.infoJSON
         }
-        record.queueID = job.queue.map(queueID(named:)) ?? o.queueID
-        record.username = job.username ?? (o.username.isEmpty ? nil : o.username)
-        record.password = job.password ?? (o.password.isEmpty ? nil : o.password)
+        record.queueID = job.queue.map(queueID(named:))
+            ?? (o.queueID == DownloadQueue.mainID ? (profile?.queueName).flatMap { $0.isEmpty ? nil : queueID(named: $0) } : nil)
+            ?? o.queueID
+        record.username = job.username ?? (o.username.isEmpty ? nil : o.username) ?? (profile?.username).flatMap { $0.isEmpty ? nil : $0 }
+        let ownLogin = job.username != nil || !o.username.isEmpty
+        record.password = job.password ?? (o.password.isEmpty ? nil : o.password) ?? (ownLogin ? nil : (profile?.password).flatMap { $0.isEmpty ? nil : $0 })
         record.checksum = job.checksum ?? (o.checksum.isEmpty ? nil : o.checksum)
-        let limit = job.speedLimitKBps ?? o.speedLimitKBps
+        let limit = job.speedLimitKBps ?? (o.speedLimitKBps > 0 ? o.speedLimitKBps : profile?.speedLimitKBps ?? 0)
         record.speedLimitKBps = limit > 0 ? limit : nil
-        if !(job.start ?? o.start) { record.status = .paused }
+        if !(job.start ?? (profile?.startAtOnce == false ? false : o.start)) { record.status = .paused }
         items.append(record)
         schedule()
         persist()
@@ -369,15 +378,19 @@ final class DownloadManager: ObservableObject {
             for item in items where item.queue == q.id && item.status == .queued && slots > 0 && transfers[item.id] == nil {
                 slots -= 1
                 let t: Downloader
+                let profile = HostProfiles.match(settings.hostProfiles, item.url)
+                let proxy = profile?.proxy ?? settings.proxy
+                let connections = max(1, min(32, profile?.maxConnections ?? settings.connections))
                 if item.siteVideo == true {
                     t = SiteVideoTransfer(record: item, sortIntoCategories: settings.sortIntoCategoryFolders,
-                                          speedLimitKBps: settings.speedLimitKBps, proxy: settings.proxy)
+                                          speedLimitKBps: settings.speedLimitKBps, proxy: proxy)
                 } else if item.isStream == true {
-                    t = StreamTransfer(record: item, connections: settings.connections, limiter: limiter,
-                                       sortIntoCategories: settings.sortIntoCategoryFolders, proxy: settings.proxy)
+                    t = StreamTransfer(record: item, connections: connections, limiter: limiter,
+                                       sortIntoCategories: settings.sortIntoCategoryFolders, proxy: proxy)
                 } else {
-                    t = Transfer(record: item, connections: settings.connections, limiter: limiter,
-                                 sortIntoCategories: settings.sortIntoCategoryFolders, proxy: settings.proxy)
+                    t = Transfer(record: item, connections: connections, limiter: limiter,
+                                 sortIntoCategories: settings.sortIntoCategoryFolders, proxy: proxy,
+                                 options: .from(settings.network, profile))
                 }
                 t.onChange = { [weak self] rec in Task { @MainActor in self?.changed(rec) } }
                 transfers[item.id] = t
@@ -545,6 +558,42 @@ final class DownloadManager: ObservableObject {
             Secrets.fill(&list, &s, from: legacySecrets)
         }
         save(list, to: AppPaths.downloads)
+    }
+
+    // MARK: backup
+
+    /// Settings, queues and the list as a backup file (passwords and cookies are left out).
+    func exportBackup(version: String) throws -> Data {
+        try Backup.export(settings: settings, queues: queues, downloads: items, app: version)
+    }
+
+    /// Adds the backup's queues and downloads that are not here yet; optionally takes its settings. Returns how many downloads were added.
+    func importBackup(_ data: Data, settingsToo: Bool) throws -> Int {
+        let file = try Backup.parse(data)
+        for q in file.queues ?? [] where !q.isMain && !queues.contains(where: { $0.id == q.id }) {
+            var q = q
+            q.running = false
+            queues.append(q)
+        }
+        var added = Backup.newDownloads(file, existing: items)
+        for i in added.indices where added[i].queueID != nil && !queues.contains(where: { $0.id == added[i].queueID }) {
+            added[i].queueID = nil
+        }
+        items.append(contentsOf: added)
+        if settingsToo, var s = file.settings {
+            // Passwords are not in backups: keep the ones saved here.
+            s.proxy.password = settings.proxy.password
+            for i in s.hostProfiles.indices {
+                if let mine = settings.hostProfiles.first(where: { HostProfiles.normalize($0.host) == HostProfiles.normalize(s.hostProfiles[i].host) }) {
+                    s.hostProfiles[i].password = mine.password
+                    if s.hostProfiles[i].proxy != nil { s.hostProfiles[i].proxy?.password = mine.proxy?.password ?? "" }
+                }
+            }
+            settings = s
+        }
+        persist()
+        schedule()
+        return added.count
     }
 
     private func saveSettings() {

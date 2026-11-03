@@ -32,8 +32,11 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
 
     private var partsFolder: URL { AppPaths.parts.appendingPathComponent(record.id.uuidString, isDirectory: true) }
 
+    private let options: TransferOptions
+
     public init(record: DownloadRecord, connections: Int, limiter: SpeedLimiter, sortIntoCategories: Bool = false,
-                proxy: ProxySettings = ProxySettings()) {
+                proxy: ProxySettings = ProxySettings(), options: TransferOptions = TransferOptions()) {
+        self.options = options
         self.record = record
         self.proxy = proxy
         self.connections = max(1, min(32, connections))
@@ -44,7 +47,7 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
         ownLimiter.setLimit(bytesPerSecond: (record.speedLimitKBps ?? 0) * 1024)
         let config = Network.configuration(proxy: proxy)
         config.httpMaximumConnectionsPerHost = 32
-        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForRequest = TimeInterval(options.readTimeoutSeconds)  // a silent connection is retried
         config.httpShouldSetCookies = false
         config.httpCookieAcceptPolicy = .never
         config.requestCachePolicy = .reloadIgnoringLocalCacheData
@@ -146,7 +149,7 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
             record.size = size
             record.acceptsRanges = ranges
             record.validator = validator
-            record.segments = SegmentPlanner.plan(size: ranges ? size : nil, connections: ranges ? connections : 1)
+            record.segments = SegmentPlanner.plan(size: ranges ? size : nil, connections: ranges ? connections : 1, minSegment: options.minSegment)
             if !ranges, let size { record.segments = [Segment(id: 0, start: 0, end: size - 1)] }
         }
         try? FileManager.default.createDirectory(at: partsFolder, withIntermediateDirectories: true)
@@ -299,7 +302,7 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
         if record.acceptsRanges, record.segments[i].written > run.writtenAtStart { attempts[seg.id] = 0 }
         let n = (attempts[seg.id] ?? 0) + 1
         attempts[seg.id] = n
-        guard n <= 6 else {
+        guard n <= options.retries else {
             return fail(error?.localizedDescription ?? "A part of the file could not be downloaded")
         }
         let delay = min(30, pow(2, Double(n - 1)))
@@ -309,7 +312,7 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
     private func splitAndLaunch() {
         guard record.acceptsRanges, running.count < connections else { return }
         let nextID = (record.segments.map(\.id).max() ?? 0) + 1
-        guard let split = SegmentPlanner.splitLargest(record.segments, nextID: nextID) else { return }
+        guard let split = SegmentPlanner.splitLargest(record.segments, nextID: nextID, minSegment: options.minSegment) else { return }
         record.segments[split.index].end = split.newEnd
         record.segments.append(split.added)
         launch(split.added.id)
