@@ -32,7 +32,7 @@ jobs:
           for f in mac-main.png mac-main-dark.png mac-add.png mac-scheduler.png mac-info.png mac-progress.png mac-batch.png \
                    windows-main.png windows-add.png windows-scheduler.png windows-info.png windows-progress.png windows-batch.png \
                    android-main.png android-detail.png android-add.png android-browser.png android-found.png android-settings.png android-main-dark.png \
-                   ios-main.png ios-detail.png ios-add.png ios-browser.png ios-found.png ios-setup.png ios-main-dark.png ipad-main.png ipad-browser.png; do
+                   ios-main.png ios-detail.png ios-add.png ios-browser.png ios-found.png ios-main-dark.png ipad-main.png ipad-browser.png; do
             git show "origin/screenshots:$f" > "site/img/$f" 2>/dev/null || rm -f "site/img/$f"
           done
           printf 'User-agent: *\nAllow: /\nSitemap: https://shahrukhalid.github.io/nexonic-download-manager/sitemap.xml\n' > site/robots.txt
