@@ -16,7 +16,7 @@ if [ "$(uname -s)" != "Darwin" ]; then
   exit 1
 fi
 
-echo "Installing $APP_NAME (free and open source, MIT license)."
+echo "Installing $APP_NAME (free and open source, MIT or Apache-2.0)."
 echo "By installing you agree to the Terms of Use: $TERMS_URL"
 
 work="$(mktemp -d)"

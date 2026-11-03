@@ -173,6 +173,15 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
   <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/windows-main.png" alt="Windows" width="290">
 </p>
 
+## New in 0.8.0
+
+**Site settings** (login, cookies, proxy and limits per website),
+**backup and restore**, **QR codes** to send a download to your phone, Android **bookmarks, search engine choice and
+SD card/USB folders**, iPhone **Shortcuts and Siri** actions to pause and resume, an optional **local API** for
+scripts ([docs/API.md](docs/API.md)), and the apps in **Arabic, German, Spanish, French, Hindi, Portuguese and
+Urdu** (machine translations under review, [docs/TRANSLATIONS.md](docs/TRANSLATIONS.md)). Full list in the
+[changelog](CHANGELOG.md).
+
 ## How to use
 
 | To | Do this |

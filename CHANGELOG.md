@@ -1,3 +1,33 @@
+## 0.8.0
+
+- **Site settings:** a login, cookies, user agent, proxy, connection count and speed limit per website (subdomains
+  included). Logins are kept encrypted and sent only to that site. Windows, Linux and Mac.
+- **Backup:** export and import settings, site settings, queues and the downloads list. Passwords and cookies are
+  never put in a backup.
+- **Network options:** reconnect after silent seconds, tries per part, DNS-over-HTTPS (Windows, Linux) and a network
+  check.
+- **Download on your phone:** Show QR Code on any download in the Mac, Windows and Linux apps; scan it and the Android
+  app adds the download. Only the link is shared, never cookies or passwords.
+- **Android:** bookmarks in the built-in browser, a choice of search engine, save to an SD card or USB folder, and
+  separate switches for finished and failed notifications.
+- **iPhone and iPad:** Pause, Resume and Status actions for Shortcuts and Siri; Command-N adds a download on iPad.
+- **Browser extension:** keep chosen sites in the browser, pause catching downloads for a while, clearer badge.
+- **Tray:** a Speed Limit menu; the main window remembers its size and place.
+- **Automation (optional, off by default):** a local API on Windows and Linux for scripts, reachable only from this
+  computer and protected by a key. See [docs/API.md](docs/API.md).
+- **Languages:** Arabic, German, Spanish, French, Hindi, Portuguese and Urdu on every app (Arabic and Urdu right to
+  left). These are machine translations waiting for review by native speakers; see
+  [docs/TRANSLATIONS.md](docs/TRANSLATIONS.md).
+- **Packages:** Scoop bucket, winget and Homebrew manifests ([docs/PACKAGES.md](docs/PACKAGES.md)).
+- **License:** the project is now available under MIT OR Apache-2.0, at your option.
+- **Android licenses:** the Android app's video engine is GPL-3.0, so the app as a whole is distributed under GPL-3.0.
+  Settings → About → Open-source licenses lists every component, and each release now includes
+  `Android-GPL-Sources.tar.gz` with their source code.
+- **Safer:** importing a backup never takes passwords or the automation switch from the file; QR codes drop a user
+  name and password from links and warn when a link looks private (a token or signature); the local API accepts a
+  few connections at a time.
+- Removed the unused video server for the old iPhone shortcut.
+
 ## 0.7.0
 
 - **New: Linux app.** The same download manager as on Windows: fast multi-connection downloads that pause and resume,

@@ -33,7 +33,7 @@
   "description": "Free, open-source download manager for Mac, Windows, Linux and Android with multi-connection downloads, pause and resume, scheduler, queues, browser integration and video downloads.",
   "url": "https://shahrukhalid.github.io/nexonic-download-manager/",
   "downloadUrl": "https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest",
-  "license": "https://opensource.org/licenses/MIT",
+  "license": "https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/LICENSE",
   "image": "https://shahrukhalid.github.io/nexonic-download-manager/icon.png",
   "screenshot": "https://shahrukhalid.github.io/nexonic-download-manager/img/mac-main.png",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
@@ -45,7 +45,7 @@
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
-    {"@type": "Question", "name": "Is Nexonic Download Manager free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. It is free and open source under the MIT license, with no ads, no account and no tracking."}},
+    {"@type": "Question", "name": "Is Nexonic Download Manager free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. It is free and open source under the MIT or Apache-2.0 license, with no ads, no account and no tracking."}},
     {"@type": "Question", "name": "Is there an IDM alternative for Mac?", "acceptedAnswer": {"@type": "Answer", "text": "Nexonic Download Manager is a native Mac app (macOS 13 or later, Apple silicon and Intel) with IDM-style features: multi-connection downloads, pause and resume, a scheduler, queues and a browser extension."}},
     {"@type": "Question", "name": "Is there an Android app?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The Android app (Android 10 or later) has the same download engine and video engine as the desktop apps: videos from YouTube, Facebook, Instagram, TikTok and 1,000+ sites, a built-in browser that catches downloads, and Share, Download with Nexonic from Chrome or any app."}},
     {"@type": "Question", "name": "Does it work with Chrome and Firefox?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The browser extension works with Chrome, Edge, Brave, Opera and Firefox and hands downloads to the app."}},
@@ -297,7 +297,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
         </div>
         <p class="meta">Also for <a href="#download" id="hero-other">Windows</a> · <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest">All files and release notes</a> · <a href="https://github.com/Shahrukhalid/nexonic-download-manager">Source code</a></p>
         <div class="trust">
-          <span><svg class="i"><use href="#i-check"/></svg>Free forever (MIT)</span>
+          <span><svg class="i"><use href="#i-check"/></svg>Free forever (open source)</span>
           <span><svg class="i"><use href="#i-check"/></svg>Native Mac, Windows and Linux apps</span>
           <span><svg class="i"><use href="#i-check"/></svg>No ads, no account</span>
           <span><svg class="i"><use href="#i-check"/></svg>Verified updates (SHA-256)</span>
@@ -672,7 +672,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <div class="f"><div class="ic"><svg class="i"><use href="#i-globe"/></svg></div><h3>Sent only where they belong</h3><p>Cookies and logins go only to the download's own server, never to other hosts or after a switch from https to http.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-check"/></svg></div><h3>Verified updates</h3><p>An update installs only if it matches the SHA-256 published with the release; on Mac the app's identity is checked too.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-refresh"/></svg></div><h3>Reliable resume</h3><p>Every part the server sends is checked, so a changed file is never mixed with old parts.</p></div>
-      <div class="f"><div class="ic"><svg class="i"><use href="#i-gh"/></svg></div><h3>Open source, MIT</h3><p>Swift and SwiftUI on Mac, C# and WPF on Windows. Built and tested in public on GitHub.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-gh"/></svg></div><h3>Open source: MIT or Apache-2.0</h3><p>Swift and SwiftUI on Mac, C# and WPF on Windows. Built and tested in public on GitHub.</p></div>
     </div>
   </div>
 </section>
@@ -683,7 +683,8 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
     <h2>Recent releases</h2>
     <p class="sub">The full history is in the <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/CHANGELOG.md">changelog</a> and on the <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases">releases page</a>.</p>
     <div class="rel">
-      <article><h3>0.7.0 <small>Latest</small></h3><ul><li>New Linux app: AppImage, .deb and .rpm, for 64-bit Intel/AMD and ARM.</li><li>Android: videos added right away, real progress, long-press to select several.</li></ul></article>
+      <article><h3>0.8.0 <small>Latest</small></h3><ul><li>Site settings: login, cookies, proxy and limits per website, plus backup and restore of your settings and downloads list.</li><li>Show QR Code on any download to finish it on your Android phone; Android adds bookmarks, a search engine choice and SD card folders.</li><li>Shortcuts and Siri can pause and resume on iPhone and iPad, and an optional local API lets scripts control the desktop apps.</li><li>Arabic, German, Spanish, French, Hindi, Portuguese and Urdu (machine translations under review).</li></ul></article>
+      <article><h3>0.7.0</h3><ul><li>New Linux app: AppImage, .deb and .rpm, for 64-bit Intel/AMD and ARM.</li><li>Android: videos added right away, real progress, long-press to select several.</li></ul></article>
       <article><h3>0.6.10</h3><ul><li>Android video downloads fixed (the "s2.e" message in 0.6.9).</li><li>Facebook share links, and sign-in through the app&rsquo;s browser for private videos.</li></ul></article>
       <article><h3>0.6.9</h3><ul><li>Android saves videos from YouTube, Facebook, Instagram, TikTok and 1,000+ sites, with quality choices.</li><li>Smaller Android download, plus a version for older 32-bit phones.</li></ul></article>
       <article><h3>0.6.8</h3><ul><li>New Android app: built-in browser, Share → Nexonic, fast downloads that resume.</li><li>iPhone and iPad app in testing.</li></ul></article>
@@ -701,7 +702,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
     <h2>Frequently asked questions</h2>
     <p class="sub">Can't find your answer? <a href="https://github.com/Shahrukhalid/nexonic-download-manager/discussions">Ask in Discussions</a>.</p>
     <div class="faq">
-      <details><summary>Is it really free?</summary><p>Yes. Nexonic Download Manager is free and open source under the MIT license, with no ads, no account, no trial and no tracking.</p></details>
+      <details><summary>Is it really free?</summary><p>Yes. Nexonic Download Manager is free and open source under the MIT or Apache-2.0 license (your choice), with no ads, no account, no trial and no tracking.</p></details>
       <details><summary>Is this an IDM alternative for Mac?</summary><p>Yes. It is a native Mac app with IDM-style features: multi-connection downloads, pause and resume, categories, a scheduler, queues and browser integration. It is not affiliated with Internet Download Manager.</p></details>
       <details><summary>Is there an Android or iPhone app?</summary><p>Yes for Android 10 and later: <a href="#android">see what it does</a> and <a href="#install-android">how to install it</a>. The iPhone and iPad app is in testing (<a href="#ios">how it works</a>): Share → Download with Nexonic from Safari or Chrome, a Shortcuts action, and files in the Files app.</p></details>
       <details><summary>Which browsers work?</summary><p>Chrome, Edge, Brave and Opera through the extension, and Firefox through the add-on. Open the app once, then install the extension and restart the browser.</p></details>
@@ -760,7 +761,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
         <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/TERMS.md">Terms of Use</a>
       </div>
     </div>
-    <div class="legal">© 2026 Shahrukh Khalid · <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/LICENSE">MIT License</a> · Not affiliated with Internet Download Manager or any site mentioned; their names belong to their owners.</div>
+    <div class="legal">© 2026 Shahrukh Khalid · <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/LICENSE">MIT or Apache-2.0</a> · Not affiliated with Internet Download Manager or any site mentioned; their names belong to their owners.</div>
   </div>
 </footer>
 
