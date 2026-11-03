@@ -1,3 +1,13 @@
+## 0.6.10
+
+- **Android: video downloads work.** In 0.6.9 every video link stopped with an "s2.e" message because a part of the
+  video engine was removed from the app by mistake. Fixed, and every build is now checked for it.
+- Android: Facebook share links (facebook.com/share/…, fb.watch) open the right video.
+- Android: videos that need you to be signed in (some Instagram and Facebook videos) work after you sign in once in
+  the app's Browser tab.
+- Android: clear messages when a video can't be saved, instead of technical codes.
+- Mac and Windows apps are unchanged.
+
 ## 0.6.9
 
 - **Android: videos from YouTube, Facebook, Instagram, TikTok, X and 1,000+ other sites.** Share or paste a video
