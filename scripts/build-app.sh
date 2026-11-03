@@ -25,6 +25,7 @@ cp .tools-cache/mac/yt-dlp .tools-cache/mac/qjs "$APP/Contents/MacOS/"
 cat packaging/THIRD-PARTY-NOTICES.txt .ffmpeg-cache/mac/NOTICE-video-tools-1.txt .tools-cache/mac/NOTICE-video-tools-2.txt \
   > "$APP/Contents/Resources/THIRD-PARTY-NOTICES.txt"
 cp packaging/TERMS.txt "$APP/Contents/Resources/TERMS.txt"
+cp -R packaging/Localizations/*.lproj "$APP/Contents/Resources/"
 sed "s/__VERSION__/$VERSION/g" packaging/Info.plist > "$APP/Contents/Info.plist"
 cp -R build/extension-chrome "$APP/Contents/Resources/Extension"
 cp "build/NexonicFirefoxAddon-$VERSION.xpi" "$APP/Contents/Resources/Firefox Add-on.xpi"

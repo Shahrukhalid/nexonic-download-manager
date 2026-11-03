@@ -36,6 +36,8 @@ targets:
     platform: iOS
     sources:
       - path: App
+      # Translations shared with the Mac app (machine translations marked for review).
+      - path: ../packaging/Localizations
     dependencies:
       - target: NexonicKit
       - target: NexonicShare
