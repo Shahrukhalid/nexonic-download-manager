@@ -30,6 +30,8 @@ The browser extension sends links only to the app on your own computer.
 5. THIRD-PARTY COMPONENTS
 The Software includes open-source components (for example FFmpeg under the LGPL and a video engine under its own license). Their licenses and notices are listed in THIRD-PARTY-NOTICES, included with the Software. Website and service names mentioned in the Software or its documentation belong to their owners; the Software is not affiliated with or endorsed by them.
 
+The Android app includes a video engine licensed under the GNU General Public License version 3 (GPL-3.0); the Android app as a whole is therefore distributed under GPL-3.0, and its source code is available as described in its Open-source licenses screen. Nothing in these terms limits any right you have under the licenses of the Software or of its components; sections 2 and 3 describe your own legal responsibilities, not extra license conditions.
+
 6. NO WARRANTY
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. Websites change, and downloads may fail or stop working at any time.
 

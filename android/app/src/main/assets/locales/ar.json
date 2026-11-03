@@ -71,7 +71,7 @@
     "Folders by type": "مجلدات حسب النوع",
     "Forward": "تقدم",
     "Found on this page": "موجود في هذه الصفحة",
-    "Free and open source (MIT or Apache-2.0) by Shahrukh Khalid.": "مجاني ومفتوح المصدر (MIT أو Apache-2.0) من Shahrukh Khalid.",
+    "Free and open source by Shahrukh Khalid. Its own code is MIT or Apache-2.0; the app as a whole is GPL-3.0 because of the video engine.": "مجاني ومفتوح المصدر من Shahrukh Khalid. شيفرته الخاصة مرخّصة بـ MIT أو Apache-2.0؛ والتطبيق ككل مرخّص بـ GPL-3.0 بسبب محرك الفيديو.",
     "General": "عام",
     "Hide login": "إخفاء تسجيل الدخول",
     "Home page": "الصفحة الرئيسية",
@@ -174,6 +174,7 @@
     "When a download fails": "عند فشل تنزيل",
     "When a download finishes": "عند اكتمال تنزيل",
     "Wi-Fi only": "Wi-Fi فقط",
-    "Yes": "نعم"
+    "Yes": "نعم",
+    "Open-source licenses": "تراخيص المصادر المفتوحة"
   }
 }

@@ -81,6 +81,22 @@ jobs:
           "$AAPT" dump permissions $DBG
           ls -la out
           sha256sum out/*.apk
+      - name: Licenses and bundled components
+        run: |
+          set -e
+          REL=$(ls out/NexonicDownloadManager-Android-release*.apk | head -1)
+          # The license screen must ship in every APK.
+          for f in NOTICES.txt GPL-3.0.txt Apache-2.0.txt PSF-2.0-Python.txt MIT-Nexonic.txt; do
+            unzip -l "$REL" "assets/licenses/$f" >/dev/null || { echo "missing assets/licenses/$f"; exit 1; }
+          done
+          # Inventory for the third-party notices: Java libraries, and the native files inside the video engine.
+          {
+            echo "== Runtime libraries"; gradle -p android --no-daemon -q :app:dependencies --configuration releaseRuntimeClasspath | grep -E "^[+\\| ]" | sed 's/^[-+\\| ]*//' | sort -u
+            echo "== Native files"; T=$(mktemp -d); unzip -q -o "$REL" 'lib/arm64-v8a/*' -d "$T"
+            for z in "$T"/lib/arm64-v8a/*.zip.so; do [ -f "$z" ] || continue; echo "-- $(basename "$z")"; unzip -Z1 "$z" | grep -E '\.so(\.|$)|/bin/' | sed 's#.*/##' | sort -u; done
+            ls "$T"/lib/arm64-v8a
+          } > out/android-components.txt
+          cat out/android-components.txt
       - name: Test results
         if: failure()
         uses: actions/upload-artifact@v4
@@ -90,4 +106,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: NexonicDownloadManager-Android
-          path: out/*.apk
+          path: |
+            out/*.apk
+            out/android-components.txt

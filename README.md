@@ -237,6 +237,8 @@ their names belong to their owners.
 Unless you explicitly state otherwise, any contribution you submit for inclusion is dual licensed as above,
 without any additional terms or conditions. Third-party components keep their own licenses
 ([notices](packaging/THIRD-PARTY-NOTICES.txt)).
+The Android app as a whole is distributed under GPL-3.0, because its video engine is GPL-3.0
+([details](android/README.md#license)).
 
 Made by **[Shahrukh Khalid](https://www.shahrukhalid.com)** · [GitHub](https://github.com/Shahrukhalid). If this app
 saves you time, please ⭐ star the repo so others can find it.

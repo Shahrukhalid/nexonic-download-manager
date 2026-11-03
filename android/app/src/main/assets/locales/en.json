@@ -71,7 +71,7 @@
     "Folders by type": "",
     "Forward": "",
     "Found on this page": "",
-    "Free and open source (MIT or Apache-2.0) by Shahrukh Khalid.": "",
+    "Free and open source by Shahrukh Khalid. Its own code is MIT or Apache-2.0; the app as a whole is GPL-3.0 because of the video engine.": "",
     "General": "",
     "Hide login": "",
     "Home page": "",
@@ -174,6 +174,7 @@
     "When a download fails": "",
     "When a download finishes": "",
     "Wi-Fi only": "",
-    "Yes": ""
+    "Yes": "",
+    "Open-source licenses": ""
   }
 }

@@ -23,6 +23,14 @@ Native Android app (Kotlin, Jetpack Compose), Android 10 or later. Same download
 - Copy-protected video is never supported.
 - Android limits background work. Downloads run as a data-sync foreground service. Android 15 may stop it after several hours; downloads then wait and continue when you open the app. Exact scheduled starts need *Alarms & reminders* permission; without it, Android may delay the start or show a notification to tap.
 
+## License
+
+Nexonic's own Android code is MIT OR Apache-2.0, like the rest of the project. The Android app as a whole (the APK)
+also contains [youtubedl-android](https://github.com/JunkFood02/youtubedl-android) with Python and an FFmpeg built
+with GPL parts, which are GPL-3.0, so the APK is distributed under **GPL-3.0**. The app lists every component, its
+license and where to get the source under *Settings → About → Open-source licenses*
+([app/src/main/assets/licenses](app/src/main/assets/licenses)).
+
 ## Build
 
 ```bash

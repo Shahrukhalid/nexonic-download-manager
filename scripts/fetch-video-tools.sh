@@ -9,7 +9,10 @@ set -euo pipefail
 TARGET="$1"
 OUT="$(mkdir -p "$2" && cd "$2" && pwd)"
 QJS=v0.16.1
-YT=https://github.com/yt-dlp/yt-dlp/releases/latest/download
+# One yt-dlp version for the program and its license list (resolved once, so they always match).
+YTTAG="$(curl -fsSLI --retry 4 -o /dev/null -w '%{url_effective}' https://github.com/yt-dlp/yt-dlp/releases/latest | sed 's#.*/tag/##')"
+case "$YTTAG" in ""|*/*) echo "Could not find the yt-dlp version" >&2; exit 1 ;; esac
+YT="https://github.com/yt-dlp/yt-dlp/releases/download/$YTTAG"
 QJ="https://github.com/quickjs-ng/quickjs/releases/download/$QJS"
 get() { curl -fsSL --retry 4 -o "$2" "$1"; }
 sha() { if command -v sha256sum >/dev/null; then sha256sum "$1" | cut -d' ' -f1; else shasum -a 256 "$1" | cut -d' ' -f1; fi; }
@@ -67,4 +70,9 @@ QuickJS-ng license:
 TXT
 get "https://raw.githubusercontent.com/quickjs-ng/quickjs/$QJS/LICENSE" "$OUT/qjs-license.txt"
 cat "$OUT/qjs-license.txt" >> "$OUT/NOTICE-video-tools-2.txt" && rm "$OUT/qjs-license.txt"
+# The yt-dlp program is a bundle that also contains Python and other libraries (some GPL/LGPL); their licenses,
+# and where to get their source, are in yt-dlp's THIRD_PARTY_LICENSES.txt for the same version.
+printf '\n\nyt-dlp %s bundled components (from its THIRD_PARTY_LICENSES.txt):\n\n' "$YTTAG" >> "$OUT/NOTICE-video-tools-2.txt"
+get "https://raw.githubusercontent.com/yt-dlp/yt-dlp/$YTTAG/THIRD_PARTY_LICENSES.txt" "$OUT/ytdlp-licenses.txt"
+cat "$OUT/ytdlp-licenses.txt" >> "$OUT/NOTICE-video-tools-2.txt" && rm "$OUT/ytdlp-licenses.txt"
 echo "Fetched the video engine for $TARGET into $OUT"

@@ -63,6 +63,7 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
     var schedule by remember { mutableStateOf(s.scheduleEnabled) }
     var minutes by remember { mutableStateOf(s.scheduleMinutes) }
     var pickTime by remember { mutableStateOf(false) }
+    var showLicenses by remember { mutableStateOf(false) }
     var block3p by remember { mutableStateOf(s.blockThirdPartyCookies) }
     var home by remember { mutableStateOf(s.homePage) }
     var engine by remember { mutableStateOf(s.searchEngine) }
@@ -188,13 +189,24 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
 
             Section("About")
             Text("Nexonic Download Manager ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodyLarge)
-            Hint("Free and open source (MIT or Apache-2.0) by Shahrukh Khalid.")
+            Hint("Free and open source by Shahrukh Khalid. Its own code is MIT or Apache-2.0; the app as a whole is GPL-3.0 because of the video engine.")
             TextButton(onClick = { openLink(context, "https://shahrukhalid.github.io/nexonic-download-manager/") }) { Text(tr("Website")) }
             TextButton(onClick = { openLink(context, "https://github.com/Shahrukhalid/nexonic-download-manager") }) { Text(tr("Source code and help")) }
             TextButton(onClick = { openLink(context, "https://github.com/Shahrukhalid/nexonic-download-manager/issues/new") }) { Text(tr("Report a problem")) }
+            TextButton(onClick = { showLicenses = true }) { Text(tr("Open-source licenses")) }
             Hint("Only download what you have the right to save. Copy-protected services are not supported.")
             Spacer(Modifier.height(32.dp))
         }
+    }
+
+    if (showLicenses) {
+        val text = remember { licenseTexts(context) }
+        AlertDialog(
+            onDismissRequest = { showLicenses = false },
+            title = { Text(tr("Open-source licenses")) },
+            text = { Text(text, style = MaterialTheme.typography.bodySmall, modifier = Modifier.verticalScroll(rememberScrollState())) },
+            confirmButton = { TextButton(onClick = { showLicenses = false }) { Text(tr("Close")) } },
+        )
     }
 
     if (pickTime) {
@@ -246,5 +258,14 @@ private fun Toggle(title: String, subtitle: String, value: Boolean, onChange: (B
             Hint(subtitle)
         }
         Switch(value, onChange)
+    }
+}
+
+/** The notices and license texts shipped in assets/licenses, NOTICES.txt first. */
+private fun licenseTexts(context: android.content.Context): String {
+    val names = runCatching { context.assets.list("licenses")?.toList() }.getOrNull().orEmpty()
+        .sortedWith(compareBy({ it != "NOTICES.txt" }, { it }))
+    return names.joinToString("\n\n" + "=".repeat(40) + "\n\n") { name ->
+        runCatching { context.assets.open("licenses/$name").bufferedReader().use { it.readText() } }.getOrDefault("")
     }
 }

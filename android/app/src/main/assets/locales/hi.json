@@ -71,7 +71,7 @@
     "Folders by type": "प्रकार के अनुसार फ़ोल्डर",
     "Forward": "आगे",
     "Found on this page": "इस पेज पर मिला",
-    "Free and open source (MIT or Apache-2.0) by Shahrukh Khalid.": "Shahrukh Khalid द्वारा मुफ़्त और ओपन सोर्स (MIT या Apache-2.0)।",
+    "Free and open source by Shahrukh Khalid. Its own code is MIT or Apache-2.0; the app as a whole is GPL-3.0 because of the video engine.": "Shahrukh Khalid द्वारा मुफ़्त और ओपन सोर्स। इसका अपना कोड MIT या Apache-2.0 है; वीडियो इंजन के कारण पूरा ऐप GPL-3.0 के तहत है।",
     "General": "सामान्य",
     "Hide login": "लॉगिन छिपाएँ",
     "Home page": "होम पेज",
@@ -174,6 +174,7 @@
     "When a download fails": "जब कोई डाउनलोड विफल हो",
     "When a download finishes": "जब कोई डाउनलोड पूरा हो",
     "Wi-Fi only": "केवल Wi-Fi",
-    "Yes": "हाँ"
+    "Yes": "हाँ",
+    "Open-source licenses": "ओपन-सोर्स लाइसेंस"
   }
 }
