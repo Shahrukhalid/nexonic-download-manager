@@ -19,9 +19,11 @@ public class LicenseTests
     [Fact]
     public void LicenseFilesOfferBoth()
     {
-        Assert.Contains("SPDX-License-Identifier: MIT OR Apache-2.0", Read("LICENSE"));
-        Assert.StartsWith("MIT License", Read("LICENSE-MIT"));
-        Assert.Contains("Copyright (c) 2026 Shahrukh Khalid", Read("LICENSE-MIT"));
+        // Exactly two license files, so GitHub shows "MIT" and "Apache-2.0" and nothing else.
+        Assert.StartsWith("MIT License", Read("LICENSE"));
+        Assert.Contains("Copyright (c) 2026 Shahrukh Khalid", Read("LICENSE"));
+        Assert.False(File.Exists(Path.Combine(Root(), "LICENSE-MIT")));
+        Assert.Contains("MIT OR Apache-2.0", Read("README.md"));
         var apache = Read("LICENSE-APACHE");
         Assert.Contains("Version 2.0, January 2004", apache);
         Assert.Contains("END OF TERMS AND CONDITIONS", apache);

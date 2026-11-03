@@ -19,7 +19,7 @@ See [docs/TRANSLATIONS.md](../docs/TRANSLATIONS.md) and the open "Help wanted: r
 3. Run the tests for the part you changed (see "Build from source" in the README).
 4. Open a pull request that explains what changed and how you tested it.
 
-Contributions are licensed under MIT OR Apache-2.0, like the rest of the project (see [LICENSE](../LICENSE)).
+Contributions are licensed under MIT OR Apache-2.0, like the rest of the project (see [LICENSE](../LICENSE) and [LICENSE-APACHE](../LICENSE-APACHE)).
 
 ## Code of conduct
 

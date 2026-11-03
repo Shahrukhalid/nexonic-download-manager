@@ -227,7 +227,8 @@ cd ios && NDM_VERSION=$(cat ../VERSION) xcodegen   # iPhone/iPad (Xcode 16, Xcod
 
 ## License
 
-Licensed under either of the [MIT License](LICENSE-MIT) or the [Apache License 2.0](LICENSE-APACHE), at your option.
+Licensed under either of the [MIT License](LICENSE) or the [Apache License 2.0](LICENSE-APACHE), at your option
+(SPDX: `MIT OR Apache-2.0`).
 © 2026 Shahrukh Khalid. Not affiliated with Internet Download Manager or any of the sites mentioned;
 their names belong to their owners.
 
