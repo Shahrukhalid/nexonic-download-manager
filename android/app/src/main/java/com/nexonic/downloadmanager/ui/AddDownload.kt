@@ -134,7 +134,7 @@ fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
             read.onSuccess { p ->
                 page = p
                 if (!nameEdited) name = VideoPages.fileName(p.title, p.choices.first().ext)
-            }.onFailure { problem = it.message ?: "No video found on this page." }
+            }.onFailure { problem = (it as? com.nexonic.downloadmanager.video.VideoException)?.message ?: VideoPages.engineError(it.javaClass.simpleName, it.message) }
         }
     }
 

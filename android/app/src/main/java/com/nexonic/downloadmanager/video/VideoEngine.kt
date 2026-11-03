@@ -1,6 +1,8 @@
 package com.nexonic.downloadmanager.video
 
 import android.content.Context
+import android.util.Log
+import android.webkit.CookieManager
 import com.nexonic.downloadmanager.core.Job
 import com.nexonic.downloadmanager.core.StreamFormat
 import com.nexonic.downloadmanager.core.VideoChoice
@@ -35,8 +37,13 @@ object VideoEngine {
         if (ready) return
         synchronized(lock) {
             if (ready) return
-            YoutubeDL.getInstance().init(app)
-            FFmpeg.getInstance().init(app)
+            try {
+                YoutubeDL.getInstance().init(app)
+                FFmpeg.getInstance().init(app)
+            } catch (e: Throwable) {
+                Log.e(TAG, "video engine start failed", e)
+                throw VideoException(VideoPages.engineError(e.javaClass.simpleName, e.message))
+            }
             ready = true
         }
     }
@@ -59,8 +66,25 @@ object VideoEngine {
         return status?.name ?: "DONE"
     }
 
+    /**
+     * Cookies of the built-in browser for this site, as a cookies file for yt-dlp. Sites like Instagram and Facebook
+     * often show videos only to signed-in people: signing in once in the Browser tab is then enough.
+     */
+    private fun cookiesFile(url: String): File? = runCatching {
+        val host = java.net.URI(url).host ?: return null
+        val header = CookieManager.getInstance().getCookie(url)?.takeIf { it.isNotBlank() } ?: return null
+        val domain = "." + host.lowercase().removePrefix("www.").removePrefix("m.")
+        val lines = VideoPages.netscapeCookies(domain, header)
+        if (lines.isEmpty()) return null
+        File(app.cacheDir, "video-cookies.txt").apply {
+            writeText("# Netscape HTTP Cookie File\n" + lines.joinToString("\n") + "\n")
+            setReadable(false, false); setReadable(true, true)
+        }
+    }.getOrNull()
+
     private fun base(url: String, userAgent: String?, referer: String?) = YoutubeDLRequest(url).apply {
         addOption("--no-playlist")
+        cookiesFile(url)?.let { addOption("--cookies", it.absolutePath) }
         addOption("--no-mtime")
         addOption("--socket-timeout", "30")
         userAgent?.let { addOption("--user-agent", it) }
@@ -71,9 +95,13 @@ object VideoEngine {
     fun read(url: String, userAgent: String? = null, referer: String? = null): VideoPage {
         ensure()
         val info = try {
-            YoutubeDL.getInstance().getInfo(base(url, userAgent, referer))
+            YoutubeDL.getInstance().getInfo(base(resolve(url), userAgent, referer))
         } catch (e: Exception) {
+            Log.w(TAG, "read failed", e)
             throw VideoException(VideoPages.friendlyError(e.message))
+        } catch (e: Throwable) {
+            Log.e(TAG, "read failed", e)
+            throw VideoException(VideoPages.engineError(e.javaClass.simpleName, e.message))
         }
         val formats = info.formats.orEmpty().map { f ->
             StreamFormat(
@@ -96,7 +124,7 @@ object VideoEngine {
                  progress: (Float, Long) -> Unit): File {
         ensure()
         dir.mkdirs()
-        val req = base(url, userAgent, referer).apply {
+        val req = base(resolve(url), userAgent, referer).apply {
             addOption("-f", choice.selector)
             addOption("-o", File(dir, "%(title).100B.%(ext)s").absolutePath)
             addOption("--concurrent-fragments", "4")
@@ -108,12 +136,39 @@ object VideoEngine {
         } catch (e: YoutubeDL.CanceledException) {
             throw e
         } catch (e: Exception) {
+            Log.w(TAG, "download failed", e)
             throw VideoException(VideoPages.friendlyError(e.message))
+        } catch (e: Throwable) {
+            Log.e(TAG, "download failed", e)
+            throw VideoException(VideoPages.engineError(e.javaClass.simpleName, e.message))
         }
         return dir.listFiles()?.filter { it.isFile && !it.name.endsWith(".part") && !it.name.endsWith(".ytdl") && it.length() > 0 }
             ?.maxByOrNull { it.length() }
             ?: throw VideoException("The video could not be saved.")
     }
+
+    /** Short share links (facebook.com/share/…, fb.watch) point to the real video page: follow them first. */
+    private fun resolve(url: String): String {
+        if (!VideoPages.isShareLink(url)) return url
+        var current = url
+        repeat(5) {
+            val conn = (java.net.URL(current).openConnection() as java.net.HttpURLConnection).apply {
+                instanceFollowRedirects = false
+                connectTimeout = 15000; readTimeout = 15000
+                setRequestProperty("User-Agent", DESKTOP_UA)
+                CookieManager.getInstance().getCookie(current)?.let { setRequestProperty("Cookie", it) }
+            }
+            val next = runCatching { if (conn.responseCode in 300..399) conn.getHeaderField("Location") else null }.getOrNull()
+            conn.disconnect()
+            if (next.isNullOrBlank()) return current
+            current = java.net.URL(java.net.URL(current), next).toString()
+            if (VideoPages.isLoginPage(current)) return url
+        }
+        return current
+    }
+
+    private const val TAG = "NexonicVideo"
+    private const val DESKTOP_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
 
     fun cancel(id: String) { runCatching { YoutubeDL.getInstance().destroyProcessById(id) } }
 }

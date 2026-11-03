@@ -53,4 +53,25 @@ class VideoTest {
         assertEquals("No video found on this page.", VideoPages.friendlyError("ERROR: Unsupported URL: https://x"))
         assertTrue(VideoPages.friendlyError("ERROR: [Instagram] abc: login required").contains("signed in"))
     }
+
+    @Test fun shareLinksAndLogin() {
+        assertTrue(VideoPages.isShareLink("https://www.facebook.com/share/r/19oeprsmak/"))
+        assertTrue(VideoPages.isShareLink("https://fb.watch/abc/"))
+        assertFalse(VideoPages.isShareLink("https://www.facebook.com/reel/123"))
+        assertTrue(VideoPages.isLoginPage("https://www.facebook.com/login/?next=x"))
+        assertFalse(VideoPages.isLoginPage("https://www.facebook.com/reel/123"))
+    }
+
+    @Test fun cookiesFileLines() {
+        val l = VideoPages.netscapeCookies(".instagram.com", "sessionid=abc; csrftoken=x=y; bad")
+        assertEquals(2, l.size)
+        assertEquals(".instagram.com\tTRUE\t/\tTRUE\t0\tsessionid\tabc", l[0])
+        assertEquals("x=y", l[1].split('\t').last())
+    }
+
+    @Test fun engineErrorsAreReadable() {
+        val m = VideoPages.engineError("NoClassDefFoundError", "s2.e")
+        assertTrue(m.startsWith("The video engine could not start"))
+        assertTrue(m.contains("NoClassDefFoundError: s2.e"))
+    }
 }

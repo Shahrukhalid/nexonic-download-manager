@@ -58,6 +58,16 @@ jobs:
           done
           BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
           AAPT="$BT/aapt2"
+          # Release builds are shrunk by R8: the video engine's classes that are used by reflection must survive,
+          # or the engine fails on phones only (debug builds are not shrunk).
+          AN=$(ls "$ANDROID_HOME"/cmdline-tools/*/bin/apkanalyzer | head -1)
+          REL=$(ls out/NexonicDownloadManager-Android-release*.apk | head -1)
+          CLASSES=$("$AN" dex packages --defined-only "$REL")
+          for cls in org.apache.commons.compress.archivers.zip.ExtraFieldUtils org.apache.commons.compress.archivers.zip.AsiExtraField \
+                     com.yausername.youtubedl_android.YoutubeDL com.yausername.youtubedl_android.mapper.VideoInfo com.yausername.ffmpeg.FFmpeg; do
+            echo "$CLASSES" | grep -q " $cls$" || { echo "R8 removed or renamed $cls: the video engine would break"; exit 1; }
+          done
+          echo "Video engine classes are intact in the release APK."
           if ls out/*release.apk >/dev/null 2>&1; then
             echo "Release APK signature:"
             "$BT/apksigner" verify --verbose --print-certs out/NexonicDownloadManager-Android-release.apk | grep -E "Verified using|Signer #1 certificate DN|SHA-256 digest"

@@ -102,6 +102,36 @@ object VideoPages {
         return "$base.$ext"
     }
 
+    /** Links that only redirect to the real video page (Facebook share links, fb.watch). */
+    fun isShareLink(url: String): Boolean {
+        val u = runCatching { URI(url.trim()) }.getOrNull() ?: return false
+        val h = u.host?.lowercase()?.removePrefix("www.")?.removePrefix("m.") ?: return false
+        return h == "fb.watch" || (h == "facebook.com" && (u.path ?: "").startsWith("/share/"))
+    }
+
+    fun isLoginPage(url: String): Boolean {
+        val p = runCatching { URI(url).path }.getOrNull()?.lowercase() ?: return false
+        return p.startsWith("/login") || p.startsWith("/accounts/login") || p.contains("checkpoint")
+    }
+
+    /** Browser cookies ("a=1; b=2") as lines of a Netscape cookies file for [domain] (".instagram.com"). */
+    fun netscapeCookies(domain: String, header: String): List<String> =
+        header.split(';').mapNotNull { part ->
+            val i = part.indexOf('=')
+            if (i <= 0) return@mapNotNull null
+            val name = part.substring(0, i).trim()
+            val value = part.substring(i + 1).trim()
+            if (name.isEmpty() || name.any { it == '\t' || it == '\n' } || value.any { it == '\t' || it == '\n' }) null
+            else "$domain\tTRUE\t/\tTRUE\t0\t$name\t$value"
+        }
+
+    /** The video engine itself failed (not the site): a readable message with the technical detail for a report. */
+    fun engineError(kind: String, detail: String?): String {
+        val d = detail?.trim()?.takeIf { it.isNotEmpty() && it.length < 160 }
+        return "The video engine could not start on this phone. Restart the app and try again; if it keeps happening, " +
+            "please report it (" + kind + (d?.let { ": $it" } ?: "") + ")."
+    }
+
     /** yt-dlp's error text, shortened to something useful for the user. */
     fun friendlyError(raw: String?): String {
         val line = raw.orEmpty().lines().map { it.trim() }.lastOrNull { it.startsWith("ERROR:") }?.removePrefix("ERROR:")?.trim()
