@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   shots:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 50
     steps:
       - uses: actions/checkout@v4
@@ -45,6 +45,7 @@ jobs:
           arch: x86_64
           profile: pixel_6
           disable-animations: true
+          emulator-boot-timeout: 1200
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           script: bash android/demo/take-screenshots.sh
       - uses: actions/upload-artifact@v4
@@ -53,13 +54,4 @@ jobs:
           path: shots/*.png
       - name: Save to the screenshots branch
         if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
-        run: |
-          set -e
-          mv shots ../shots
-          git fetch -q origin screenshots
-          git checkout -q screenshots
-          rm -f android-*.png
-          cp ../shots/android-*.png .
-          git add -A
-          git -c user.name="Shahrukh Khalid" -c user.email="90670731+Shahrukhalid@users.noreply.github.com" commit -qm "Android screenshots" || exit 0
-          git push -q origin screenshots
+        run: bash scripts/publish-screenshots.sh shots "Android screenshots" 'android-*.png'
