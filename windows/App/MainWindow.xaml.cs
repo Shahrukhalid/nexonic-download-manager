@@ -18,6 +18,7 @@ public partial class MainWindow : Window
     public MainWindow(DownloadManager manager)
     {
         InitializeComponent();
+        WindowPlace.Restore(this);
         this.manager = manager;
         Grid.ItemsSource = manager.Rows;
         BuildSidebar();
@@ -37,6 +38,7 @@ public partial class MainWindow : Window
     {
         e.Cancel = true;
         manager.Save();
+        WindowPlace.Save(this);
         Hide();
     }
 

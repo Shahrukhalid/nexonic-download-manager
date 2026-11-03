@@ -1,0 +1,18 @@
+# Created with scripts/package-manifests.py
+PackageIdentifier: Shahrukhalid.NexonicDownloadManager
+PackageVersion: 0.7.0
+InstallerType: inno
+Scope: user
+InstallModes:
+  - interactive
+  - silent
+UpgradeBehavior: install
+ProductCode: '{6F1C2E4B-8B7D-4C55-9E2A-3D9B1F0A7C21}_is1'
+Commands:
+  - ndm
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v0.7.0/NexonicDownloadManager-Windows-Setup.exe
+    InstallerSha256: A466DE32B56035EFEEBB029806C4D0B3627CB3025EF7B08CB741ADA9A0261346
+ManifestType: installer
+ManifestVersion: 1.6.0

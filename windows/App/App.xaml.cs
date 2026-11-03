@@ -50,6 +50,7 @@ public partial class App : Application
         menu.Items.Add("Add URL…", null, (_, _) => window!.ShowAdd(Dialogs.ClipboardLink()));
         menu.Items.Add("Stop All", null, (_, _) => manager.PauseAll());
         menu.Items.Add("Resume All", null, (_, _) => manager.ResumeAll());
+        menu.Items.Add(SpeedLimitMenu(manager));
         menu.Items.Add("Quit", null, (_, _) => Quit(manager));
         tray.ContextMenuStrip = menu;
         manager.Notify += (title, body) =>
@@ -69,9 +70,29 @@ public partial class App : Application
         _ = ListenAsync(manager);
     }
 
+    /// <summary>Tray quick setting: the speed limit for all downloads, from off to 10 MB/s.</summary>
+    static System.Windows.Forms.ToolStripMenuItem SpeedLimitMenu(DownloadManager manager)
+    {
+        var item = new System.Windows.Forms.ToolStripMenuItem("Speed Limit");
+        foreach (var kb in SpeedLimits.Presets)
+        {
+            var choice = new System.Windows.Forms.ToolStripMenuItem(SpeedLimits.Title(kb));
+            choice.Click += (_, _) => { var s = manager.Settings; s.SpeedLimitKBps = kb; manager.ApplySettings(s); };
+            item.DropDownItems.Add(choice);
+        }
+        item.DropDownOpening += (_, _) =>
+        {
+            var current = manager.Settings.SpeedLimitKBps;
+            for (var i = 0; i < SpeedLimits.Presets.Length; i++)
+                ((System.Windows.Forms.ToolStripMenuItem)item.DropDownItems[i]).Checked = SpeedLimits.Presets[i] == current;
+        };
+        return item;
+    }
+
     void Quit(DownloadManager manager)
     {
         manager.Save();
+        if (window != null) WindowPlace.Save(window);
         if (tray != null) tray.Visible = false;
         Shutdown();
     }

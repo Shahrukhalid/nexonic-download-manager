@@ -37,6 +37,9 @@ Download faster, pause and resume anytime, and save videos from YouTube, Instagr
 
 Everything is included. Nothing else to install.
 
+Windows with [Scoop](https://scoop.sh): `scoop bucket add nexonic https://github.com/Shahrukhalid/nexonic-download-manager` then
+`scoop install nexonic-download-manager`. More package managers: [docs/PACKAGES.md](docs/PACKAGES.md).
+
 > **Mac users:** the easiest way is one command in Terminal. It installs or updates the app and opens it without the
 > "Apple could not verify" message:
 >

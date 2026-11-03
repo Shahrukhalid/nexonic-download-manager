@@ -125,6 +125,23 @@ public sealed class App : Application
             Item("Add URL…", async () => { if (MainWindow is { } w) await w.ShowAdd(await Ui.ClipboardLink(w)); });
             Item("Stop All", m.PauseAll);
             Item("Resume All", m.ResumeAll);
+            var limits = new NativeMenu();
+            var limitItems = new List<(NativeMenuItem Item, int KB)>();
+            foreach (var kb in SpeedLimits.Presets)
+            {
+                var choice = new NativeMenuItem { Header = SpeedLimits.Title(kb), ToggleType = NativeMenuItemToggleType.Radio, IsChecked = m.Settings.SpeedLimitKBps == kb };
+                var value = kb;
+                choice.Click += (_, _) =>
+                {
+                    var s = m.Settings;
+                    s.SpeedLimitKBps = value;
+                    m.ApplySettings(s);
+                    foreach (var (it, k) in limitItems) it.IsChecked = k == value;
+                };
+                limitItems.Add((choice, kb));
+                limits.Items.Add(choice);
+            }
+            menu.Items.Add(new NativeMenuItem { Header = "Speed Limit", Menu = limits });
             menu.Items.Add(new NativeMenuItemSeparator());
             Item("Quit", Quit);
             tray = new TrayIcon { Icon = new WindowIcon(s), ToolTipText = "Nexonic Download Manager", Menu = menu, IsVisible = true };
@@ -145,6 +162,7 @@ public sealed class App : Application
     public void Quit()
     {
         manager?.Save();
+        MainWindow?.SavePlace();
         if (MainWindow != null) MainWindow.Quitting = true;
         if (tray != null) tray.IsVisible = false;
         desktop?.Shutdown();

@@ -54,6 +54,7 @@ public sealed class MainWindow : Window
         MinWidth = 760;
         MinHeight = 420;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        RestorePlace();
 
         list.ItemsSource = view;
         list.ItemTemplate = new FuncDataTemplate<Row>((row, _) => RowView(row), supportsRecycling: false);
@@ -87,6 +88,7 @@ public sealed class MainWindow : Window
             if (Quitting) return;
             e.Cancel = true;   // closing the window keeps the downloads running
             manager.Save();
+            SavePlace();
             Hide();
         };
 
@@ -95,6 +97,42 @@ public sealed class MainWindow : Window
         var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         timer.Tick += (_, _) => { ShowDetails(); UpdateStatus(); };
         timer.Start();
+    }
+
+    /// <summary>Opens where it was last time, when that place is still on a screen.</summary>
+    void RestorePlace()
+    {
+        var p = Prefs.Load();
+        if (p.WindowWidth is double w && p.WindowHeight is double h && w >= MinWidth && h >= MinHeight)
+        {
+            Width = w;
+            Height = h;
+        }
+        if (p.WindowX is int x && p.WindowY is int y)
+        {
+            WindowStartupLocation = WindowStartupLocation.Manual;
+            Position = new PixelPoint(x, y);
+            Opened += (_, _) => { if (Screens.ScreenFromPoint(new PixelPoint(x + 40, y + 20)) == null) Position = new PixelPoint(80, 80); };
+        }
+        if (p.WindowMaximized) WindowState = WindowState.Maximized;
+    }
+
+    public void SavePlace()
+    {
+        try
+        {
+            var p = Prefs.Load();
+            p.WindowMaximized = WindowState == WindowState.Maximized;
+            if (WindowState == WindowState.Normal)
+            {
+                p.WindowX = Position.X;
+                p.WindowY = Position.Y;
+                p.WindowWidth = Bounds.Width;
+                p.WindowHeight = Bounds.Height;
+            }
+            p.Save();
+        }
+        catch { }
     }
 
     bool Typing => FocusManager?.GetFocusedElement() is TextBox;

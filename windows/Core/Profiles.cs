@@ -280,3 +280,11 @@ public static class NetworkCheck
         return lines;
     }
 }
+
+/// <summary>Speed limits offered in the tray menu.</summary>
+public static class SpeedLimits
+{
+    public static readonly int[] Presets = { 0, 128, 256, 512, 1024, 2048, 5120, 10240 };
+
+    public static string Title(int kb) => kb <= 0 ? "No Limit" : kb >= 1024 && kb % 1024 == 0 ? $"{kb / 1024} MB/s" : $"{kb} KB/s";
+}
