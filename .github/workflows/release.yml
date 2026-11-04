@@ -127,6 +127,11 @@ jobs:
         run: bash linux/packaging/build.sh ${{ matrix.arch }} .ffmpeg-cache/linux-${{ matrix.arch }} .tools-cache/linux-${{ matrix.arch }}
       - name: Check the app before it is published (every tool present, packages install, windows open)
         run: bash linux/packaging/check.sh ${{ matrix.arch }}
+      - name: Smoke test the packaged app before it is published
+        run: |
+          T="$RUNNER_TEMP/smoke" && mkdir -p "$T" && cd "$T"
+          "$GITHUB_WORKSPACE"/build/linux-${{ matrix.arch }}/*.AppImage --appimage-extract >/dev/null
+          python3 "$GITHUB_WORKSPACE/linux/packaging/smoke.py" "$T/squashfs-root/usr/lib/nexonic-download-manager" "$T/run"
       - name: Add the Linux files to the release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -182,12 +187,39 @@ jobs:
         run: |
           $tag = $env:GITHUB_REF_NAME
           $repo = $env:GITHUB_REPOSITORY
+          $v = (Get-Content VERSION).Trim()
+          if ($tag -ne "v$v") { throw "Release tag $tag does not match VERSION $v" }
+          $required = @(
+            "NexonicDownloadManager-Mac.dmg", "NexonicDownloadManager-Mac.zip",
+            "NexonicDownloadManager-Windows-Setup.exe", "NexonicDownloadManager-Windows-Portable.zip",
+            "NexonicDownloadManager-Linux-x86_64.AppImage", "NexonicDownloadManager-Linux-aarch64.AppImage",
+            "NexonicExtension-Chrome.zip", "NexonicAddon-Firefox.xpi",
+            "NexonicDownloadManager-Android.apk", "NexonicDownloadManager-Android-32bit.apk"
+          )
+          # Android builds and GPL sources run independently. Wait for both before generating update details
+          # or making the release public; otherwise the update file can permanently omit the Android APKs.
+          $expected = $required + @("Android-GPL-Sources.tar.gz")
+          $ready = $false
+          for ($attempt = 0; $attempt -lt 60; $attempt++) {
+            $details = gh release view $tag --json assets | ConvertFrom-Json
+            if ($LASTEXITCODE -ne 0) { throw "Cannot inspect release assets" }
+            $present = @($details.assets | Where-Object { $_.size -gt 0 -and $_.state -eq "uploaded" } | ForEach-Object { $_.name })
+            $missing = @($expected | Where-Object { $_ -notin $present })
+            if ($missing.Count -eq 0) { $ready = $true; break }
+            Write-Host "Waiting for release assets: $($missing -join ', ')"
+            Start-Sleep -Seconds 30
+          }
+          if (-not $ready) { throw "Release assets incomplete: $($missing -join ', ')" }
           gh release download $tag --dir dl --pattern "Nexonic*"
+          if ($LASTEXITCODE -ne 0) { throw "Cannot download release assets for update checksums" }
+          foreach ($name in $required) {
+            if (-not (Test-Path "dl/$name")) { throw "Missing update asset: $name" }
+          }
           $base = "https://github.com/$repo/releases/download/$tag"
           $assets = @(Get-ChildItem dl | Sort-Object Name | ForEach-Object {
             [ordered]@{ name = $_.Name; browser_download_url = "$base/$($_.Name)"; digest = "sha256:" + (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower() }
           })
-          if ($assets.Count -lt 6) { throw "Expected 6 release files, found $($assets.Count)" }
+          if ($assets.Count -ne $required.Count) { throw "Expected $($required.Count) update files, found $($assets.Count)" }
           [ordered]@{
             tag_name = $tag; html_url = "https://github.com/$repo/releases/tag/$tag"; draft = $false; prerelease = $false
             body = (Get-Content CHANGELOG.md -Raw); assets = $assets

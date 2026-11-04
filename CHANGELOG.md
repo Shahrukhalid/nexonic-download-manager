@@ -1,3 +1,12 @@
+## 0.8.1
+
+- **Linux:** fixed a crash when adding a second download, creating a queue, or rebuilding the downloads list.
+- **Linux:** the app now starts when its data folder has a long path.
+- **Linux checks:** every build exercises the packaged app with real downloads, file integrity, pause and resume,
+  command-line queues, local API security and the bundled video tools on both Intel/AMD and ARM computers.
+- Clearer Linux crash reports and local API error logs help diagnose problems.
+- No new user-facing features on Mac, Windows, Android, iPhone/iPad or the browser extension.
+
 ## 0.8.0
 
 - **Site settings:** a login, cookies, user agent, proxy, connection count and speed limit per website (subdomains

@@ -18,9 +18,18 @@ jobs:
       - name: Tests
         run: swift test --package-path mac
       - name: Build the app
-        run: UNIVERSAL=0 bash scripts/build-app.sh
+        run: UNIVERSAL=${{ startsWith(github.head_ref, 'release/') && '1' || '0' }} bash scripts/build-app.sh
       - name: Check the bundle
         run: |
+          V="$(cat VERSION)"
+          A="build/Nexonic Download Manager.app/Contents"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$A/Info.plist")" = "$V"
+          if [ "${{ startsWith(github.head_ref, 'release/') }}" = "true" ]; then
+            for f in NexonicDownloadManager nexonic-host ffmpeg; do
+              archs="$(lipo -archs "$A/MacOS/$f")"
+              [[ "$archs" == *x86_64* && "$archs" == *arm64* ]] || { echo "$f is not universal"; exit 1; }
+            done
+          fi
           test -x "build/Nexonic Download Manager.app/Contents/MacOS/NexonicDownloadManager"
           test -x "build/Nexonic Download Manager.app/Contents/MacOS/nexonic-host"
           test -f "build/Nexonic Download Manager.app/Contents/Resources/AppIcon.icns"

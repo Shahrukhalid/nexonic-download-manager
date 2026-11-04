@@ -4,9 +4,9 @@ name: iOS
 on:
   push:
     branches: [main, feature/mobile-platforms]
-    paths: ["ios/**", "mac/Sources/NexonicCore/**", "android/demo/page.html", ".github/workflows/ios.yml"]
+    paths: ["VERSION", "ios/**", "mac/Sources/NexonicCore/**", "android/demo/page.html", ".github/workflows/ios.yml"]
   pull_request:
-    paths: ["ios/**", "mac/Sources/NexonicCore/**", ".github/workflows/ios.yml"]
+    paths: ["VERSION", "ios/**", "mac/Sources/NexonicCore/**", ".github/workflows/ios.yml"]
   workflow_dispatch:
 permissions:
   contents: write
