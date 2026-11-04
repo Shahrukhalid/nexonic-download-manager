@@ -2,6 +2,8 @@
 
 # Nexonic Download Manager
 
+<img src="packaging/icon-1024.png" alt="Nexonic Universal Download Manager icon" width="112" height="112">
+
 **Free, open-source download manager for Mac, Windows, Linux, Android, iPhone and iPad: an alternative to Internet Download Manager (IDM).**
 
 Download faster, pause and resume anytime, and save videos from YouTube, Instagram, Facebook, X (Twitter), TikTok and

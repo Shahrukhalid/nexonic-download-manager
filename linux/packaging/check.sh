@@ -49,6 +49,11 @@ sudo apt-get install -y -qq "$DEB" >/dev/null
 ndm help | grep -q "ndm batch" || fail "ndm after installing the .deb"
 [ "$(nexonic-download-manager --version)" = "$V" ] || fail "the installed app"
 desktop-file-validate /usr/share/applications/nexonic-download-manager.desktop
+for size in 16 24 32 48 64 128 256 512; do
+  icon="/usr/share/icons/hicolor/${size}x${size}/apps/nexonic-download-manager.png"
+  [ -f "$icon" ] || fail "missing launcher icon: $size"
+  [ "$(identify -format '%wx%h' "$icon")" = "${size}x${size}" ] || fail "wrong launcher icon size: $size"
+done
 sudo apt-get remove -y -qq nexonic-download-manager >/dev/null
 [ ! -e /opt/nexonic-download-manager ] || fail "the .deb left files behind"
 

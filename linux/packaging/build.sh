@@ -36,6 +36,8 @@ python3 "$ROOT/scripts/build-extensions.py" >/dev/null
 cp -R "$ROOT/build/extension-chrome" "$APP/Extension"
 cp "$ROOT/build/NexonicFirefoxAddon-$VERSION.xpi" "$APP/Firefox Add-on.xpi"
 cp "$PKG/nexonic-download-manager.png" "$APP/"
+mkdir -p "$APP/icons"
+cp "$ROOT"/branding/universal/generated/linux/*.png "$APP/icons/"
 cp "$ROOT/LICENSE" "$APP/LICENSE.txt"
 cp "$ROOT/LICENSE-APACHE" "$APP/LICENSE-APACHE.txt"
 cp "$ROOT/TERMS.md" "$APP/TERMS.md"
@@ -51,6 +53,11 @@ chmod 755 "$AD/AppRun"
 sed 's|^Exec=.*|Exec=NexonicDownloadManager %U|' "$PKG/nexonic-download-manager.desktop" > "$AD/nexonic-download-manager.desktop"
 cp "$PKG/nexonic-download-manager.png" "$AD/nexonic-download-manager.png"
 ln -s nexonic-download-manager.png "$AD/.DirIcon"
+for size in 16 24 32 48 64 128 256 512; do
+  target="$AD/usr/share/icons/hicolor/${size}x${size}/apps"
+  mkdir -p "$target"
+  cp "$ROOT/branding/universal/generated/linux/$size.png" "$target/nexonic-download-manager.png"
+done
 TOOLDIR="${APPIMAGE_TOOLS:-$ROOT/.appimage-tools}"
 mkdir -p "$TOOLDIR"
 fetch() { # url file sha256
@@ -80,7 +87,11 @@ printf '#!/bin/sh\nexec /opt/nexonic-download-manager/NexonicDownloadManager "$@
 printf '#!/bin/sh\nexec /opt/nexonic-download-manager/nexonic-host "$@"\n' > "$D/usr/bin/ndm"
 chmod 755 "$D/usr/bin/nexonic-download-manager" "$D/usr/bin/ndm"
 cp "$PKG/nexonic-download-manager.desktop" "$D/usr/share/applications/"
-cp "$PKG/nexonic-download-manager.png" "$D/usr/share/icons/hicolor/256x256/apps/"
+for size in 16 24 32 48 64 128 256 512; do
+  target="$D/usr/share/icons/hicolor/${size}x${size}/apps"
+  mkdir -p "$target"
+  cp "$ROOT/branding/universal/generated/linux/$size.png" "$target/nexonic-download-manager.png"
+done
 cp "$APP/THIRD-PARTY-NOTICES.txt" "$D/usr/share/doc/nexonic-download-manager/copyright"
 SIZE="$(du -sk "$D" --exclude=DEBIAN | cut -f1)"
 cat > "$D/DEBIAN/control" <<CONTROL
@@ -138,7 +149,7 @@ cp -a $R/stage/. %{buildroot}/
 /usr/bin/nexonic-download-manager
 /usr/bin/ndm
 /usr/share/applications/nexonic-download-manager.desktop
-/usr/share/icons/hicolor/256x256/apps/nexonic-download-manager.png
+/usr/share/icons/hicolor/*/apps/nexonic-download-manager.png
 SPEC
 rpmbuild -bb --quiet --define "_topdir $R" --target "$RPM" "$R/SPECS/nexonic-download-manager.spec"
 cp "$R/RPMS/$RPM/nexonic-download-manager-$VERSION-1.$RPM.rpm" "$OUT/"

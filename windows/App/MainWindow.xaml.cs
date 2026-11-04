@@ -18,6 +18,7 @@ public partial class MainWindow : Window
     public MainWindow(DownloadManager manager)
     {
         InitializeComponent();
+        Icon = System.Windows.Media.Imaging.BitmapFrame.Create(new Uri("pack://application:,,,/app.ico", UriKind.Absolute));
         WindowPlace.Restore(this);
         this.manager = manager;
         Grid.ItemsSource = manager.Rows;

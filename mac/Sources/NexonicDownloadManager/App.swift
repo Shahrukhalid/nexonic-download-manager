@@ -33,10 +33,19 @@ struct NexonicDownloadManagerApp: App {
         Window("Nexonic Download Manager Help", id: "help") {
             HelpView()
         }
-        MenuBarExtra("Nexonic", systemImage: "arrow.down.circle") {
+        MenuBarExtra {
             MenuBarView().environmentObject(manager)
+        } label: {
+            Image(nsImage: Self.menuBarIcon)
         }
     }
+    private static var menuBarIcon: NSImage {
+        let image = NSImage(named: "MenuBarIcon") ?? NSApp.applicationIconImage ?? NSImage()
+        image.size = NSSize(width: 18, height: 18)
+        image.isTemplate = true
+        return image
+    }
+
 }
 
 /// Links from the browser helper (nexonicdm://inbox, nexonicdm://show) are handled here, so a download from the

@@ -30,11 +30,9 @@ sed "s/__VERSION__/$VERSION/g" packaging/Info.plist > "$APP/Contents/Info.plist"
 cp -R build/extension-chrome "$APP/Contents/Resources/Extension"
 cp "build/NexonicFirefoxAddon-$VERSION.xpi" "$APP/Contents/Resources/Firefox Add-on.xpi"
 
-ICONSET="build/AppIcon.iconset"
-mkdir -p "$ICONSET"
-# The prepared iconset includes the simplified approved mark at small Finder/Dock sizes.
-cp branding/universal/generated/macos/AppIcon.iconset/*.png "$ICONSET/"
-iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
+# Prepared assets are generated only from branding/universal/master.png.
+cp branding/universal/generated/macos/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+cp branding/universal/generated/macos/MenuBarIcon.png "$APP/Contents/Resources/MenuBarIcon.png"
 
 if [ -n "${SIGN_IDENTITY:-}" ]; then
   codesign --force --options runtime --timestamp -s "$SIGN_IDENTITY" "$APP/Contents/MacOS/nexonic-host"

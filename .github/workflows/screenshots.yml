@@ -71,7 +71,8 @@ jobs:
           path: shots/*.png
   publish:
     needs: [mac, windows]
-    if: always() && (needs.mac.result == 'success' || needs.windows.result == 'success')
+    # Review-branch captures are artifacts only; never replace live documentation screenshots.
+    if: always() && github.ref == 'refs/heads/main' && (needs.mac.result == 'success' || needs.windows.result == 'success')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

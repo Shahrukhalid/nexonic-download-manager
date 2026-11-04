@@ -132,7 +132,8 @@ public sealed class Integration
         var ndm = Path.Combine(home, ".local", "bin", "ndm");
         if (File.Exists(ndm) && File.ReadAllText(ndm).Contains(Marker)) Delete(ndm);
         Delete(Path.Combine(dataHome, "applications", AppId + ".desktop"));
-        Delete(Path.Combine(dataHome, "icons", "hicolor", "256x256", "apps", AppId + ".png"));
+        foreach (var size in new[] { 16, 24, 32, 48, 64, 128, 256, 512 })
+            Delete(Path.Combine(dataHome, "icons", "hicolor", $"{size}x{size}", "apps", AppId + ".png"));
         try { if (Directory.Exists(BinFolder)) Directory.Delete(BinFolder, true); } catch { }
         try { var browser = Path.Combine(dataHome, AppId, "browser"); if (Directory.Exists(browser)) Directory.Delete(browser, true); } catch { }
         LinuxSystem.Run("update-desktop-database", Path.Combine(dataHome, "applications"));
@@ -174,10 +175,18 @@ public sealed class Integration
         {
             var icon = Path.Combine(appDir, "nexonic-download-manager.png");
             var iconTarget = Path.Combine(dataHome, "icons", "hicolor", "256x256", "apps", AppId + ".png");
-            if (File.Exists(icon) && (!File.Exists(iconTarget) || new FileInfo(iconTarget).Length != new FileInfo(icon).Length))
+            if (File.Exists(icon))
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(iconTarget)!);
                 File.Copy(icon, iconTarget, true);
+            }
+            foreach (var size in new[] { 16, 24, 32, 48, 64, 128, 256, 512 })
+            {
+                var source = Path.Combine(appDir, "icons", $"{size}.png");
+                if (!File.Exists(source)) continue;
+                var destination = Path.Combine(dataHome, "icons", "hicolor", $"{size}x{size}", "apps", AppId + ".png");
+                Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+                File.Copy(source, destination, true);
             }
             var entry = Path.Combine(dataHome, "applications", AppId + ".desktop");
             var text = DesktopEntry(target);
