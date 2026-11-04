@@ -1,107 +1,92 @@
 #!/usr/bin/env python3
-"""Draws the app icon (Mac, Windows, extension) and the Mac installer window background. Needs Pillow and Inter."""
+"""Generate all A1 artwork from the unchanged approved master. Requires Pillow.
+Run only on the branding preparation branch until its public rollout is approved.
+"""
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+import hashlib, io, json, struct
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 ROOT = Path(__file__).resolve().parent.parent
-FONT = "/usr/share/fonts/opentype/inter/"
-TOP, BOTTOM = (56, 189, 248), (37, 64, 205)  # sky to deep blue
+ASSETS = ROOT / 'branding/universal'
+MASTER = ASSETS / 'master.png'
+EXPECTED = '65f3556135b5e04304def0c28d0b6895cf1233e22e3c81c0eede0621cb50185c'
+NAVY = '#050b25'
 
-
-def gradient(size, top, bottom):
-    w, h = size
-    g = Image.new("RGB", (1, h))
-    for y in range(h):
-        t = y / max(1, h - 1)
-        g.putpixel((0, y), tuple(round(a + (b - a) * t) for a, b in zip(top, bottom)))
-    return g.resize((w, h))
-
-
-def icon(px=1024):
-    s = 4  # draw large, then shrink for smooth edges
-    n = px * s
-    img = Image.new("RGBA", (n, n), (0, 0, 0, 0))
-    m = round(n * 0.1)  # macOS icon grid margin
-    body = (m, m, n - m, n - m)
-    r = round((n - 2 * m) * 0.225)
-    # soft shadow
-    shadow = Image.new("RGBA", (n, n), (0, 0, 0, 0))
-    ImageDraw.Draw(shadow).rounded_rectangle((m, m + n * 0.015, n - m, n - m + n * 0.015), r, fill=(10, 20, 60, 110))
-    img = Image.alpha_composite(img, shadow.filter(ImageFilter.GaussianBlur(n * 0.02)))
-    # body with gradient
-    mask = Image.new("L", (n, n), 0)
-    ImageDraw.Draw(mask).rounded_rectangle(body, r, fill=255)
-    img.paste(gradient((n, n), TOP, BOTTOM), (0, 0), mask)
-    # top sheen
-    sheen = Image.new("RGBA", (n, n), (0, 0, 0, 0))
-    ImageDraw.Draw(sheen).ellipse((-n * 0.2, -n * 0.75, n * 1.2, n * 0.42), fill=(255, 255, 255, 26))
-    img = Image.alpha_composite(img, Image.composite(sheen.filter(ImageFilter.GaussianBlur(n * 0.03)), Image.new("RGBA", (n, n)), mask))
-    d = ImageDraw.Draw(img)
-    c = n / 2
-    white = (255, 255, 255, 255)
-    # arrow: stem + head
-    sw = n * 0.105
-    d.rounded_rectangle((c - sw / 2, n * 0.25, c + sw / 2, n * 0.56), sw * 0.3, fill=white)
-    hw, top_y, tip_y = n * 0.215, n * 0.47, n * 0.665
-    d.polygon([(c - hw, top_y), (c + hw, top_y), (c, tip_y)], fill=white)
-    # tray
-    tw, ty, th = n * 0.27, n * 0.725, n * 0.06
-    d.rounded_rectangle((c - tw, ty, c + tw, ty + th), th / 2, fill=white)
-    # speed lines, blended over the blue
-    lines = Image.new("RGBA", (n, n), (0, 0, 0, 0))
-    ld = ImageDraw.Draw(lines)
-    for i, (y, ln) in enumerate([(0.28, 0.11), (0.355, 0.16), (0.43, 0.09)]):
-        x2 = c - sw / 2 - n * 0.04
-        ld.rounded_rectangle((x2 - n * ln, n * y, x2, n * y + n * 0.036), n * 0.018, fill=(255, 255, 255, 200 - i * 40))
-    img = Image.alpha_composite(img, lines)
-    return img.resize((px, px), Image.LANCZOS)
-
-
-def background(scale):
-    w, h = 660 * scale, 500 * scale
-    img = gradient((w, h), (250, 251, 254), (232, 238, 250)).convert("RGBA")
-    d = ImageDraw.Draw(img)
-    f = lambda name, size: ImageFont.truetype(FONT + name, size * scale)
-    ink, muted, accent = (24, 32, 52), (92, 102, 122), (37, 99, 235)
-
-    def center(text, y, font, fill):
-        tw = d.textlength(text, font=font)
-        d.text(((w - tw) / 2, y * scale), text, font=font, fill=fill)
-
-    center("Install Nexonic Download Manager", 26, f("InterDisplay-Bold.otf", 24), ink)
-    center("Drag the app onto Applications", 60, f("Inter-Regular.otf", 14), muted)
-    # arrow between the two icons (icons sit at x 180 and 480, y 165)
-    y = 165 * scale
-    d.line((262 * scale, y, 392 * scale, y), fill=(150, 162, 186), width=3 * scale)
-    d.polygon([(392 * scale, y - 9 * scale), (408 * scale, y), (392 * scale, y + 9 * scale)], fill=(150, 162, 186))
-    # divider and extras caption
-    d.line((60 * scale, 286 * scale, (660 - 60) * scale, 286 * scale), fill=(214, 222, 236), width=scale)
-    center("Browser extension and Firefox add-on (optional)", 296, f("Inter-Medium.otf", 11), muted)
-    # thank-you footer
-    center("Thank you for downloading! More tools and updates:", 452, f("Inter-Regular.otf", 11), muted)
-    t1, t2, sep = "github.com/Shahrukhalid", "www.shahrukhalid.com", "   ·   "
-    fb = f("Inter-SemiBold.otf", 12)
-    total = d.textlength(t1 + sep + t2, font=fb)
-    x = (w - total) / 2
-    d.text((x, 468 * scale), t1, font=fb, fill=accent)
-    x += d.textlength(t1, font=fb)
-    d.text((x, 468 * scale), sep, font=fb, fill=muted)
-    x += d.textlength(sep, font=fb)
-    d.text((x, 468 * scale), t2, font=fb, fill=accent)
-    return img.convert("RGB")
-
+def font(size):
+    for name in ('/System/Library/Fonts/Supplemental/Arial.ttf', 'DejaVuSans.ttf'):
+        try: return ImageFont.truetype(name, size)
+        except OSError: pass
+    return ImageFont.load_default()
 
 def main():
-    big = icon(1024)
-    big.save(ROOT / "packaging/icon-1024.png")
-    big.resize((256, 256), Image.LANCZOS).save(
-        ROOT / "windows/App/app.ico", sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
-    for s in (16, 48, 128):
-        icon(s * 4).resize((s, s), Image.LANCZOS).save(ROOT / f"extension/icons/{s}.png")
-    background(1).save(ROOT / "packaging/dmg-background.png")
-    background(2).save(ROOT / "packaging/dmg-background@2x.png")
-    print("Artwork written")
-
-
-if __name__ == "__main__":
-    main()
+    if hashlib.sha256(MASTER.read_bytes()).hexdigest() != EXPECTED:
+        raise SystemExit('Approved master changed; use the original owner-supplied PNG.')
+    master = Image.open(MASTER).convert('RGB')
+    w, h = master.size
+    # Crop only the existing central N and download mark; do not redraw the approved design.
+    crop = master.crop((round(w*.30), round(h*.32), round(w*.70), round(h*.67)))
+    small = ImageOps.pad(crop, (512,512), color=NAVY, method=Image.Resampling.LANCZOS)
+    small.save(ASSETS / 'small.png')
+    outputs=[]
+    def save(im, relative, size=None):
+        path=ROOT/relative;path.parent.mkdir(parents=True,exist_ok=True)
+        if size: im=im.resize((size,size),Image.Resampling.LANCZOS)
+        im.save(path);outputs.append(relative)
+    def icon(size): return small if size <= 48 else master
+    save(master,'packaging/icon-1024.png',1024)
+    entries=[];blobs=[];offset=6+7*16
+    for size in (16,24,32,48,64,128,256):
+        im=icon(size).convert('RGBA').resize((size,size),Image.Resampling.LANCZOS)
+        buf=io.BytesIO();im.save(buf,format='PNG');data=buf.getvalue()
+        entries.append(struct.pack('<BBBBHHII',size%256,size%256,0,0,1,32,len(data),offset))
+        blobs.append(data);offset+=len(data)
+    (ROOT/'windows/App/app.ico').write_bytes(struct.pack('<HHH',0,1,7)+b''.join(entries)+b''.join(blobs))
+    outputs.append('windows/App/app.ico')
+    for size in (16,48,128): save(icon(size),f'extension/icons/{size}.png',size)
+    for size in (16,24,32,48,64,128,256,512):
+        save(icon(size),f'branding/universal/generated/linux/{size}.png',size)
+    save(master,'linux/packaging/nexonic-download-manager.png',256)
+    save(master,'linux/App/icon.png',256) if (ROOT/'linux/App/icon.png').exists() else None
+    for size in (16,32,128,256,512):
+        for scale in (1,2):
+            name=f'icon_{size}x{size}'+('@2x' if scale==2 else '')+'.png'
+            save(small if size<=32 else master,f'branding/universal/generated/macos/AppIcon.iconset/{name}',size*scale)
+    for density,size in [('mdpi',48),('hdpi',72),('xhdpi',96),('xxhdpi',144),('xxxhdpi',192)]:
+        save(icon(size),f'android/app/src/main/res/mipmap-{density}/ic_launcher.png',size)
+    fg=Image.new('RGBA',(432,432),(0,0,0,0))
+    fg.alpha_composite(master.convert('RGBA').resize((288,288),Image.Resampling.LANCZOS),(72,72))
+    save(fg,'android/app/src/main/res/drawable/ic_launcher_foreground.png')
+    mono=Image.new('RGBA',small.size,'white');mono.putalpha(small.convert('L').point(lambda x: 255 if x>100 else 0))
+    canvas=Image.new('RGBA',(432,432));canvas.alpha_composite(mono.resize((288,288),Image.Resampling.LANCZOS),(72,72))
+    save(canvas,'android/app/src/main/res/drawable/ic_launcher_monochrome.png')
+    for level,extra in [(26,''),(33,'  <monochrome android:drawable="@drawable/ic_launcher_monochrome" />\n')]:
+        p=ROOT/f'android/app/src/main/res/mipmap-anydpi-v{level}/ic_launcher.xml';p.parent.mkdir(parents=True,exist_ok=True)
+        p.write_text('<?xml version="1.0" encoding="utf-8"?>\n<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n  <background android:drawable="@color/ic_launcher_background" />\n  <foreground android:drawable="@drawable/ic_launcher_foreground" />\n'+extra+'</adaptive-icon>\n')
+        outputs.append(str(p.relative_to(ROOT)))
+    p=ROOT/'android/app/src/main/res/values/icon-background.xml'
+    p.write_text('<?xml version="1.0" encoding="utf-8"?>\n<resources><color name="ic_launcher_background">'+NAVY+'</color></resources>\n')
+    outputs.append(str(p.relative_to(ROOT)))
+    save(master,'ios/App/Assets.xcassets/AppIcon.appiconset/icon-1024.png',1024)
+    save(small,'site/favicon.png',48);save(master,'site/icon.png',512)
+    og=Image.new('RGB',(1200,630),NAVY);og.paste(master.resize((430,430),Image.Resampling.LANCZOS),(40,100))
+    d=ImageDraw.Draw(og)
+    for text,y,size in [('Nexonic',150,64),('Universal Download',245,46),('Manager',305,46),('One App. Every Download.',410,29)]:
+        d.text((500,y),text,fill='white',font=font(size))
+    save(og,'site/og.png')
+    preview=Image.new('RGB',(1200,760),NAVY);d=ImageDraw.Draw(preview)
+    d.text((32,24),'Nexonic — A1 Universal Hub',fill='white',font=font(34))
+    preview.paste(master.resize((280,280),Image.Resampling.LANCZOS),(32,90))
+    d.text((360,100),'Approved master, preserved unchanged',fill='white',font=font(25))
+    for y,bg in [(180,'#10172c'),(440,'#edf0f8')]:
+        d.rectangle((345,y,1165,y+235),fill=bg)
+        x=365
+        for size in (16,24,32,48,64,128):
+            im=icon(size).resize((size,size),Image.Resampling.LANCZOS)
+            preview.paste(im,(x,y+55))
+            d.text((x,y+195),str(size)+' px',fill='white' if y==180 else NAVY,font=font(15));x+=130
+    d.text((32,690),'Small icons retain the original N and download symbol. No public rollout yet.',fill='white',font=font(22))
+    save(preview,'branding/universal/preview.png')
+    manifest={'master_sha256':EXPECTED,'outputs':{name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest() for name in outputs}}
+    (ASSETS/'generated-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+    print(f'Generated {len(outputs)} platform assets from the approved master.')
+if __name__=='__main__': main()
