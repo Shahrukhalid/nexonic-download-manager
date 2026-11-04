@@ -66,7 +66,9 @@ public sealed class DownloadRecord
     public List<VideoPart>? VideoParts { get; set; }
     public string? VideoStep { get; set; }
 
-    public long Received { get { if (IsStream == true || SiteVideo == true) return StreamBytes ?? 0; lock (Segments) return Segments.Sum(s => s.Written); } }
+    public TorrentMetadata? Torrent { get; set; }
+
+    public long Received { get { if (Torrent != null) return Torrent.Received; if (IsStream == true || SiteVideo == true) return StreamBytes ?? 0; lock (Segments) return Segments.Sum(s => s.Written); } }
     public double Progress => IsStream == true
         ? (StreamTotal is > 0 ? Math.Min(1, (double)(StreamDone ?? 0) / StreamTotal.Value) : 0)
         : Size is > 0 ? Math.Min(1, (double)Received / Size.Value) : 0;
@@ -160,6 +162,8 @@ public static class FileTypes
 
 public sealed class AppSettings
 {
+    /// <summary>Optional Linux libtorrent runtime; off for existing and new installations.</summary>
+    public bool TorrentsEnabled { get; set; }
     public int Connections { get; set; } = 8;
     public int MaxActive { get; set; } = 3;
     public int SpeedLimitKBps { get; set; }

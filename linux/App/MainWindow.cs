@@ -184,6 +184,7 @@ public sealed class MainWindow : Window
         }
         void Gap() => toolbar.Children.Add(new Border { Width = 1, Height = 36, Background = Ui.Line, Margin = new Thickness(6, 0) });
         Tool(Ui.Icons.Add, "Add URL", "Add one or more links (Ctrl+N)", () => _ = OnAdd());
+        Tool(Ui.Icons.Add, "Torrent", "Preview a torrent file or magnet link", () => _ = Dialogs.Torrent(this, manager, "", CurrentQueue));
         Tool(Ui.Icons.Play, "Resume", "Resume the selected downloads", () => { foreach (var r in Selected) manager.Resume(r); });
         Tool(Ui.Icons.Pause, "Stop", "Stop the selected downloads", () => { foreach (var r in Selected) manager.Pause(r); });
         Tool(Ui.Icons.StopAll, "Stop All", "Stop every download", manager.PauseAll);

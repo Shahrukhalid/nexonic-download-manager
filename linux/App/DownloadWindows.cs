@@ -342,7 +342,7 @@ public static class DownloadWindows
         right.Children.Add(pause);
         right.Children.Add(Ui.Button("Cancel", async () =>
         {
-            if (!await Ui.Confirm(w, "Cancel this download?", $"{row.Record.FileName} is removed from the list and the part already downloaded is deleted.", "Cancel Download", "Keep")) return;
+            if (!await Ui.Confirm(w, "Cancel this download?", row.Record.Torrent != null ? $"{row.Record.FileName} is removed from the list. Torrent files stay on disk." : $"{row.Record.FileName} is removed from the list and the part already downloaded is deleted.", "Cancel Download", "Keep")) return;
             w.Close();
             m.Remove(row);
         }));
@@ -391,7 +391,7 @@ public static class DownloadWindows
             values[2].Text = Row.Bytes(r.Received) + (r.Size is > 0 ? $" ({pct:0.0} %)" : "");
             values[3].Text = r.IsActive && row.SpeedBytes > 0 ? row.Speed : "–";
             values[4].Text = row.TimeLeft.Length > 0 ? row.TimeLeft : "–";
-            values[5].Text = r.AcceptsRanges || r.SiteVideo == true || r.IsStream == true ? "Yes" : "No";
+            values[5].Text = r.Torrent != null || r.AcceptsRanges || r.SiteVideo == true || r.IsStream == true ? "Yes" : "No";
             bar.IsIndeterminate = r.IsActive && r.Size is null && r.IsStream != true;
             bar.Value = pct;
             pause.Content = r.IsActive || r.Status == DownloadStatus.Queued ? "Pause" : "Resume";
@@ -420,7 +420,9 @@ public static class DownloadWindows
             }
             if (!plain)
             {
-                segCaption.Text = r.SiteVideo == true
+                segCaption.Text = r.Torrent is { } torrent
+                    ? $"BitTorrent · {torrent.Peers} peers · {torrent.Seeds} seeds · Upload {Row.Bytes(torrent.UploadRate)}/s\n{torrent.Files.Count} files · Piece verification on resume · {torrent.InfoHash}"
+                    : r.SiteVideo == true
                     ? ("Video site · " + SiteVideo.ChoiceText(r.AudioOnly, r.MaxHeight) + ", picture and sound joined") + $"\nSave to: {r.Folder}"
                     : r.IsStream == true ? $"Streamed video · pieces: {r.StreamDone ?? 0} of {r.StreamTotal ?? 0}, joined into one .mp4" : "";
                 segCaption.IsVisible = segCaption.Text.Length > 0;

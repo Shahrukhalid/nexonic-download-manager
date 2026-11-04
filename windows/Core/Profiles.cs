@@ -199,10 +199,12 @@ public static class Backup
             App = appVersion,
             Settings = Clone(settings),
             Queues = Clone(queues.ToList()),
-            Downloads = downloads.Select(r => Clone(r)!).ToList(),
+            // Torrent backups need tracker-secret redaction and portable resume data (Milestone 8).
+            Downloads = downloads.Where(r => r.Torrent == null).Select(r => Clone(r)!).ToList(),
         };
         var s = file.Settings!;
         s.Proxy.Password = "";
+        s.TorrentsEnabled = false;
         s.Automation.Key = "";
         foreach (var p in s.HostProfiles) { p.Password = null; if (p.Proxy != null) p.Proxy.Password = ""; }
         foreach (var r in file.Downloads)
@@ -244,7 +246,7 @@ public static class Backup
             r.FileName = FileNames.Sanitize(r.FileName ?? "");
             if (!string.IsNullOrEmpty(r.Folder) && !Path.IsPathFullyQualified(r.Folder)) r.Folder = "";
         }
-        file.Downloads = (file.Downloads ?? new()).Where(r => new DownloadJob(r.Url ?? "").IsValid).ToList();
+        file.Downloads = (file.Downloads ?? new()).Where(r => r.Torrent == null && new DownloadJob(r.Url ?? "").IsValid).ToList();
         if (file.Settings is { } s)
         {
             // Never take secrets or the automation switch from a file: the API stays as it is on this computer.
@@ -252,6 +254,7 @@ public static class Backup
             s.Network ??= new();
             s.Proxy.Password = "";
             s.Automation = new AutomationSettings();
+            s.TorrentsEnabled = false;
             s.HostProfiles = (s.HostProfiles ?? new()).Where(p => p != null).ToList();
             foreach (var p in s.HostProfiles) { p.Password = null; if (p.Proxy != null) p.Proxy.Password = ""; }
         }

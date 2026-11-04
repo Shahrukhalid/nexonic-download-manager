@@ -15,6 +15,7 @@ public sealed class AddOptions
     public string Password { get; set; } = "";
     public string Checksum { get; set; } = "";
     public int SpeedLimitKBps { get; set; }
+    public DownloadEngine Engine { get; set; } = DownloadEngine.Auto;
     public bool AudioOnly { get; set; }
 }
 
@@ -79,6 +80,8 @@ public sealed partial class DownloadManager
     public void ApplySettings(AppSettings s)
     {
         Settings = s;
+        if (TorrentRuntime.Unavailable(s) != null)
+            foreach (var row in Rows.Where(r => r.Record.Torrent != null && r.Record.IsActive).ToList()) Pause(row);
         limiter.SetLimit(s.SpeedLimitKBps * 1024);
         Network.Options = s.Network.Clamped();
         Write(AppPaths.Settings, s);
@@ -105,8 +108,12 @@ public sealed partial class DownloadManager
         if (!job.IsValid) return null;
         job = job with { Url = Links.Unwrap(job.Url) };  // e.g. a Google Images result: the picture itself, not Google's page
         o ??= new AddOptions();
-        var site = job.Site == true || (Nexonic.Core.SiteVideo.IsSupported(job.Url) && job.Stream != true);
-        var stream = !site && (job.Stream == true || HLS.IsPlaylistUrl(job.Url));
+        var engine = o.Engine == DownloadEngine.Auto
+            ? job.Site == true ? DownloadEngine.Video : job.Stream == true ? DownloadEngine.Hls : SmartDownload.Detect(job.Url)
+            : o.Engine;
+        // Remote .torrent URLs remain ordinary files until explicitly opened in the torrent preview.
+        var site = engine == DownloadEngine.Video;
+        var stream = engine == DownloadEngine.Hls;
         var name = job.FileName is { Length: > 0 } n ? FileNames.Sanitize(n) : FileNames.FromUrl(job.Url);
         if (stream) name = Path.GetFileNameWithoutExtension(name) + ".mp4";
         if (site && string.IsNullOrEmpty(job.FileName)) name = $"Video from {new Uri(job.Url).Host}";
@@ -152,6 +159,22 @@ public sealed partial class DownloadManager
         Rows.Insert(0, new Row(rec, QueueName));
         Schedule();
         Save();
+        return rec.Id;
+    }
+
+    /// <summary>Explicit, previewed torrent entry point. Browser/CLI/local API validators remain HTTP-only.</summary>
+    public Guid AddTorrent(string source, TorrentMetadata metadata, AddOptions options)
+    {
+        if (TorrentRuntime.Unavailable(Settings) is { } reason) throw new InvalidOperationException(reason);
+        if (SmartDownload.Detect(source) != DownloadEngine.Torrent || metadata.Files.Count == 0 || string.IsNullOrEmpty(metadata.Metainfo))
+            throw new ArgumentException("Preview a local torrent or magnet before adding it.");
+        var rec = new DownloadRecord { Url = source, FileName = metadata.Name, Size = metadata.Size,
+            Folder = options.Folder ?? Settings.Folder, QueueId = options.QueueId, Torrent = metadata,
+            Status = options.Start ? DownloadStatus.Queued : DownloadStatus.Paused,
+            SpeedLimitKBps = options.SpeedLimitKBps > 0 ? options.SpeedLimitKBps : null };
+        Rows.Insert(0, new Row(rec, QueueName));
+        Save();
+        Schedule();
         return rec.Id;
     }
 
@@ -252,7 +275,16 @@ public sealed partial class DownloadManager
         r.Checksum = NullIfEmpty(checksum);
         r.SpeedLimitKBps = limitKBps > 0 ? limitKBps : null;
         r.QueueId = queueId;
-        if (transfers.TryGetValue(r.Id, out var t)) t.OwnLimiter.SetLimit(Math.Max(0, limitKBps) * 1024);
+        if (transfers.TryGetValue(r.Id, out var t))
+        {
+            if (r.Torrent != null)
+            {
+                transfers.Remove(r.Id);
+                t.Pause();
+                r.Status = DownloadStatus.Queued; // Native limit is applied when the worker restarts/rechecks pieces.
+            }
+            else t.OwnLimiter.SetLimit(Math.Max(0, limitKBps) * 1024);
+        }
         row.Refresh();
         Save();
         Schedule();
@@ -404,12 +436,9 @@ public sealed partial class DownloadManager
                 var profile = HostProfiles.Match(Settings.HostProfiles, row.Record.Url);
                 var proxy = profile?.Proxy ?? Settings.Proxy;
                 var connections = Math.Clamp(profile?.MaxConnections ?? Settings.Connections, 1, 32);
-                IDownloader t = row.Record.SiteVideo == true
-                    ? new SiteVideoTransfer(row.Record, Settings.SortIntoCategoryFolders, Settings.SpeedLimitKBps, proxy)
-                    : row.Record.IsStream == true
-                    ? new StreamTransfer(row.Record, connections, limiter, Settings.SortIntoCategoryFolders, proxy)
-                    : new Transfer(row.Record, connections, limiter, Settings.SortIntoCategoryFolders, proxy,
-                        TransferOptions.From(Network.Options, profile));
+                var context = new DownloadContext(connections, limiter, Settings.SortIntoCategoryFolders, proxy,
+                    TransferOptions.From(Network.Options, profile), Settings.TorrentsEnabled, Settings.SpeedLimitKBps);
+                var t = new DownloadProviders().Create(row.Record, context);
                 transfers[row.Record.Id] = t;
                 row.Record.Status = DownloadStatus.Probing;
                 t.Changed += rec => post(() => Changed(row, rec, t));
@@ -519,6 +548,7 @@ public sealed partial class DownloadManager
             // Passwords are not in backups: keep the ones saved here.
             s.Proxy.Password = Settings.Proxy.Password;
             s.Automation = Settings.Automation;
+            s.TorrentsEnabled = Settings.TorrentsEnabled; // Backups cannot opt into a new network protocol.
             foreach (var p in s.HostProfiles)
                 if (Settings.HostProfiles.FirstOrDefault(x => HostProfiles.Normalize(x.Host) == HostProfiles.Normalize(p.Host)) is { } mine)
                 {

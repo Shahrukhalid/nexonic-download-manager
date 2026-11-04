@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Translations of the desktop apps (see docs/TRANSLATIONS.md). -->
+    <EmbeddedResource Include="Torrents/bridge.py" LogicalName="torrent.bridge.py" />
     <EmbeddedResource Include="Locales\*.json" LogicalName="locale.%(Filename).json" />
   </ItemGroup>
 </Project>

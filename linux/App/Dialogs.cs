@@ -10,7 +10,7 @@ using Nexonic.Linux;
 namespace Nexonic.App;
 
 /// <summary>The app's small windows, the same as the Windows app's, built in code so each one reads top to bottom.</summary>
-public static class Dialogs
+public static partial class Dialogs
 {
     // ---- Add ----
 
@@ -19,6 +19,7 @@ public static class Dialogs
         var f = new Form(owner, "Add Download", 580);
         f.Note("Paste one or more links, one per line.");
         var text = f.Text("Links", links, multi: true);
+        var engine = f.Field("Download engine", new ComboBox { ItemsSource = new[] { "Automatic", "File (HTTP/HTTPS)", "HLS stream", "Video site", "Torrent / magnet" }, SelectedIndex = 0 });
         var name = f.Text("File name (one link only; empty = from the link)");
         var folder = f.Folder(m.Settings.Folder);
         var queue = f.Queue(m, queueId);
@@ -39,8 +40,15 @@ public static class Dialogs
         var limit = Inner("Speed limit in KB/s (0 = none)");
         f.Body.Children.Add(new Expander { Header = "Login, checksum and speed limit", Content = inner, Margin = new Thickness(0, 8, 0, 0), HorizontalAlignment = HorizontalAlignment.Stretch });
         var error = f.Error();
-        void Go(bool start)
+        async void Go(bool start)
         {
+            var input = (text.Text ?? "").Trim();
+            if (engine.SelectedIndex == 4 || engine.SelectedIndex == 0 && SmartDownload.Detect(input) == DownloadEngine.Torrent)
+            {
+                f.Close();
+                await Torrent(owner, m, input, queueId);
+                return;
+            }
             if ((sum.Text ?? "").Trim().Length > 0 && Checksum.Parse(sum.Text!) == null) { error.Text = "The checksum is not a valid value."; return; }
             var n = m.AddLinks(text.Text ?? "", new AddOptions
             {
@@ -53,6 +61,7 @@ public static class Dialogs
                 Checksum = (sum.Text ?? "").Trim(),
                 SpeedLimitKBps = Ui.Number(limit.Text),
                 AudioOnly = audio.IsChecked == true,
+                Engine = engine.SelectedIndex switch { 1 => DownloadEngine.File, 2 => DownloadEngine.Hls, 3 => DownloadEngine.Video, _ => DownloadEngine.Auto },
             });
             if (n == 0) { error.Text = "Paste at least one http or https link."; return; }
             f.Close();
@@ -402,6 +411,7 @@ public static class Dialogs
         var (folderRow, folder) = Form.FolderRow(f.Window, s.Folder);
         general.Children.Add(folderRow);
         var sort = Tick(general, "Put each type in its own folder (Video, Music, Documents, Programs, Compressed, Images)", s.SortIntoCategoryFolders);
+        var torrents = Tick(general, "Enable experimental torrents (optional Linux libtorrent runtime)", s.TorrentsEnabled);
         var notify = Tick(general, "Notifications", s.Notifications);
         var updates = Tick(general, "Check for updates when the app opens", s.CheckForUpdates);
         general.Children.Add(new TextBlock { Text = "Language", Margin = new Thickness(0, 10, 0, 3) });
@@ -619,6 +629,7 @@ public static class Dialogs
             s.MaxActive = Math.Clamp(Ui.Number(active.Text, 3), 1, 10);
             s.Folder = (folder.Text ?? "").Trim().Length > 0 ? folder.Text!.Trim() : s.Folder;
             s.SortIntoCategoryFolders = sort.IsChecked == true;
+            s.TorrentsEnabled = torrents.IsChecked == true;
             s.Notifications = notify.IsChecked == true;
             s.CheckForUpdates = updates.IsChecked == true;
             s.Language = languageChoices[Math.Max(0, language.SelectedIndex)];
