@@ -1,5 +1,6 @@
 # CI only: install the pinned public v0.8.1, then this candidate, using a fresh hosted runner profile.
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
 if ($env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_ENVIRONMENT -ne 'github-hosted' -or -not $env:RUNNER_TEMP) { throw 'Run this upgrade check only on a GitHub Actions Windows runner.' }
 $support = Join-Path $env:LOCALAPPDATA 'Nexonic Download Manager'
 # Core tests can already have created this folder. Preserve it rather than overwrite it.
@@ -29,7 +30,12 @@ $partHash = (Get-FileHash $part -Algorithm SHA256).Hash
 $exe = Join-Path $env:LOCALAPPDATA 'Programs/Nexonic Download Manager/NexonicDownloadManager.exe'
 function Install-And-Check([string]$Setup, [string]$Expected) {
     $log = Join-Path $env:RUNNER_TEMP "nexonic-upgrade-$Expected.log"
-    $setupProcess = Start-Process $Setup -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',"/LOG=`"$log`"") -Wait -PassThru
+    $setupProcess = Start-Process $Setup -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',"/LOG=`"$log`"") -PassThru
+    # Start-Process -Wait includes the auto-launched app's lifetime. Wait only for the installer.
+    if (-not $setupProcess.WaitForExit(180000)) {
+        $setupProcess.Kill($true)
+        throw "Installer timed out: $log"
+    }
     if ($setupProcess.ExitCode -ne 0) { throw "Installer returned $($setupProcess.ExitCode): $log" }
     # Inno's silent update path starts the app. Require it to stay alive before inspecting persisted data.
     $app = $null
@@ -61,7 +67,11 @@ Install-And-Check $old '0.8.1'
 Install-And-Check $candidate $version
 
 } finally {
-    Get-Process NexonicDownloadManager -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    $cleanup = Get-Process NexonicDownloadManager -ErrorAction SilentlyContinue
+    if ($cleanup) {
+        $cleanup | Stop-Process -Force -ErrorAction SilentlyContinue
+        $cleanup | Wait-Process -Timeout 10 -ErrorAction SilentlyContinue
+    }
     if (Test-Path $support) {
         $result = Join-Path $env:RUNNER_TEMP ("nexonic-upgrade-result-" + [Guid]::NewGuid().ToString('N'))
         Move-Item $support $result
