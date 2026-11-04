@@ -10,6 +10,8 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
+      - name: Validate release version and tag
+        run: python3 scripts/check-release.py
       - uses: actions/cache@v4
         with:
           path: .ffmpeg-cache/mac
@@ -111,7 +113,7 @@ jobs:
       - name: Build and test tools
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq rpm xvfb xauth imagemagick desktop-file-utils ffmpeg >/dev/null
+          sudo apt-get install -y -qq rpm xvfb xauth imagemagick desktop-file-utils ffmpeg python3-libtorrent >/dev/null
       - uses: actions/cache@v4
         id: ffmpeg
         with:
@@ -121,6 +123,8 @@ jobs:
         run: bash scripts/build-ffmpeg.sh linux .ffmpeg-cache/linux-${{ matrix.arch }}
       - name: Video engine
         run: bash scripts/fetch-video-tools.sh linux-${{ matrix.arch }} .tools-cache/linux-${{ matrix.arch }}
+      - name: Native torrent integration (generated data, loopback only)
+        run: /usr/bin/python3 tests/torrent_bridge_test.py
       - name: Tests
         run: dotnet test linux/Tests/Tests.csproj
       - name: Build the app, AppImage, .deb and .rpm

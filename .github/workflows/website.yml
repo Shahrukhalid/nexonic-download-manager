@@ -3,6 +3,8 @@ on:
   push:
     branches: [main]
     paths: ["site/**", "VERSION", ".github/workflows/website.yml"]
+  release:
+    types: [published]
   workflow_run:
     workflows: ["Screenshots", "Android screenshots", "iOS"]
     types: [completed]
@@ -27,9 +29,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - name: Add the current version and the latest app screenshots
+      - name: Add the published version and the latest app screenshots
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          V="$(cat VERSION)"
+          # Main can contain an approved release candidate before its tag is published.
+          V="$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)"
+          V="${V#v}"
+          [[ "$V" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Invalid published release version"; exit 1; }
           sed -i "s/__VERSION__/$V/g" site/index.html
           mkdir -p site/img
           git fetch --depth 1 origin screenshots

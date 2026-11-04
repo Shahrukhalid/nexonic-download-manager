@@ -13,6 +13,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Desktop\Desktop.csproj" />
     <ProjectReference Include="..\App\App.csproj" />
+    <Compile Include="../../windows/Tests/UpgradeTests.cs" Link="UpgradeTests.cs" />
+    <EmbeddedResource Include="../../windows/Tests/Fixtures/v0.8.1/*.json" LogicalName="upgrade081.%(Filename).json" />
     <!-- Shared download-core tests that also run on Linux. -->
     <Compile Include="..\..\windows\Tests\ProfilesTests.cs" Link="ProfilesTests.cs" />
     <Compile Include="..\..\windows\Tests\QrTests.cs" Link="QrTests.cs" />

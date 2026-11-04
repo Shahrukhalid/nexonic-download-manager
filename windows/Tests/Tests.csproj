@@ -9,6 +9,9 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Fixtures/v0.8.1/*.json" LogicalName="upgrade081.%(Filename).json" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />
   </ItemGroup>
 </Project>

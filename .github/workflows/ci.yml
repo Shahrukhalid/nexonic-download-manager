@@ -111,6 +111,10 @@ jobs:
           if ($m -notmatch " mp4 ") { throw "ffmpeg has no mp4 muxer: $m" }
           & build\win\yt-dlp.exe --version
           if ($LASTEXITCODE -ne 0) { throw "yt-dlp.exe does not run" }
+      - name: Upgrade from v0.8.1 preserves data
+        if: startsWith(github.head_ref, 'release/')
+        shell: pwsh
+        run: ./scripts/test-windows-upgrade.ps1
       - name: Helper answers a ping
         shell: pwsh
         run: |
@@ -138,6 +142,8 @@ jobs:
           node-version: 22
       - run: node --test
         working-directory: extension
+      - name: Release versions are consistent
+        run: python3 scripts/check-release.py
       - name: Manifest is valid JSON with the fixed key
         run: python3 -c "import json; m=json.load(open('extension/manifest.json')); assert m['manifest_version']==3 and m['key']"
       - name: Build the Chrome extension and the Firefox add-on

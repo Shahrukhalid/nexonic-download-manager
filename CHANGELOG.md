@@ -1,3 +1,25 @@
+## 0.9.0
+
+- **New icon:** the approved Nexonic design across the desktop and mobile apps, installers and browser extensions.
+  Application identifiers, existing data folders and update channels are unchanged.
+- **Linux, experimental torrents (off by default):** preview a local `.torrent` file or magnet link, review its files,
+  choose Skip/Low/Normal/High priorities, and download through the existing queues and scheduler.
+- **Torrent resume:** native piece checkpoints persist between runs; missing or unusable checkpoints fall back to
+  piece checks. Stop allows the worker to save its state. Removing a torrent retains its downloaded and partial files.
+- **Optional Linux setup:** install system `python3-libtorrent` (2.x) for `/usr/bin/python3`. Ordinary file/video downloads
+  keep working without it, including in the AppImage. Peers and trackers can see your IP address.
+- **Initial torrent limits:** Linux only, v1 torrents only, no continued seeding after completion. System/custom proxy,
+  shared global speed-limit and DNS-over-HTTPS configurations are refused by the torrent provider; choose No proxy,
+  disable those shared settings, and use a per-torrent download cap. Torrent history is excluded from export/import
+  backups. See [the torrent guide](docs/TORRENTS.md).
+- **Linux download engines:** automatic source detection and a manual File/HLS/Video/Torrent choice reuse the existing
+  HTTP, streamed video and video-site engines. Browser/CLI/local API additions remain HTTP(S)-only.
+- Existing HTTP/video features, saved download progress, credentials and queues are preserved when upgrading.
+- Full seeding, tracker management and new playlist/gallery/media features are still in development. Other platforms
+  receive the icon update; this release does not add torrents to Windows, Mac, Android or iPhone/iPad.
+- Android retains its GPL-3.0 distribution notices and required corresponding-source archive. Translations remain
+  marked for human review.
+
 ## 0.8.1
 
 - **Linux:** fixed a crash when adding a second download, creating a queue, or rebuilding the downloads list.

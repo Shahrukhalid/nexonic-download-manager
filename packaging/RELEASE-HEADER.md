@@ -5,3 +5,8 @@
 **Android:** open `NexonicDownloadManager-Android.apk` on your phone and allow installing from your browser or Files app when asked. Older 32-bit phones: `NexonicDownloadManager-Android-32bit.apk`.
 
 **Linux:** `NexonicDownloadManager-Linux-x86_64.AppImage` runs on every distribution (`chmod +x`, then open it); ARM computers: `-aarch64.AppImage`. Ubuntu, Debian, Mint, Pop!_OS: the `.deb`. Fedora, openSUSE: the `.rpm`. Check files with `sha256sum -c --ignore-missing SHA256SUMS-linux-x64.txt`. [Linux guide](https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/docs/LINUX.md)
+
+**Experimental Linux torrents:** off by default; install system `python3-libtorrent` (2.x) for `/usr/bin/python3`.
+Preview torrent/magnet metadata before starting. The initial provider requires No proxy and no shared global
+speed limit or DNS over HTTPS; per-torrent download limits are available. Other platforms do not include a torrent UI.
+[Setup and limitations](https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/docs/TORRENTS.md)

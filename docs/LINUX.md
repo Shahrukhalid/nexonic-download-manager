@@ -17,7 +17,9 @@ Download from the [latest release](https://github.com/Shahrukhalid/nexonic-downl
 | Fedora, openSUSE, RHEL, AlmaLinux, Rocky Linux | `nexonic-download-manager-<version>-1.x86_64.rpm` (`.aarch64.rpm` on ARM) |
 | Arch Linux, Manjaro, EndeavourOS, SteamOS | the AppImage |
 
-Everything is included (the .NET runtime, the video engine and ffmpeg). Nothing else needs to be installed.
+The standard engines include the .NET runtime, video engine and ffmpeg. Experimental torrents in v0.9.0 and later
+are off by default and additionally require system `python3-libtorrent` (2.x) for `/usr/bin/python3`, including when
+using the AppImage. See [setup, supported features and restrictions](TORRENTS.md).
 
 ## Install
 
