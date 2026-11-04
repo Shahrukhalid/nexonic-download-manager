@@ -11,7 +11,7 @@ PORT_API = 47812
 results = []
 
 def check(name, ok, detail=""):
-    results.append(ok)
+    results.append(bool(ok))
     print(("PASS " if ok else "FAIL ") + name + (f"  ({detail})" if detail else ""), flush=True)
 
 # ---- test files and a range-capable web server ----
