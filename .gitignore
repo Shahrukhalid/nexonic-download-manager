@@ -12,3 +12,7 @@ windows/**/obj/
 .appimage-tools/
 linux/**/bin/
 linux/**/obj/
+
+# Generated Python bytecode
+__pycache__/
+*.py[cod]
