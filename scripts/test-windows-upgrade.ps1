@@ -1,8 +1,14 @@
 # CI only: install the pinned public v0.8.1, then this candidate, using a fresh hosted runner profile.
 $ErrorActionPreference = 'Stop'
-if ($env:GITHUB_ACTIONS -ne 'true' -or -not $env:RUNNER_TEMP) { throw 'Run this upgrade check only on a GitHub Actions Windows runner.' }
+if ($env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_ENVIRONMENT -ne 'github-hosted' -or -not $env:RUNNER_TEMP) { throw 'Run this upgrade check only on a GitHub Actions Windows runner.' }
 $support = Join-Path $env:LOCALAPPDATA 'Nexonic Download Manager'
-if (Test-Path $support) { throw 'Refusing to overwrite an existing app data directory.' }
+# Core tests can already have created this folder. Preserve it rather than overwrite it.
+$backup = $null
+if (Test-Path $support) {
+    $backup = Join-Path $env:RUNNER_TEMP ("nexonic-before-upgrade-" + [Guid]::NewGuid().ToString('N'))
+    Move-Item $support $backup
+}
+try {
 $version = (Get-Content VERSION).Trim()
 $candidate = (Resolve-Path "build/NexonicDownloadManager-Setup-$version.exe").Path
 $old = Join-Path $env:RUNNER_TEMP 'Nexonic-0.8.1-Setup.exe'
@@ -53,3 +59,12 @@ function Install-And-Check([string]$Setup, [string]$Expected) {
 }
 Install-And-Check $old '0.8.1'
 Install-And-Check $candidate $version
+
+} finally {
+    Get-Process NexonicDownloadManager -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    if (Test-Path $support) {
+        $result = Join-Path $env:RUNNER_TEMP ("nexonic-upgrade-result-" + [Guid]::NewGuid().ToString('N'))
+        Move-Item $support $result
+    }
+    if ($backup -and (Test-Path $backup)) { Move-Item $backup $support }
+}
