@@ -2,7 +2,7 @@
 """Smoke test of the Nexonic Download Manager Linux build (run by .github/workflows/linux.yml after check.sh): runs the real app headless (Xvfb) with its own home folder,
 serves test files from a local web server (ranges, slow mode, a bad checksum file), and drives it through the ndm
 command and the local API. Prints PASS/FAIL lines. Usage: ndm-linux-smoke.py <app folder> <work folder> [lang]"""
-import hashlib, http.server, json, os, shutil, socket, subprocess, sys, threading, time, urllib.request
+import atexit, hashlib, http.server, json, os, shutil, socket, subprocess, sys, threading, time, urllib.request
 
 APP, WORK = sys.argv[1], sys.argv[2]
 LANG = sys.argv[3] if len(sys.argv) > 3 else ""
@@ -42,7 +42,7 @@ class H(http.server.SimpleHTTPRequestHandler):
             step = 64 * 1024
             for i in range(0, len(chunk), step):
                 s.wfile.write(chunk[i:i + step])
-                if H.slow: time.sleep(0.02)
+                if H.slow: time.sleep(0.2)
         except (BrokenPipeError, ConnectionResetError): pass
     do_HEAD = lambda s: (s.send_response(200), s.send_header("Accept-Ranges", "bytes"),
                          s.send_header("Content-Length", str(os.path.getsize(os.path.join(files, s.path.lstrip("/"))))), s.end_headers())
@@ -52,8 +52,9 @@ BASE = f"http://127.0.0.1:{srv.server_port}"
 # ---- isolated home with the API on ----
 home = os.path.join(WORK, "home"); dl = os.path.join(WORK, "Downloads")
 support = os.path.join(home, ".local", "share", "Nexonic Download Manager"); os.makedirs(support); os.makedirs(dl)
-settings = {"DownloadFolder": dl, "Automation": {"Enabled": True, "Port": PORT_API, "Key": KEY},
-            "AskBeforeDownload": False, "ShowProgressWindow": False, "ShowCompleteWindow": False}
+settings = {"Folder": dl, "CategoryFolders": False, "Automation": {"Enabled": True, "Port": PORT_API, "Key": KEY},
+            "ShowDownloadDialog": False, "ShowProgressWindow": False, "ShowCompleteDialog": False,
+            "Notifications": False, "MonitorClipboard": False, "CheckForUpdates": False}
 if LANG: settings["Language"] = LANG
 json.dump(settings, open(os.path.join(support, "settings.json"), "w"))
 env = dict(os.environ, HOME=home, XDG_DATA_HOME=os.path.join(home, ".local", "share"), XDG_CONFIG_HOME=os.path.join(home, ".config"),
@@ -66,6 +67,22 @@ time.sleep(4)
 log = open(os.path.join(WORK, "app.log"), "w")
 app = subprocess.Popen([os.path.join(APP, "NexonicDownloadManager")], env=env, stdout=log, stderr=log)
 
+def cleanup():
+    code = app.poll()
+    print(f"App exit before cleanup: {code}", flush=True)
+    if code is None: app.terminate()
+    try: app.wait(timeout=5)
+    except subprocess.TimeoutExpired: app.kill(); app.wait()
+    xvfb.terminate()
+    try: xvfb.wait(timeout=5)
+    except subprocess.TimeoutExpired: xvfb.kill(); xvfb.wait()
+    srv.shutdown()
+    log.close()
+    print("---- app output ----", flush=True)
+    print(open(os.path.join(WORK, "app.log")).read(), flush=True)
+
+atexit.register(cleanup)
+
 def api(method, path, body=None, headers=None, key=KEY):
     h = {"Host": f"127.0.0.1:{PORT_API}"}
     if key: h["Authorization"] = "Bearer " + key
@@ -74,8 +91,8 @@ def api(method, path, body=None, headers=None, key=KEY):
                                  data=json.dumps(body).encode() if body is not None else None)
     try:
         with urllib.request.urlopen(req, timeout=10) as r: return r.status, json.loads(r.read() or b"null")
-    except urllib.error.HTTPError as e: return e.code, None
-    except Exception as e: return 0, str(e)
+    except urllib.error.HTTPError as e: return e.code, json.loads(e.read() or b"null")
+    except Exception as e: return 0, {"error": str(e)}
 
 for _ in range(60):
     if api("GET", "/v1/status")[0] == 200: break
@@ -83,7 +100,7 @@ for _ in range(60):
 st, body = api("GET", "/v1/status")
 check("app starts headless and the local API answers", st == 200, f"{st} {body}")
 if st != 200:
-    print(open(os.path.join(WORK, "app.log")).read()[-3000:]); app.kill(); xvfb.kill(); sys.exit(1)
+    sys.exit(1)
 
 # ---- API security ----
 check("API refuses a request without the key", api("GET", "/v1/status", key=None)[0] == 401)
@@ -121,13 +138,20 @@ if ids:
 # ---- pause and resume ----
 H.slow = True
 st, d = api("POST", "/v1/downloads", {"url": BASE + "/big.bin", "fileName": "resume.bin"})
-rid = (d or {}).get("ids", [None])[0]
-time.sleep(4)
+ids = d.get("ids") if isinstance(d, dict) else None
+check("add a second download through the API", st == 201 and bool(ids), f"{st} {d}")
+if not ids: sys.exit(1)
+rid = ids[0]
+for _ in range(80):
+    st, current = api("GET", f"/v1/downloads/{rid}")
+    if st == 200 and 0 < current.get("received", 0) < len(data): break
+    if app.poll() is not None: sys.exit(1)
+    time.sleep(0.1)
 st_p, _ = api("POST", f"/v1/downloads/{rid}/pause"); time.sleep(2)
 p1 = api("GET", f"/v1/downloads/{rid}")[1] or {}
 time.sleep(3)
 p2 = api("GET", f"/v1/downloads/{rid}")[1] or {}
-check("pause stops the transfer", st_p == 200 and p1.get("received") == p2.get("received") and (p1.get("received") or 0) > 0,
+check("pause stops the transfer", st_p == 200 and p2.get("status") == "paused" and p1.get("received") == p2.get("received") and (p1.get("received") or 0) > 0,
       f"{p1.get('status')} {p1.get('received')}")
 H.slow = False
 api("POST", f"/v1/downloads/{rid}/resume")
@@ -148,7 +172,8 @@ check("ndm --queue creates the queue", night is not None)
 if night:
     api("POST", f"/v1/queues/{night['id']}/start")
     time.sleep(6)
-    check("queue start downloads it and the checksum matches", os.path.isfile(os.path.join(dl, "cli.txt")))
+    cli_path = os.path.join(dl, "cli.txt")
+    check("queue start downloads it and the checksum matches", os.path.isfile(cli_path) and hashlib.sha256(open(cli_path, "rb").read()).hexdigest() == small_sha)
 
 # ---- video tools present and runnable ----
 for tool, arg in (("yt-dlp", "--version"), ("ffmpeg", "-version"), ("qjs", "--help")):
@@ -161,9 +186,8 @@ subprocess.run(["import", "-display", ":77", "-window", "root", shot], capture_o
 check("screenshot taken", os.path.isfile(shot), shot)
 
 st, d = api("GET", "/v1/downloads")
+check("app remains alive and the download list answers", app.poll() is None and st == 200 and isinstance(d, list))
 print("downloads:", json.dumps(d)[:600])
-app.terminate(); time.sleep(2); app.kill(); xvfb.kill(); srv.shutdown()
 print(f"SUMMARY {sum(results)}/{len(results)} passed")
 if not all(results):
-    print("---- app output ----"); print(open(os.path.join(WORK, "app.log")).read()[-6000:])
     sys.exit(1)

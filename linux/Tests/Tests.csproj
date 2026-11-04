@@ -5,12 +5,14 @@
     <AssemblyName>Nexonic.Linux.Tests</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Avalonia.Headless.XUnit" Version="11.2.3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Desktop\Desktop.csproj" />
+    <ProjectReference Include="..\App\App.csproj" />
     <!-- Shared download-core tests that also run on Linux. -->
     <Compile Include="..\..\windows\Tests\ProfilesTests.cs" Link="ProfilesTests.cs" />
     <Compile Include="..\..\windows\Tests\QrTests.cs" Link="QrTests.cs" />
