@@ -53,6 +53,7 @@ jobs:
           (cd "$(dirname "$APP")" && zip -qry "$GITHUB_WORKSPACE/out/Nexonic-simulator.app.zip" Nexonic.app)
           ls -la out
       - name: Screenshots (iPhone and iPad)
+        if: github.event_name != 'pull_request'
         timeout-minutes: 30
         continue-on-error: true
         run: |

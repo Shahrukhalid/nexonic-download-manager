@@ -16,8 +16,12 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build:
-    # After a Screenshots run only when it succeeded (a failed run may leave the screenshots branch mid-update).
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    # Verification PRs must not deploy the website. Only successful runs from main refresh screenshots.
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.event != 'pull_request')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
