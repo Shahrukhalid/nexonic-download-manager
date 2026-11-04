@@ -96,7 +96,7 @@ public sealed class LocalApi : IDisposable
             else (status, body) = await onUi(() => Route(req.Method, req.Path, req.Body, control));
         }
         catch (Exception e) when (e is IOException or OperationCanceledException or SocketException) { return; }
-        catch { status = 500; body = Error("Internal error"); }
+        catch (Exception e) { status = 500; body = Error("Internal error"); Console.Error.WriteLine("Local API: " + e); }
         try
         {
             var json = JsonSerializer.SerializeToUtf8Bytes(body, Json);

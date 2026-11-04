@@ -45,6 +45,11 @@ jobs:
         run: bash linux/packaging/build.sh ${{ matrix.arch }} .ffmpeg-cache/linux-${{ matrix.arch }} .tools-cache/linux-${{ matrix.arch }}
       - name: Check the app and the packages
         run: bash linux/packaging/check.sh ${{ matrix.arch }}
+      - name: Smoke test (downloads, pause and resume, queues, local API security)
+        run: |
+          T="$RUNNER_TEMP/smoke" && mkdir -p "$T" && cd "$T"
+          "$GITHUB_WORKSPACE"/build/linux-${{ matrix.arch }}/*.AppImage --appimage-extract >/dev/null
+          python3 "$GITHUB_WORKSPACE/linux/packaging/smoke.py" "$T/squashfs-root/usr/lib/nexonic-download-manager" "$T/run"
       - uses: actions/upload-artifact@v7
         if: always()
         with:

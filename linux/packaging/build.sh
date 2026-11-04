@@ -21,7 +21,7 @@ rm -rf "$OUT"
 mkdir -p "$APP"
 
 echo "== App ($RID)"
-dotnet publish "$ROOT/linux/App/App.csproj" -c Release -r "$RID" --self-contained -p:Version="$VERSION" -o "$APP" -nologo
+dotnet publish "$ROOT/linux/App/App.csproj" -c Release -r "$RID" --self-contained -p:Version="$VERSION" -p:DebugType=embedded -o "$APP" -nologo
 # The browser helper and ndm command share the app's runtime: only its own files are added.
 dotnet publish "$ROOT/windows/Host/Host.csproj" -c Release -r "$RID" --self-contained -p:Version="$VERSION" \
   -p:InvariantGlobalization=true -o "$OUT/host" -nologo

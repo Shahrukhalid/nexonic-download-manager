@@ -21,6 +21,9 @@ public sealed class SingleInstance : IDisposable
         Directory.CreateDirectory(folder);
         lockPath = Path.Combine(folder, "nexonic-download-manager.lock");
         socketPath = Path.Combine(folder, "nexonic-download-manager.sock");
+        // Linux socket paths are limited to 108 bytes; a long home or data folder would stop the app from starting.
+        if (System.Text.Encoding.UTF8.GetByteCount(socketPath) > 100)
+            socketPath = Path.Combine(Path.GetTempPath(), $"nexonic-download-manager-{Environment.UserName}.sock");
     }
 
     /// <summary>True for the first copy (it then owns the lock until it exits).</summary>
