@@ -70,8 +70,10 @@ public sealed class MainWindow : Window
 
         Content = BuildLayout();
         BuildSidebar();
-        manager.Queues.CollectionChanged += (_, _) => BuildSidebar();
-        manager.Rows.CollectionChanged += (_, _) => Refilter();
+        // Rebuild after the change has finished: rebuilding the list inside the change notification crashed the app
+        // when a download was added while another one was listed (found by linux/packaging/smoke.py).
+        manager.Queues.CollectionChanged += (_, _) => Avalonia.Threading.Dispatcher.UIThread.Post(BuildSidebar);
+        manager.Rows.CollectionChanged += (_, _) => Avalonia.Threading.Dispatcher.UIThread.Post(() => Refilter());
 
         KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.N, KeyModifiers.Control), Command = new Cmd(() => _ = OnAdd()) });
         KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.F, KeyModifiers.Control), Command = new Cmd(() => search.Focus()) });
