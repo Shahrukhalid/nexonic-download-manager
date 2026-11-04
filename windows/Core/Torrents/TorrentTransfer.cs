@@ -86,6 +86,7 @@ public sealed class TorrentTransfer : IDownloader
     public DownloadRecord Record { get; }
     public SpeedLimiter OwnLimiter { get; } = new();
     public event Action<DownloadRecord>? Changed;
+    readonly object gate = new();
     readonly DownloadContext context;
     readonly CancellationTokenSource cancellation = new();
     public TorrentTransfer(DownloadRecord record, DownloadContext context) { Record = record; this.context = context; }
@@ -98,49 +99,58 @@ public sealed class TorrentTransfer : IDownloader
                 SpeedLimitKBps = context.GlobalSpeedLimitKBps, Network = Network.Options };
             if (TorrentRuntime.Unavailable(settings) is { } reason) throw new InvalidOperationException(reason);
             var torrent = Record.Torrent ?? throw new InvalidOperationException("Torrent metadata is missing.");
-            cancellation.Token.ThrowIfCancellationRequested();
-            Record.Status = DownloadStatus.Probing;
-            Changed?.Invoke(Record);
+            lock (gate)
+            {
+                cancellation.Token.ThrowIfCancellationRequested();
+                Record.Status = DownloadStatus.Probing;
+                Changed?.Invoke(Record);
+            }
             // Isolated per-task directory avoids overwriting unrelated files or another torrent's data.
             var folder = Path.Combine(Record.Folder, "Nexonic torrents", Record.Id.ToString("N"));
             await TorrentRuntime.RunAsync(new { action = "download", metainfo = torrent.Metainfo, folder,
                 limit = (long)Math.Clamp(Record.SpeedLimitKBps ?? 0, 0, 2000000) * 1024 }, e =>
             {
-                if (cancellation.IsCancellationRequested) return;
-                switch (e.GetProperty("event").GetString())
+                lock (gate)
                 {
-                    case "metadata":
-                        // Native validation is authoritative even if a saved history/backup was edited.
-                        var checkedMetadata = TorrentRuntime.ReadMetadata(e);
-                        Record.Torrent = torrent = checkedMetadata;
-                        Record.FileName = torrent.Name;
-                        Record.Size = torrent.Size;
-                        break;
-                    case "progress":
-                        torrent.Received = e.GetProperty("received").GetInt64();
-                        torrent.Peers = e.GetProperty("peers").GetInt32();
-                        torrent.Seeds = e.GetProperty("seeds").GetInt32();
-                        torrent.UploadRate = e.GetProperty("upload_rate").GetInt32();
-                        Record.Status = DownloadStatus.Downloading;
-                        break;
-                    case "finished":
-                        torrent.Received = torrent.Size;
-                        Record.SavedPath = torrent.Files.Count == 1 ? Path.Combine(folder, torrent.Files[0].Path) : Path.Combine(folder, torrent.Name);
-                        Record.Status = DownloadStatus.Finished;
-                        Record.Finished = DateTime.Now;
-                        break;
+                    if (cancellation.IsCancellationRequested) return;
+                    switch (e.GetProperty("event").GetString())
+                    {
+                        case "metadata":
+                            // Native validation is authoritative even if a saved history/backup was edited.
+                            var checkedMetadata = TorrentRuntime.ReadMetadata(e);
+                            Record.Torrent = torrent = checkedMetadata;
+                            Record.FileName = torrent.Name;
+                            Record.Size = torrent.Size;
+                            break;
+                        case "progress":
+                            torrent.Received = e.GetProperty("received").GetInt64();
+                            torrent.Peers = e.GetProperty("peers").GetInt32();
+                            torrent.Seeds = e.GetProperty("seeds").GetInt32();
+                            torrent.UploadRate = e.GetProperty("upload_rate").GetInt32();
+                            Record.Status = DownloadStatus.Downloading;
+                            break;
+                        case "finished":
+                            torrent.Received = torrent.Size;
+                            Record.SavedPath = torrent.Files.Count == 1 ? Path.Combine(folder, torrent.Files[0].Path) : Path.Combine(folder, torrent.Name);
+                            Record.Status = DownloadStatus.Finished;
+                            Record.Finished = DateTime.Now;
+                            break;
+                    }
+                    Changed?.Invoke(Record);
                 }
-                Changed?.Invoke(Record);
             }, cancellation.Token);
         }
         catch (Exception e)
         {
-            if (cancellation.IsCancellationRequested) return;
-            Record.Status = DownloadStatus.Failed;
-            Record.Error = e.Message;
-            Changed?.Invoke(Record);
+            lock (gate)
+            {
+                if (cancellation.IsCancellationRequested) return;
+                Record.Status = DownloadStatus.Failed;
+                Record.Error = e.Message;
+                Changed?.Invoke(Record);
+            }
         }
     }
-    public void Pause() { cancellation.Cancel(); Record.Status = DownloadStatus.Paused; Changed?.Invoke(Record); }
-    public void Discard() { cancellation.Cancel(); } // User files are never deleted by native-engine cleanup.
+    public void Pause() { lock (gate) { cancellation.Cancel(); Record.Status = DownloadStatus.Paused; Changed?.Invoke(Record); } }
+    public void Discard() { lock (gate) cancellation.Cancel(); } // User files are never deleted by native-engine cleanup.
 }

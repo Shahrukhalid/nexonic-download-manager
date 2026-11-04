@@ -134,7 +134,9 @@ def main():
     params.url_seeds = []
     params.http_seeds = []
     params.peers = []
-    params.flags |= lt.torrent_flags.upload_mode | lt.torrent_flags.default_dont_download
+    # Ubuntu 22.04 bindings omit the newer optional flag. upload_mode is the required no-payload guard.
+    dont_download = getattr(lt.torrent_flags, 'default_dont_download', 0)
+    params.flags |= lt.torrent_flags.upload_mode | dont_download
     params.flags &= ~lt.torrent_flags.auto_managed
     params.flags &= ~lt.torrent_flags.paused
     if params.ti is not None and params.ti.priv():
@@ -190,7 +192,7 @@ def main():
         handle.set_download_limit(max(0, min(int(req.get('limit', 0)), 2**31 - 1)))
         handle.set_upload_limit(32 * 1024)
         handle.prioritize_files([4] * ti.num_files())
-        handle.unset_flags(lt.torrent_flags.upload_mode | lt.torrent_flags.default_dont_download)
+        handle.unset_flags(lt.torrent_flags.upload_mode | dont_download)
         while not stop.is_set():
             if peer:
                 handle.connect_peer(('127.0.0.1', int(peer)))

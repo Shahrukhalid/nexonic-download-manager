@@ -565,6 +565,7 @@ public sealed class MainWindow : Window
         var failed = new List<string>();
         foreach (var r in rows)
         {
+            if (toTrash && r.Record.Torrent?.Files.Count > 1) { failed.Add(r.Record.FileName + " (move torrent folders manually)"); continue; }
             if (toTrash && r.Record.SavedPath is { } p && File.Exists(p) && !LinuxSystem.Trash(p)) { failed.Add(r.Record.FileName); continue; }
             manager.Remove(r);
         }
