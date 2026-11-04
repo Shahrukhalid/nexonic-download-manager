@@ -17,6 +17,10 @@ get() { # the URL, then known mirrors for hosts that are often down
   curl -fsSL --retry 4 -o "$2" "$1" && return 0
   case "$1" in
     *fossies.org/*/lzo-*) curl -fsSL --retry 4 -o "$2" "https://www.oberhumer.com/opensource/lzo/download/$(basename "$1" .tar.xz).tar.gz" ;;
+    *downloads.sourceforge.net/project/giflib/giflib-5.*)
+      # Upstream moved the 5.x releases into a subdirectory in 2026.
+      curl -fsSL --retry 4 -o "$2" "https://downloads.sourceforge.net/project/giflib/giflib-5.x/$(basename "$1")" \
+        || curl -fsSL --retry 4 -o "$2" "https://mirrors.omnios.org/libgif/$(basename "$1")" ;;
     *downloads.sourceforge.net/project/*) curl -fsSL --retry 4 -o "$2" "https://master.dl.sourceforge.net/project/${1#*downloads.sourceforge.net/project/}?viasf=1" ;;
     *) return 1 ;;
   esac
@@ -109,6 +113,11 @@ This archive holds:
 Nexonic's own source code is the "Source code" archive of the same release, or the matching tag at
 https://github.com/Shahrukhalid/nexonic-download-manager. Questions: open an issue in that repository.
 TXT
+if grep -q 'NOT INCLUDED' "$ROOT/COMPONENTS.txt"; then
+  echo "::error::Source collection is incomplete; refusing to package an incomplete archive."
+  grep 'NOT INCLUDED' "$ROOT/COMPONENTS.txt"
+  exit 1
+fi
 tar -C "$WORK" -czf "$OUT/Android-GPL-Sources.tar.gz" Android-GPL-Sources
 ls -la "$OUT/Android-GPL-Sources.tar.gz"
 wc -l < "$ROOT/COMPONENTS.txt"
