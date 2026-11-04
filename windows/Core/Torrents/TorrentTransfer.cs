@@ -11,6 +11,17 @@ public sealed class TorrentMetadata
     public string InfoHash { get; set; } = "";
     public string Metainfo { get; set; } = "";
     public List<TorrentFile> Files { get; set; } = new();
+    public List<int>? FilePriorities { get; set; }
+    public string ResumeStatus { get; set; } = "";
+    public int[] Priorities()
+    {
+        var values = FilePriorities?.ToArray() ?? Enumerable.Repeat(4, Files.Count).ToArray();
+        if (values.Length != Files.Count || values.Any(p => p is not (0 or 1 or 4 or 7)) || !values.Any(p => p > 0))
+            throw new ArgumentException("Select at least one file and choose Skip, Low, Normal or High priorities.");
+        return values;
+    }
+    [System.Text.Json.Serialization.JsonIgnore]
+    public long SelectedSize => Files.Zip(Priorities()).Where(pair => pair.Second > 0).Sum(pair => pair.First.Size);
     public long Received { get; set; }
     public int Peers { get; set; }
     public int Seeds { get; set; }
@@ -54,14 +65,19 @@ public static class TorrentRuntime
         { UseShellExecute = false, RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true };
         psi.ArgumentList.Add("-I"); psi.ArgumentList.Add("-u"); psi.ArgumentList.Add("-c"); psi.ArgumentList.Add(Script);
         using var process = Process.Start(psi) ?? throw new InvalidOperationException("Could not start the torrent runtime.");
-        // The script also stops on stdin EOF. Kill on cancellation so a native worker cannot outlive pause/quit.
-        using var stop = cancellation.Register(() => { try { process.Kill(entireProcessTree: true); } catch { } });
+        using var killAfterGrace = new Timer(_ => { try { process.Kill(entireProcessTree: true); } catch { } });
         try
         {
             var stderr = process.StandardError.ReadToEndAsync();
             await process.StandardInput.WriteLineAsync(JsonSerializer.Serialize(request));
+            // Allow a bounded graceful stop so the native engine can flush a final resume checkpoint.
+            using var stop = cancellation.Register(() =>
+            {
+                try { process.StandardInput.Close(); } catch { }
+                killAfterGrace.Change(TimeSpan.FromSeconds(8), Timeout.InfiniteTimeSpan);
+            });
             var sawEvent = false;
-            while (await process.StandardOutput.ReadLineAsync(cancellation) is { } line)
+            while (await process.StandardOutput.ReadLineAsync() is { } line)
             {
                 if (line.Length > 4 * 1024 * 1024) throw new InvalidDataException("Torrent response exceeds the size limit.");
                 using var doc = JsonDocument.Parse(line);
@@ -70,7 +86,8 @@ public static class TorrentRuntime
                 if (e.GetProperty("event").GetString() == "error") throw new InvalidOperationException(e.GetProperty("message").GetString());
                 onEvent(e);
             }
-            await process.WaitForExitAsync(cancellation);
+            await process.WaitForExitAsync();
+            cancellation.ThrowIfCancellationRequested();
             var errors = await stderr;
             if (process.ExitCode != 0 || !sawEvent) throw new InvalidOperationException("Torrent runtime failed. Install python3-libtorrent (libtorrent 2.x). " + errors[..Math.Min(errors.Length, 300)]);
         }
@@ -87,10 +104,27 @@ public sealed class TorrentTransfer : IDownloader
     public SpeedLimiter OwnLimiter { get; } = new();
     public event Action<DownloadRecord>? Changed;
     readonly object gate = new();
+    static readonly System.Runtime.CompilerServices.ConditionalWeakTable<DownloadRecord, SemaphoreSlim> workers = new();
     readonly DownloadContext context;
+    bool discarded;
+    string ResumePath => Path.Combine(AppPaths.Parts, Record.Id.ToString("N"), "torrent.resume");
     readonly CancellationTokenSource cancellation = new();
     public TorrentTransfer(DownloadRecord record, DownloadContext context) { Record = record; this.context = context; }
-    public Task StartAsync() => Task.Run(RunAsync);
+    public Task StartAsync() => Task.Run(async () =>
+    {
+        var worker = workers.GetValue(Record, _ => new SemaphoreSlim(1, 1));
+        try
+        {
+            await worker.WaitAsync(cancellation.Token);
+            try { await RunAsync(); } finally { worker.Release(); }
+        }
+        catch (OperationCanceledException) { }
+    });
+    string? LoadResume()
+    {
+        try { return new FileInfo(ResumePath).Length <= 3 * 1024 * 1024 ? File.ReadAllText(ResumePath) : null; }
+        catch { return null; }
+    }
     async Task RunAsync()
     {
         try
@@ -99,6 +133,7 @@ public sealed class TorrentTransfer : IDownloader
                 SpeedLimitKBps = context.GlobalSpeedLimitKBps, Network = Network.Options };
             if (TorrentRuntime.Unavailable(settings) is { } reason) throw new InvalidOperationException(reason);
             var torrent = Record.Torrent ?? throw new InvalidOperationException("Torrent metadata is missing.");
+            var priorities = torrent.Priorities();
             lock (gate)
             {
                 cancellation.Token.ThrowIfCancellationRequested();
@@ -107,20 +142,36 @@ public sealed class TorrentTransfer : IDownloader
             }
             // Isolated per-task directory avoids overwriting unrelated files or another torrent's data.
             var folder = Path.Combine(Record.Folder, "Nexonic torrents", Record.Id.ToString("N"));
-            await TorrentRuntime.RunAsync(new { action = "download", metainfo = torrent.Metainfo, folder,
+            await TorrentRuntime.RunAsync(new { action = "download", metainfo = torrent.Metainfo, folder, priorities, resume = LoadResume(),
                 limit = (long)Math.Clamp(Record.SpeedLimitKBps ?? 0, 0, 2000000) * 1024 }, e =>
             {
                 lock (gate)
                 {
+                    if (e.GetProperty("event").GetString() == "checkpoint")
+                    {
+                        if (!discarded)
+                        {
+                            var saved = e.GetProperty("resume").GetString()!;
+                            try { TorrentCheckpoint.Write(ResumePath, saved); }
+                            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+                            { torrent.ResumeStatus = "Checkpoint could not be saved; resume will recheck pieces"; }
+                        }
+                        return;
+                    }
                     if (cancellation.IsCancellationRequested) return;
                     switch (e.GetProperty("event").GetString())
                     {
                         case "metadata":
                             // Native validation is authoritative even if a saved history/backup was edited.
                             var checkedMetadata = TorrentRuntime.ReadMetadata(e);
+                            checkedMetadata.ResumeStatus = torrent.ResumeStatus;
                             Record.Torrent = torrent = checkedMetadata;
                             Record.FileName = torrent.Name;
-                            Record.Size = torrent.Size;
+                            torrent.FilePriorities = priorities.ToList();
+                            Record.Size = torrent.SelectedSize;
+                            break;
+                        case "resume":
+                            torrent.ResumeStatus = e.GetProperty("used").GetBoolean() ? "Resume checkpoint loaded" : "Checkpoint unavailable; rechecking pieces";
                             break;
                         case "progress":
                             torrent.Received = e.GetProperty("received").GetInt64();
@@ -130,8 +181,9 @@ public sealed class TorrentTransfer : IDownloader
                             Record.Status = DownloadStatus.Downloading;
                             break;
                         case "finished":
-                            torrent.Received = torrent.Size;
-                            Record.SavedPath = torrent.Files.Count == 1 ? Path.Combine(folder, torrent.Files[0].Path) : Path.Combine(folder, torrent.Name);
+                            torrent.Received = torrent.SelectedSize;
+                            var selected = torrent.Files.Where((_, i) => priorities[i] > 0).ToList();
+                            Record.SavedPath = selected.Count == 1 ? Path.Combine(folder, selected[0].Path) : Path.Combine(folder, torrent.Name);
                             Record.Status = DownloadStatus.Finished;
                             Record.Finished = DateTime.Now;
                             break;
@@ -152,5 +204,5 @@ public sealed class TorrentTransfer : IDownloader
         }
     }
     public void Pause() { lock (gate) { cancellation.Cancel(); Record.Status = DownloadStatus.Paused; Changed?.Invoke(Record); } }
-    public void Discard() { lock (gate) cancellation.Cancel(); } // User files are never deleted by native-engine cleanup.
+    public void Discard() { lock (gate) { discarded = true; cancellation.Cancel(); } } // User files are never deleted by native-engine cleanup.
 }

@@ -591,11 +591,12 @@ public sealed class MainWindow : Window
     ContextMenu BuildContextMenu()
     {
         var menu = new ContextMenu();
-        void Item(string header, Action click)
+        MenuItem Item(string header, Action click)
         {
             var m = new MenuItem { Header = header };
             m.Click += (_, _) => click();
             menu.Items.Add(m);
+            return m;
         }
         Item("Open", () => { if (One?.Record.SavedPath is { } p) LinuxSystem.Open(p); });
         Item("Show in Folder", () => { if (One?.Record.SavedPath is { } p) LinuxSystem.ShowInFolder(p); });
@@ -604,6 +605,7 @@ public sealed class MainWindow : Window
         Item("Resume", () => { foreach (var r in Selected) manager.Resume(r); });
         Item("Stop", () => { foreach (var r in Selected) manager.Pause(r); });
         Item("Refresh Link…", () => { if (One is { } r) _ = Dialogs.RefreshLink(this, manager, r); });
+        var torrentFiles = Item("Torrent Files…", () => { if (One is { } r && r.Record.Torrent != null) _ = Dialogs.TorrentFiles(this, manager, r); });
         Item("Properties…", () => { if (One is { } r) _ = Dialogs.Properties(this, manager, r); });
         Item("Copy Link", () => { if (One is { } r) _ = Clipboard?.SetTextAsync(r.Record.Url); });
         Item("Show QR Code…", () => { if (Selected.Count > 0) _ = Dialogs.ShowQr(this, Selected.Select(r => r.Record.Url).ToList()); });
@@ -613,6 +615,7 @@ public sealed class MainWindow : Window
         Item("Delete and Move File to Trash…", () => _ = ConfirmRemove(Selected, toTrash: true));
         menu.Opening += (_, _) =>
         {
+            torrentFiles.IsEnabled = One?.Record.Torrent != null;
             moveMenu.Items.Clear();
             foreach (var q in manager.Queues)
             {

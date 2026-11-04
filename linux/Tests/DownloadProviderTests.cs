@@ -55,6 +55,36 @@ public sealed class DownloadProviderTests
     }
 
     [Fact]
+    public void FileSelectionPersistsAndRejectsInvalidPriorities()
+    {
+        var torrent = new TorrentMetadata { Files = new() { new("first.bin", 100), new("second.bin", 200) }, FilePriorities = new() { 0, 7 } };
+        var restored = JsonSerializer.Deserialize<TorrentMetadata>(JsonSerializer.Serialize(torrent))!;
+        Assert.Equal(200, restored.SelectedSize);
+        Assert.Equal(new[] { 0, 7 }, restored.Priorities());
+        restored.FilePriorities = new() { 0, 0 };
+        Assert.Throws<ArgumentException>(() => restored.Priorities());
+        restored.FilePriorities = new() { 4 };
+        Assert.Throws<ArgumentException>(() => restored.Priorities());
+        restored.FilePriorities = new() { 2, 4 };
+        Assert.Throws<ArgumentException>(() => restored.Priorities());
+    }
+
+    [Fact]
+    public void CheckpointsReplaceAtomicallyWithPrivatePermissionsAndRejectOversizedData()
+    {
+        using var temp = new TempHome();
+        var path = Path.Combine(temp.Path, "resume", "torrent.resume");
+        TorrentCheckpoint.Write(path, Convert.ToBase64String(new byte[] { 1, 2, 3 }));
+        TorrentCheckpoint.Write(path, Convert.ToBase64String(new byte[] { 4, 5 }));
+        Assert.Equal(new byte[] { 4, 5 }, Convert.FromBase64String(File.ReadAllText(path)));
+        Assert.False(File.Exists(path + ".tmp"));
+        if (!OperatingSystem.IsWindows())
+            Assert.Equal(UnixFileMode.UserRead | UnixFileMode.UserWrite, File.GetUnixFileMode(path));
+        Assert.Throws<InvalidDataException>(() => TorrentCheckpoint.Write(path, new string('a', 3 * 1024 * 1024 + 1)));
+        Assert.Equal(new byte[] { 4, 5 }, Convert.FromBase64String(File.ReadAllText(path)));
+    }
+
+    [Fact]
     public void TorrentProgressSurvivesHistoryRoundTrip()
     {
         var original = new DownloadRecord { Size = 100, Torrent = new() { Name = "test", Received = 25, Files = new() { new("test", 100) } } };
@@ -112,5 +142,9 @@ public sealed class NativeTorrentRuntimeTests
         Assert.Equal(13, record.Received);
         Assert.Equal("Nexonic test\n", await File.ReadAllTextAsync(record.SavedPath!));
         Assert.Equal(Path.Combine(destination, "fixture.bin"), record.SavedPath);
+        var checkpointPath = Path.Combine(AppPaths.Parts, record.Id.ToString("N"), "torrent.resume");
+        Assert.True(File.Exists(checkpointPath));
+        Assert.NotEmpty(Convert.FromBase64String(await File.ReadAllTextAsync(checkpointPath)));
+        Directory.Delete(Path.GetDirectoryName(checkpointPath)!, true);
     }
 }

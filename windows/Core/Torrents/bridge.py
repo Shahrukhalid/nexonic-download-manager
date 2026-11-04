@@ -12,7 +12,7 @@ import threading
 import time
 
 MAX_META = 2 * 1024 * 1024
-MAX_LINE = 4 * 1024 * 1024
+MAX_LINE = 8 * 1024 * 1024
 stop = threading.Event()
 
 
@@ -83,6 +83,62 @@ def read_commands():
     stop.set()
 
 
+def file_priorities(request, count):
+    priorities = request.get('priorities')
+    if priorities is None:
+        return [4] * count
+    if not isinstance(priorities, list) or len(priorities) != count or any(type(p) is not int or p not in (0, 1, 4, 7) for p in priorities):
+        raise ValueError('Choose Skip, Low, Normal or High for each torrent file')
+    if not any(priorities):
+        raise ValueError('Select at least one torrent file')
+    return priorities
+
+
+def restore_resume(lt, request, fresh):
+    encoded = request.get('resume')
+    if not encoded:
+        return fresh
+    try:
+        data = base64.b64decode(encoded, validate=True)
+        if len(data) > MAX_META:
+            raise ValueError('Checkpoint exceeds the size limit')
+        restored = lt.read_resume_data(data)
+        if restored.info_hash != fresh.ti.info_hash():
+            raise ValueError('Checkpoint belongs to another torrent')
+        # Resume data may supply storage paths, renamed files, peers, trackers and unsafe flags.
+        # Only validated metadata/current settings define these; never trust a checkpoint's routing.
+        restored.ti = fresh.ti
+        restored.flags = fresh.flags
+        restored.renamed_files = {}
+        restored.trackers = fresh.trackers
+        restored.tracker_tiers = fresh.tracker_tiers
+        restored.url = ''
+        restored.piece_priorities = []
+        restored.banned_peers = []
+        restored.dht_nodes = []
+        restored.storage_mode = lt.storage_mode_t.storage_mode_sparse
+        emit('resume', used=True)
+        return restored
+    except Exception:
+        emit('resume', used=False)  # Native engine rechecks existing pieces when a checkpoint is unusable.
+        return fresh
+
+
+def checkpoint(lt, session, handle):
+    handle.save_resume_data(lt.save_resume_flags_t.flush_disk_cache)
+    until = time.monotonic() + 5
+    while time.monotonic() < until:
+        for alert in session.pop_alerts():
+            if isinstance(alert, lt.save_resume_data_alert):
+                data = bytes(lt.write_resume_data_buf(alert.params))
+                if len(data) <= MAX_META:
+                    emit('checkpoint', resume=base64.b64encode(data).decode('ascii'))
+                return
+            if isinstance(alert, lt.save_resume_data_failed_alert):
+                return
+        session.wait_for_alert(100)
+
+
 def main():
     try:
         import libtorrent as lt
@@ -130,6 +186,11 @@ def main():
             emit('metadata', name=name, size=sum(f['size'] for f in files), files=files,
                  info_hash=str(params.ti.info_hash()), metainfo=base64.b64encode(raw).decode('ascii'))
             return
+    if action == 'download':
+        if params.ti is None:
+            raise ValueError('Preview torrent metadata before downloading')
+        params = restore_resume(lt, req, params)
+        params.file_priorities = file_priorities(req, params.ti.num_files())
     # Magnet web seeds, explicit peers and external metadata URLs are never inherited.
     params.url_seeds = []
     params.http_seeds = []
@@ -191,8 +252,12 @@ def main():
         safe_destination(req['folder'], files)
         handle.set_download_limit(max(0, min(int(req.get('limit', 0)), 2**31 - 1)))
         handle.set_upload_limit(32 * 1024)
-        handle.prioritize_files([4] * ti.num_files())
+        priorities = file_priorities(req, ti.num_files())
+        selected_size = sum(f['size'] for f, priority in zip(files, priorities) if priority > 0)
+        handle.prioritize_files(priorities)
         handle.unset_flags(lt.torrent_flags.upload_mode | dont_download)
+        last_checkpoint = time.monotonic()
+        completed = False
         while not stop.is_set():
             if peer:
                 handle.connect_peer(('127.0.0.1', int(peer)))
@@ -201,13 +266,17 @@ def main():
                 raise RuntimeError(s.errc.message())
             emit('progress', received=s.total_wanted_done, peers=s.num_peers, seeds=s.num_seeds,
                  download_rate=s.download_payload_rate, upload_rate=s.upload_payload_rate)
-            if s.is_seeding:
-                # Closing the session flushes native writes. No persistent seeding in this milestone.
-                ses.remove_torrent(handle)
+            if s.is_finished and s.total_wanted == selected_size:
+                completed = True
                 break
+            if time.monotonic() - last_checkpoint >= 5:
+                checkpoint(lt, ses, handle)
+                last_checkpoint = time.monotonic()
             stop.wait(.25)
-        else:
-            ses.remove_torrent(handle)
+        handle.pause()
+        checkpoint(lt, ses, handle)
+        ses.remove_torrent(handle)
+        if not completed:
             return
     del handle
     del ses

@@ -37,15 +37,14 @@ public static partial class Dialogs
         var queue = f.Queue(manager, queueId);
         var limit = f.Text("Torrent download limit in KB/s (0 = unlimited)", "0");
         var preview = f.Note("Load metadata to preview the name, size and files before starting.");
-        var fileList = f.Text("Files", "", multi: true);
-        fileList.IsReadOnly = true;
+        var fileList = f.Field("Files — choose Skip, Low, Normal or High", new TorrentFileSelection());
         var error = f.Error();
         using var cancel = new CancellationTokenSource();
         f.Window.Closed += (_, _) => cancel.Cancel();
         TorrentMetadata? metadata = null;
         string? previewSource = null;
         var busy = false;
-        void Invalidate() { metadata = null; previewSource = null; fileList.Text = ""; }
+        void Invalidate() { metadata = null; previewSource = null; fileList.Load(null); }
         input.TextChanged += (_, _) => Invalidate();
         f.AddButton("Cancel", f.Close, isCancel: true);
         f.AddButton("Load metadata", async () =>
@@ -68,7 +67,7 @@ public static partial class Dialogs
                 metadata = found;
                 previewSource = requestedSource;
                 preview.Text = $"{found.Name}\n{Row.Bytes(found.Size)} · {found.Files.Count} files · Hash {found.InfoHash}";
-                fileList.Text = string.Join("\n", found.Files.Select(file => $"{file.Path} ({Row.Bytes(file.Size)})"));
+                fileList.Load(found);
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { error.Text = e.Message; preview.Text = "Metadata could not be loaded."; }
@@ -80,6 +79,8 @@ public static partial class Dialogs
             if (enabled.IsChecked != true) { error.Text = "Enable experimental torrents first."; return; }
             try
             {
+                metadata.FilePriorities = fileList.Priorities.ToList();
+                _ = metadata.SelectedSize; // Reject empty selection before creating a task.
                 var destination = (folder.Text ?? "").Trim();
                 if (!Path.IsPathFullyQualified(destination)) { error.Text = "Choose an absolute destination folder."; return; }
                 manager.AddTorrent(previewSource, metadata, new AddOptions { Folder = destination,
@@ -92,4 +93,22 @@ public static partial class Dialogs
         f.AddButton("Start Download", () => Add(true));
         await f.Show();
     }
+    public static async Task TorrentFiles(Window owner, DownloadManager manager, Row row)
+    {
+        if (row.Record.Torrent is not { } torrent) return;
+        var f = new Form(owner, "Torrent Files", 640);
+        f.Note($"{torrent.Name} · {Row.Bytes(torrent.Size)} total\nChanging the selection pauses this torrent. Resume it when ready; existing files stay on disk. " +
+               "Skipping a file can still require boundary pieces shared with selected files.");
+        var selection = f.Field("Files and priorities", new TorrentFileSelection());
+        selection.Load(torrent);
+        var error = f.Error();
+        f.AddButton("Cancel", f.Close, isCancel: true);
+        f.AddButton("Save and Pause", () =>
+        {
+            try { manager.SetTorrentPriorities(row, selection.Priorities); f.Close(); }
+            catch (Exception e) { error.Text = e.Message; }
+        });
+        await f.Show();
+    }
+
 }

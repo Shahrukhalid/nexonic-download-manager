@@ -79,6 +79,67 @@ class TorrentBridgeTests(unittest.TestCase):
                 self.assertFalse(dest.exists())
             finally: worker.close()
 
+    def test_selected_files_checkpoint_restart_and_untrusted_resume_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve(); seed = root/'seed'; (seed/'bundle').mkdir(parents=True)
+            chosen = seed/'bundle'/'selected.bin'; skipped = seed/'bundle'/'skipped.bin'
+            chosen.write_bytes(hashlib.sha256(b'selected').digest() * (384 * 1024))
+            skipped.write_bytes(hashlib.sha256(b'skipped').digest() * (64 * 1024))
+            fs = lt.file_storage()
+            fs.add_file('bundle/selected.bin', chosen.stat().st_size)
+            fs.add_file('bundle/skipped.bin', skipped.stat().st_size)
+            creator = lt.create_torrent(fs, 16384, lt.create_torrent.v1_only)
+            lt.set_piece_hashes(creator, str(seed)); raw = lt.bencode(creator.generate()); ti = lt.torrent_info(raw)
+            ses = lt.session(dict(listen_interfaces='127.0.0.1:0', enable_dht=False, enable_lsd=False,
+                                  enable_upnp=False, enable_natpmp=False, allow_multiple_connections_per_ip=True))
+            params = lt.add_torrent_params(); params.ti = ti; params.save_path = str(seed)
+            params.flags &= ~lt.torrent_flags.paused; params.flags &= ~lt.torrent_flags.auto_managed
+            handle = ses.add_torrent(params)
+            until = time.monotonic() + 20
+            while not handle.status().is_seeding:
+                if time.monotonic() > until: self.fail('Seed did not verify fixture')
+                time.sleep(.05)
+            dest = root/'download'
+            request = dict(action='download', metainfo=base64.b64encode(raw).decode('ascii'), folder=str(dest),
+                           test_peer=ses.listen_port(), priorities=[7, 0], limit=512 * 1024)
+            first = Worker(request)
+            try:
+                first.event('progress', lambda e: 0 < e['received'] < chosen.stat().st_size)
+                saved = first.event('checkpoint')['resume']
+                checkpoint = lt.read_resume_data(base64.b64decode(saved))
+                self.assertTrue(any(checkpoint.have_pieces))
+                self.assertEqual(list(checkpoint.file_priorities), [7, 0])
+            finally: first.close(force=True)
+            # Even a locally edited checkpoint cannot rename files or choose another destination.
+            state = lt.bdecode(base64.b64decode(saved))
+            state[b'mapped_files'] = [b'../../escape.bin', b'other.bin']
+            state[b'save_path'] = str(root/'outside').encode()
+            state[b'file_priority'] = [0, 7]
+            edited = base64.b64encode(lt.bencode(state)).decode('ascii')
+            second = Worker(dict(request, resume=edited, limit=0))
+            try:
+                self.assertTrue(second.event('resume')['used'])
+                second.event('finished'); second.p.wait(timeout=10); self.assertEqual(second.p.returncode, 0)
+            finally: second.close()
+            self.assertEqual(hashlib.sha256((dest/'bundle'/'selected.bin').read_bytes()).hexdigest(),
+                             hashlib.sha256(chosen.read_bytes()).hexdigest())
+            skipped_result = dest/'bundle'/'skipped.bin'
+            self.assertFalse(skipped_result.exists() and skipped_result.read_bytes() == skipped.read_bytes())
+            self.assertFalse((root/'outside').exists()); self.assertFalse((root/'escape.bin').exists())
+            # Corrupt checkpoints fall back to the native engine's ordinary piece check.
+            fallback = Worker(dict(request, resume='not-valid-base64', limit=0))
+            try:
+                self.assertFalse(fallback.event('resume')['used'])
+                fallback.event('finished'); fallback.p.wait(timeout=10); self.assertEqual(fallback.p.returncode, 0)
+            finally: fallback.close()
+            ses.remove_torrent(handle)
+
+    def test_file_priorities_require_a_valid_nonempty_selection(self):
+        self.assertEqual(bridge.file_priorities({}, 2), [4, 4])
+        for priorities in [[0, 0], [4], [2, 4], [True, 4]]:
+            with self.subTest(priorities=priorities), self.assertRaises(ValueError):
+                bridge.file_priorities(dict(priorities=priorities), 2)
+
     def test_real_torrent_magnet_pause_resume_and_integrity(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp).resolve(); seed = root/'seed'; seed.mkdir(); dest = root/'download'

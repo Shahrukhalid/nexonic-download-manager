@@ -421,7 +421,7 @@ public static class DownloadWindows
             if (!plain)
             {
                 segCaption.Text = r.Torrent is { } torrent
-                    ? $"BitTorrent · {torrent.Peers} peers · {torrent.Seeds} seeds · Upload {Row.Bytes(torrent.UploadRate)}/s\n{torrent.Files.Count} files · Piece verification on resume · {torrent.InfoHash}"
+                    ? $"BitTorrent · {torrent.Peers} peers · {torrent.Seeds} seeds · Upload {Row.Bytes(torrent.UploadRate)}/s\n{torrent.Files.Count} files · {torrent.ResumeStatus} · {torrent.InfoHash}"
                     : r.SiteVideo == true
                     ? ("Video site · " + SiteVideo.ChoiceText(r.AudioOnly, r.MaxHeight) + ", picture and sound joined") + $"\nSave to: {r.Folder}"
                     : r.IsStream == true ? $"Streamed video · pieces: {r.StreamDone ?? 0} of {r.StreamTotal ?? 0}, joined into one .mp4" : "";

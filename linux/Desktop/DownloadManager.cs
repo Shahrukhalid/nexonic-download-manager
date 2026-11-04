@@ -168,7 +168,7 @@ public sealed partial class DownloadManager
         if (TorrentRuntime.Unavailable(Settings) is { } reason) throw new InvalidOperationException(reason);
         if (SmartDownload.Detect(source) != DownloadEngine.Torrent || metadata.Files.Count == 0 || string.IsNullOrEmpty(metadata.Metainfo))
             throw new ArgumentException("Preview a local torrent or magnet before adding it.");
-        var rec = new DownloadRecord { Url = source, FileName = metadata.Name, Size = metadata.Size,
+        var rec = new DownloadRecord { Url = source, FileName = metadata.Name, Size = metadata.SelectedSize,
             Folder = options.Folder ?? Settings.Folder, QueueId = options.QueueId, Torrent = metadata,
             Status = options.Start ? DownloadStatus.Queued : DownloadStatus.Paused,
             SpeedLimitKBps = options.SpeedLimitKBps > 0 ? options.SpeedLimitKBps : null };
@@ -176,6 +176,23 @@ public sealed partial class DownloadManager
         Save();
         Schedule();
         return rec.Id;
+    }
+
+    public void SetTorrentPriorities(Row row, IReadOnlyList<int> priorities)
+    {
+        var torrent = row.Record.Torrent ?? throw new ArgumentException("This is not a torrent.");
+        // Validate a copy before altering a running task or its previous selection.
+        var candidate = new TorrentMetadata { Files = torrent.Files, FilePriorities = priorities.ToList() };
+        var selectedSize = candidate.SelectedSize;
+        Pause(row);
+        torrent.FilePriorities = candidate.FilePriorities;
+        torrent.Received = 0; // Native verified progress is refreshed on Resume, not reused for another selection.
+        row.Record.Size = selectedSize;
+        row.Record.SavedPath = null;
+        row.Record.Finished = null;
+        row.Record.Status = DownloadStatus.Paused;
+        row.Refresh();
+        Save();
     }
 
     static string? NullIfEmpty(string s) => string.IsNullOrEmpty(s) ? null : s;
