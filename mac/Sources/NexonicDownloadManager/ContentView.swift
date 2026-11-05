@@ -134,7 +134,17 @@ struct ContentView: View {
         .onChange(of: manager.addRequest?.id) { _ in
             if let r = manager.addRequest { sheet = .add(r) }
         }
-        .onOpenURL { _ in manager.collectInbox() }
+        .onOpenURL { url in if !TorrentInbox.shared.accept(url) { manager.collectInbox() } }
+        .onReceive(TorrentInbox.shared.$source) { source in
+            // .torrent files from Finder, magnet links and torrents pasted in Add URL open the Torrents window.
+            guard let source else { return }
+            // After the current change finishes (and any Add sheet has closed), so the new sheet always appears.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                TorrentInbox.shared.source = nil
+                DownloadManager.showMainWindow?()
+                sheet = .torrent(source)
+            }
+        }
         .onAppear {
             let open = openWindow
             DownloadManager.showMainWindow = {
