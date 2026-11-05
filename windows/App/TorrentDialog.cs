@@ -62,7 +62,7 @@ public static partial class Dialogs
     public static void Torrent(Window owner, DownloadManager manager, string source, string queueId)
     {
         var f = new Form(owner, "Add Torrent", 700);
-        f.Note("Torrent peers and trackers can see your IP address. Choose material you may download and share. The native engine connects directly; use No proxy and disable the shared limit and DNS over HTTPS. Local-network peers and web seeds are disabled.");
+        f.Note("Torrent peers and trackers can see your IP address. Choose material you may download and share. The native engine uses your proxy setting (HTTP or SOCKS5) and the speed limit for all downloads; DNS over HTTPS must be off. Local-network peers and web seeds are disabled.");
         var enabled = f.Check("Enable experimental torrents", manager.Settings.TorrentsEnabled);
         var input = f.Text("Magnet, HTTP(S) torrent link or local .torrent file", source);
         f.AddButton("Choose .torrent…", () =>
@@ -91,7 +91,7 @@ public static partial class Dialogs
             busy = true; var requested = input.Text.Trim(); preview.Text = "Loading metadata…";
             try
             {
-                var found = await TorrentRuntime.PreviewAsync(requested, cancel.Token);
+                var found = await TorrentRuntime.PreviewAsync(requested, cancel.Token, manager.Settings.Proxy);
                 if (requested != input.Text.Trim()) return;
                 metadata = found; previewSource = requested; selection.Load(found);
                 preview.Text = $"{found.Name} · {Row.Bytes(found.Size)} · {found.Files.Count} files\n{found.InfoHash}";

@@ -72,7 +72,7 @@ struct SettingsView: View {
                     Text("Only encrypted connections").tag(TorrentNetwork.Encryption.require)
                     Text("Off").tag(TorrentNetwork.Encryption.off)
                 }
-                Text("Speed limits, connections per torrent, upload slots and seeding are set for each torrent when you add it, or later under Torrent Settings. Changes here apply to torrents started afterwards. Peers and trackers can see your IP address.")
+                Text("Speed limits, connections per torrent, upload slots and seeding are set for each torrent when you add it, or later under Torrent Settings. Torrents use the proxy from the Connection tab (HTTP or SOCKS5, or the Mac's proxy with \"Use the system settings\") and the speed limit for all downloads. Changes apply to torrents started afterwards. Peers and trackers can see your IP address, or your proxy's.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             .formStyle(.grouped)

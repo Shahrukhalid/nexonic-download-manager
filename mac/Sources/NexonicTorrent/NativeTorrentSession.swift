@@ -14,8 +14,10 @@ public final class NativeTorrentSession: @unchecked Sendable {
     public init(stateDirectory: URL, allowLocalPeers: Bool = false, dht: Bool = true, network: TorrentNetwork = TorrentNetwork()) throws {
         guard stateDirectory.isFileURL else { throw TorrentFailure("Choose a local state directory.") }
         let path = stateDirectory.path.hasPrefix("/var/") ? "/private" + stateDirectory.path : stateDirectory.path
-        let data = try JSONSerialization.data(withJSONObject: ["state_dir": path, "allow_local_peers": allowLocalPeers, "dht": dht,
-                                                               "port_forwarding": network.portForwarding, "encryption": network.encryption.rawValue])
+        var config: [String: Any] = ["state_dir": path, "allow_local_peers": allowLocalPeers, "dht": dht,
+                                     "port_forwarding": network.portForwarding, "encryption": network.encryption.rawValue]
+        if let proxy = network.proxy { config["proxy"] = proxy.engineSettings }
+        let data = try JSONSerialization.data(withJSONObject: config)
         context = String(decoding: data, as: UTF8.self).withCString { ndm_torrent_create($0) }
         if context == nil {
             let result = ndm_torrent_call(nil, "{}")

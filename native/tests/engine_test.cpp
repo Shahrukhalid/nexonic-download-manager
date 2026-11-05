@@ -102,6 +102,12 @@ int main() {
         context->call({{"action","reannounce"},{"id","payload"}});
         context->call({{"action","remove"},{"id","payload"}});
         require(fs::exists(downloaded),"Removing a torrent deleted user payload data");
+        {
+            auto good=json{{"state_dir",(base/"proxy-state").u8string()},{"dht",false},{"proxy",{{"type","socks5"},{"host","127.0.0.1"},{"port",9},{"username","u"},{"password","p"}}}}.dump();
+            void* proxied=ndm_torrent_create(good.c_str()); require(proxied!=nullptr,"Proxy session failed to start"); ndm_torrent_destroy(proxied);
+            auto bad=json{{"state_dir",(base/"proxy-bad").u8string()},{"proxy",{{"type","ftp"},{"host","x"},{"port",1}}}}.dump();
+            void* refused=ndm_torrent_create(bad.c_str()); require(refused==nullptr,"Invalid proxy accepted"); if (refused) ndm_torrent_destroy(refused);
+        }
         context->call({{"action","add"},{"id","../escape"},{"preview",true},{"metainfo",meta}},false);
         std::cout<<"PASS native libtorrent "<<ndm_torrent_version()<<": metadata, magnet, real peer transfer, pause/restart, file priorities, trackers, piece recheck and SHA-256 "<<expected<<"\n";
         context.reset();

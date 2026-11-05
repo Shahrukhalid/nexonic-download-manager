@@ -43,13 +43,13 @@ public enum TorrentSource {
     public static func isTorrent(_ source: String) -> Bool {
         source.lowercased().hasPrefix("magnet:?") || (URL(string: source)?.path.lowercased().hasSuffix(".torrent") ?? source.lowercased().hasSuffix(".torrent"))
     }
-    public static func preview(_ source: String, stateDirectory: URL) async throws -> TorrentSnapshot {
+    public static func preview(_ source: String, stateDirectory: URL, network: TorrentNetwork = TorrentNetwork()) async throws -> TorrentSnapshot {
         let source = source.trimmingCharacters(in: .whitespacesAndNewlines)
         let magnet = source.lowercased().hasPrefix("magnet:?")
         let metainfo = magnet ? "" : try await metadata(source).base64EncodedString()
         let directory = stateDirectory.appendingPathComponent("preview-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: directory) }
-        let engine = try NativeTorrentSession(stateDirectory: directory)
+        let engine = try NativeTorrentSession(stateDirectory: directory, network: network)
         defer { engine.close() }
         var snapshot = try TorrentSnapshot.decode(engine.call(["action": "add", "id": "preview", "preview": true, "source": magnet ? "magnet:?" + source.dropFirst(8) : source, "metainfo": metainfo]))
         let deadline = Date().addingTimeInterval(100)

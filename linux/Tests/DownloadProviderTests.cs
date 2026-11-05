@@ -96,14 +96,18 @@ public sealed class DownloadProviderTests
     }
 
     [Fact]
-    public void ProxyAndSharedNetworkPoliciesCannotBeSilentlyBypassed()
+    public void TorrentsFollowTheProxyAndSpeedLimitAndRefuseDnsOverHttps()
     {
-        var s = new AppSettings { TorrentsEnabled = true };
-        Assert.Contains("proxy", TorrentRuntime.Unavailable(s));
-        s.Proxy.Mode = ProxyMode.None;
-        s.SpeedLimitKBps = 5;
-        Assert.Contains("global speed", TorrentRuntime.Unavailable(s));
-        s.SpeedLimitKBps = 0;
+        var s = new AppSettings { TorrentsEnabled = true, SpeedLimitKBps = 5 };
+        foreach (var mode in Enum.GetValues<ProxyMode>()) { s.Proxy.Mode = mode; Assert.Null(TorrentRuntime.Unavailable(s)); }
+        Assert.Null(TorrentRuntime.Proxy(new ProxySettings { Mode = ProxyMode.None }));
+        Assert.Null(TorrentRuntime.Proxy(new ProxySettings { Mode = ProxyMode.Socks, Host = "" }));
+        var socks = System.Text.Json.JsonSerializer.Serialize(TorrentRuntime.Proxy(new ProxySettings { Mode = ProxyMode.Socks, Host = "proxy.example", Port = 1080 }));
+        Assert.Contains("\"socks5\"", socks); Assert.Contains("1080", socks);
+        Assert.Equal(200, TorrentRuntime.DownloadLimit(300, 200));
+        Assert.Equal(100, TorrentRuntime.DownloadLimit(100, 200));
+        Assert.Equal(200, TorrentRuntime.DownloadLimit(null, 200));
+        Assert.Equal(0, TorrentRuntime.DownloadLimit(0, 0));
         s.Network.DnsOverHttps = "https://cloudflare-dns.com/dns-query";
         Assert.Contains("DNS", TorrentRuntime.Unavailable(s));
     }

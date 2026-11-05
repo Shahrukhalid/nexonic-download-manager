@@ -20,7 +20,7 @@ public final class TorrentWorker: @unchecked Sendable {
                 var task = task
                 try task.options.validate()
                 guard (0...2_000_000).contains(downloadLimitKBps) else { throw TorrentFailure("Invalid torrent download limit.") }
-                if task.metadata == nil { task.metadata = try await TorrentSource.preview(task.source, stateDirectory: stateDirectory) }
+                if task.metadata == nil { task.metadata = try await TorrentSource.preview(task.source, stateDirectory: stateDirectory, network: network) }
                 guard let metadata = task.metadata, let metainfo = metadata.metainfo else { throw TorrentFailure("Torrent metadata is missing.") }
                 if task.priorities == nil { task.priorities = metadata.files?.map { $0.pad ? 0 : 4 } }
                 let priorities = try task.selectedPriorities()

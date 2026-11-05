@@ -44,13 +44,35 @@ public sealed class TorrentMetadata
 /// <summary>Bundled native metadata previews; descriptor bytes never indicate content completion.</summary>
 public static class TorrentRuntime
 {
-    public static string? Unavailable(AppSettings settings) => !settings.TorrentsEnabled ? "Enable experimental torrents first."
-        : settings.Proxy.Mode != ProxyMode.None ? "Torrents currently require an explicit No proxy setting; system and custom proxies are not supported."
-        : settings.SpeedLimitKBps > 0 ? "Torrents do not yet support the shared global speed limit. Use a per-torrent limit instead."
+    public static string? Unavailable(AppSettings settings) => !settings.TorrentsEnabled ? "Turn on torrents first."
         : settings.Network.DnsOverHttps.Length > 0 ? "Torrents do not yet support the configured DNS over HTTPS resolver."
         : !File.Exists(NativeTorrentSession.BundledLibrary) ? "The bundled native torrent engine is missing. Reinstall the complete application." : null;
 
-    public static Task<TorrentMetadata> PreviewAsync(string source, CancellationToken cancellation = default) => Task.Run(async () =>
+    /// <summary>The proxy torrents use: none, the HTTP or SOCKS5 proxy from settings, or the system's web proxy.</summary>
+    public static object? Proxy(ProxySettings? proxy)
+    {
+        if (proxy is null || proxy.Mode == ProxyMode.None) return null;
+        if (proxy.Mode is ProxyMode.Http or ProxyMode.Socks)
+            return string.IsNullOrWhiteSpace(proxy.Host) || proxy.Port is < 1 or > 65535 ? null
+                : new { type = proxy.Mode == ProxyMode.Socks ? "socks5" : "http", host = proxy.Host.Trim(), port = proxy.Port, username = proxy.Username, password = proxy.Password };
+        try
+        {
+            var target = new Uri("https://tracker.example/");
+            var system = System.Net.Http.HttpClient.DefaultProxy;
+            if (system.IsBypassed(target) || system.GetProxy(target) is not { } found || found == target || found.Port is < 1 or > 65535) return null;
+            return new { type = "http", host = found.Host, port = found.Port, username = "", password = "" };
+        }
+        catch (Exception e) when (e is InvalidOperationException or PlatformNotSupportedException or UriFormatException) { return null; }
+    }
+
+    /// <summary>A torrent's own download limit, capped by the limit for all downloads (KB/s, 0 = none).</summary>
+    public static int DownloadLimit(int? own, int all)
+    {
+        int mine = Math.Clamp(own ?? 0, 0, 2000000), shared = Math.Clamp(all, 0, 2000000);
+        return mine == 0 ? shared : shared == 0 ? mine : Math.Min(mine, shared);
+    }
+
+    public static Task<TorrentMetadata> PreviewAsync(string source, CancellationToken cancellation = default, ProxySettings? proxy = null) => Task.Run(async () =>
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
         timeout.CancelAfter(TimeSpan.FromSeconds(100));
@@ -62,7 +84,7 @@ public static class TorrentRuntime
             if (source.StartsWith("magnet:?", StringComparison.OrdinalIgnoreCase)) source = "magnet:?" + source[8..];
             string metainfo = source.StartsWith("magnet:?", StringComparison.OrdinalIgnoreCase) ? ""
                 : Convert.ToBase64String(await TorrentSource.ReadMetadataAsync(source, token));
-            using var engine = new NativeTorrentSession(state);
+            using var engine = new NativeTorrentSession(state, proxy: Proxy(proxy));
             var status = engine.Invoke(new { action = "add", id = "preview", source, metainfo, preview = true });
             while (status.GetProperty("state").GetString() != "preview")
             {
@@ -127,7 +149,7 @@ public sealed class TorrentTransfer : IDownloader
             if (torrent.MetadataPending)
             {
                 Record.Status = DownloadStatus.Probing; Changed?.Invoke(Record);
-                torrent = await TorrentRuntime.PreviewAsync(Record.Url, cancellation.Token);
+                torrent = await TorrentRuntime.PreviewAsync(Record.Url, cancellation.Token, context.Proxy);
                 Record.Torrent = torrent; Record.FileName = torrent.Name; Record.Size = torrent.SelectedSize;
             }
             var priorities = torrent.Priorities();
@@ -149,10 +171,10 @@ public sealed class TorrentTransfer : IDownloader
                 catch (Exception e) when (e is IOException or FormatException or UnauthorizedAccessException) { }
             }
             cancellation.Token.ThrowIfCancellationRequested();
-            engine = new NativeTorrentSession(state, dht: torrent.Dht);
+            engine = new NativeTorrentSession(state, dht: torrent.Dht, proxy: TorrentRuntime.Proxy(context.Proxy));
             engine.Invoke(new { action = "add", id = "payload", source = Record.Url, metainfo = torrent.Metainfo, preview = false,
                 destination = folder, priorities, seed = torrent.Seed, ratio_limit = torrent.RatioLimit, seed_seconds = torrent.SeedSeconds,
-                download_limit = (long)Math.Clamp(Record.SpeedLimitKBps ?? 0, 0, 2000000) * 1024,
+                download_limit = (long)TorrentRuntime.DownloadLimit(Record.SpeedLimitKBps, context.GlobalSpeedLimitKBps) * 1024,
                 upload_limit = (long)Math.Clamp(torrent.UploadLimitKBps, 0, 2000000) * 1024, trackers = torrent.Trackers });
             var snapshot = engine.Invoke(new { action = "resume", id = "payload" });
             torrent.ResumeStatus = File.Exists(checkpoint) ? "Resume checkpoint loaded; native pieces verified" : "Checking existing pieces";

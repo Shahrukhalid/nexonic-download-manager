@@ -136,12 +136,28 @@ public struct TorrentOptions: Codable, Equatable, Sendable {
     }
 }
 
+/// An HTTP or SOCKS5 proxy for peers, trackers and DHT.
+public struct TorrentProxy: Equatable, Sendable {
+    public enum Kind: String, Sendable { case http, socks5 }
+    public var kind: Kind
+    public var host: String
+    public var port: Int
+    public var username = ""
+    public var password = ""
+    public init(kind: Kind, host: String, port: Int, username: String = "", password: String = "") {
+        self.kind = kind; self.host = host; self.port = port; self.username = username; self.password = password
+    }
+    var engineSettings: [String: Any] { ["type": kind.rawValue, "host": host, "port": port, "username": username, "password": password] }
+}
+
 /// App-wide torrent network settings, used by every torrent session.
 public struct TorrentNetwork: Codable, Equatable, Sendable {
     public enum Encryption: String, Codable, CaseIterable, Sendable { case prefer, require, off }
     /// Ask the router to forward the listening port (UPnP and NAT-PMP), so more peers can connect.
     public var portForwarding = false
     public var encryption = Encryption.prefer
+    /// The proxy torrents connect through, from the app's proxy setting (not saved with these settings).
+    public var proxy: TorrentProxy?
     public init() {}
     enum CodingKeys: String, CodingKey { case portForwarding, encryption }
     public init(from decoder: Decoder) throws {

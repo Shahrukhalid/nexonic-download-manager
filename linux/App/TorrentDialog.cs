@@ -14,7 +14,7 @@ public static partial class Dialogs
         var f = new Form(owner, "Add Torrent", 640);
         f.Note("Torrent peers and trackers can see your IP address. Only download material you may share. " +
                "The bundled native engine downloads and verifies the actual files. " +
-               "It connects directly: choose No proxy and disable the shared speed limit / DNS over HTTPS first. " +
+               "It uses your proxy setting (HTTP or SOCKS5) and the speed limit for all downloads; DNS over HTTPS must be off. " +
                "Web seeds and local-network peers are disabled. Seeding uses your chosen ratio/time limits; partial files are retained on removal.");
         var enabled = f.Check("Enable experimental torrents", manager.Settings.TorrentsEnabled);
         enabled.PropertyChanged += (_, change) =>
@@ -63,7 +63,7 @@ public static partial class Dialogs
             var requestedSource = (input.Text ?? "").Trim();
             try
             {
-                var found = await TorrentRuntime.PreviewAsync(requestedSource, cancel.Token);
+                var found = await TorrentRuntime.PreviewAsync(requestedSource, cancel.Token, settings.Proxy);
                 if (requestedSource != (input.Text ?? "").Trim()) { preview.Text = "Source changed. Load metadata again."; return; }
                 metadata = found;
                 previewSource = requestedSource;

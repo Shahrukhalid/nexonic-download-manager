@@ -244,6 +244,19 @@ struct Engine {
         int policy = encryption == "require" ? lt::settings_pack::pe_forced : encryption == "off" ? lt::settings_pack::pe_disabled : lt::settings_pack::pe_enabled;
         settings.set_int(lt::settings_pack::out_enc_policy, policy); settings.set_int(lt::settings_pack::in_enc_policy, policy);
         if (encryption == "require") settings.set_int(lt::settings_pack::allowed_enc_level, lt::settings_pack::pe_rc4);
+        // An HTTP or SOCKS5 proxy carries peer, tracker and DHT traffic, so torrents follow the user's proxy setting.
+        if (config.contains("proxy") && config["proxy"].is_object()) {
+            auto const& proxy = config["proxy"]; auto type = proxy.value("type", std::string()); auto host = proxy.value("host", std::string());
+            int port = proxy.value("port", 0); auto user = proxy.value("username", std::string());
+            if ((type != "http" && type != "socks5") || host.empty() || host.size() > 255 || port < 1 || port > 65535) throw std::runtime_error("Invalid torrent proxy");
+            settings.set_int(lt::settings_pack::proxy_type, type == "http" ? (user.empty() ? lt::settings_pack::http : lt::settings_pack::http_pw)
+                : (user.empty() ? lt::settings_pack::socks5 : lt::settings_pack::socks5_pw));
+            settings.set_str(lt::settings_pack::proxy_hostname, host); settings.set_int(lt::settings_pack::proxy_port, port);
+            if (!user.empty()) { settings.set_str(lt::settings_pack::proxy_username, user); settings.set_str(lt::settings_pack::proxy_password, proxy.value("password", std::string())); }
+            settings.set_bool(lt::settings_pack::proxy_hostnames, true);
+            settings.set_bool(lt::settings_pack::proxy_peer_connections, true);
+            settings.set_bool(lt::settings_pack::proxy_tracker_connections, true);
+        }
         settings.set_bool(lt::settings_pack::allow_multiple_connections_per_ip, config.value("allow_local_peers", false));
         settings.set_bool(lt::settings_pack::apply_ip_filter_to_trackers, true);
         settings.set_int(lt::settings_pack::max_metadata_size, int(MAX_META));

@@ -21,7 +21,7 @@ public sealed class NativeTorrentSession : IDisposable
         OperatingSystem.IsWindows() ? "nexonic_torrent.dll" : OperatingSystem.IsMacOS() ? "libnexonic_torrent.dylib" : "libnexonic_torrent.so");
 
     // An explicit library path is for SDK consumers and integration tests, never read from download/history input.
-    public NativeTorrentSession(string stateDirectory, bool allowLocalPeers = false, bool dht = true, string? libraryPath = null)
+    public NativeTorrentSession(string stateDirectory, bool allowLocalPeers = false, bool dht = true, string? libraryPath = null, object? proxy = null)
     {
         if (!Path.IsPathFullyQualified(stateDirectory)) throw new ArgumentException("Choose an absolute torrent state directory.");
         library = NativeLibrary.Load(libraryPath ?? BundledLibrary);
@@ -32,7 +32,7 @@ public sealed class NativeTorrentSession : IDisposable
             call = Export<Call>("ndm_torrent_call");
             free = Export<Free>("ndm_torrent_free");
             destroy = Export<Destroy>("ndm_torrent_destroy");
-            session = create(JsonSerializer.Serialize(new { state_dir = stateDirectory, allow_local_peers = allowLocalPeers, dht }));
+            session = create(JsonSerializer.Serialize(new { state_dir = stateDirectory, allow_local_peers = allowLocalPeers, dht, proxy }));
             if (session == IntPtr.Zero)
             {
                 // The C API reports initialization errors through a null-session call.
