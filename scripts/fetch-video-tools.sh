@@ -10,11 +10,12 @@ TARGET="$1"
 OUT="$(mkdir -p "$2" && cd "$2" && pwd)"
 QJS=v0.16.1
 # One yt-dlp version for the program and its license list (resolved once, so they always match).
-YTTAG="$(curl -fsSLI --retry 4 -o /dev/null -w '%{url_effective}' https://github.com/yt-dlp/yt-dlp/releases/latest | sed 's#.*/tag/##')"
+YTTAG="$(curl -fsSLI --retry 8 --retry-delay 10 --retry-all-errors --retry-max-time 300 --connect-timeout 20 -o /dev/null -w '%{url_effective}' https://github.com/yt-dlp/yt-dlp/releases/latest | sed 's#.*/tag/##')"
 case "$YTTAG" in ""|*/*) echo "Could not find the yt-dlp version" >&2; exit 1 ;; esac
 YT="https://github.com/yt-dlp/yt-dlp/releases/download/$YTTAG"
 QJ="https://github.com/quickjs-ng/quickjs/releases/download/$QJS"
-get() { curl -fsSL --retry 4 -o "$2" "$1"; }
+# GitHub and other hosts sometimes answer 502/504 for a few minutes: keep retrying instead of failing a release.
+get() { curl -fsSL --retry 8 --retry-delay 10 --retry-all-errors --retry-max-time 300 --connect-timeout 20 -o "$2" "$1"; }
 sha() { if command -v sha256sum >/dev/null; then sha256sum "$1" | cut -d' ' -f1; else shasum -a 256 "$1" | cut -d' ' -f1; fi; }
 # Every downloaded tool is checked before it can end up in an installer: QuickJS against hashes pinned here,
 # yt-dlp against the SHA2-256SUMS file of the same yt-dlp release.
