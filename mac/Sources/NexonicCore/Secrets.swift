@@ -195,7 +195,13 @@ public enum SavedFile {
             let f = DateFormatter()
             f.dateFormat = "yyyyMMdd-HHmmss"
             let copy = url.deletingPathExtension().appendingPathExtension("unreadable-\(f.string(from: Date())).json")
-            try? FileManager.default.copyItem(at: url, to: copy)
+            // Keep one copy per damaged content: reading the same file again (even a second later) adds nothing.
+            let prefix = url.deletingPathExtension().lastPathComponent + ".unreadable-"
+            let folder = url.deletingLastPathComponent()
+            let kept = (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? []
+            if !kept.contains(where: { $0.hasPrefix(prefix) && (try? Data(contentsOf: folder.appendingPathComponent($0))) == data }) {
+                try? FileManager.default.copyItem(at: url, to: copy)
+            }
             return (nil, true)
         }
     }

@@ -224,6 +224,9 @@ struct Engine {
     std::mutex mutex;
     fs::path state;
     bool allow_local;
+    // "0.0.0.0:0,[::]:0" opens one socket per network adapter, each with its own ephemeral port.
+    // Report the IPv4 loopback port (what same-machine peers reach), else the first IPv4 port.
+    int listen_v4 = 0, listen_loopback = 0;
     lt::session session;
     std::map<std::string, Job> jobs;
     static lt::session_params settings(json const& config) {
@@ -284,6 +287,13 @@ struct Engine {
     }
     void pump() {
         std::vector<lt::alert*> alerts; session.pop_alerts(&alerts);
+        for (auto* alert : alerts)
+            if (auto* ls = lt::alert_cast<lt::listen_succeeded_alert>(alert))
+                if (ls->socket_type == lt::socket_type_t::tcp && ls->address.is_v4())
+                {
+                    if (ls->address.is_loopback()) listen_loopback = ls->port;
+                    else if (!listen_v4) listen_v4 = ls->port;
+                }
         for (auto* alert : alerts) for (auto& [id,j] : jobs) {
             auto* ta = dynamic_cast<lt::torrent_alert*>(alert); if (!ta || ta->handle != j.handle) continue;
             if (auto* saved = lt::alert_cast<lt::save_resume_data_alert>(alert)) {
@@ -399,7 +409,7 @@ struct Engine {
         if (action == "restore") {
             auto value = read_file(manifest(r.at("id").get<std::string>()),MAX_REQUEST); auto saved = json::parse(value.begin(),value.end()); saved["preview"] = false; add(saved); return snapshot(job(saved));
         }
-        if (action == "list") { json list = json::array(); for (auto& [id,j] : jobs) list.push_back(snapshot(j)); return {{"jobs",list},{"listen_port",session.listen_port()}}; }
+        if (action == "list") { json list = json::array(); for (auto& [id,j] : jobs) list.push_back(snapshot(j)); return {{"jobs",list},{"listen_port",listen_loopback ? listen_loopback : listen_v4 ? listen_v4 : session.listen_port()}}; }
         if (action == "status") return snapshot(job(r));
         if (action == "configure") { auto& j = job(r); configure(j,r); return snapshot(j); }
         if (action == "resume") { auto& j = job(r); if (j.preview) throw std::runtime_error("Metadata-only task cannot be resumed as a download"); j.error.clear(); j.running = true; j.handle.unset_flags(lt::torrent_flags::upload_mode); j.handle.resume(); persist(j); return snapshot(j); }

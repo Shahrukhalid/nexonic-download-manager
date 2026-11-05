@@ -178,7 +178,16 @@ public static class SafeFile
         catch (Exception e) when (e is JsonException or InvalidOperationException or NotSupportedException or ArgumentException
                                        or IOException or UnauthorizedAccessException)
         {
-            try { File.Copy(path, Path.ChangeExtension(path, $".unreadable-{DateTime.Now:yyyyMMdd-HHmmss}.json"), true); } catch { }
+            try
+            {
+                // Keep one copy per damaged content: reading the same file again (even a second later) adds nothing.
+                var bytes = File.ReadAllBytes(path);
+                var folder = Path.GetDirectoryName(path)!;
+                var prefix = Path.GetFileNameWithoutExtension(path) + ".unreadable-";
+                if (!Directory.EnumerateFiles(folder, prefix + "*").Any(f => File.ReadAllBytes(f).AsSpan().SequenceEqual(bytes)))
+                    File.Copy(path, Path.ChangeExtension(path, $".unreadable-{DateTime.Now:yyyyMMdd-HHmmss}.json"), true);
+            }
+            catch { }
             return default;
         }
     }

@@ -46,14 +46,16 @@ std::string hash(fs::path const& p) {
 }
 int main() {
     auto base=fs::canonical(fs::temp_directory_path())/fs::path("nexonic-torrent-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    auto torrent_name = std::string(u8"Legal-\u8a66\u9a13");
+    auto seed_tree = base/"seed"/fs::u8path(torrent_name);
     try {
-        fs::create_directories(base/"seed"/"legal-test");
+        fs::create_directories(seed_tree);
         for(auto [name,size]:std::vector<std::pair<std::string,int>>{{"selected.bin",4*1024*1024},{"skipped.bin",16384}}) {
-            std::ofstream out(base/"seed"/"legal-test"/name,std::ios::binary); for(int i=0;i<size;++i) out.put(char(i%251));
+            std::ofstream out(seed_tree/name,std::ios::binary); for(int i=0;i<size;++i) out.put(char(i%251));
         }
         {
         Context seed(base/"seed-state");
-        auto created=seed.call({{"action","create_torrent"},{"path",(base/"seed"/"legal-test").u8string()}});
+        auto created=seed.call({{"action","create_torrent"},{"path",seed_tree.u8string()}});
         auto meta=created.at("metainfo");
         seed.call({{"action","add"},{"id","seed"},{"preview",false},{"metainfo",meta},{"destination",(base/"seed").u8string()},{"seed",true},{"ratio_limit",0},{"upload_limit",0}});
         seed.call({{"action","resume"},{"id","seed"}});
@@ -86,10 +88,10 @@ int main() {
         context->call({{"action","resume"},{"id","payload"}});
         context->call({{"action","connect_peer"},{"id","payload"},{"port",port}});
         auto done=until(*context,"payload",[](json const& x){return x["state"]=="complete";});
-        auto downloaded=base/"download"/"legal-test"/"selected.bin";
-        auto expected=hash(base/"seed"/"legal-test"/"selected.bin");
+        auto downloaded=base/"download"/fs::u8path(torrent_name)/"selected.bin";
+        auto expected=hash(seed_tree/"selected.bin");
         require(done.at("payload_complete").get<bool>() && hash(downloaded)==expected,"Final torrent payload hash mismatch");
-        require(done["sha256"]["legal-test/selected.bin"]==expected,"Native final integrity report mismatch");
+        require(done["sha256"][torrent_name+"/selected.bin"]==expected,"Native final integrity report mismatch");
         require(done["received"]==4*1024*1024,"Wrong selected payload progress");
         require(done["trackers"].size()==1,"Tracker changes were lost");
         context->call({{"action","remove"},{"id","payload"}});
