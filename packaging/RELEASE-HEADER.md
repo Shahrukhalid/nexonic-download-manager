@@ -1,6 +1,6 @@
-# Nexonic Download Manager 0.11.1
+# Nexonic Download Manager 0.11.2
 
-**New: torrents on Mac**, joining Windows and Linux, all with the same built-in engine (no extra install). Click **Torrents** in the toolbar, turn torrents on, then add a magnet, a torrent link or a `.torrent` file. Preview files, pick what to download, pause/resume, limit speeds and optionally seed. Every finished file is piece-checked and gets a SHA-256. Android and iPhone/iPad torrents are still in development. Android APK licensing and corresponding-source requirements remain unchanged; the release must include `Android-GPL-Sources.tar.gz`.
+**Mac torrents, like a BitTorrent client:** double-click a `.torrent` file or click a magnet link and Nexonic opens it. Select a torrent for its General, Trackers, Peers and Files details (seeds, peers, speeds, ratio, availability, connections), and right-click → **Torrent Settings…** for speed limits, connections, upload slots, download in order, seeding and trackers. **Settings → Torrents** adds router port forwarding and encryption. Android and iPhone/iPad torrents are still in development. Android APK licensing and corresponding-source requirements remain unchanged; the release must include `Android-GPL-Sources.tar.gz`.
 
 **Mac, first launch:** macOS says it *could not verify* the app because it's free and not sold through Apple. Click **Done**, open **System Settings → Privacy & Security**, click **Open Anyway**, then **Open Anyway** again and enter your Mac password. Only once; updates installed with **Update Now** open without a warning. [Pictures of each step](https://github.com/Shahrukhalid/nexonic-download-manager#first-launch-on-mac)
 

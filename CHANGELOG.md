@@ -1,3 +1,18 @@
+## 0.11.2
+
+- **Mac: open torrents from anywhere.** Double-click a `.torrent` file in Finder or click a magnet link in your browser
+  and Nexonic opens it in the Add Torrent window. A torrent pasted into Add URL goes there too, so you see its files
+  before downloading (before, it was added as a plain download and disappeared).
+- **Mac: torrent details like a BitTorrent client.** Select a torrent for General (pieces, downloaded and uploaded,
+  speeds, seeds and peers connected and in the swarm, ratio, availability, connections, time active), Trackers
+  (status, seeds, peers, Update Tracker), Peers (IP, client, flags, progress, speeds) and Files. The list has a
+  Seeds / Peers column.
+- **Mac: Torrent Settings** (right-click): download and upload limits, connections per torrent, upload slots, download
+  pieces in order, seeding, trackers and file priorities. A running torrent takes the changes right away.
+- **Mac: Settings → Torrents:** router port forwarding (UPnP and NAT-PMP, off by default) and encryption.
+- Torrent engine (all platforms): peer list, tracker status, swarm and piece details, connection limits and tracker
+  update. Settings, download history and update compatibility are unchanged.
+
 ## 0.11.1
 
 - Everything in 0.11.0 below (torrents on Mac). 0.11.0 was not published: a source server failed while its Android
