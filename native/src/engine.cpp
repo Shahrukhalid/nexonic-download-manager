@@ -15,6 +15,8 @@
 #include <libtorrent/alert_types.hpp>
 #include <libtorrent/ip_filter.hpp>
 #include <libtorrent/hex.hpp>
+#include <libtorrent/peer_info.hpp>
+#include <libtorrent/announce_entry.hpp>
 #include <nlohmann/json.hpp>
 #include <openssl/evp.h>
 #include <filesystem>
@@ -216,7 +218,8 @@ struct Job {
     bool preview = true, running = false, verified = false, verifying = false, notified_check = false;
     bool seed = false, checkpoint_pending = false;
     double ratio_limit = 1.0;
-    int download_limit = 0, upload_limit = 32768, seed_seconds = 0;
+    int download_limit = 0, upload_limit = 32768, seed_seconds = 0, max_connections = -1, max_uploads = -1;
+    bool sequential = false;
     json hashes = json::object();
     Clock::time_point last_save = Clock::now();
 };
@@ -234,8 +237,13 @@ struct Engine {
         settings.set_str(lt::settings_pack::listen_interfaces, config.value("listen", "0.0.0.0:0,[::]:0"));
         settings.set_bool(lt::settings_pack::enable_dht, config.value("dht", true));
         settings.set_bool(lt::settings_pack::enable_lsd, false);
-        settings.set_bool(lt::settings_pack::enable_upnp, false);
-        settings.set_bool(lt::settings_pack::enable_natpmp, false);
+        // Port forwarding on the router (UPnP and NAT-PMP) is off unless the user turns it on.
+        settings.set_bool(lt::settings_pack::enable_upnp, config.value("port_forwarding", false));
+        settings.set_bool(lt::settings_pack::enable_natpmp, config.value("port_forwarding", false));
+        auto encryption = config.value("encryption", std::string("prefer"));
+        int policy = encryption == "require" ? lt::settings_pack::pe_forced : encryption == "off" ? lt::settings_pack::pe_disabled : lt::settings_pack::pe_enabled;
+        settings.set_int(lt::settings_pack::out_enc_policy, policy); settings.set_int(lt::settings_pack::in_enc_policy, policy);
+        if (encryption == "require") settings.set_int(lt::settings_pack::allowed_enc_level, lt::settings_pack::pe_rc4);
         settings.set_bool(lt::settings_pack::allow_multiple_connections_per_ip, config.value("allow_local_peers", false));
         settings.set_bool(lt::settings_pack::apply_ip_filter_to_trackers, true);
         settings.set_int(lt::settings_pack::max_metadata_size, int(MAX_META));
@@ -352,7 +360,35 @@ struct Engine {
             for (auto index : ti->files().file_range()) result["files"].push_back({{"index",int(index)}, {"path",fs::u8path(ti->files().file_path(index)).generic_u8string()}, {"size",ti->files().file_size(index)},
                 {"received",progress[static_cast<std::size_t>(static_cast<int>(index))]},{"priority",j.selection.empty() ? 4 : int(static_cast<std::uint8_t>(j.selection[static_cast<std::size_t>(static_cast<int>(index))]))}, {"pad",bool(ti->files().file_flags(index) & lt::file_storage::flag_pad_file)}});
         }
-        result["trackers"] = json::array(); for (auto const& t : j.handle.trackers()) result["trackers"].push_back(t.url);
+        result["trackers"] = json::array(); result["tracker_status"] = json::array();
+        for (auto const& t : j.handle.trackers()) {
+            result["trackers"].push_back(t.url);
+            std::string message; int seeds = -1, peers = -1; bool working = false, updating = false;
+            for (auto const& endpoint : t.endpoints) for (auto version : {lt::protocol_version::V1, lt::protocol_version::V2}) {
+                auto const& hash = endpoint.info_hashes[version];
+                if (hash.last_error) message = hash.last_error.message(); else if (!hash.message.empty() && message.empty()) message = hash.message;
+                seeds = std::max(seeds, hash.scrape_complete); peers = std::max(peers, hash.scrape_incomplete);
+                working = working || (hash.start_sent && hash.fails == 0 && !hash.last_error); updating = updating || hash.updating;
+            }
+            result["tracker_status"].push_back({{"url",t.url},{"tier",int(t.tier)},{"working",working},{"updating",updating},{"message",message},{"seeds",seeds},{"peers",peers}});
+        }
+        // What a BitTorrent client shows for a torrent: swarm size, connections, availability and the pieces it has.
+        result["connections"] = s.num_connections; result["seeds_total"] = s.num_complete; result["peers_total"] = s.num_incomplete;
+        result["seeds_connected"] = s.num_seeds; result["peers_connected"] = s.num_peers - s.num_seeds;
+        result["availability"] = s.distributed_copies; result["downloaded"] = s.all_time_download;
+        result["pieces_done"] = s.num_pieces; result["piece_count"] = ti ? ti->num_pieces() : 0; result["piece_size"] = ti ? ti->piece_length() : 0;
+        result["active_seconds"] = std::int64_t(s.active_duration.count()); result["seeding_seconds"] = std::int64_t(s.seeding_duration.count());
+        result["max_connections"] = j.max_connections; result["max_uploads"] = j.max_uploads; result["sequential"] = j.sequential;
+        json map = json::array(); int count = s.pieces.size();
+        if (count > 0) {
+            int buckets = std::min(count, 100);
+            for (int b = 0; b < buckets; ++b) {
+                int from = int(std::int64_t(b) * count / buckets), to = int(std::int64_t(b + 1) * count / buckets), have = 0;
+                for (int i = from; i < to; ++i) if (s.pieces.get_bit(lt::piece_index_t(i))) ++have;
+                map.push_back(to > from ? have * 100 / (to - from) : 0);
+            }
+        }
+        result["piece_map"] = map;
         return result;
     }
     void add(json const& request) {
@@ -394,7 +430,14 @@ struct Engine {
         j.download_limit = r.value("download_limit",j.download_limit); j.upload_limit = r.value("upload_limit",j.upload_limit);
         j.seed = r.value("seed",j.seed); j.ratio_limit = r.value("ratio_limit",j.ratio_limit); j.seed_seconds = r.value("seed_seconds",j.seed_seconds);
         if (j.download_limit < 0 || j.upload_limit < 0 || !std::isfinite(j.ratio_limit) || j.ratio_limit < 0 || j.seed_seconds < 0) throw std::runtime_error("Invalid torrent limits");
+        // -1 means no limit; libtorrent needs at least 2 connections and 1 upload slot.
+        int connections = r.value("max_connections",j.max_connections), uploads = r.value("max_uploads",j.max_uploads);
+        if (connections != -1 && (connections < 2 || connections > 10000)) throw std::runtime_error("Connections per torrent must be between 2 and 10,000");
+        if (uploads != -1 && (uploads < 1 || uploads > 10000)) throw std::runtime_error("Upload slots must be between 1 and 10,000");
+        j.max_connections = connections; j.max_uploads = uploads; j.sequential = r.value("sequential",j.sequential);
         j.handle.set_download_limit(j.download_limit); j.handle.set_upload_limit(j.upload_limit); j.handle.prioritize_files(j.selection);
+        j.handle.set_max_connections(j.max_connections); j.handle.set_max_uploads(j.max_uploads);
+        if (j.sequential) j.handle.set_flags(lt::torrent_flags::sequential_download); else j.handle.unset_flags(lt::torrent_flags::sequential_download);
         if (r.contains("trackers")) {
             std::vector<lt::announce_entry> trackers;
             for (auto const& url : r["trackers"]) { auto value = url.get<std::string>(); if (value.size() > 4096 || !(value.rfind("https://",0)==0 || value.rfind("http://",0)==0 || value.rfind("udp://",0)==0)) throw std::runtime_error("Tracker must use HTTP, HTTPS or UDP"); trackers.emplace_back(value); }
@@ -442,6 +485,18 @@ struct Engine {
             }
             return {{"flushed",true}};
         }
+        if (action == "peers") {
+            auto& j = job(r); std::vector<lt::peer_info> info; j.handle.get_peer_info(info); json list = json::array();
+            for (auto const& p : info) {
+                if (list.size() >= 300) break;
+                list.push_back({{"address",p.ip.address().to_string()},{"port",int(p.ip.port())},{"client",p.client},{"progress",double(p.progress)},
+                    {"download_speed",p.payload_down_speed},{"upload_speed",p.payload_up_speed},{"downloaded",p.total_download},{"uploaded",p.total_upload},
+                    {"seed",bool(p.flags & lt::peer_info::seed)},{"encrypted",bool(p.flags & (lt::peer_info::rc4_encrypted | lt::peer_info::plaintext_encrypted))},
+                    {"incoming",!(p.flags & lt::peer_info::local_connection)},{"utp",bool(p.flags & lt::peer_info::utp_socket)}});
+            }
+            return {{"peers",list}};
+        }
+        if (action == "reannounce") { auto& j = job(r); j.handle.force_reannounce(); if (j.handle.status().has_metadata) j.handle.force_dht_announce(); return snapshot(j); }
         if (action == "settings") {
             lt::settings_pack settings; settings.set_bool(lt::settings_pack::enable_dht,r.value("dht",true));
             settings.set_int(lt::settings_pack::download_rate_limit,std::max(0,r.value("download_limit",0)));

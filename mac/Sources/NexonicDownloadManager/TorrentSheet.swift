@@ -72,11 +72,12 @@ struct TorrentSheet: View {
                         }
                     }
                 }
-                .frame(minHeight: 140, maxHeight: 220)
+                .frame(minHeight: 120, maxHeight: 200)
                 Form {
                     SaveOptions(folder: $folder, queueID: $queue)
                     LabeledContent("Download limit") { limitField($downloadLimit) }
                     LabeledContent("Upload limit") { limitField($options.uploadLimitKBps) }
+                    TorrentConnectionFields(options: $options)
                     Toggle("Find peers with DHT", isOn: $options.dht)
                     Toggle("Keep sharing (seeding) after the download", isOn: $options.seed)
                     if options.seed {
@@ -179,6 +180,7 @@ struct TorrentSheet: View {
         task.priorities = priorities
         task.options = options
         do {
+            try options.validate()
             guard (0...2_000_000).contains(downloadLimit) else { throw TorrentFailure("Enter a download limit between 0 and 2,000,000 KB/s.") }
             try manager.addTorrent(task, folder: folder, queueID: queue, limit: downloadLimit, start: start)
             dismiss()

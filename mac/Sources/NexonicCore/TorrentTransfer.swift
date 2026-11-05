@@ -21,7 +21,8 @@ public final class TorrentTransfer: Downloader, @unchecked Sendable {
         if let reason = TorrentPolicy.unavailable(settings) { fail(TorrentFailure(reason)); return }
         let folder = record.folder.appendingPathComponent("Nexonic torrents/\(record.id.uuidString)")
         let state = AppPaths.parts.appendingPathComponent(record.id.uuidString).appendingPathComponent("native")
-        worker.start(id: "payload", task: task, destination: folder, stateDirectory: state, downloadLimitKBps: record.speedLimitKBps ?? 0) { [self] result in
+        worker.start(id: "payload", task: task, destination: folder, stateDirectory: state, downloadLimitKBps: record.speedLimitKBps ?? 0,
+                     network: settings.torrentNetwork) { [self] result in
             switch result {
             case .failure(let error): fail(error)
             case .success(let snapshot):
@@ -51,6 +52,19 @@ public final class TorrentTransfer: Downloader, @unchecked Sendable {
         record.error = error is CancellationError ? nil : error.localizedDescription
         onChange?(record)
     }
+    /// Applies new options, download limit and file priorities to the running torrent. False when it is not running.
+    @discardableResult
+    public func apply(_ task: TorrentTask, limitKBps: Int, trackers: [String]? = nil) throws -> Bool {
+        var request = task.options.engineSettings
+        if let trackers { request["trackers"] = trackers }
+        request["download_limit"] = max(0, limitKBps) * 1024
+        if let priorities = task.priorities { request["priorities"] = priorities }
+        guard try worker.configure(request) else { return false }
+        record.torrent?.options = task.options; record.torrent?.priorities = task.priorities
+        return true
+    }
+    public func peers() -> [TorrentPeer] { worker.peers() }
+    public func reannounce() { worker.reannounce() }
     public func pause() { worker.pause() }
     public func discard() { worker.discard() }
 }

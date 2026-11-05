@@ -237,13 +237,15 @@ public struct AppSettings: Codable, Equatable, Sendable {
     // Added in 0.7.1: advanced connection settings and settings per website
     public var network = NetworkOptions()
     public var hostProfiles: [HostProfile] = []
+    // Added in 0.11.2: torrent connection settings
+    public var torrentNetwork = TorrentNetwork()
 
     public init() {}
 
     enum CodingKeys: String, CodingKey {
         case torrentsEnabled, connections, maxActive, speedLimitKBps, folder, sortIntoCategoryFolders = "categoryFolders", notifications, monitorClipboard,
              clipboardTypes, proxy, showCompleteDialog, playSound, markDownloads, scanEnabled, scanCommand,
-             showDownloadDialog, showProgressWindow, bringToFrontOnBrowserDownload, checkForUpdates, skippedVersion, network, hostProfiles
+             showDownloadDialog, showProgressWindow, bringToFrontOnBrowserDownload, checkForUpdates, skippedVersion, network, hostProfiles, torrentNetwork
     }
 
     /// Missing keys keep their defaults, so settings from older versions still load.
@@ -273,6 +275,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         skippedVersion = try c.decodeIfPresent(String.self, forKey: .skippedVersion) ?? d.skippedVersion
         network = try c.decodeIfPresent(NetworkOptions.self, forKey: .network) ?? d.network
         hostProfiles = try c.decodeIfPresent([HostProfile].self, forKey: .hostProfiles) ?? d.hostProfiles
+        torrentNetwork = (try? c.decodeIfPresent(TorrentNetwork.self, forKey: .torrentNetwork)) ?? d.torrentNetwork
     }
 }
 

@@ -84,7 +84,11 @@ int main() {
         context=std::make_unique<Context>(base/"download-state");
         auto restored=context->call({{"action","restore"},{"id","payload"}});
         require(restored["files"][0]["priority"]==7 && restored["files"][1]["priority"]==0,"Priorities lost after restart");
-        context->call({{"action","configure"},{"id","payload"},{"download_limit",0},{"trackers",{"http://127.0.0.1:9/announce"}}});
+        auto tuned=context->call({{"action","configure"},{"id","payload"},{"download_limit",0},{"trackers",{"http://127.0.0.1:9/announce"}},{"max_connections",40},{"max_uploads",4},{"sequential",true}});
+        require(tuned["max_connections"]==40 && tuned["max_uploads"]==4 && tuned["sequential"]==true,"Connection settings were not applied");
+        require(tuned["tracker_status"].size()==1 && tuned["piece_count"].get<int>()>0 && tuned.contains("connections") && tuned["piece_map"].is_array(),"Torrent details are missing");
+        context->call({{"action","configure"},{"id","payload"},{"max_connections",0}},false);
+        require(context->call({{"action","peers"},{"id","payload"}})["peers"].is_array(),"Peer list is missing");
         context->call({{"action","resume"},{"id","payload"}});
         context->call({{"action","connect_peer"},{"id","payload"},{"port",port}});
         auto done=until(*context,"payload",[](json const& x){return x["state"]=="complete";});
@@ -94,6 +98,8 @@ int main() {
         require(done["sha256"][torrent_name+"/selected.bin"]==expected,"Native final integrity report mismatch");
         require(done["received"]==4*1024*1024,"Wrong selected payload progress");
         require(done["trackers"].size()==1,"Tracker changes were lost");
+        require(done["pieces_done"].get<int>()>0 && done["max_connections"]==40,"Piece counts or connection settings are missing");
+        context->call({{"action","reannounce"},{"id","payload"}});
         context->call({{"action","remove"},{"id","payload"}});
         require(fs::exists(downloaded),"Removing a torrent deleted user payload data");
         context->call({{"action","add"},{"id","../escape"},{"preview",true},{"metainfo",meta}},false);

@@ -45,6 +45,12 @@ final class NativeTorrentTests: XCTestCase {
         _ = try client.call(["action": "configure", "id": "download", "download_limit": 0])
         _ = try client.call(["action": "resume", "id": "download"])
         _ = try client.call(["action": "connect_peer", "id": "download", "port": port])
+        var options = TorrentOptions(); options.maxConnections = 30; options.maxUploads = 3; options.sequential = true
+        var tune = options.engineSettings; tune["action"] = "configure"; tune["id"] = "download"
+        let tuned = try TorrentSnapshot.decode(client.call(tune))
+        XCTAssertEqual(tuned.maxConnections, 30); XCTAssertEqual(tuned.maxUploads, 3); XCTAssertEqual(tuned.sequential, true)
+        XCTAssertGreaterThan(tuned.pieceCount ?? 0, 0); XCTAssertNotNil(tuned.connections); XCTAssertNotNil(tuned.trackerStatus)
+        XCTAssertNoThrow(try TorrentPeer.list(client.call(["action": "peers", "id": "download"])))
         let complete = try await wait(client, "download") { $0["state"] as? String == "complete" }
         let selected = try XCTUnwrap(files.first { ($0["path"] as? String)?.hasSuffix("selected.bin") == true }?["path"] as? String)
         XCTAssertEqual(try Data(contentsOf: destination.appendingPathComponent(selected)), bytes)
@@ -55,6 +61,18 @@ final class NativeTorrentTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: destination.appendingPathComponent(selected).path))
         client.close()
         XCTAssertThrowsError(try client.call(["action": "list"]))
+    }
+    func testOptionsFromOlderVersionsStillLoad() throws {
+        let old = try JSONDecoder().decode(TorrentOptions.self, from: Data(#"{"seed":true,"ratioLimit":2,"seedSeconds":60,"uploadLimitKBps":10,"dht":false}"#.utf8))
+        XCTAssertTrue(old.seed); XCTAssertEqual(old.uploadLimitKBps, 10); XCTAssertFalse(old.dht)
+        XCTAssertEqual(old.maxConnections, 0); XCTAssertEqual(old.maxUploads, 0); XCTAssertFalse(old.sequential)
+        XCTAssertEqual(old.engineSettings["max_connections"] as? Int, -1)
+        XCTAssertEqual(TorrentOptions().engineSettings["max_connections"] as? Int, 50)
+        var bad = TorrentOptions(); bad.maxConnections = 1
+        XCTAssertThrowsError(try bad.validate())
+        let peers = try TorrentPeer.list(["peers": [["address": "203.0.113.5", "port": 6881, "client": "Test 1.0", "progress": 0.5, "download_speed": 1024,
+            "upload_speed": 0, "downloaded": 4096, "uploaded": 0, "seed": false, "encrypted": true, "incoming": true, "utp": false]] as [[String: Any]]])
+        XCTAssertEqual(peers.first?.flags, "EI")
     }
     private func wait(_ engine: NativeTorrentSession, _ id: String, condition: ([String: Any]) -> Bool) async throws -> [String: Any] {
         let deadline = Date().addingTimeInterval(40)

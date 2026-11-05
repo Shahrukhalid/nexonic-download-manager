@@ -414,6 +414,10 @@ final class DownloadManager: ObservableObject {
         // Fields edited in the app while the transfer runs stay as edited.
         rec.queueID = items[i].queueID
         rec.speedLimitKBps = items[i].speedLimitKBps
+        if let edited = items[i].torrent, rec.torrent != nil {  // torrent settings changed while it runs
+            rec.torrent?.options = edited.options; rec.torrent?.priorities = edited.priorities
+            rec.size = rec.torrent?.selectedSize
+        }
         if rec.status == .paused, requeue.remove(rec.id) != nil { rec.status = .queued }
         if items[i].torrent?.notified == true { rec.torrent?.notified = true }
         if rec.torrent?.metadata?.payloadComplete == true, rec.torrent?.notified != true {
@@ -446,12 +450,24 @@ final class DownloadManager: ObservableObject {
         items.append(record); persist(); schedule()
     }
 
-    func updateTorrent(_ id: UUID, task: TorrentTask, limit: Int) throws {
+    /// Connected peers of a running torrent.
+    func torrentPeers(_ id: UUID) -> [TorrentPeer] { (transfers[id] as? TorrentTransfer)?.peers() ?? [] }
+    /// Asks trackers and DHT for more peers now.
+    func reannounce(_ id: UUID) { (transfers[id] as? TorrentTransfer)?.reannounce() }
+
+    /// Saves a torrent's settings. `trackers` replaces its tracker list when given.
+    func updateTorrent(_ id: UUID, task: TorrentTask, limit: Int, trackers: [String]? = nil) throws {
         _ = try task.selectedPriorities(); try task.options.validate()
         guard let index = items.firstIndex(where: { $0.id == id }) else { return }
-        // Editing is allowed once the native worker has fully paused and flushed its checkpoint.
-        guard transfers[id] == nil else { pause(id); throw TorrentFailure("Pausing and saving checkpoint. Open settings again after the task stops.") }
         var updated = task
+        // A running torrent takes the new settings right away; a stopped one uses them when it starts.
+        if let running = transfers[id] as? TorrentTransfer, try running.apply(updated, limitKBps: limit, trackers: trackers) {
+            if updated.priorities != items[index].torrent?.priorities { updated.notified = false }
+            items[index].torrent = updated; items[index].size = updated.selectedSize; items[index].speedLimitKBps = limit
+            persist()
+            return
+        }
+        guard transfers[id] == nil else { pause(id); throw TorrentFailure("Pausing and saving checkpoint. Open settings again after the task stops.") }
         if updated.priorities != items[index].torrent?.priorities { updated.notified = false; items[index].finished = nil; items[index].savedPath = nil }
         items[index].torrent = updated; items[index].size = updated.selectedSize
         items[index].speedLimitKBps = limit; items[index].status = .paused
@@ -542,6 +558,8 @@ final class DownloadManager: ObservableObject {
         var s: [UUID: Double] = [:]
         // Averaged over the last 6 seconds: video sites deliver in bursts, so a single tick is often 0.
         for item in items where item.status.isActive {
+            // Torrents report their own download speed.
+            if let snapshot = item.torrent?.metadata { s[item.id] = Double(max(0, snapshot.downloadSpeed)); continue }
             var h = recent[item.id] ?? []
             h.append(item.received)
             if h.count > 13 { h.removeFirst(h.count - 13) }

@@ -41,7 +41,7 @@ extension FileCategory {
 }
 
 enum Sheet: Identifiable {
-    case add(AddRequest), batch, scheduler(String), grabber, properties(UUID), refresh(UUID), torrent(String)
+    case add(AddRequest), batch, scheduler(String), grabber, properties(UUID), refresh(UUID), torrent(String), torrentSettings(UUID)
 
     var id: String {
         switch self {
@@ -52,6 +52,7 @@ enum Sheet: Identifiable {
         case .properties(let id): return "properties-\(id)"
         case .refresh(let id): return "refresh-\(id)"
         case .torrent: return "torrent"
+        case .torrentSettings(let id): return "torrent-settings-\(id)"
         }
     }
 }
@@ -120,7 +121,11 @@ struct ContentView: View {
                 if shown.isEmpty { emptyState } else { table }
                 if selection.count == 1, let id = selection.first, let item = manager.items.first(where: { $0.id == id }) {
                     Divider()
-                    DetailPane(item: item, bps: manager.speeds[id] ?? 0, eta: manager.eta(item), queue: manager.queueName(item.queue))
+                    if item.torrent != nil {
+                        TorrentDetailPane(item: item)
+                    } else {
+                        DetailPane(item: item, bps: manager.speeds[id] ?? 0, eta: manager.eta(item), queue: manager.queueName(item.queue))
+                    }
                 }
                 Divider()
                 StatusBar()
@@ -187,6 +192,10 @@ struct ContentView: View {
             TableColumn("Progress") { r in ProgressView(value: r.status == .finished ? 1 : r.progress).progressViewStyle(.linear).tint(r.status == .finished ? .green : brand) }.width(110)
             TableColumn("Speed") { r in Text(r.status.isActive ? speed(manager.speeds[r.id] ?? 0) : "") }.width(90)
             TableColumn("Time Left") { r in Text(r.status.isActive ? manager.eta(r) : "") }.width(70)
+            TableColumn("Seeds / Peers") { r in
+                Text(r.torrent?.metadata.map { r.status.isActive ? "\($0.seedsText) / \($0.peersText)" : "" } ?? "")
+                    .foregroundStyle(.secondary).monospacedDigit()
+            }.width(110)
             TableColumn("Status") { r in
                 HStack(spacing: 5) {
                     Circle().fill(statusColor(r)).frame(width: 7, height: 7)
@@ -271,6 +280,7 @@ struct ContentView: View {
         case .properties(let id): PropertiesSheet(id: id)
         case .refresh(let id): RefreshSheet(id: id)
         case .torrent(let source): TorrentSheet(queueID: currentQueue, initialSource: source)
+        case .torrentSettings(let id): TorrentSettingsSheet(id: id)
         }
     }
 
@@ -289,8 +299,13 @@ struct ContentView: View {
         Button("Resume") { ids.forEach(manager.resume) }
         Button("Stop") { ids.forEach(manager.pause) }
         if ids.count == 1, let id = ids.first {
-            Button("Refresh Link…") { sheet = .refresh(id) }
-            Button("Properties…") { sheet = .properties(id) }
+            if manager.items.first(where: { $0.id == id })?.torrent != nil {
+                Button("Torrent Settings…") { sheet = .torrentSettings(id) }
+                Button("Update Tracker") { manager.reannounce(id) }
+            } else {
+                Button("Refresh Link…") { sheet = .refresh(id) }
+                Button("Properties…") { sheet = .properties(id) }
+            }
             Button("Copy Link") {
                 if let u = manager.items.first(where: { $0.id == id })?.url {
                     NSPasteboard.general.clearContents()

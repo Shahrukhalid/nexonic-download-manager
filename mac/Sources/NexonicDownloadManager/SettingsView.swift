@@ -1,5 +1,6 @@
 import AppKit
 import NexonicCore
+import NexonicTorrent
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -61,6 +62,21 @@ struct SettingsView: View {
             }
             .formStyle(.grouped)
             .tabItem { Label("Connection", systemImage: "network") }
+
+            Form {
+                Toggle("Torrents on", isOn: $manager.settings.torrentsEnabled)
+                Toggle("Forward the listening port on my router (UPnP and NAT-PMP)", isOn: $manager.settings.torrentNetwork.portForwarding)
+                    .help("Lets more peers connect to you, which usually makes torrents faster.")
+                Picker("Encryption", selection: $manager.settings.torrentNetwork.encryption) {
+                    Text("Prefer encrypted connections").tag(TorrentNetwork.Encryption.prefer)
+                    Text("Only encrypted connections").tag(TorrentNetwork.Encryption.require)
+                    Text("Off").tag(TorrentNetwork.Encryption.off)
+                }
+                Text("Speed limits, connections per torrent, upload slots and seeding are set for each torrent when you add it, or later under Torrent Settings. Changes here apply to torrents started afterwards. Peers and trackers can see your IP address.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            .formStyle(.grouped)
+            .tabItem { Label("Torrents", systemImage: "arrow.down.circle.dotted") }
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("Settings used for every download from a website. A site also covers its subdomains (example.com covers www.example.com). Logins are only sent to that site and are kept with the app's other secrets.")
