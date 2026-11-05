@@ -79,7 +79,11 @@ jobs:
           cp "build/NexonicExtension-$V.zip" up/NexonicExtension-Chrome.zip
           cp "build/NexonicFirefoxAddon-$V.xpi" up/NexonicAddon-Firefox.xpi
           cat packaging/RELEASE-HEADER.md CHANGELOG.md > build/release-notes.md
-          gh release create "$GITHUB_REF_NAME" --draft --title "Nexonic Download Manager $V" --notes-file build/release-notes.md up/*
+          # A GitHub server error can leave the draft created but the step failed: a re-run then adds the files to it.
+          if ! gh release create "$GITHUB_REF_NAME" --draft --title "Nexonic Download Manager $V" --notes-file build/release-notes.md up/*; then
+            sleep 10
+            gh release view "$GITHUB_REF_NAME" >/dev/null && gh release upload "$GITHUB_REF_NAME" up/* --clobber
+          fi
   ffmpeg-windows:
     runs-on: ubuntu-latest
     timeout-minutes: 30

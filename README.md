@@ -37,8 +37,8 @@ Download faster, pause and resume anytime, and save videos from YouTube, Instagr
 | Chrome, Edge, Brave, Opera extension | [NexonicExtension-Chrome.zip](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicExtension-Chrome.zip) |
 | Firefox add-on | [NexonicAddon-Firefox.xpi](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicAddon-Firefox.xpi) |
 
-The standard file, video and torrent engines are included. Torrents on Mac, Windows and Linux use a built-in engine
-and are off until you enable them; see [the torrent guide](docs/TORRENTS.md).
+The standard file, video and torrent engines are included. Torrents work on Mac, Windows, Linux, Android, iPhone and
+iPad with the same built-in engine and are off until you turn them on; see [the torrent guide](docs/TORRENTS.md).
 
 Windows with [Scoop](https://scoop.sh): `scoop bucket add nexonic https://github.com/Shahrukhalid/nexonic-download-manager` then
 `scoop install nexonic-download-manager`. More package managers: [docs/PACKAGES.md](docs/PACKAGES.md).
@@ -140,6 +140,10 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
 - **Scheduler and queues:** start at night, stop in the morning, sleep or shut down when done.
 - **Batch downloads** (`img[001-100].jpg`), a **site grabber**, and **clipboard** detection.
 - **Speed limits**, proxy, password-protected downloads and checksum checks.
+- **Torrents on every platform**, like a BitTorrent client: open a magnet link or a `.torrent` file, choose the files,
+  and see seeds, peers, speeds, trackers and pieces. Change limits, connections and upload slots while it runs. Every
+  piece is checked and each file gets a SHA-256. Works with your proxy; off until you turn it on.
+- **An IDM-style toolbar** on Mac with large buttons and their names, and menus for every command.
 - **Updates inside the app:** a new version shows up when you open the app, with what's new and Update Now, Remind
   Me Later or Skip This Version.
 - **Same app on Mac, Windows and Linux**, light and dark mode, no account, no tracking.
@@ -176,14 +180,21 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
   <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/windows-main.png" alt="Windows" width="290">
 </p>
 
-## New in 0.8.0
+## What's new
 
-**Site settings** (login, cookies, proxy and limits per website),
-**backup and restore**, **QR codes** to send a download to your phone, Android **bookmarks, search engine choice and
-SD card/USB folders**, iPhone **Shortcuts and Siri** actions to pause and resume, an optional **local API** for
-scripts ([docs/API.md](docs/API.md)), and the apps in **Arabic, German, Spanish, French, Hindi, Portuguese and
-Urdu** (machine translations under review, [docs/TRANSLATIONS.md](docs/TRANSLATIONS.md)). Full list in the
-[changelog](CHANGELOG.md).
+- **0.13.0: torrents on Android, iPhone and iPad.** Open a magnet link or `.torrent` file, choose the files and
+  download; every piece is checked. Android downloads in the background; iPhone and iPad download while the app is
+  open and continue when you come back. Also: torrent details, Peers and Trackers windows and live settings on
+  Windows and Linux, `.torrent` files and magnet links open the app, and faster torrents (no upload cap by default).
+- **0.11.4: an IDM-style toolbar on Mac**, with large coloured buttons and their names, and a Downloads menu.
+- **0.11.0 – 0.11.3: torrents on Mac**, with uTorrent-style details (General, Trackers, Peers, Files), settings that
+  apply while a torrent runs, and support for your proxy.
+- **0.10.0: torrents on Windows and Linux** with a built-in engine.
+- **0.8.0:** site settings, backup and restore, QR codes to your phone, iPhone Shortcuts and Siri, an optional local
+  API ([docs/API.md](docs/API.md)), and seven more languages (machine translations under review,
+  [docs/TRANSLATIONS.md](docs/TRANSLATIONS.md)).
+
+Full list in the [changelog](CHANGELOG.md).
 
 ## How to use
 

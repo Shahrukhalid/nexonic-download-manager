@@ -210,7 +210,7 @@ public sealed class Integration
         "Terminal=false\n" +
         "Categories=Network;FileTransfer;\n" +
         "Keywords=download;manager;video;queue;resume;\n" +
-        "MimeType=x-scheme-handler/nexonic;text/x-uri;application/x-mswinurl;\n" +
+        "MimeType=x-scheme-handler/nexonic;text/x-uri;application/x-mswinurl;application/x-bittorrent;x-scheme-handler/magnet;\n" +
         "StartupWMClass=NexonicDownloadManager\n" +
         "X-AppImage-Integrate=false\n";
 
