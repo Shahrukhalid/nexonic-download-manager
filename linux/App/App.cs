@@ -73,6 +73,10 @@ public sealed class App : Application
             if (m.Settings.Notifications)
                 LinuxSystem.Notify("Download finished", r.FileName + (r.ChecksumResult is { } c ? " – " + c : ""), IconPath);
             if (m.Settings.ShowCompleteDialog) Dialogs.Complete(m, r);
+            if (m.Settings.ExtractZips && Archives.IsZip(r.SavedPath)) Unzip(r.SavedPath!, text =>
+            {
+                if (m.Settings.Notifications) LinuxSystem.Notify("Unzipped", text, IconPath);
+            });
         };
         m.ClipboardLink += link => _ = window.ShowAdd(link);
         m.QuitRequested += Quit;
@@ -101,6 +105,19 @@ public sealed class App : Application
         timer.Start();
         if (Environment.GetEnvironmentVariable("NDM_SHOW") is { Length: > 0 } show) { Demo.Show(show, window, m); return; }
         Updater.Start(m);
+    }
+
+    /// <summary>Unzip when finished (Downloads menu): unpacks in the background, then reports on the UI thread.</summary>
+    static void Unzip(string path, Action<string> done)
+    {
+        var name = Path.GetFileName(path);
+        Task.Run(() =>
+        {
+            string text;
+            try { text = $"{name} → {Path.GetFileName(Archives.ExtractZip(path))}"; }
+            catch (Exception e) { text = $"{name}: {e.Message}"; }
+            Dispatcher.UIThread.Post(() => done(text));
+        });
     }
 
     /// <summary>The icon file for notifications (installed with the app, or the copy in the AppImage).</summary>

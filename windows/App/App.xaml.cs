@@ -68,6 +68,10 @@ public partial class App : Application
             if (manager.Settings.Notifications)
                 tray.ShowBalloonTip(3000, "Download finished", r.FileName + (r.ChecksumResult is { } c ? " – " + c : ""), System.Windows.Forms.ToolTipIcon.Info);
             if (manager.Settings.ShowCompleteDialog) Dialogs.Complete(manager, r);
+            if (manager.Settings.ExtractZips && Archives.IsZip(r.SavedPath)) Unzip(r.SavedPath!, text =>
+            {
+                if (manager.Settings.Notifications) tray.ShowBalloonTip(3000, "Unzipped", text, System.Windows.Forms.ToolTipIcon.Info);
+            });
         };
         manager.ClipboardLink += link => window.ShowAdd(link);
         manager.QuitRequested += () => Quit(manager);
@@ -75,6 +79,19 @@ public partial class App : Application
         Demo.Start(manager, window);
         Updater.Start(manager);
         _ = ListenAsync(manager);
+    }
+
+    /// <summary>Unzip when finished (Downloads menu): unpacks in the background, then reports on the UI thread.</summary>
+    void Unzip(string path, Action<string> done)
+    {
+        var name = Path.GetFileName(path);
+        Task.Run(() =>
+        {
+            string text;
+            try { text = $"{name} → {Path.GetFileName(Archives.ExtractZip(path))}"; }
+            catch (Exception e) { text = $"{name}: {e.Message}"; }
+            Dispatcher.BeginInvoke(() => done(text));
+        });
     }
 
     /// <summary>Tray quick setting: the speed limit for all downloads, from off to 10 MB/s.</summary>

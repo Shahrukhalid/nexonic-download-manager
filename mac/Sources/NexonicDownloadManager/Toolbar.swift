@@ -124,6 +124,7 @@ private struct OptionsTileLabel: View {
 struct MainMenus: Commands {
     @AppStorage("toolbarText") private var showText = true
     @AppStorage("showToolbar") private var showToolbar = true
+    @AppStorage("extractZips") private var extractZips = false
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {
@@ -145,6 +146,8 @@ struct MainMenus: Commands {
             Divider()
             Button("Delete…") { MainActions.shared.send(.delete) }
             Button("Delete Completed…") { MainActions.shared.send(.deleteCompleted) }
+            Divider()
+            Toggle("Unzip Finished .zip Files", isOn: $extractZips)
             Divider()
             Button("Scheduler…") { MainActions.shared.send(.scheduler) }
             Button("Start Queue") { MainActions.shared.send(.startQueue) }
