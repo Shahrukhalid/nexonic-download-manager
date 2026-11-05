@@ -1,6 +1,6 @@
 # Torrent downloads
 
-Since **v0.10.0**, Windows and Linux use a bundled libtorrent 2.0.11 engine, and Mac since **v0.11.0**; the earlier optional Python bridge of v0.9.0 is no longer needed. Android and iPhone/iPad integration is still in development.
+Since **v0.10.0**, Windows and Linux use a bundled libtorrent 2.0.11 engine, and Mac since **v0.11.0**; the earlier optional Python bridge of v0.9.0 is no longer needed. Android and iPhone/iPad have torrents since **v0.13.0** (phones don't seed; iPhone/iPad download while the app is open).
 
 ## Mac
 

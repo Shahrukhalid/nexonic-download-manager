@@ -1,3 +1,15 @@
+## 0.13.0
+
+- **Torrents on Android.** Open a magnet link or a `.torrent` file (or share one to Nexonic), choose the files, and the
+  torrent downloads in the background with the other downloads, showing seeds, peers and speeds. Every piece is
+  checked; finished files go to your Downloads folder. Torrents stay off until you turn them on; phones don't keep
+  sharing (seeding) after the download.
+- **Torrents on iPhone and iPad.** Add a magnet link or a `.torrent` file from the Downloads menu, Files or another app.
+  Torrents download while Nexonic is open, pause with a checkpoint when it goes to the background and continue when
+  you come back. Finished files are in Files › Nexonic › Torrents.
+- Android releases now also include `Android-Torrent-Sources.tar.gz`, the exact sources the torrent engine was built
+  from.
+
 ## 0.12.0
 
 - **Windows and Linux: torrent details like a BitTorrent client.** The Torrent Manager shows downloaded and uploaded
