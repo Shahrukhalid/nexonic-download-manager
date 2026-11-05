@@ -129,6 +129,9 @@ object VideoEngine {
             addOption("-o", File(dir, "%(title).100B.%(ext)s").absolutePath)
             addOption("--concurrent-fragments", "4")
             if (choice.audioOnly) addOption("--no-keep-video") else addOption("--merge-output-format", "mp4")
+            // Title, artist, date, description and chapters stay inside the saved file (as on the desktop apps).
+            addOption("--embed-metadata")
+            addOption("--embed-chapters")
             if (rateKB > 0) addOption("--limit-rate", "${rateKB}K")
         }
         try {

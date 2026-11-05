@@ -271,6 +271,9 @@ public enum SiteVideo {
         return (["--config-locations", file.path] + rest, file)
     }
 
+    /// Kept inside the saved file (needs ffmpeg): title, artist, date and description, and the video's chapters.
+    public static let mediaDetails = ["--embed-metadata", "--embed-chapters"]
+
     /// The command for one video. `folder` gets the finished file, `temp` the partial one (so it can resume).
     public static func arguments(url: URL, folder: String, temp: String, ffmpeg: String?, quickJS: String?, audioOnly: Bool,
                                  referrer: String?, cookies: String?, userAgent: String?, username: String?, password: String?,
@@ -287,6 +290,7 @@ public enum SiteVideo {
         if let quickJS { a += ["--js-runtimes", "quickjs:\(quickJS)"] }
         if let ffmpeg { a += ["--ffmpeg-location", (ffmpeg as NSString).deletingLastPathComponent] }  // folder: ffmpeg and ffprobe
         a += format(audioOnly: audioOnly, maxHeight: maxHeight)
+        if ffmpeg != nil { a += mediaDetails }
         if let referrer, !referrer.isEmpty { a += ["--referer", referrer] }
         if let userAgent, !userAgent.isEmpty { a += ["--user-agent", userAgent] }
         if let cookies, !cookies.isEmpty { a += ["--add-header", "Cookie:\(cookies)"] }
