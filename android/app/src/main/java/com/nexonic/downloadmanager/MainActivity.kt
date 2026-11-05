@@ -43,6 +43,8 @@ class UiState {
     /** The add window: a browser offer, or pasted/shared text. */
     var addOffer by mutableStateOf<Offer?>(null)
     var addText by mutableStateOf<String?>(null)
+    /** A magnet link or .torrent file to show in the Add Torrent window. */
+    var addTorrent by mutableStateOf<String?>(null)
     var longPress by mutableStateOf<Pair<Offer, Boolean>?>(null)
     var detailId by mutableStateOf<Long?>(null)
     var message by mutableStateOf<String?>(null)
@@ -91,12 +93,19 @@ class MainActivity : ComponentActivity() {
         when (intent.action) {
             Intent.ACTION_SEND -> {
                 val text = listOfNotNull(intent.getStringExtra(Intent.EXTRA_TEXT), intent.getStringExtra(Intent.EXTRA_SUBJECT)).joinToString(" ")
+                // A shared .torrent file, or a magnet link in shared text.
+                val stream = androidx.core.content.IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, android.net.Uri::class.java)
+                val magnet = Regex("magnet:\\?[^\\s]+").find(text)?.value
+                if (stream != null || magnet != null) { ui.tab = Tab.DOWNLOADS; ui.addTorrent = stream?.toString() ?: magnet; intent.action = null; return }
                 val links = Links.split(text)
                 if (links.isEmpty()) ui.message = "No web link was shared."
                 else { ui.tab = Tab.DOWNLOADS; ui.addText = links.joinToString("\n") }
             }
             Intent.ACTION_VIEW -> {
                 val u = intent.dataString
+                if (u != null && (u.startsWith("magnet:", true) || intent.type == "application/x-bittorrent" || u.startsWith("content://") || u.startsWith("file://"))) {
+                    ui.tab = Tab.DOWNLOADS; ui.addTorrent = u; intent.action = null; return
+                }
                 val shared = u?.let { Links.fromNexonicLink(it) }.orEmpty()
                 if (shared.isNotEmpty()) { ui.tab = Tab.DOWNLOADS; ui.addText = shared.joinToString("\n") }  // a QR code from the desktop app
                 else if (u != null && Links.isWebLink(u)) { ui.tab = Tab.BROWSER; browser.go(u) }

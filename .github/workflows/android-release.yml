@@ -37,13 +37,42 @@ jobs:
           echo "The release $TAG was not created within 30 minutes"; exit 1
   apk:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
     env:
       TAG: ${{ github.event.inputs.tag || github.ref_name }}
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ env.TAG }}
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Native build tools
+        timeout-minutes: 15
+        run: |
+          for try in 1 2 3; do
+            timeout 300 sudo apt-get update -qq && timeout 400 sudo apt-get install -y -qq ninja-build pkg-config autoconf automake libtool && exit 0
+            sleep 20
+          done
+          exit 1
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .native-cache/installed
+            .native-cache/binaries
+            .native-cache/vcpkg/downloads
+          key: native-android-${{ hashFiles('native/vcpkg.json', 'native/triplets/**', 'native/src/**', 'native/include/**') }}
+          restore-keys: native-android-
+      - name: Torrent engine for Android
+        run: bash scripts/android-torrent-libs.sh arm64 arm
+      - name: Torrent engine sources (exact source archives used for the build)
+        run: |
+          set -euo pipefail
+          mkdir -p tsrc && cp -r native tsrc/nexonic-native
+          find .native-cache/vcpkg/downloads -maxdepth 1 -type f \( -name '*.tar.gz' -o -name '*.tar.xz' -o -name '*.zip' -o -name '*.tar.bz2' \) -exec cp {} tsrc/ \;
+          git -C .native-cache/vcpkg rev-parse HEAD > tsrc/vcpkg-commit.txt
+          tar -czf Android-Torrent-Sources.tar.gz -C tsrc .
+          ls -la Android-Torrent-Sources.tar.gz
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -83,7 +112,7 @@ jobs:
         run: |
           for i in $(seq 1 60); do
             if gh release view "$TAG" >/dev/null 2>&1; then
-              gh release upload "$TAG" NexonicDownloadManager-Android.apk NexonicDownloadManager-Android-32bit.apk --clobber
+              gh release upload "$TAG" NexonicDownloadManager-Android.apk NexonicDownloadManager-Android-32bit.apk Android-Torrent-Sources.tar.gz --clobber
               echo "Added the Android APKs to $TAG"; exit 0
             fi
             sleep 30

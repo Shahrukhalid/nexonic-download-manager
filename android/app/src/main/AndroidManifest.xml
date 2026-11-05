@@ -42,6 +42,25 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="nexonic" android:host="add" />
             </intent-filter>
+            <!-- Magnet links and .torrent files open in the Add Torrent window. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="magnet" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/x-bittorrent" />
+            </intent-filter>
+            <intent-filter android:label="@string/share_download">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/x-bittorrent" />
+            </intent-filter>
             <!-- "Open with": web links open in the built-in browser. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

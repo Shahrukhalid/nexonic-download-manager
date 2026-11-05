@@ -26,7 +26,10 @@ struct NexonicApp: App {
                 .environment(model)
                 .environment(browser)
                 .onOpenURL { url in model.open(url) }
-                .onChange(of: phase) { _, p in if p == .active { model.refresh(importing: true) } }
+                .onChange(of: phase) { _, p in
+                    if p == .active { model.refresh(importing: true); TorrentStore.shared.enterForeground() }
+                    if p == .background { TorrentStore.shared.enterBackground() }
+                }
                 .tint(Color(red: 0.15, green: 0.39, blue: 0.92))
         }
     }
@@ -59,6 +62,9 @@ struct RootView: View {
             }
         }
         .sheet(isPresented: $model.showSetup) { NavigationStack { SetupGuideView() } }
+        .sheet(item: $model.torrentRequest) { request in
+            TorrentAddView(source: request.source) { message in if let message { model.toast = message } }
+        }
         .overlay(alignment: .bottom) {
             if let toast = model.toast {
                 Text(toast)

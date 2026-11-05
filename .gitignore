@@ -27,3 +27,7 @@ native/tests/dotnet/obj/
 
 # Generated Apple torrent SDK
 mac/Native/
+
+# Android torrent engine, built by scripts/android-torrent-libs.sh
+android/app/src/main/jniLibs/
+android/app/src/main/assets/licenses/Torrent-engine-NOTICES.txt

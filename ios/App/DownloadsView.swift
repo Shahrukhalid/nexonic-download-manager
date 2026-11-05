@@ -75,6 +75,7 @@ struct DownloadsView: View {
                 .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
                 .listRowBackground(Color.clear)
             }
+            TorrentRows()
             if shown.isEmpty {
                 ContentUnavailableView {
                     Label(model.jobs.isEmpty ? "No downloads yet" : "Nothing here", systemImage: "arrow.down.circle")
@@ -113,6 +114,7 @@ struct DownloadsView: View {
                         ForEach(FileCategory.allCases, id: \.self) { c in Label(c.label, systemImage: c.symbol).tag(Optional(c)) }
                     }
                     Divider()
+                    Button("Add Torrent…", systemImage: "arrow.down.circle.dotted") { model.torrentRequest = TorrentRequest(source: "") }
                     if model.activeCount > 0 { Button("Pause All", systemImage: "pause") { model.pauseAll() } }
                     Button("Start All", systemImage: "play") { model.startLater() }
                     Button("Clear Finished", systemImage: "checkmark.circle") { model.clearFinished() }

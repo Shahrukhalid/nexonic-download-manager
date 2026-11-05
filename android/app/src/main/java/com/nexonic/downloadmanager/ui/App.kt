@@ -87,6 +87,15 @@ fun App(ui: UiState, browser: Browser) {
         }
     }
 
+    // A magnet link pasted or shared as text opens the Add Torrent window instead.
+    LaunchedEffect(ui.addText) {
+        val t = ui.addText?.trim()
+        if (t != null && t.startsWith("magnet:?", true) && !t.contains('\n')) { ui.addText = null; ui.addTorrent = t }
+    }
+    ui.addTorrent?.let { source ->
+        TorrentSheet(source) { msg -> ui.addTorrent = null; if (msg != null) ui.message = msg }
+    }
+
     if (ui.addOffer != null || ui.addText != null) {
         AddDownloadSheet(
             offer = ui.addOffer,

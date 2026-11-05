@@ -335,6 +335,16 @@ fun DetailSheet(item: DownloadItem, onDismiss: () -> Unit, message: (String) -> 
                 InfoRow("Time left", Format.eta(item.etaSeconds).ifEmpty { "…" })
             }
             InfoRow("Resume", if (item.resumable) "Yes" else "No")
+            item.torrent?.let { t ->
+                fun count(n: Int, total: Int) = if (total >= 0) "$n ($total)" else "$n"
+                InfoRow("Files", "${t.selectedFiles.size} of ${t.files.count { !it.pad }}")
+                if (item.status == Status.DOWNLOADING) {
+                    InfoRow("Seeds", count(t.seeds, t.seedsTotal))
+                    InfoRow("Peers", count((t.peers - t.seeds).coerceAtLeast(0), t.peersTotal))
+                    InfoRow("Upload speed", Format.speed(t.uploadSpeed).ifEmpty { "0" })
+                }
+                if (t.infoHash.isNotEmpty()) InfoRow("Hash", t.infoHash)
+            }
             item.quality?.let { InfoRow("Quality", it) }
             InfoRow("Type", item.category.label)
             item.savedPath?.let { InfoRow("Saved to", it) }
@@ -368,7 +378,7 @@ fun DetailSheet(item: DownloadItem, onDismiss: () -> Unit, message: (String) -> 
                         FilledTonalButton(onClick = { share(context, item, message) }) { Text(tr("Share")) }
                     }
                 }
-                if (item.status != Status.COMPLETE) OutlinedButton(onClick = { refresh = true }) { Text(tr("Refresh link")) }
+                if (item.status != Status.COMPLETE && !item.isTorrent) OutlinedButton(onClick = { refresh = true }) { Text(tr("Refresh link")) }
                 OutlinedButton(onClick = { copy(context, item.url); message("Link copied") }) { Text(tr("Copy link")) }
                 OutlinedButton(onClick = { confirmDelete = true }) { Text(tr("Delete")) }
             }

@@ -4,9 +4,9 @@ name: iOS
 on:
   push:
     branches: [main, feature/mobile-platforms]
-    paths: ["VERSION", "ios/**", "mac/Sources/NexonicCore/**", "android/demo/page.html", ".github/workflows/ios.yml"]
+    paths: ["VERSION", "ios/**", "mac/Sources/NexonicCore/**", "mac/Sources/NexonicTorrent/**", "native/**", "android/demo/page.html", ".github/workflows/ios.yml"]
   pull_request:
-    paths: ["VERSION", "ios/**", "mac/Sources/NexonicCore/**", ".github/workflows/ios.yml"]
+    paths: ["VERSION", "ios/**", "mac/Sources/NexonicCore/**", "mac/Sources/NexonicTorrent/**", "native/**", ".github/workflows/ios.yml"]
   workflow_dispatch:
 permissions:
   contents: write
@@ -16,9 +16,21 @@ concurrency:
 jobs:
   build:
     runs-on: macos-15
-    timeout-minutes: 60
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v7
+      - name: Native torrent build tools
+        run: brew list ninja pkgconf >/dev/null 2>&1 || brew install ninja pkgconf
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .native-cache/installed
+            .native-cache/binaries
+            .native-cache/vcpkg/downloads
+          key: native-ios-${{ hashFiles('native/vcpkg.json', 'native/triplets/**', 'native/src/**', 'native/include/**') }}
+          restore-keys: native-ios-
+      - name: Torrent engine for iPhone and iPad
+        run: python3 scripts/build-torrent-apple.py --ios
       - name: Xcode project
         run: |
           brew list xcodegen >/dev/null 2>&1 || brew install -q xcodegen

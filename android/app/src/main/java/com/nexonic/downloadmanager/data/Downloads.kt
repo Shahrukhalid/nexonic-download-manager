@@ -85,6 +85,75 @@ object Downloads {
 
     private fun partFile(id: Long): File = File(app.getExternalFilesDir(null) ?: app.filesDir, "partial/$id.part")
     private fun videoDir(id: Long): File = File(app.getExternalFilesDir(null) ?: app.filesDir, "partial/video-$id")
+    private fun torrentDir(id: Long): File = File(app.getExternalFilesDir(null) ?: app.filesDir, "partial/torrent-$id")
+    private fun torrentState(id: Long): File = File(app.filesDir, "torrents/$id")
+
+    /** Adds a torrent whose files were chosen in the Add Torrent window. */
+    @Synchronized fun addTorrent(info: com.nexonic.downloadmanager.torrent.TorrentInfo, startNow: Boolean): Long {
+        val key = info.source.ifEmpty { "torrent:" + info.infoHash }
+        _items.value.firstOrNull { it.torrent?.infoHash == info.infoHash && it.status != Status.COMPLETE }?.let { existing ->
+            if (startNow && existing.status !in listOf(Status.DOWNLOADING, Status.QUEUED)) resume(existing.id)
+            return existing.id
+        }
+        val id = maxOf(System.currentTimeMillis(), (_items.value.maxOfOrNull { it.id } ?: 0) + 1)
+        val item = DownloadItem(id = id, url = key, fileName = FileNames.sanitize(info.name), size = info.selectedSize, resumable = true,
+            status = if (startNow) Status.QUEUED else Status.LATER, torrent = info)
+        _items.value = listOf(item) + _items.value
+        persist()
+        if (startNow) pump()
+        return id
+    }
+
+    private fun startTorrent(item: DownloadItem) {
+        val id = item.id
+        val info = item.torrent!!
+        val job = com.nexonic.downloadmanager.torrent.TorrentJob(info, torrentState(id), torrentDir(id), settings.speedLimitKB,
+            object : com.nexonic.downloadmanager.torrent.TorrentListener {
+                override fun progress(received: Long, wanted: Long, downloadSpeed: Long, uploadSpeed: Long, peers: Int, seeds: Int, seedsTotal: Int, peersTotal: Int) {
+                    update(id, save = false) {
+                        if (it.status != Status.DOWNLOADING) it
+                        else it.copy(written = received, size = wanted.takeIf { w -> w > 0 } ?: it.size, speed = downloadSpeed,
+                            torrent = it.torrent?.copy(peers = peers, seeds = seeds, seedsTotal = seedsTotal, peersTotal = peersTotal, uploadSpeed = uploadSpeed))
+                    }
+                }
+
+                override fun finished(folder: File, files: List<com.nexonic.downloadmanager.torrent.TorrentFileInfo>) {
+                    synchronized(this@Downloads) { transfers.remove(id) }
+                    try {
+                        // Each file goes to Downloads (or the chosen folder), named after the torrent when it has several.
+                        var first: Publisher.Saved? = null
+                        for (f in files) {
+                            val source = File(folder, f.path)
+                            val base = f.path.substringAfterLast('/')
+                            val name = if (files.size == 1) base else FileNames.sanitize(info.name + " - " + base)
+                            val mime = android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(base.substringAfterLast('.', "").lowercase())
+                            val saved = Publisher.publish(app, source, name, mime, settings.categoryFolders, settings.saveTree)
+                            if (first == null) first = saved
+                        }
+                        update(id) {
+                            it.copy(status = Status.COMPLETE, written = info.selectedSize, size = info.selectedSize, speed = 0,
+                                fileName = if (files.size == 1) first!!.name else it.fileName,
+                                contentUri = first?.uri?.toString(), savedPath = first?.path, finishedAt = System.currentTimeMillis(), error = null)
+                        }
+                        folder.deleteRecursively(); torrentState(id).deleteRecursively()
+                        get(id)?.let { Notifier.finished(app, it) }
+                    } catch (e: Exception) {
+                        update(id) { it.copy(status = Status.FAILED, speed = 0, error = "Could not save to Downloads: ${e.message}") }
+                    }
+                    main.post { pump() }
+                }
+
+                override fun failed(message: String) {
+                    synchronized(this@Downloads) { transfers.remove(id) }
+                    update(id) { it.copy(status = Status.FAILED, error = message, speed = 0) }
+                    get(id)?.let { Notifier.failed(app, it) }
+                    main.post { pump() }
+                }
+            })
+        transfers[id] = job
+        update(id) { it.copy(status = Status.DOWNLOADING, error = null) }
+        job.start()
+    }
 
     @Synchronized private fun update(id: Long, save: Boolean = true, change: (DownloadItem) -> DownloadItem) {
         _items.value = _items.value.map { if (it.id == id) change(it) else it }
@@ -186,6 +255,7 @@ object Downloads {
             Thread.sleep(300)
             partFile(id).delete()
             videoDir(id).deleteRecursively()
+            torrentDir(id).deleteRecursively(); torrentState(id).deleteRecursively()
             if (deleteFile) item.contentUri?.let { Publisher.delete(app, it) }
         }
         pump()
@@ -284,6 +354,7 @@ object Downloads {
 
     private fun startTransfer(item: DownloadItem) {
         if (item.isVideo) return startVideo(item)
+        if (item.isTorrent) return startTorrent(item)
         val id = item.id
         val s = secrets.get(id)
         val request = DownloadRequest(item.url, s.cookies, item.referer, item.userAgent, s.user, s.password)

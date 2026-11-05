@@ -38,9 +38,17 @@ targets:
       - path: App
       # Translations shared with the Mac app (machine translations marked for review).
       - path: ../packaging/Localizations
+      # The torrent engine's Swift side, shared with the Mac app (built by scripts/build-torrent-apple.py --ios).
+      - path: ../mac/Sources/NexonicTorrent
     dependencies:
       - target: NexonicKit
       - target: NexonicShare
+      - framework: ../mac/Native/CNexonicTorrent.xcframework
+        embed: false
+      - sdk: Security.framework
+      - sdk: SystemConfiguration.framework
+      - sdk: libc++.tbd
+      - sdk: libresolv.tbd
     entitlements:
       path: App/Nexonic.entitlements
     settings:

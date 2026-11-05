@@ -8,6 +8,7 @@ final class AppModel {
     var speeds: [UUID: Int64] = [:]
     var tab: AppTab = .downloads
     var addInput: DownloadInput?
+    var torrentRequest: TorrentRequest?
     var showSetup = false
     var showPaste = false
     var toast: String?
@@ -88,6 +89,11 @@ final class AppModel {
 
     /// nexonic://download?url=… (used by the Shortcut guide) and web links opened with Nexonic.
     func open(_ url: URL) {
+        if url.scheme?.lowercased() == "magnet" { tab = .downloads; torrentRequest = TorrentRequest(source: url.absoluteString); return }
+        if url.isFileURL, url.pathExtension.lowercased() == "torrent" {
+            if let local = TorrentAddView.copyIn(url) { tab = .downloads; torrentRequest = TorrentRequest(source: local.path) }
+            return
+        }
         if url.scheme == "nexonic" {
             let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
             let links = items.filter { $0.name == "url" }.compactMap { $0.value.flatMap(Net.webURL) }
