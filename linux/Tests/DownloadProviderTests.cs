@@ -40,7 +40,7 @@ public sealed class DownloadProviderTests
         var task = new DownloadProviders().Create(record, context);
         await task.StartAsync();
         Assert.Equal(DownloadStatus.Failed, record.Status);
-        Assert.Contains("Enable", record.Error);
+        Assert.Contains("torrents first", record.Error);
         Assert.Null(record.SavedPath);
     }
 
