@@ -1,5 +1,6 @@
 import AppKit
 import NexonicCore
+import NexonicTorrent
 import SwiftUI
 
 @MainActor func chooseFolder(_ start: URL) -> URL? {
@@ -98,6 +99,13 @@ struct AddSheet: View {
     }
 
     private func add(start: Bool) {
+        // Torrent files, links and magnets open the Torrents window (file list, priorities, seeding) instead.
+        let torrents = lines.map(TorrentInbox.normalized).filter(TorrentSource.isTorrent)
+        if !torrents.isEmpty, torrents.count == lines.count {
+            close()
+            TorrentInbox.shared.source = torrents[0]
+            return
+        }
         var o = DownloadManager.AddOptions()
         o.folder = folder
         o.fileName = name.isEmpty ? nil : name
