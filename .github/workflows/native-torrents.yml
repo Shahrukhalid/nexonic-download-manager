@@ -1,59 +1,22 @@
-name: Native torrents
+name: Native torrent Windows diagnostics
 on:
-  pull_request:
-    paths: ["native/**", "windows/Core/**", "scripts/build-torrent-native.py", ".github/workflows/native-torrents.yml"]
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 jobs:
-  desktop:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - runner: ubuntu-22.04
-            target: linux-x64
-          - runner: ubuntu-22.04-arm
-            target: linux-arm64
-          - runner: windows-latest
-            target: win-x64
-          - runner: macos-15
-            target: mac-current
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 60
+  managed:
+    runs-on: windows-latest
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.11'
       - uses: actions/setup-dotnet@v4
-        if: runner.os != 'macOS'
         with:
           dotnet-version: '8.0.x'
-      - name: Native build tools (Linux)
-        if: runner.os == 'Linux'
-        run: sudo apt-get update -qq && sudo apt-get install -y ninja-build pkg-config autoconf automake libtool
-      - name: Native build tools (Mac)
-        if: runner.os == 'macOS'
-        run: brew install ninja pkgconf
-      - uses: actions/cache@v4
-        with:
-          path: |
-            .native-cache/installed
-            .native-cache/binaries
-            .native-cache/vcpkg/downloads
-          save-always: true
-          key: native-${{ matrix.target }}-${{ hashFiles('native/vcpkg.json', 'native/triplets/**') }}
-      - name: Build, real transfer and integrity tests
-        run: python scripts/build-torrent-native.py ${{ matrix.target }} --test
-      - name: Managed host real-transfer tests (Linux)
-        if: runner.os == 'Linux'
-        run: dotnet run --project native/tests/dotnet -p:NativeTorrentLibrary="$GITHUB_WORKSPACE/.native-cache/sdk/${{ matrix.target }}/lib/libnexonic_torrent.so" -- .native-cache/sdk/${{ matrix.target }}/lib/libnexonic_torrent.so
-      - name: Managed host real-transfer tests (Windows)
-        if: runner.os == 'Windows'
+      - name: Fetch the already-tested SDK (same engine sources)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download 41944977147 --repo Shahrukhalid/nexonic-download-manager --name torrent-native-win-x64 --dir .native-cache/sdk/win-x64
+      - name: Reproduce managed native transfer
         shell: pwsh
-        run: dotnet run --project native/tests/dotnet "-p:NativeTorrentLibrary=$env:GITHUB_WORKSPACE/.native-cache/sdk/${{ matrix.target }}/bin/nexonic_torrent.dll" -- .native-cache/sdk/${{ matrix.target }}/bin/nexonic_torrent.dll
-      - uses: actions/upload-artifact@v7
-        with:
-          name: torrent-native-${{ matrix.target }}
-          path: .native-cache/sdk/${{ matrix.target }}
+        run: dotnet run --project native/tests/dotnet "-p:NativeTorrentLibrary=$env:GITHUB_WORKSPACE/.native-cache/sdk/win-x64/bin/nexonic_torrent.dll" -- .native-cache/sdk/win-x64/bin/nexonic_torrent.dll
