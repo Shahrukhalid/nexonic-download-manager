@@ -299,6 +299,9 @@ public static class SiteVideo
         return (rest, file);
     }
 
+    /// <summary>Kept inside the saved file (needs ffmpeg): title, artist, date and description, and the video's chapters.</summary>
+    public static readonly string[] MediaDetails = { "--embed-metadata", "--embed-chapters" };
+
     /// <summary>The command for one video. folder gets the finished file, temp the partial one (so it can resume).</summary>
     public static List<string> Arguments(string url, string folder, string temp, string? ffmpeg, string? quickJs, bool audioOnly,
         string? referrer, string? cookies, string? userAgent, string? username, string? password, int speedLimitKBps, string? infoJson = null,
@@ -318,6 +321,7 @@ public static class SiteVideo
         if (quickJs != null) a.AddRange(new[] { "--js-runtimes", $"quickjs:{quickJs}" });
         if (ffmpeg != null) a.AddRange(new[] { "--ffmpeg-location", Path.GetDirectoryName(ffmpeg)! }); // folder: ffmpeg and ffprobe
         a.AddRange(Format(audioOnly, maxHeight));
+        if (ffmpeg != null) a.AddRange(MediaDetails);
         if (!string.IsNullOrEmpty(referrer)) a.AddRange(new[] { "--referer", referrer });
         if (!string.IsNullOrEmpty(userAgent)) a.AddRange(new[] { "--user-agent", userAgent });
         if (!string.IsNullOrEmpty(cookies)) a.AddRange(new[] { "--add-header", $"Cookie:{cookies}" });
