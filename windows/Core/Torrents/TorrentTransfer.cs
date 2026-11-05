@@ -15,7 +15,12 @@ public sealed class TorrentMetadata
     public bool Seed { get; set; }
     public double RatioLimit { get; set; } = 1;
     public int SeedSeconds { get; set; }
-    public int UploadLimitKBps { get; set; } = 32;
+    /// <summary>0 = no limit. Uploading is what earns fast downloads from other peers, so new torrents don't cap it.</summary>
+    public int UploadLimitKBps { get; set; }
+    /// <summary>Peers this torrent may connect to and upload to at once (0 = no limit), and pieces in order.</summary>
+    public int MaxConnections { get; set; } = 50;
+    public int MaxUploads { get; set; } = 4;
+    public bool Sequential { get; set; }
     public bool Dht { get; set; } = true;
     public List<string> Trackers { get; set; } = new();
     public long Uploaded { get; set; }
@@ -39,6 +44,37 @@ public sealed class TorrentMetadata
     public int Peers { get; set; }
     public int Seeds { get; set; }
     public int UploadRate { get; set; }
+    // What a BitTorrent client shows for a running torrent (refreshed by the engine).
+    public int Connections { get; set; }
+    public int SeedsTotal { get; set; } = -1;
+    public int PeersTotal { get; set; } = -1;
+    public double Availability { get; set; } = -1;
+    public long Downloaded { get; set; }
+    public int PiecesDone { get; set; }
+    public int PieceCount { get; set; }
+    public long PieceSize { get; set; }
+    public long ActiveSeconds { get; set; }
+    public List<TorrentTrackerStatus> TrackerStatus { get; set; } = new();
+    /// <summary>Engine settings for this torrent's limits, connections, seeding and order (-1 = no limit).</summary>
+    public Dictionary<string, object> EngineSettings() => new()
+    {
+        ["seed"] = Seed, ["ratio_limit"] = RatioLimit, ["seed_seconds"] = SeedSeconds,
+        ["upload_limit"] = (long)Math.Clamp(UploadLimitKBps, 0, 2000000) * 1024,
+        ["max_connections"] = MaxConnections <= 0 ? -1 : Math.Clamp(MaxConnections, 2, 10000),
+        ["max_uploads"] = MaxUploads <= 0 ? -1 : Math.Clamp(MaxUploads, 1, 10000), ["sequential"] = Sequential,
+    };
+}
+
+public sealed record TorrentTrackerStatus(string Url, bool Working, bool Updating, string Message, int Seeds, int Peers)
+{
+    public string Status => Updating ? "Updating…" : Message.Length > 0 ? Message : Working ? "Working" : "Not contacted yet";
+}
+
+public sealed record TorrentPeer(string Address, int Port, string Client, double Progress, long DownloadSpeed, long UploadSpeed,
+    long Downloaded, long Uploaded, bool Seed, bool Encrypted, bool Incoming, bool Utp)
+{
+    /// <summary>Flags as BitTorrent clients show them: E encrypted, I incoming, P µTP, S seed.</summary>
+    public string Flags => (Encrypted ? "E" : "") + (Incoming ? "I" : "") + (Utp ? "P" : "") + (Seed ? "S" : "");
 }
 
 /// <summary>Bundled native metadata previews; descriptor bytes never indicate content completion.</summary>
@@ -98,6 +134,21 @@ public static class TorrentRuntime
         finally { try { Directory.Delete(state, true); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
     }, cancellation);
 
+    /// <summary>Swarm, connection, piece and tracker details from an engine snapshot (missing fields are skipped).</summary>
+    internal static void ReadDetails(JsonElement e, TorrentMetadata t)
+    {
+        int Int(string name, int fallback) => e.TryGetProperty(name, out var v) && v.TryGetInt32(out var n) ? n : fallback;
+        long Long(string name) => e.TryGetProperty(name, out var v) && v.TryGetInt64(out var n) ? n : 0;
+        t.Connections = Int("connections", t.Peers); t.SeedsTotal = Int("seeds_total", -1); t.PeersTotal = Int("peers_total", -1);
+        t.Availability = e.TryGetProperty("availability", out var a) && a.TryGetDouble(out var d) ? d : -1;
+        t.Downloaded = Long("downloaded"); t.PiecesDone = Int("pieces_done", 0); t.PieceCount = Int("piece_count", 0);
+        t.PieceSize = Long("piece_size"); t.ActiveSeconds = Long("active_seconds");
+        if (e.TryGetProperty("tracker_status", out var list) && list.ValueKind == JsonValueKind.Array)
+            t.TrackerStatus = list.EnumerateArray().Select(x => new TorrentTrackerStatus(x.GetProperty("url").GetString() ?? "",
+                x.GetProperty("working").GetBoolean(), x.GetProperty("updating").GetBoolean(), x.GetProperty("message").GetString() ?? "",
+                x.GetProperty("seeds").GetInt32(), x.GetProperty("peers").GetInt32())).ToList();
+    }
+
     internal static TorrentMetadata ReadMetadata(JsonElement e)
     {
         var files = e.GetProperty("files").EnumerateArray().Select(f => new TorrentFile(
@@ -119,6 +170,41 @@ public sealed class TorrentTransfer : IDownloader
     static readonly System.Runtime.CompilerServices.ConditionalWeakTable<DownloadRecord, SemaphoreSlim> workers = new();
     readonly DownloadContext context;
     bool discarded;
+    NativeTorrentSession? active;
+    NativeTorrentSession? Running { get { lock (gate) return active; } }
+    /// <summary>Applies new limits, connections, seeding, file priorities and trackers to the running torrent.
+    /// False when it isn't running (the settings are then used when it starts).</summary>
+    public bool Apply(TorrentMetadata settings, int downloadLimitKBps, IReadOnlyList<int>? priorities = null, IReadOnlyList<string>? trackers = null)
+    {
+        if (Running is not { } engine) return false;
+        var request = settings.EngineSettings();
+        request["action"] = "configure"; request["id"] = "payload";
+        request["download_limit"] = (long)TorrentRuntime.DownloadLimit(downloadLimitKBps, context.GlobalSpeedLimitKBps) * 1024;
+        if (priorities != null) request["priorities"] = priorities;
+        if (trackers != null) request["trackers"] = trackers;
+        try { engine.Invoke(request); return true; }
+        catch (ObjectDisposedException) { return false; }
+    }
+    /// <summary>Connected peers of the running torrent.</summary>
+    public IReadOnlyList<TorrentPeer> Peers()
+    {
+        if (Running is not { } engine) return Array.Empty<TorrentPeer>();
+        try
+        {
+            return engine.Invoke(new { action = "peers", id = "payload" }).GetProperty("peers").EnumerateArray().Select(p => new TorrentPeer(
+                p.GetProperty("address").GetString() ?? "", p.GetProperty("port").GetInt32(), p.GetProperty("client").GetString() ?? "",
+                p.GetProperty("progress").GetDouble(), p.GetProperty("download_speed").GetInt64(), p.GetProperty("upload_speed").GetInt64(),
+                p.GetProperty("downloaded").GetInt64(), p.GetProperty("uploaded").GetInt64(), p.GetProperty("seed").GetBoolean(),
+                p.GetProperty("encrypted").GetBoolean(), p.GetProperty("incoming").GetBoolean(), p.GetProperty("utp").GetBoolean())).ToList();
+        }
+        catch (Exception e) when (e is ObjectDisposedException or InvalidOperationException or KeyNotFoundException) { return Array.Empty<TorrentPeer>(); }
+    }
+    /// <summary>Asks the trackers and DHT for more peers now.</summary>
+    public void Reannounce()
+    {
+        try { Running?.Invoke(new { action = "reannounce", id = "payload" }); }
+        catch (Exception e) when (e is ObjectDisposedException or InvalidOperationException) { }
+    }
     string ResumePath => Path.Combine(AppPaths.Parts, Record.Id.ToString("N"), "torrent.resume");
     readonly CancellationTokenSource cancellation = new();
     public TorrentTransfer(DownloadRecord record, DownloadContext context) { Record = record; this.context = context; }
@@ -171,11 +257,14 @@ public sealed class TorrentTransfer : IDownloader
                 catch (Exception e) when (e is IOException or FormatException or UnauthorizedAccessException) { }
             }
             cancellation.Token.ThrowIfCancellationRequested();
-            engine = new NativeTorrentSession(state, dht: torrent.Dht, proxy: TorrentRuntime.Proxy(context.Proxy));
-            engine.Invoke(new { action = "add", id = "payload", source = Record.Url, metainfo = torrent.Metainfo, preview = false,
-                destination = folder, priorities, seed = torrent.Seed, ratio_limit = torrent.RatioLimit, seed_seconds = torrent.SeedSeconds,
-                download_limit = (long)TorrentRuntime.DownloadLimit(Record.SpeedLimitKBps, context.GlobalSpeedLimitKBps) * 1024,
-                upload_limit = (long)Math.Clamp(torrent.UploadLimitKBps, 0, 2000000) * 1024, trackers = torrent.Trackers });
+            engine = new NativeTorrentSession(state, dht: torrent.Dht, proxy: TorrentRuntime.Proxy(context.Proxy),
+                portForwarding: context.TorrentPortForwarding, encryption: context.TorrentEncryption);
+            var add = torrent.EngineSettings();
+            add["action"] = "add"; add["id"] = "payload"; add["source"] = Record.Url; add["metainfo"] = torrent.Metainfo; add["preview"] = false;
+            add["destination"] = folder; add["priorities"] = priorities; add["trackers"] = torrent.Trackers;
+            add["download_limit"] = (long)TorrentRuntime.DownloadLimit(Record.SpeedLimitKBps, context.GlobalSpeedLimitKBps) * 1024;
+            engine.Invoke(add);
+            lock (gate) active = engine;
             var snapshot = engine.Invoke(new { action = "resume", id = "payload" });
             torrent.ResumeStatus = File.Exists(checkpoint) ? "Resume checkpoint loaded; native pieces verified" : "Checking existing pieces";
             while (true)
@@ -194,6 +283,7 @@ public sealed class TorrentTransfer : IDownloader
                     torrent.UploadRate = snapshot.GetProperty("upload_speed").GetInt32(); torrent.DownloadRate = snapshot.GetProperty("download_speed").GetInt64();
                     torrent.Uploaded = snapshot.GetProperty("uploaded").GetInt64(); torrent.Eta = snapshot.GetProperty("eta").GetInt64(); torrent.Ratio = snapshot.GetProperty("ratio").GetDouble();
                     torrent.PayloadComplete = snapshot.GetProperty("payload_complete").GetBoolean();
+                    TorrentRuntime.ReadDetails(snapshot, torrent);
                     Record.Status = status == "seeding" ? DownloadStatus.Seeding : status == "complete" ? DownloadStatus.Finished
                         : status is "checking" or "verifying" ? DownloadStatus.Probing : DownloadStatus.Downloading;
                     if (torrent.PayloadComplete)
@@ -221,6 +311,7 @@ public sealed class TorrentTransfer : IDownloader
         }
         finally
         {
+            lock (gate) active = null;
             if (engine != null)
             {
                 try
@@ -240,6 +331,19 @@ public sealed class TorrentTransfer : IDownloader
 
 public static class TorrentText
 {
+    static string Count(int connected, int total) => total >= 0 ? $"{connected} ({total})" : connected.ToString();
+    /// <summary>A BitTorrent client's General tab as text.</summary>
+    public static string Details(TorrentMetadata t, bool running) => string.Join("\n", new[]
+    {
+        $"Downloaded {Bytes(t.Downloaded > 0 ? t.Downloaded : t.Received)} · Uploaded {Bytes(t.Uploaded)} · Ratio {t.Ratio:0.000}",
+        running ? $"Download {Bytes(t.DownloadRate)}/s · Upload {Bytes(t.UploadRate)}/s" + (t.Eta > 0 ? $" · Time left {TimeSpan.FromSeconds(Math.Min(t.Eta, 8553600)):g}" : "") : "Stopped",
+        $"Seeds {Count(t.Seeds, t.SeedsTotal)} · Peers {Count(Math.Max(0, t.Peers - t.Seeds), t.PeersTotal)} · Connections {t.Connections}" + (t.MaxConnections > 0 ? $" of {t.MaxConnections}" : ""),
+        (t.PieceCount > 0 ? $"Pieces {t.PiecesDone} of {t.PieceCount} × {Bytes(t.PieceSize)}" : "Pieces –") + (t.Availability >= 0 ? $" · Availability {t.Availability:0.000}" : "")
+            + (t.ActiveSeconds > 0 ? $" · Active {TimeSpan.FromSeconds(t.ActiveSeconds):g}" : ""),
+        $"Upload limit {(t.UploadLimitKBps > 0 ? t.UploadLimitKBps + " KB/s" : "none")} · Upload slots {(t.MaxUploads > 0 ? t.MaxUploads.ToString() : "no limit")}" + (t.Sequential ? " · In order" : ""),
+        "Hash " + t.InfoHash,
+    });
+    static string Bytes(long n) { string[] u = { "B", "KB", "MB", "GB", "TB" }; double v = n; int i = 0; while (v >= 1024 && i < u.Length - 1) { v /= 1024; i++; } return i == 0 ? $"{n} B" : $"{v:0.0} {u[i]}"; }
     public static string Summary(TorrentMetadata t) => $"{t.Peers} peers · {t.Seeds} seeds · ↓ {t.DownloadRate / 1024d:0.0} KiB/s · ↑ {t.UploadRate / 1024d:0.0} KiB/s · Ratio {t.Ratio:0.00}"
         + (t.Eta >= 0 ? $" · ETA {TimeSpan.FromSeconds(Math.Min(t.Eta, 8553600)):g}" : "")
         + (t.PayloadComplete ? " · Pieces and SHA-256 verified" : "");

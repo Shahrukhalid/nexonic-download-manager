@@ -15,12 +15,14 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // A .torrent file or magnet link the app was opened with goes to the running copy (or this one) to show.
+        var torrents = TorrentInbox.Drop(e.Args);
         single = new Mutex(true, "Nexonic.DownloadManager.Single", out var first);
         if (!first)
         {
             // Another copy runs: wake it (it adds the new downloads and shows its window) and quit. Never open a second window.
             // One byte tells the running copy why it was woken: 'i' = new downloads from the browser, 's' = the user opened the app.
-            var why = e.Args.Contains("--inbox") ? (byte)'i' : (byte)'s';
+            var why = e.Args.Contains("--inbox") && torrents == 0 ? (byte)'i' : (byte)'s';
             for (var attempt = 0; attempt < 5; attempt++)
             {
                 try { using var c = new NamedPipeClientStream(".", PipeName, PipeDirection.Out, PipeOptions.CurrentUserOnly); c.Connect(1500); c.WriteByte(why); c.Flush(); break; }
@@ -38,6 +40,8 @@ public partial class App : Application
         // Started by the browser helper: stay in the tray unless the user wants the window for browser downloads.
         if (!e.Args.Contains("--inbox") || manager.Settings.BringToFrontOnBrowserDownload) window.Show();
         manager.DownloadDialogRequested += job => DownloadWindows.ShowInfo(manager, job);
+        manager.TorrentRequested += source => { ShowWindow(); Dialogs.Torrent(window!, manager, source, DownloadQueue.MainId); };
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ApplicationIdle, new Action(manager.CollectTorrents));
         manager.ProgressRequested += row => DownloadWindows.ShowProgress(manager, row);
         manager.ShowRequested += ShowWindow;
         tray = new System.Windows.Forms.NotifyIcon

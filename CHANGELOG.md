@@ -1,3 +1,18 @@
+## 0.12.0
+
+- **Windows and Linux: torrent details like a BitTorrent client.** The Torrent Manager shows downloaded and uploaded
+  amounts, speeds, seeds and peers (connected and in the swarm), connections, pieces, availability and time active.
+  New **Peers** (IP, client, flags, progress, speeds) and **Trackers** (status, seeds, peers, Update Tracker) windows.
+- **Windows and Linux: Torrent Settings take effect right away** on a running torrent: download and upload limits,
+  connections per torrent, upload slots, download pieces in order, seeding, trackers and file priorities.
+- **Windows and Linux: Torrent Network settings:** router port forwarding (UPnP and NAT-PMP, off by default) and
+  encryption.
+- **Windows and Linux: open torrents from anywhere.** Double-click a `.torrent` file or click a magnet link and the
+  Add Torrent window opens (Windows registers them for the app unless another program already handles them; it is
+  always listed under "Open with").
+- **Faster torrents:** new torrents no longer cap uploading at 32 KB/s. Peers send faster to those who upload, as in
+  other BitTorrent clients. Set an upload limit per torrent if you need one.
+
 ## 0.11.4
 
 - **Mac: a toolbar like IDM's.** Large coloured buttons with their names: Add URL, Torrent, Resume, Stop, Stop All,

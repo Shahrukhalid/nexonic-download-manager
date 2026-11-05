@@ -19,7 +19,8 @@ public static class SmartDownload
 
 public sealed record ProviderCapabilities(bool PauseResume, bool PieceVerification, bool PeerStatistics, bool SharedSpeedLimit);
 public sealed record DownloadContext(int Connections, SpeedLimiter Limiter, bool CategoryFolders,
-    ProxySettings Proxy, TransferOptions Options, bool TorrentsEnabled = false, int GlobalSpeedLimitKBps = 0);
+    ProxySettings Proxy, TransferOptions Options, bool TorrentsEnabled = false, int GlobalSpeedLimitKBps = 0,
+    bool TorrentPortForwarding = false, string TorrentEncryption = "prefer");
 
 /// <summary>Every provider returns the existing IDownloader task used by queues and progress windows.</summary>
 public interface IDownloadProvider

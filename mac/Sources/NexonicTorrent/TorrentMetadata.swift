@@ -101,7 +101,8 @@ public struct TorrentOptions: Codable, Equatable, Sendable {
     public var seed = false
     public var ratioLimit = 1.0
     public var seedSeconds = 0
-    public var uploadLimitKBps = 32
+    /// 0 = no limit. Peers send faster to those who upload, so new torrents don't cap uploading (like BitTorrent clients).
+    public var uploadLimitKBps = 0
     public var dht = true
     /// Connections and upload slots for this torrent; 0 means no limit.
     public var maxConnections = 50

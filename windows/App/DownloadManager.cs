@@ -197,14 +197,56 @@ public sealed partial class DownloadManager
         Save();
     }
 
+    /// <summary>Saves a torrent's limits, connections, seeding, file priorities and trackers. A running torrent takes them
+    /// right away; a stopped one uses them when it starts.</summary>
+    public void ApplyTorrentSettings(Row row, TorrentMetadata settings, int limitKBps, IReadOnlyList<int> priorities, List<string> trackers)
+    {
+        var torrent = row.Record.Torrent ?? throw new ArgumentException("This is not a torrent.");
+        var candidate = new TorrentMetadata { Files = torrent.Files, FilePriorities = priorities.ToList() };
+        var selectedSize = candidate.SelectedSize;
+        var changed = !torrent.Priorities().SequenceEqual(candidate.Priorities());
+        var trackersChanged = !trackers.SequenceEqual(torrent.Trackers);
+        torrent.Seed = settings.Seed; torrent.Dht = settings.Dht; torrent.RatioLimit = settings.RatioLimit; torrent.SeedSeconds = settings.SeedSeconds;
+        torrent.UploadLimitKBps = settings.UploadLimitKBps; torrent.MaxConnections = settings.MaxConnections; torrent.MaxUploads = settings.MaxUploads;
+        torrent.Sequential = settings.Sequential; torrent.Trackers = trackers;
+        row.Record.SpeedLimitKBps = limitKBps;
+        if (transfers.TryGetValue(row.Record.Id, out var t) && t is TorrentTransfer running
+            && running.Apply(torrent, limitKBps, changed ? candidate.Priorities() : null, trackersChanged ? trackers : null))
+        {
+            torrent.FilePriorities = candidate.FilePriorities;
+            if (changed) { torrent.CompletionNotified = false; row.Record.Size = selectedSize; }
+            row.Refresh(); Save();
+            return;
+        }
+        if (changed) SetTorrentPriorities(row, priorities);
+        else { row.Refresh(); Save(); }
+    }
+
+    /// <summary>Connected peers of a running torrent.</summary>
+    public IReadOnlyList<TorrentPeer> TorrentPeers(Row row) =>
+        transfers.TryGetValue(row.Record.Id, out var t) && t is TorrentTransfer running ? running.Peers() : Array.Empty<TorrentPeer>();
+    /// <summary>Asks the trackers and DHT for more peers now.</summary>
+    public void Reannounce(Row row) { if (transfers.TryGetValue(row.Record.Id, out var t) && t is TorrentTransfer running) running.Reannounce(); }
+    public bool IsRunning(Row row) => transfers.ContainsKey(row.Record.Id);
+
     static string? NullIfEmpty(string s) => string.IsNullOrEmpty(s) ? null : s;
 
     /// <summary>
     /// Downloads handed over by the browser extension and the ndm command. A link clicked in the browser opens the
     /// download window (unless turned off); the same link already downloading is never added twice.
     /// </summary>
+    /// <summary>A .torrent file or magnet link opened from outside the app, to show in the Add Torrent window.</summary>
+    public event Action<string>? TorrentRequested;
+    /// <summary>Shows the Add Torrent window for each torrent opened from the file manager or a browser.</summary>
+    public void CollectTorrents()
+    {
+        if (TorrentRequested == null) return;
+        foreach (var source in TorrentInbox.Collect()) TorrentRequested(source);
+    }
+
     public void CollectInbox()
     {
+        CollectTorrents();
         var browser = false;
         foreach (var j in new Inbox().Collect())
         {
@@ -440,7 +482,8 @@ public sealed partial class DownloadManager
                 var proxy = profile?.Proxy ?? Settings.Proxy;
                 var connections = Math.Clamp(profile?.MaxConnections ?? Settings.Connections, 1, 32);
                 var context = new DownloadContext(connections, limiter, Settings.SortIntoCategoryFolders, proxy,
-                    TransferOptions.From(Network.Options, profile), Settings.TorrentsEnabled, Settings.SpeedLimitKBps);
+                    TransferOptions.From(Network.Options, profile), Settings.TorrentsEnabled, Settings.SpeedLimitKBps,
+                    Settings.TorrentPortForwarding, Settings.TorrentEncryption);
                 var t = new DownloadProviders().Create(row.Record, context);
                 transfers[row.Record.Id] = t;
                 row.Record.Status = DownloadStatus.Probing;

@@ -86,7 +86,8 @@ public static partial class Dialogs
                 if (!Path.IsPathFullyQualified(destination)) { error.Text = "Choose an absolute destination folder."; return; }
                 var limit = options.Save(draft);
                 metadata.Seed = draft.Seed; metadata.Dht = draft.Dht; metadata.RatioLimit = draft.RatioLimit; metadata.SeedSeconds = draft.SeedSeconds;
-                metadata.UploadLimitKBps = draft.UploadLimitKBps;
+                metadata.UploadLimitKBps = draft.UploadLimitKBps; metadata.MaxConnections = draft.MaxConnections;
+                metadata.MaxUploads = draft.MaxUploads; metadata.Sequential = draft.Sequential;
                 if (draft.Trackers.Count > 0) metadata.Trackers = draft.Trackers;
                 manager.AddTorrent(previewSource, metadata, new AddOptions { Folder = destination,
                     QueueId = Form.QueueId(queue), Start = start, SpeedLimitKBps = limit });
@@ -102,7 +103,7 @@ public static partial class Dialogs
     {
         if (row.Record.Torrent is not { MetadataPending: false } torrent) return;
         var f = new Form(owner, "Torrent Files and Settings", 700);
-        f.Note($"{torrent.Name} · {Row.Bytes(torrent.Size)} total\nChanging the selection pauses this torrent. Resume it when ready; existing files stay on disk. " +
+        f.Note($"{torrent.Name} · {Row.Bytes(torrent.Size)} total\nA running torrent takes the changes right away; existing files stay on disk. " +
                "Skipping a file can still require boundary pieces shared with selected files.");
         var selection = f.Field("Files and priorities", new TorrentFileSelection());
         selection.Load(torrent);
@@ -110,18 +111,15 @@ public static partial class Dialogs
         var options = new NativeTorrentOptionsForm(f, torrent, row.Record.SpeedLimitKBps ?? 0);
         var error = f.Error();
         f.AddButton("Cancel", f.Close, isCancel: true);
-        f.AddButton("Save and Pause", () =>
+        f.AddButton("Save", () =>
         {
             try
             {
                 var draft = new TorrentMetadata(); var limit = options.Save(draft);
-                manager.SetTorrentPriorities(row, selection.Priorities);
-                torrent.Seed = draft.Seed; torrent.Dht = draft.Dht; torrent.RatioLimit = draft.RatioLimit;
-                torrent.UploadLimitKBps = draft.UploadLimitKBps; torrent.SeedSeconds = draft.SeedSeconds; torrent.Trackers = draft.Trackers;
-                row.Record.SpeedLimitKBps = limit; manager.Save(); f.Close();
+                manager.ApplyTorrentSettings(row, draft, limit, selection.Priorities, draft.Trackers); f.Close();
             }
             catch (Exception e) { error.Text = e.Message; }
-        });
+        }, isDefault: true);
         await f.Show();
     }
 

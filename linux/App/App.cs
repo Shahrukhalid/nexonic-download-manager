@@ -64,6 +64,7 @@ public sealed class App : Application
         // Started by the browser helper: stay in the tray unless the user wants the window for browser downloads.
         if (!StartedForInbox || m.Settings.BringToFrontOnBrowserDownload) window.Show();
         m.DownloadDialogRequested += job => DownloadWindows.ShowInfo(m, job);
+        m.TorrentRequested += source => { ShowWindow(); _ = Dialogs.Torrent(window, m, source, DownloadQueue.MainId); };
         m.ProgressRequested += row => DownloadWindows.ShowProgress(m, row);
         m.ShowRequested += ShowWindow;
         m.Notify += (title, body) => { if (m.Settings.Notifications) LinuxSystem.Notify(title, body, IconPath); };

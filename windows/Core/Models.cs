@@ -164,6 +164,10 @@ public sealed class AppSettings
 {
     /// <summary>Bundled native libtorrent engine; off for existing and new installations.</summary>
     public bool TorrentsEnabled { get; set; }
+    /// <summary>Ask the router to forward the torrent port (UPnP and NAT-PMP); off unless turned on.</summary>
+    public bool TorrentPortForwarding { get; set; }
+    /// <summary>Torrent peer encryption: prefer, require or off.</summary>
+    public string TorrentEncryption { get; set; } = "prefer";
     public int Connections { get; set; } = 8;
     public int MaxActive { get; set; } = 3;
     public int SpeedLimitKBps { get; set; }

@@ -218,7 +218,7 @@ struct Job {
     bool preview = true, running = false, verified = false, verifying = false, notified_check = false;
     bool seed = false, checkpoint_pending = false;
     double ratio_limit = 1.0;
-    int download_limit = 0, upload_limit = 32768, seed_seconds = 0, max_connections = -1, max_uploads = -1;
+    int download_limit = 0, upload_limit = 0, seed_seconds = 0, max_connections = -1, max_uploads = -1;
     bool sequential = false;
     json hashes = json::object();
     Clock::time_point last_save = Clock::now();

@@ -113,6 +113,37 @@ public sealed class DownloadProviderTests
     }
 }
 
+public sealed class TorrentInboxTests
+{
+    [Fact]
+    public void OnlyMagnetsAndExistingTorrentFilesAreAccepted()
+    {
+        using var temp = new TempHome();
+        var file = Path.Combine(temp.Path, "linux.torrent");
+        File.WriteAllBytes(file, new byte[] { 100, 101 });
+        Assert.Equal("magnet:?xt=urn:btih:abc", TorrentInbox.Source(" magnet:?xt=urn:btih:abc "));
+        Assert.Equal(file, TorrentInbox.Source(file));
+        Assert.Equal(file, TorrentInbox.Source(new Uri(file).AbsoluteUri));
+        Assert.Null(TorrentInbox.Source(Path.Combine(temp.Path, "missing.torrent")));
+        Assert.Null(TorrentInbox.Source("https://example.org/file.zip"));
+        Assert.Null(TorrentInbox.Source("relative.torrent"));
+    }
+
+    [Fact]
+    public void DetailsReadLikeABitTorrentClient()
+    {
+        var t = new TorrentMetadata { InfoHash = "abc", Seeds = 2, Peers = 5, SeedsTotal = 40, PeersTotal = 90, Connections = 5, MaxConnections = 50,
+            PiecesDone = 3, PieceCount = 10, PieceSize = 16384, Availability = 1.5, Downloaded = 2048, MaxUploads = 4 };
+        var text = TorrentText.Details(t, running: true);
+        Assert.Contains("Seeds 2 (40)", text);
+        Assert.Contains("Peers 3 (90)", text);
+        Assert.Contains("Connections 5 of 50", text);
+        Assert.Contains("Pieces 3 of 10", text);
+        Assert.Equal(-1, new TorrentMetadata { MaxConnections = 0 }.EngineSettings()["max_connections"]);
+        Assert.Equal(0L, new TorrentMetadata().EngineSettings()["upload_limit"]);
+    }
+}
+
 public sealed class LinuxTorrentFactAttribute : FactAttribute
 {
     public LinuxTorrentFactAttribute() { if (!OperatingSystem.IsLinux()) Skip = "Requires a bundled native Linux engine; exercised by both Linux CI architectures."; }

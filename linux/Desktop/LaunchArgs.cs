@@ -61,7 +61,9 @@ public static class LaunchArgs
     /// <summary>Puts the links into the inbox; the running app picks them up (the Add window or the list).</summary>
     public static int Drop(IEnumerable<string> args)
     {
-        var n = 0;
+        var list = args.ToList();
+        var n = TorrentInbox.Drop(list);  // .torrent files and magnet links open in the Add Torrent window
+        args = list.Where(a => TorrentInbox.Source(a) == null);
         foreach (var link in Links(args))
         {
             try { new Inbox().Drop(new DownloadJob(link)); n++; } catch { }

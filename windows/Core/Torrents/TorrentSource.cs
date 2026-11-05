@@ -43,3 +43,63 @@ public static class TorrentSource
         finally { response?.Dispose(); }
     }
 }
+
+/// <summary>Torrents handed to the app from outside: a .torrent file opened from the file manager or a magnet link
+/// clicked in a browser. A second start of the app drops them here and wakes the running copy, which shows the Add
+/// Torrent window for each.</summary>
+public static class TorrentInbox
+{
+    static string Folder => Path.Combine(AppPaths.Support, "Torrent inbox");
+
+    /// <summary>A magnet link or a local .torrent file (path or file:// link), normalised; null for anything else.</summary>
+    public static string? Source(string arg)
+    {
+        var text = (arg ?? "").Trim();
+        if (text.Length is 0 or > 32768) return null;
+        if (text.StartsWith("magnet:?", StringComparison.OrdinalIgnoreCase)) return text;
+        if (text.StartsWith("file://", StringComparison.OrdinalIgnoreCase) && Uri.TryCreate(text, UriKind.Absolute, out var u) && u.IsFile) text = u.LocalPath;
+        return Path.IsPathFullyQualified(text) && text.EndsWith(".torrent", StringComparison.OrdinalIgnoreCase) && File.Exists(text) ? text : null;
+    }
+
+    /// <summary>Saves the torrents among the arguments for the running app; returns how many.</summary>
+    public static int Drop(IEnumerable<string> args)
+    {
+        var n = 0;
+        foreach (var source in args.Select(Source).OfType<string>().Take(20))
+        {
+            try
+            {
+                Directory.CreateDirectory(Folder);
+                var tmp = Path.Combine(Folder, $"{DateTime.UtcNow.Ticks:D20}-{Guid.NewGuid():N}.tmp");
+                File.WriteAllText(tmp, source);
+                File.Move(tmp, Path.ChangeExtension(tmp, ".txt"));
+                n++;
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
+        return n;
+    }
+
+    /// <summary>Takes the waiting torrents, oldest first.</summary>
+    public static List<string> Collect()
+    {
+        var found = new List<string>();
+        try
+        {
+            if (!Directory.Exists(Folder)) return found;
+            foreach (var file in Directory.GetFiles(Folder, "*.txt").OrderBy(f => f, StringComparer.Ordinal).Take(20))
+            {
+                try
+                {
+                    var text = new FileInfo(file).Length <= 40000 ? File.ReadAllText(file) : "";
+                    File.Delete(file);
+                    if (Source(text) is { } source) found.Add(source);
+                }
+                catch (IOException) { }
+            }
+        }
+        catch (UnauthorizedAccessException) { }
+        return found;
+    }
+}

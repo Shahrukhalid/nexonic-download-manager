@@ -8,5 +8,5 @@ Icon=nexonic-download-manager
 Terminal=false
 Categories=Network;FileTransfer;
 Keywords=download;manager;video;queue;resume;
-MimeType=x-scheme-handler/nexonic;text/x-uri;application/x-mswinurl;
+MimeType=x-scheme-handler/nexonic;text/x-uri;application/x-mswinurl;application/x-bittorrent;x-scheme-handler/magnet;
 StartupWMClass=NexonicDownloadManager

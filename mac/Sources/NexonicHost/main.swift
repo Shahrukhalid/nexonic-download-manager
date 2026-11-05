@@ -2,7 +2,7 @@ import Foundation
 import NexonicCore
 
 // Browser helper (native messaging) and the `ndm` command line: both hand downloads to the app through the inbox.
-let version = "0.11.4"
+let version = "0.12.0"
 
 func openApp(_ url: String) {
     let p = Process()
