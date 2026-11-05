@@ -69,6 +69,7 @@ struct ContentView: View {
     @State private var openAll = true
     @State private var openUnfinished = false
     @State private var openFinished = false
+    @AppStorage("showToolbar") private var showToolbar = true
 
     private func row(_ f: SidebarFilter) -> some View {
         Label(f.title(manager), systemImage: icon(f)).badge(count(f)).tag(f)
@@ -118,6 +119,11 @@ struct ContentView: View {
             .navigationSplitViewColumnWidth(min: 180, ideal: 200)
         } detail: {
             VStack(spacing: 0) {
+                if showToolbar {
+                    MainToolbar(hasSelection: !selection.isEmpty, hasItems: !shown.isEmpty, allSelected: allSelected,
+                                queueName: manager.queueName(currentQueue), perform: perform)
+                    Divider()
+                }
                 if shown.isEmpty { emptyState } else { table }
                 if selection.count == 1, let id = selection.first, let item = manager.items.first(where: { $0.id == id }) {
                     Divider()
@@ -132,12 +138,16 @@ struct ContentView: View {
             }
             .searchable(text: $search, placement: .toolbar, prompt: "Search downloads")
             .navigationTitle(filter.title(manager))
-            .toolbar { toolbar }
         }
         .tint(brand)
         .sheet(item: $sheet) { s in sheetView(s).environmentObject(manager) }
         .onChange(of: manager.addRequest?.id) { _ in
             if let r = manager.addRequest { sheet = .add(r) }
+        }
+        .onReceive(MainActions.shared.$pending) { action in
+            guard let action else { return }
+            MainActions.shared.pending = nil
+            perform(action)
         }
         .onOpenURL { url in if !TorrentInbox.shared.accept(url) { manager.collectInbox() } }
         .onReceive(TorrentInbox.shared.$source) { source in
@@ -227,47 +237,28 @@ struct ContentView: View {
         .padding(40)
     }
 
-    @ToolbarContentBuilder private var toolbar: some ToolbarContent {
-        ToolbarItemGroup {
-            Button { sheet = .add(AddRequest(links: clipboardLink(), queueID: currentQueue)) } label: {
-                Label("Add URL", systemImage: "plus.circle")
-            }
-            .keyboardShortcut("n")
-            .help("Add one or more links")
-            Button { selection.forEach(manager.resume) } label: { Label("Resume", systemImage: "play.fill") }
-                .disabled(selection.isEmpty).help("Resume the selected downloads")
-            Button { selection.forEach(manager.pause) } label: { Label("Stop", systemImage: "pause.fill") }
-                .disabled(selection.isEmpty).help("Stop the selected downloads")
-            Button { manager.pauseAll() } label: { Label("Stop All", systemImage: "stop.fill") }.help("Stop every download")
-            Button { toggleSelectAll() } label: {
-                Label(allSelected ? "Select None" : "Select All", systemImage: allSelected ? "checklist.unchecked" : "checklist.checked")
-            }
-            .disabled(shown.isEmpty).help(allSelected ? "Deselect all downloads" : "Select every download in this list")
-            Button { confirmDelete(selection) } label: { Label("Delete", systemImage: "trash") }
-                .disabled(selection.isEmpty).help("Remove the selected downloads from the list")
-            Button { confirmClearFinished() } label: { Label("Delete Completed", systemImage: "checkmark.circle") }
-                .help("Remove finished downloads from the list")
-        }
-        ToolbarItemGroup {
-            Button { sheet = .scheduler(currentQueue) } label: { Label("Scheduler", systemImage: "calendar.badge.clock") }
-                .help("Queues and timetables")
-            Button { manager.startQueue(currentQueue) } label: { Label("Start Queue", systemImage: "play.circle") }
-                .help("Start \(manager.queueName(currentQueue))")
-            Button { manager.stopQueue(currentQueue) } label: { Label("Stop Queue", systemImage: "stop.circle") }
-                .help("Stop \(manager.queueName(currentQueue))")
-            Button { sheet = .grabber } label: { Label("Grabber", systemImage: "globe") }.help("Download files from a website section")
-            Button { sheet = .batch } label: { Label("Batch", systemImage: "number") }.help("Download a numbered series of files")
-            Button { sheet = .torrent(TorrentSource.isTorrent(clipboardLink()) ? clipboardLink() : "") } label: {
-                Label("Torrents", systemImage: "arrow.down.circle.dotted")
-            }
-            .help("Add a .torrent file, torrent link or magnet")
-            if #available(macOS 14, *) {
-                SettingsLink { Label("Options", systemImage: "gearshape") }.help("Options")
-            } else {
-                Button { NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) } label: {
-                    Label("Options", systemImage: "gearshape")
-                }
-            }
+    /// Runs a toolbar or menu command on the current list and selection.
+    private func perform(_ action: MainAction) {
+        let one = selection.count == 1 ? selection.first : nil
+        switch action {
+        case .addURL: sheet = .add(AddRequest(links: clipboardLink(), queueID: currentQueue))
+        case .addTorrent: sheet = .torrent(TorrentSource.isTorrent(clipboardLink()) ? clipboardLink() : "")
+        case .batch: sheet = .batch
+        case .grabber: sheet = .grabber
+        case .scheduler: sheet = .scheduler(currentQueue)
+        case .resume: selection.forEach(manager.resume)
+        case .stop: selection.forEach(manager.pause)
+        case .stopAll: manager.pauseAll()
+        case .resumeAll: manager.resumeAll()
+        case .delete: confirmDelete(selection)
+        case .deleteCompleted: confirmClearFinished()
+        case .selectAll: toggleSelectAll()
+        case .startQueue: manager.startQueue(currentQueue)
+        case .stopQueue: manager.stopQueue(currentQueue)
+        case .open: if let one { manager.open(one) }
+        case .showInFinder: if let one { manager.reveal(one) }
+        case .properties:
+            if let one { sheet = manager.items.first(where: { $0.id == one })?.torrent != nil ? .torrentSettings(one) : .properties(one) }
         }
     }
 

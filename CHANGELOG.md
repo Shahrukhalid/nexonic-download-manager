@@ -1,3 +1,12 @@
+## 0.11.4
+
+- **Mac: a toolbar like IDM's.** Large coloured buttons with their names: Add URL, Torrent, Resume, Stop, Stop All,
+  Select All, Delete, Delete Completed, Scheduler, Start Queue, Stop Queue, Grabber, Batch and Options. Turn the
+  buttons or their names off under View.
+- **Mac: menus for every command.** File has Add URL, Add Torrent, Add Batch Download and Site Grabber; a new
+  Downloads menu has Resume, Stop, Resume All, Stop All, Open, Show in Finder, Properties, Delete, Delete Completed,
+  Scheduler and the queue commands, with keyboard shortcuts.
+
 ## 0.11.3
 
 - **Fixed: torrents wouldn't load** with the message "Torrents require No proxy". The default proxy setting ("Use the

@@ -18,10 +18,7 @@ struct NexonicDownloadManagerApp: App {
         }
         .commands {
             AppCommands()
-            CommandGroup(after: .newItem) {
-                Button("Stop All") { manager.pauseAll() }.keyboardShortcut("p", modifiers: [.command, .shift])
-                Button("Resume All") { manager.resumeAll() }.keyboardShortcut("r", modifiers: [.command, .shift])
-            }
+            MainMenus()
         }
         Settings {
             SettingsView().environmentObject(manager)
