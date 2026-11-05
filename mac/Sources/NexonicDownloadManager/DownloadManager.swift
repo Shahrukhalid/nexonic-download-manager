@@ -485,6 +485,8 @@ final class DownloadManager: ObservableObject {
         if let c = rec.checksumResult { body += " – \(c)" }
         post("Download finished", body)
         if settings.scanEnabled { scan(file) }
+        // Downloads › Unzip Finished .zip Files (off by default)
+        if UserDefaults.standard.bool(forKey: "extractZips"), file.pathExtension.lowercased() == "zip" { unzip(file) }
         if settings.showCompleteDialog { CompleteWindow.show(rec, manager: self) }
     }
 
@@ -498,6 +500,35 @@ final class DownloadManager: ObservableObject {
         ]
         var f = file
         try? f.setResourceValues(values)
+    }
+
+    /// Unzips into a new folder named after the archive ("Photos", then "Photos (2)"…) with the system's ditto tool.
+    private func unzip(_ file: URL) {
+        let dir = file.deletingLastPathComponent()
+        let base = file.deletingPathExtension().lastPathComponent.isEmpty ? "Archive" : file.deletingPathExtension().lastPathComponent
+        var folder = dir.appendingPathComponent(base, isDirectory: true)
+        var n = 2
+        while FileManager.default.fileExists(atPath: folder.path) {
+            folder = dir.appendingPathComponent("\(base) (\(n))", isDirectory: true)
+            n += 1
+        }
+        let target = folder
+        DispatchQueue.global().async {
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
+            p.arguments = ["-x", "-k", file.path, target.path]
+            let ok: Bool
+            do {
+                try p.run()
+                p.waitUntilExit()
+                ok = p.terminationStatus == 0
+            } catch {
+                ok = false
+            }
+            Task { @MainActor in
+                self.post("Unzipped", ok ? "\(file.lastPathComponent) → \(target.lastPathComponent)" : "\(file.lastPathComponent): could not be unzipped")
+            }
+        }
     }
 
     private func scan(_ file: URL) {
