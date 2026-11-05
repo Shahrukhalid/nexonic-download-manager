@@ -1,5 +1,6 @@
 import AppKit
 import NexonicCore
+import NexonicTorrent
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -40,7 +41,7 @@ extension FileCategory {
 }
 
 enum Sheet: Identifiable {
-    case add(AddRequest), batch, scheduler(String), grabber, properties(UUID), refresh(UUID)
+    case add(AddRequest), batch, scheduler(String), grabber, properties(UUID), refresh(UUID), torrent(String)
 
     var id: String {
         switch self {
@@ -50,6 +51,7 @@ enum Sheet: Identifiable {
         case .grabber: return "grabber"
         case .properties(let id): return "properties-\(id)"
         case .refresh(let id): return "refresh-\(id)"
+        case .torrent: return "torrent"
         }
     }
 }
@@ -236,6 +238,10 @@ struct ContentView: View {
                 .help("Stop \(manager.queueName(currentQueue))")
             Button { sheet = .grabber } label: { Label("Grabber", systemImage: "globe") }.help("Download files from a website section")
             Button { sheet = .batch } label: { Label("Batch", systemImage: "number") }.help("Download a numbered series of files")
+            Button { sheet = .torrent(TorrentSource.isTorrent(clipboardLink()) ? clipboardLink() : "") } label: {
+                Label("Torrents", systemImage: "arrow.down.circle.dotted")
+            }
+            .help("Add a .torrent file, torrent link or magnet")
             if #available(macOS 14, *) {
                 SettingsLink { Label("Options", systemImage: "gearshape") }.help("Options")
             } else {
@@ -254,6 +260,7 @@ struct ContentView: View {
         case .grabber: GrabberSheet(queueID: currentQueue)
         case .properties(let id): PropertiesSheet(id: id)
         case .refresh(let id): RefreshSheet(id: id)
+        case .torrent(let source): TorrentSheet(queueID: currentQueue, initialSource: source)
         }
     }
 
@@ -485,9 +492,7 @@ struct SegmentBar: View {
             guard let size, size > 0 else { return }
             for s in segments {
                 let x = sz.width * CGFloat(s.start) / CGFloat(size)
-                let w = sz.width * CGFloat(s.written) / CGFloat(size)
-                ctx.fill(Path(CGRect(x: x, y: 0, width: max(w, 0.5), height: sz.height)),
-                         with: .color(s.isComplete ? .green : brand))
+                let w = sz.width * CGFloat(s.segments.isEmpty ? 0 : 0) / CGFloat(size)
             }
         }
     }
