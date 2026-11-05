@@ -1,3 +1,9 @@
+## 0.15.0
+
+- **Videos keep their details and chapters** (Mac, Windows, Linux and Android): saved videos and sound files now
+  carry the title, channel or artist, date and description, and the video's chapters, so players show chapter marks
+  and media libraries list them properly.
+
 ## 0.14.0
 
 - **Windows and Linux: a toolbar like IDM's.** Large coloured buttons with their names, in IDM's order: Add URL,
