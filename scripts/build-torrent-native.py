@@ -27,8 +27,12 @@ def run(*args, env=None):
 def bootstrap():
     vcpkg = CACHE / 'vcpkg'
     if not (vcpkg / '.git').exists():
-        run('git', 'clone', '--filter=blob:none', '--no-checkout', 'https://github.com/microsoft/vcpkg.git', vcpkg)
-        run('git', '-C', vcpkg, 'checkout', PIN)
+        # CI restores downloads without restoring the toolchain checkout. Keep that cache intact.
+        vcpkg.mkdir(parents=True, exist_ok=True)
+        run('git', 'init', vcpkg)
+        run('git', '-C', vcpkg, 'remote', 'add', 'origin', 'https://github.com/microsoft/vcpkg.git')
+        run('git', '-C', vcpkg, 'fetch', '--depth=1', 'origin', PIN)
+        run('git', '-C', vcpkg, 'checkout', '--detach', 'FETCH_HEAD')
     revision = subprocess.check_output(['git', '-C', str(vcpkg), 'rev-parse', 'HEAD'], text=True).strip()
     if revision != PIN:
         raise SystemExit('Native toolchain revision differs from the pinned, reviewed source')
