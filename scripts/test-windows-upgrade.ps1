@@ -37,12 +37,21 @@ function Install-And-Check([string]$Setup, [string]$Expected) {
     # A hung installer or app must fail this check with details, never stall the job.
     $watchdog = Start-Process pwsh -PassThru -WindowStyle Hidden -ArgumentList @('-NoProfile','-Command',
         "Start-Sleep 420; Get-Process | Where-Object { `$_.ProcessName -match 'Nexonic|Setup|\.tmp' } | Stop-Process -Force -ErrorAction SilentlyContinue")
-    $setupProcess = Start-Process $Setup -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',"/LOG=`"$log`"") -PassThru
-    # Start-Process -Wait includes the auto-launched app's lifetime. Wait only for the installer.
-    Step "installer started (pid $($setupProcess.Id))"
-    if (-not $setupProcess.WaitForExit(180000)) {
-        $setupProcess.Kill($true)
-        throw "Installer timed out: $log"
+    # Nothing from the previous version may still run: the installer would wait for it to close.
+    Get-Process | Where-Object { $_.ProcessName -match 'Nexonic|nexonic' } | Stop-Process -Force -ErrorAction SilentlyContinue
+    $setupProcess = $null
+    for ($try = 1; $try -le 2; $try++) {
+        $setupProcess = Start-Process $Setup -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/CLOSEAPPLICATIONS','/FORCECLOSEAPPLICATIONS',"/LOG=`"$log`"") -PassThru
+        # Start-Process -Wait includes the auto-launched app's lifetime. Wait only for the installer, polling so a
+        # stuck process can never block this step.
+        Step "installer started (pid $($setupProcess.Id), try $try)"
+        $deadline = (Get-Date).AddMinutes(3)
+        while (-not $setupProcess.HasExited -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 500 }
+        if ($setupProcess.HasExited) { break }
+        Step "installer still running after 3 minutes; stopping it"
+        Get-Content $log -Tail 40 -ErrorAction SilentlyContinue
+        Get-Process | Where-Object { $_.ProcessName -match 'Nexonic|nexonic|Setup|\.tmp|^is-' } | Stop-Process -Force -ErrorAction SilentlyContinue
+        if ($try -eq 2) { throw "Installer timed out twice: $log" }
     }
     Step "installer finished with $($setupProcess.ExitCode)"
     if ($setupProcess.ExitCode -ne 0) { Get-Content $log -Tail 40 -ErrorAction SilentlyContinue; throw "Installer returned $($setupProcess.ExitCode): $log" }
