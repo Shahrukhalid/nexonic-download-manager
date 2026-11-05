@@ -492,7 +492,9 @@ struct SegmentBar: View {
             guard let size, size > 0 else { return }
             for s in segments {
                 let x = sz.width * CGFloat(s.start) / CGFloat(size)
-                let w = sz.width * CGFloat(s.segments.isEmpty ? 0 : 0) / CGFloat(size)
+                let w = sz.width * CGFloat(s.written) / CGFloat(size)
+                ctx.fill(Path(CGRect(x: x, y: 0, width: max(w, 0.5), height: sz.height)),
+                         with: .color(s.isComplete ? .green : brand))
             }
         }
     }
