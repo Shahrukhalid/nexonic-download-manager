@@ -58,7 +58,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls {
-            if url.host == "show" {
+            if TorrentInbox.shared.accept(url) {  // a .torrent file opened in Finder or a magnet link
+                if let show = DownloadManager.showMainWindow { show() } else { NSApp.activate(ignoringOtherApps: true) }
+            } else if url.host == "show" {
                 if let show = DownloadManager.showMainWindow { show() } else { NSApp.activate(ignoringOtherApps: true) }
             } else {
                 DownloadManager.shared.collectInbox()
