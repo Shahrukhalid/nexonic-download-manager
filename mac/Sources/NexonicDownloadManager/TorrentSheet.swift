@@ -109,6 +109,9 @@ struct TorrentSheet: View {
             if source.isEmpty { source = initialSource }
             if !source.isEmpty, TorrentPolicy.unavailable(manager.settings) == nil { load() }
         }
+        .onChange(of: manager.settings.torrentsEnabled) { on in
+            if on, snapshot == nil, loading == nil, !source.isEmpty { load() }  // opened before torrents were on
+        }
         .onDisappear { loading?.cancel() }
     }
 
@@ -147,7 +150,7 @@ struct TorrentSheet: View {
     private func load() {
         message = ""
         if let reason = TorrentPolicy.unavailable(manager.settings) { message = reason; return }
-        let text = source.trimmingCharacters(in: .whitespacesAndNewlines)
+        let text = TorrentInbox.normalized(source)
         guard TorrentSource.isTorrent(text) else { message = "Enter a magnet link, a link to a .torrent file or choose a .torrent file."; return }
         loading?.cancel()
         snapshot = nil
@@ -172,7 +175,7 @@ struct TorrentSheet: View {
 
     private func add(_ start: Bool) {
         guard let snapshot else { return }
-        var task = TorrentTask(source: source.trimmingCharacters(in: .whitespacesAndNewlines), metadata: snapshot)
+        var task = TorrentTask(source: TorrentInbox.normalized(source), metadata: snapshot)
         task.priorities = priorities
         task.options = options
         do {
@@ -182,5 +185,28 @@ struct TorrentSheet: View {
         } catch {
             message = error.localizedDescription
         }
+    }
+}
+
+/// Torrents handed to the app from outside the Torrents window: a .torrent file opened in Finder, a magnet link
+/// clicked in a browser, or a torrent pasted in Add URL. The main window shows them in the Torrents window.
+@MainActor
+final class TorrentInbox: ObservableObject {
+    static let shared = TorrentInbox()
+    @Published var source: String?
+
+    /// Takes a .torrent file or magnet link; false for anything else.
+    @discardableResult
+    func accept(_ url: URL) -> Bool {
+        if url.isFileURL, url.pathExtension.lowercased() == "torrent" { source = url.path; return true }
+        if url.scheme?.lowercased() == "magnet" { source = url.absoluteString; return true }
+        return false
+    }
+
+    /// A pasted or dropped file:// link becomes a plain path; everything else is only trimmed.
+    nonisolated static func normalized(_ text: String) -> String {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if t.lowercased().hasPrefix("file://"), let url = URL(string: t), url.isFileURL { return url.path }
+        return t
     }
 }
