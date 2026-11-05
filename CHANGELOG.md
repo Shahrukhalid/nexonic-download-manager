@@ -1,3 +1,15 @@
+## 0.14.0
+
+- **Windows and Linux: a toolbar like IDM's.** Large coloured buttons with their names, in IDM's order: Add URL,
+  Torrents, Resume, Stop, Stop All, Select All, Delete, Delete Completed, Scheduler, Start Queue, Stop Queue, Grabber,
+  Batch and Options. Resume, Stop and Delete are greyed out until downloads are selected.
+- **Windows and Linux: menus like IDM's.** Tasks, Downloads, View and Help, with shortcuts: Ctrl+R resume, Ctrl+.
+  stop, Ctrl+Shift+R resume all, Ctrl+Shift+P stop all, Ctrl+O open, Ctrl+Shift+T add torrent, Ctrl+Shift+B batch,
+  Ctrl+Shift+G grabber. View › Show Toolbar Buttons and Show Button Names hide the buttons or just their names.
+- **Unzip when finished** (Mac, Windows and Linux; Downloads › Unzip Finished .zip Files, off by default): a finished
+  `.zip` download is unpacked into a new folder next to it ("Photos", then "Photos (2)"…). Entries that would land
+  outside that folder are skipped, and archives that unpack to more than 64 GB are left alone.
+
 ## 0.13.0
 
 - **Torrents on Android.** Open a magnet link or a `.torrent` file (or share one to Nexonic), choose the files, and the
