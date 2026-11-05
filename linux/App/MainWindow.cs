@@ -62,7 +62,7 @@ public sealed class MainWindow : Window
         {
             Setters = { new Setter(ListBoxItem.PaddingProperty, new Thickness(10, 5)), new Setter(ListBoxItem.MinHeightProperty, 34.0) },
         });
-        list.SelectionChanged += (_, _) => ShowDetails();
+        list.SelectionChanged += (_, _) => { ShowDetails(); UpdateButtons(); };
         list.DoubleTapped += (_, _) => OnDoubleClick();
         list.ContextMenu = BuildContextMenu();
         sidebar.SelectionChanged += (_, _) => OnFilter();
@@ -80,6 +80,18 @@ public sealed class MainWindow : Window
         KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.A, KeyModifiers.Control), Command = new Cmd(SelectAllUnlessTyping) });
         KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.Delete), Command = new Cmd(() => { if (!Typing) _ = ConfirmRemove(Selected, toTrash: false); }) });
         KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.F1), Command = new Cmd(() => HelpWindows.ShowHelp(this)) });
+        void Shortcut(Key key, KeyModifiers mods, Action run) =>
+            KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(key, mods), Command = new Cmd(() => { if (!Typing) run(); }) });
+        Shortcut(Key.R, KeyModifiers.Control, ResumeSelected);
+        Shortcut(Key.OemPeriod, KeyModifiers.Control, StopSelected);
+        Shortcut(Key.R, KeyModifiers.Control | KeyModifiers.Shift, manager.ResumeAll);
+        Shortcut(Key.P, KeyModifiers.Control | KeyModifiers.Shift, manager.PauseAll);
+        Shortcut(Key.O, KeyModifiers.Control, OnDoubleClick);
+        Shortcut(Key.T, KeyModifiers.Control | KeyModifiers.Shift, OpenTorrents);
+        Shortcut(Key.B, KeyModifiers.Control | KeyModifiers.Shift, OpenBatch);
+        Shortcut(Key.G, KeyModifiers.Control | KeyModifiers.Shift, OpenGrabber);
+        Shortcut(Key.Q, KeyModifiers.Control, manager.RequestQuit);
+        UpdateButtons();
 
         DragDrop.SetAllowDrop(this, true);
         AddHandler(DragDrop.DragOverEvent, (_, e) => e.DragEffects = DragDropEffects.Copy);
@@ -158,13 +170,106 @@ public sealed class MainWindow : Window
 
     // ---- layout ----
 
+    readonly WrapPanel toolbar = new();
+    Button? resumeButton, stopButton, deleteButton;
+    readonly MenuItem showToolbarItem = new() { Header = "Show _Toolbar Buttons", ToggleType = MenuItemToggleType.CheckBox };
+    readonly MenuItem showNamesItem = new() { Header = "Show Button _Names", ToggleType = MenuItemToggleType.CheckBox };
+    readonly MenuItem unzipItem = new() { Header = "_Unzip Finished .zip Files", ToggleType = MenuItemToggleType.CheckBox };
+
+    void OpenTorrents() => _ = Dialogs.TorrentManager(this, manager, CurrentQueue);
+    void OpenGrabber() => _ = Dialogs.Grabber(this, manager, CurrentQueue);
+    void OpenBatch() => _ = Dialogs.Batch(this, manager, CurrentQueue);
+    void ResumeSelected() { foreach (var r in Selected) manager.Resume(r); }
+    void StopSelected() { foreach (var r in Selected) manager.Pause(r); }
+    void StartQueue() { manager.StartQueue(CurrentQueue); BuildSidebar(); }
+    void StopQueue() { manager.StopQueue(CurrentQueue); BuildSidebar(); }
+
+    /// <summary>Menus like IDM's: Tasks, Downloads, View and Help. Each item does the same as its toolbar button.</summary>
+    Menu BuildMenu()
+    {
+        MenuItem Item(string header, Action run, string? keys = null)
+        {
+            var item = new MenuItem { Header = header };
+            if (keys != null) item.InputGesture = KeyGesture.Parse(keys);
+            item.Click += (_, _) => run();
+            return item;
+        }
+        MenuItem Group(string header, params Control[] items)
+        {
+            var g = new MenuItem { Header = header };
+            foreach (var i in items) g.Items.Add(i);
+            return g;
+        }
+        Separator Line() => new();
+        showToolbarItem.Click += (_, _) => { manager.Settings.ShowToolbar = !manager.Settings.ShowToolbar; manager.ApplySettings(manager.Settings); ApplyToolbar(); };
+        showNamesItem.Click += (_, _) => { manager.Settings.ToolbarText = !manager.Settings.ToolbarText; manager.ApplySettings(manager.Settings); ApplyToolbar(); };
+        ToolTip.SetTip(unzipItem, "Unpack each finished .zip download into a folder next to it");
+        unzipItem.Click += (_, _) => { manager.Settings.ExtractZips = !manager.Settings.ExtractZips; manager.ApplySettings(manager.Settings); ApplyToolbar(); };
+        var menu = new Menu();
+        menu.Items.Add(Group("_Tasks",
+            Item("_Add URL…", () => _ = OnAdd(), "Ctrl+N"),
+            Item("Add _Torrent…", OpenTorrents, "Ctrl+Shift+T"),
+            Item("Add _Batch Download…", OpenBatch, "Ctrl+Shift+B"),
+            Item("Site _Grabber…", OpenGrabber, "Ctrl+Shift+G"),
+            Line(),
+            Item("_Options…", () => _ = Dialogs.Options(this, manager)),
+            Line(),
+            Item("_Quit", manager.RequestQuit, "Ctrl+Q")));
+        menu.Items.Add(Group("_Downloads",
+            Item("_Resume", ResumeSelected, "Ctrl+R"),
+            Item("_Stop", StopSelected, "Ctrl+OemPeriod"),
+            Line(),
+            Item("Resume _All", manager.ResumeAll, "Ctrl+Shift+R"),
+            Item("Stop A_ll", manager.PauseAll, "Ctrl+Shift+P"),
+            Line(),
+            Item("_Open", OnDoubleClick, "Ctrl+O"),
+            Line(),
+            Item("_Delete…", () => _ = ConfirmRemove(Selected, toTrash: false)),
+            Item("Delete _Completed…", () => _ = OnClear()),
+            Line(),
+            unzipItem,
+            Line(),
+            Item("S_cheduler…", () => _ = OnScheduler()),
+            Item("Start _Queue", StartQueue),
+            Item("Stop Q_ueue", StopQueue)));
+        menu.Items.Add(Group("_View", showToolbarItem, showNamesItem));
+        menu.Items.Add(Group("_Help",
+            Item("_Help", () => HelpWindows.ShowHelp(this), "F1"),
+            Item("_About Nexonic Download Manager", () => _ = HelpWindows.ShowAbout(this))));
+        return menu;
+    }
+
+    /// <summary>View menu: show or hide the toolbar buttons and their names (saved with the settings).</summary>
+    void ApplyToolbar()
+    {
+        var showToolbar = manager.Settings.ShowToolbar;
+        var showNames = manager.Settings.ToolbarText;
+        toolbar.IsVisible = showToolbar;
+        showToolbarItem.IsChecked = showToolbar;
+        showNamesItem.IsChecked = showNames;
+        showNamesItem.IsEnabled = showToolbar;
+        unzipItem.IsChecked = manager.Settings.ExtractZips;
+        foreach (var b in toolbar.Children.OfType<Button>())
+            if (b.Content is StackPanel p && p.Children.Count > 1) p.Children[1].IsVisible = showNames;
+    }
+
+    /// <summary>Resume, Stop and Delete work on the selection, so they are greyed out without one (as in IDM).</summary>
+    void UpdateButtons()
+    {
+        var any = list.SelectedItems?.Count > 0;
+        foreach (var b in new[] { resumeButton, stopButton, deleteButton }) if (b != null) b.IsEnabled = any;
+    }
+
     Control BuildLayout()
     {
         var root = new DockPanel();
 
-        var toolbar = new WrapPanel { Margin = new Thickness(8, 6, 8, 4), VerticalAlignment = VerticalAlignment.Center };
-        void Tool(string icon, string caption, string tip, Action click)
+        toolbar.Margin = new Thickness(8, 6, 8, 4);
+        toolbar.VerticalAlignment = VerticalAlignment.Center;
+        Button Tool(string icon, string color, string caption, string tip, Action click)
         {
+            var glyph = Ui.Icon(icon, 22);
+            glyph.Foreground = Ui.Brush(color);
             var b = new Button
             {
                 Background = Brushes.Transparent, BorderThickness = new Thickness(0), Padding = new Thickness(8, 6), MinWidth = 64,
@@ -173,7 +278,7 @@ public sealed class MainWindow : Window
                     Spacing = 3,
                     Children =
                     {
-                        new Border { Child = Ui.Icon(icon, 22), HorizontalAlignment = HorizontalAlignment.Center },
+                        new Border { Child = glyph, HorizontalAlignment = HorizontalAlignment.Center },
                         new TextBlock { Text = caption, FontSize = 11, HorizontalAlignment = HorizontalAlignment.Center },
                     },
                 },
@@ -181,26 +286,27 @@ public sealed class MainWindow : Window
             ToolTip.SetTip(b, tip);
             b.Click += (_, _) => click();
             toolbar.Children.Add(b);
+            return b;
         }
         void Gap() => toolbar.Children.Add(new Border { Width = 1, Height = 36, Background = Ui.Line, Margin = new Thickness(6, 0) });
-        Tool(Ui.Icons.Add, "Add URL", "Add one or more links (Ctrl+N)", () => _ = OnAdd());
-        Tool(Ui.Icons.Add, "Torrents", "Torrent Manager", () => _ = Dialogs.TorrentManager(this, manager, CurrentQueue));
-        Tool(Ui.Icons.Play, "Resume", "Resume the selected downloads", () => { foreach (var r in Selected) manager.Resume(r); });
-        Tool(Ui.Icons.Pause, "Stop", "Stop the selected downloads", () => { foreach (var r in Selected) manager.Pause(r); });
-        Tool(Ui.Icons.StopAll, "Stop All", "Stop every download", manager.PauseAll);
-        Tool(Ui.Icons.SelectAll, "Select All", "Select every download in this list (click again to deselect)", ToggleSelectAll);
-        Tool(Ui.Icons.Delete, "Delete", "Remove the selected downloads from the list", () => _ = ConfirmRemove(Selected, toTrash: false));
-        Tool(Ui.Icons.Clear, "Delete Completed", "Remove finished downloads from the list", () => _ = OnClear());
+        Tool(Ui.Icons.Add, "#2DA44E", "Add URL", "Add one or more links (Ctrl+N)", () => _ = OnAdd());
+        Tool(Ui.Icons.Download, "#6E40C9", "Torrents", "Torrent Manager: add a .torrent file, torrent link or magnet (Ctrl+Shift+T)", OpenTorrents);
         Gap();
-        Tool(Ui.Icons.Clock, "Scheduler", "Queues and timetables", () => _ = OnScheduler());
-        Tool(Ui.Icons.StartQueue, "Start Queue", "Start the selected queue", () => { manager.StartQueue(CurrentQueue); BuildSidebar(); });
-        Tool(Ui.Icons.StopQueue, "Stop Queue", "Stop the selected queue", () => { manager.StopQueue(CurrentQueue); BuildSidebar(); });
+        resumeButton = Tool(Ui.Icons.Play, "#1F6FEB", "Resume", "Resume the selected downloads (Ctrl+R)", ResumeSelected);
+        stopButton = Tool(Ui.Icons.Pause, "#D97706", "Stop", "Stop the selected downloads (Ctrl+.)", StopSelected);
+        Tool(Ui.Icons.StopAll, "#CF222E", "Stop All", "Stop every download (Ctrl+Shift+P)", manager.PauseAll);
         Gap();
-        Tool(Ui.Icons.Globe, "Grabber", "Download files from a website section", () => _ = Dialogs.Grabber(this, manager, CurrentQueue));
-        Tool(Ui.Icons.Batch, "Batch", "Download a numbered series of files", () => _ = Dialogs.Batch(this, manager, CurrentQueue));
-        Tool(Ui.Icons.Options, "Options", "Options", () => _ = Dialogs.Options(this, manager));
-        Tool(Ui.Icons.Help, "Help", "Help (F1)", () => HelpWindows.ShowHelp(this));
-        Tool(Ui.Icons.Info, "About", "About Nexonic Download Manager", () => _ = HelpWindows.ShowAbout(this));
+        Tool(Ui.Icons.SelectAll, "#0E9F9F", "Select All", "Select every download in this list (click again to deselect)", ToggleSelectAll);
+        deleteButton = Tool(Ui.Icons.Delete, "#CF222E", "Delete", "Remove the selected downloads from the list", () => _ = ConfirmRemove(Selected, toTrash: false));
+        Tool(Ui.Icons.Clear, "#2DA44E", "Delete Completed", "Remove finished downloads from the list", () => _ = OnClear());
+        Gap();
+        Tool(Ui.Icons.Clock, "#8250DF", "Scheduler", "Queues and timetables", () => _ = OnScheduler());
+        Tool(Ui.Icons.StartQueue, "#10B981", "Start Queue", "Start the selected queue", StartQueue);
+        Tool(Ui.Icons.StopQueue, "#DB2777", "Stop Queue", "Stop the selected queue", StopQueue);
+        Gap();
+        Tool(Ui.Icons.Globe, "#1F6FEB", "Grabber", "Download files from a website section (Ctrl+Shift+G)", OpenGrabber);
+        Tool(Ui.Icons.Batch, "#9A6700", "Batch", "Download a numbered series of files (Ctrl+Shift+B)", OpenBatch);
+        Tool(Ui.Icons.Options, "#6E7781", "Options", "Options", () => _ = Dialogs.Options(this, manager));
 
         var top = new DockPanel { LastChildFill = true };
         var searchBox = new DockPanel { Margin = new Thickness(8, 0, 12, 0), VerticalAlignment = VerticalAlignment.Center };
@@ -214,9 +320,13 @@ public sealed class MainWindow : Window
         DockPanel.SetDock(searchBox, Dock.Right);
         top.Children.Add(searchBox);
         top.Children.Add(toolbar);
+        var menu = BuildMenu();
+        DockPanel.SetDock(menu, Dock.Top);
+        root.Children.Add(menu);
         var topBorder = new Border { Child = top, BorderBrush = Ui.Line, BorderThickness = new Thickness(0, 0, 0, 1) };
         DockPanel.SetDock(topBorder, Dock.Top);
         root.Children.Add(topBorder);
+        ApplyToolbar();
 
         var status = new DockPanel { Margin = new Thickness(12, 5) };
         DockPanel.SetDock(statusRight, Dock.Right);
