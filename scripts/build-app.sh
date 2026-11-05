@@ -9,6 +9,8 @@ APP="build/Nexonic Download Manager.app"
 ARCHS=()
 if [ "${UNIVERSAL:-1}" != "0" ] && xcodebuild -version >/dev/null 2>&1; then ARCHS=(--arch arm64 --arch x86_64); fi
 
+if [ "${#ARCHS[@]}" -gt 0 ]; then python3 scripts/build-torrent-apple.py --universal-mac; else python3 scripts/build-torrent-apple.py; fi
+
 swift build --package-path mac -c release ${ARCHS[@]+"${ARCHS[@]}"}
 BIN="$(swift build --package-path mac -c release ${ARCHS[@]+"${ARCHS[@]}"} --show-bin-path)"
 
@@ -25,6 +27,7 @@ cp .tools-cache/mac/yt-dlp .tools-cache/mac/qjs "$APP/Contents/MacOS/"
 cat packaging/THIRD-PARTY-NOTICES.txt .ffmpeg-cache/mac/NOTICE-video-tools-1.txt .tools-cache/mac/NOTICE-video-tools-2.txt \
   > "$APP/Contents/Resources/THIRD-PARTY-NOTICES.txt"
 cp packaging/TERMS.txt "$APP/Contents/Resources/TERMS.txt"
+cp -R mac/Native/notices "$APP/Contents/Resources/torrent-licenses"
 cp -R packaging/Localizations/*.lproj "$APP/Contents/Resources/"
 sed "s/__VERSION__/$VERSION/g" packaging/Info.plist > "$APP/Contents/Info.plist"
 cp -R build/extension-chrome "$APP/Contents/Resources/Extension"

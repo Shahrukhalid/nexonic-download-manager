@@ -2,6 +2,7 @@ import AppKit
 import CoreServices
 import Foundation
 import NexonicCore
+import NexonicTorrent
 import UserNotifications
 
 /// What the Add window opens with (from the toolbar, the clipboard or a batch).
@@ -26,6 +27,9 @@ final class DownloadManager: ObservableObject {
     @Published var settings: AppSettings {
         didSet {
             limiter.setLimit(bytesPerSecond: settings.speedLimitKBps * 1024)
+            if TorrentPolicy.unavailable(settings) != nil {
+                for item in items where item.torrent != nil && item.status.isActive { pause(item.id) }
+            }
             saveSettings()
             schedule()
         }
@@ -143,6 +147,7 @@ final class DownloadManager: ObservableObject {
         let agent = (profile?.userAgent).flatMap { $0.isEmpty ? nil : $0 } ?? job.userAgent
         var record = DownloadRecord(url: url, folder: folder, fileName: name, referrer: job.referrer,
                                     cookies: job.cookies, userAgent: agent)
+        if TorrentSource.isTorrent(url.absoluteString) { record.torrent = TorrentTask(source: url.absoluteString) }
         if stream { record.isStream = true }
         if site {
             record.siteVideo = true
@@ -374,14 +379,16 @@ final class DownloadManager: ObservableObject {
     private func schedule() {
         for q in queues where q.running {
             let limit = q.isMain ? settings.maxActive : q.maxActive
-            var slots = max(1, limit) - items.filter { $0.queue == q.id && $0.status.isActive }.count
+            var slots = max(1, limit) - items.filter { $0.queue == q.id && $0.status.isActive && $0.status != .seeding }.count
             for item in items where item.queue == q.id && item.status == .queued && slots > 0 && transfers[item.id] == nil {
                 slots -= 1
                 let t: Downloader
                 let profile = HostProfiles.match(settings.hostProfiles, item.url)
                 let proxy = profile?.proxy ?? settings.proxy
                 let connections = max(1, min(32, profile?.maxConnections ?? settings.connections))
-                if item.siteVideo == true {
+                if item.torrent != nil {
+                    t = TorrentTransfer(record: item, settings: settings)
+                } else if item.siteVideo == true {
                     t = SiteVideoTransfer(record: item, sortIntoCategories: settings.sortIntoCategoryFolders,
                                           speedLimitKBps: settings.speedLimitKBps, proxy: proxy)
                 } else if item.isStream == true {
@@ -408,7 +415,13 @@ final class DownloadManager: ObservableObject {
         rec.queueID = items[i].queueID
         rec.speedLimitKBps = items[i].speedLimitKBps
         if rec.status == .paused, requeue.remove(rec.id) != nil { rec.status = .queued }
+        if items[i].torrent?.notified == true { rec.torrent?.notified = true }
+        if rec.torrent?.metadata?.payloadComplete == true, rec.torrent?.notified != true {
+            rec.torrent?.notified = true
+            finished(rec)
+        }
         items[i] = rec
+        if rec.status == .seeding, before != .seeding { persist(); schedule() }
         if rec.status == .paused, let link = pendingRefresh.removeValue(forKey: rec.id) {
             transfers.removeValue(forKey: rec.id)
             refresh(rec.id, with: link)
@@ -416,11 +429,33 @@ final class DownloadManager: ObservableObject {
         }
         if before != rec.status, [.finished, .failed, .paused, .queued].contains(rec.status) {
             transfers.removeValue(forKey: rec.id)
-            if rec.status == .finished { finished(rec) }
+            if rec.status == .finished, rec.torrent == nil { finished(rec) }
             if rec.status == .failed { post("Download failed", "\(rec.fileName): \(rec.error ?? "")") }
             persist()
             schedule()
         }
+    }
+
+    func addTorrent(_ task: TorrentTask, folder: URL, queueID: String, limit: Int, start: Bool) throws {
+        if let reason = TorrentPolicy.unavailable(settings) { throw TorrentFailure(reason) }
+        _ = try task.selectedPriorities(); try task.options.validate()
+        let url = URL(string: task.source).flatMap { $0.scheme == nil ? nil : $0 } ?? URL(fileURLWithPath: task.source)
+        var record = DownloadRecord(url: url, folder: folder, fileName: task.metadata?.name)
+        record.torrent = task; record.size = task.selectedSize; record.queueID = queueID
+        record.speedLimitKBps = limit; record.status = start ? .queued : .paused
+        items.append(record); persist(); schedule()
+    }
+
+    func updateTorrent(_ id: UUID, task: TorrentTask, limit: Int) throws {
+        _ = try task.selectedPriorities(); try task.options.validate()
+        guard let index = items.firstIndex(where: { $0.id == id }) else { return }
+        // Editing is allowed once the native worker has fully paused and flushed its checkpoint.
+        guard transfers[id] == nil else { pause(id); throw TorrentFailure("Pausing and saving checkpoint. Open settings again after the task stops.") }
+        var updated = task
+        if updated.priorities != items[index].torrent?.priorities { updated.notified = false; items[index].finished = nil; items[index].savedPath = nil }
+        items[index].torrent = updated; items[index].size = updated.selectedSize
+        items[index].speedLimitKBps = limit; items[index].status = .paused
+        persist()
     }
 
     // MARK: after a download

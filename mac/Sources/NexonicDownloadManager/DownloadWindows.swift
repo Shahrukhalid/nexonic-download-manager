@@ -393,6 +393,7 @@ struct DownloadProgressView: View {
         if isPreparingVideo(item) { return "Preparing video… (finding the best quality)" }
         if item.status.isActive, let step = item.videoStep { return step }
         switch item.status {
+        case .seeding: return "Seeding verified files"
         case .queued: return "Waiting in queue"
         case .probing: return "Connecting…"
         case .downloading: return "Receiving data…"

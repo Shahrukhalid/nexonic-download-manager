@@ -24,3 +24,6 @@ native/build/
 # Native managed integration-test outputs
 native/tests/dotnet/bin/
 native/tests/dotnet/obj/
+
+# Generated Apple torrent SDK
+mac/Native/

@@ -42,3 +42,9 @@ dotnet run --project native/tests/dotnet -- /absolute/path/to/libnexonic_torrent
 ```
 
 Use `nexonic_torrent.dll` on Windows or `libnexonic_torrent.dylib` for a shared macOS test build. The Apple SDK itself remains static. This adapter does not yet switch the shipped app frontend from its existing provider.
+
+### Apple integration in progress
+
+`python3 scripts/build-torrent-apple.py` prepares the current Mac architecture as a local XCFramework; use `--universal-mac` for distribution, or `--ios` for device/simulator slices. The native libraries and dependencies preserve macOS 13 / iOS 17 deployment floors. Sources and notices stay pinned; generated SDKs are ignored.
+
+The `NexonicTorrent` Swift package product provides the serialized C ABI, bounded metadata loading, typed snapshots and foreground worker. Its real loopback transfer XCTest covers Unicode paths, magnet preview, selection, checkpoint restart and final SHA-256. The Mac queue adapter is groundwork; a complete GUI and iOS application integration are not delivered by this draft.

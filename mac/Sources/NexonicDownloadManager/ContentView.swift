@@ -359,7 +359,7 @@ struct ContentView: View {
 
 func statusColor(_ r: DownloadRecord) -> Color {
     switch r.status {
-    case .downloading, .probing: return brand
+    case .downloading, .probing, .seeding: return brand
     case .queued: return .orange
     case .paused: return .gray
     case .finished: return r.checksumResult?.contains("not") == true ? .red : .green
@@ -422,6 +422,7 @@ func isPreparingVideo(_ r: DownloadRecord) -> Bool {
 func statusText(_ r: DownloadRecord) -> String {
     if isPreparingVideo(r) { return "Preparing video…" }
     switch r.status {
+    case .seeding: return "Seeding"
     case .queued: return "Queued"
     case .probing: return "Connecting…"
     case .downloading: return "\(Int(r.progress * 100))%"

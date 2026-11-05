@@ -1,9 +1,10 @@
 import Foundation
+import NexonicTorrent
 
 public enum DownloadStatus: String, Codable, Sendable {
-    case queued, probing, downloading, paused, finished, failed
+    case queued, probing, downloading, paused, finished, failed, seeding
 
-    public var isActive: Bool { self == .probing || self == .downloading }
+    public var isActive: Bool { self == .probing || self == .downloading || self == .seeding }
 }
 
 /// One piece of a video from a video site (the picture or the sound), shown in the progress window.
@@ -78,6 +79,7 @@ public struct DownloadRecord: Codable, Identifiable, Sendable {
     // Added in 0.6.2: the file's ETag or Last-Modified when the download started, so a changed file is never resumed into
     public var validator: String?
     // Added in 0.6.3: the highest picture quality chosen for a video (nil = the best on offer)
+    public var torrent: TorrentTask?
     public var maxHeight: Int?
 
     public init(url: URL, folder: URL, fileName: String? = nil, referrer: String? = nil, cookies: String? = nil,
@@ -96,7 +98,7 @@ public struct DownloadRecord: Codable, Identifiable, Sendable {
         added = Date()
     }
 
-    public var received: Int64 { isStream == true || siteVideo == true ? (streamBytes ?? 0) : segments.reduce(0) { $0 + $1.written } }
+    public var received: Int64 { if let torrent { return torrent.metadata?.received ?? 0 }; return isStream == true || siteVideo == true ? (streamBytes ?? 0) : segments.reduce(0) { $0 + $1.written } }
     public var progress: Double {
         if isStream == true {
             guard let total = streamTotal, total > 0 else { return 0 }
@@ -208,6 +210,7 @@ public struct ProxySettings: Codable, Equatable, Sendable {
 }
 
 public struct AppSettings: Codable, Equatable, Sendable {
+    public var torrentsEnabled: Bool = false
     public var connections: Int = 8
     public var maxActive: Int = 3
     public var speedLimitKBps: Int = 0
@@ -238,7 +241,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public init() {}
 
     enum CodingKeys: String, CodingKey {
-        case connections, maxActive, speedLimitKBps, folder, sortIntoCategoryFolders = "categoryFolders", notifications, monitorClipboard,
+        case torrentsEnabled, connections, maxActive, speedLimitKBps, folder, sortIntoCategoryFolders = "categoryFolders", notifications, monitorClipboard,
              clipboardTypes, proxy, showCompleteDialog, playSound, markDownloads, scanEnabled, scanCommand,
              showDownloadDialog, showProgressWindow, bringToFrontOnBrowserDownload, checkForUpdates, skippedVersion, network, hostProfiles
     }
@@ -247,6 +250,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let d = AppSettings()
+        torrentsEnabled = try c.decodeIfPresent(Bool.self, forKey: .torrentsEnabled) ?? false
         connections = try c.decodeIfPresent(Int.self, forKey: .connections) ?? d.connections
         maxActive = try c.decodeIfPresent(Int.self, forKey: .maxActive) ?? d.maxActive
         speedLimitKBps = try c.decodeIfPresent(Int.self, forKey: .speedLimitKBps) ?? d.speedLimitKBps

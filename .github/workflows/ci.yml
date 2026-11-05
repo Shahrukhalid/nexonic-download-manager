@@ -15,6 +15,17 @@ jobs:
         with:
           path: .ffmpeg-cache/mac
           key: ffmpeg-mac-${{ hashFiles('scripts/build-ffmpeg.sh') }}
+      - name: Native torrent build tools
+        run: brew list ninja pkgconf >/dev/null 2>&1 || brew install ninja pkgconf
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .native-cache/installed
+            .native-cache/binaries
+            .native-cache/vcpkg/downloads
+          key: native-mac-current-${{ hashFiles('native/vcpkg.json', 'native/triplets/**') }}
+      - name: Prepare native Apple torrent SDK
+        run: python3 scripts/build-torrent-apple.py
       - name: Tests
         run: swift test --package-path mac
       - name: Build the app
