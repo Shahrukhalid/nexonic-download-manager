@@ -28,6 +28,19 @@ public partial class MainWindow : Window
         InputBindings.Add(new KeyBinding(new Cmd(() => OnRemove(this, new RoutedEventArgs())), Key.Delete, ModifierKeys.None));
         InputBindings.Add(new KeyBinding(new Cmd(() => Search.Focus()), Key.F, ModifierKeys.Control));
         InputBindings.Add(new KeyBinding(new Cmd(() => HelpWindows.ShowHelp(this)), Key.F1, ModifierKeys.None));
+        void Shortcut(Key key, ModifierKeys mods, RoutedEventHandler handler) =>
+            InputBindings.Add(new KeyBinding(new Cmd(() => { if (Keyboard.FocusedElement is not TextBox) handler(this, new RoutedEventArgs()); }), key, mods));
+        Shortcut(Key.R, ModifierKeys.Control, OnResume);
+        Shortcut(Key.OemPeriod, ModifierKeys.Control, OnPause);
+        Shortcut(Key.R, ModifierKeys.Control | ModifierKeys.Shift, OnResumeAll);
+        Shortcut(Key.P, ModifierKeys.Control | ModifierKeys.Shift, OnPauseAll);
+        Shortcut(Key.O, ModifierKeys.Control, OnOpen);
+        Shortcut(Key.I, ModifierKeys.Control, OnProperties);
+        Shortcut(Key.T, ModifierKeys.Control | ModifierKeys.Shift, OnTorrents);
+        Shortcut(Key.B, ModifierKeys.Control | ModifierKeys.Shift, OnBatch);
+        Shortcut(Key.G, ModifierKeys.Control | ModifierKeys.Shift, OnGrabber);
+        ApplyToolbar();
+        UpdateButtons();
         UpdateStatus();
         var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         timer.Tick += (_, _) => { ShowDetails(); UpdateStatus(); };
@@ -114,7 +127,7 @@ public partial class MainWindow : Window
         var empty = view.IsEmpty;
         Empty.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
         Grid.Visibility = empty ? Visibility.Collapsed : Visibility.Visible;
-        EmptyTitle.Text = Search.Text.Length > 0 ? $"Nothing matches \u201C{Search.Text}\u201D" : "No downloads here yet";
+        EmptyTitle.Text = Search.Text.Length > 0 ? $"Nothing matches “{Search.Text}”" : "No downloads here yet";
         if (++statusTicks % 4 == 0)
             foreach (var item in Sidebar.Items.OfType<ListBoxItem>())
                 if (item is { Tag: string key, Content: DockPanel dp } && dp.Children[0] is TextBlock c) c.Text = CountFor(key);
@@ -155,7 +168,32 @@ public partial class MainWindow : Window
     List<Row> Selected => Grid.SelectedItems.OfType<Row>().ToList();
     Row? One => Grid.SelectedItems.Count == 1 ? Grid.SelectedItem as Row : null;
 
-    void OnSelection(object s, SelectionChangedEventArgs e) => ShowDetails();
+    void OnSelection(object s, SelectionChangedEventArgs e) { ShowDetails(); UpdateButtons(); }
+
+    /// <summary>Resume, Stop and Delete work on the selection, so they are greyed out without one (as in IDM).</summary>
+    void UpdateButtons()
+    {
+        var any = Grid.SelectedItems.Count > 0;
+        ResumeButton.IsEnabled = StopButton.IsEnabled = DeleteButton.IsEnabled = any;
+    }
+
+    /// <summary>View menu: show or hide the toolbar buttons and their names (saved with the settings).</summary>
+    void ApplyToolbar()
+    {
+        var showToolbar = manager.Settings.ShowToolbar;
+        var showNames = manager.Settings.ToolbarText;
+        Toolbar.Visibility = showToolbar ? Visibility.Visible : Visibility.Collapsed;
+        ShowToolbarItem.IsChecked = showToolbar;
+        ShowNamesItem.IsChecked = showNames;
+        ShowNamesItem.IsEnabled = showToolbar;
+        UnzipItem.IsChecked = manager.Settings.ExtractZips;
+        foreach (var b in Toolbar.Children.OfType<Button>())
+            if (b.Content is StackPanel p && p.Children.Count > 1) p.Children[1].Visibility = showNames ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    void OnToggleToolbar(object s, RoutedEventArgs e) { manager.Settings.ShowToolbar = ShowToolbarItem.IsChecked; manager.ApplySettings(manager.Settings); ApplyToolbar(); }
+    void OnToggleUnzip(object s, RoutedEventArgs e) { manager.Settings.ExtractZips = UnzipItem.IsChecked; manager.ApplySettings(manager.Settings); }
+    void OnToggleNames(object s, RoutedEventArgs e) { manager.Settings.ToolbarText = ShowNamesItem.IsChecked; manager.ApplySettings(manager.Settings); ApplyToolbar(); }
 
     void ShowDetails()
     {
@@ -239,6 +277,8 @@ public partial class MainWindow : Window
         }
     }
     void OnPauseAll(object s, RoutedEventArgs e) => manager.PauseAll();
+    void OnResumeAll(object s, RoutedEventArgs e) => manager.ResumeAll();
+    void OnExit(object s, RoutedEventArgs e) { manager.Save(); WindowPlace.Save(this); manager.RequestQuit(); }
     void OnClear(object s, RoutedEventArgs e)
     {
         var done = manager.Rows.Where(r => r.Record.Status == DownloadStatus.Finished).ToList();  // only the ones counted in the question

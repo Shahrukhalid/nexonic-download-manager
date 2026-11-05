@@ -199,6 +199,11 @@ public sealed class AppSettings
     // Added in 0.6.0: in-app updates
     public bool CheckForUpdates { get; set; } = true;
     public string SkippedVersion { get; set; } = "";
+    // Added in 0.14.0: IDM-style toolbar and menus on Windows and Linux (View menu)
+    public bool ShowToolbar { get; set; } = true;
+    public bool ToolbarText { get; set; } = true;
+    /// <summary>Unzip finished .zip downloads into a folder next to them (off unless turned on).</summary>
+    public bool ExtractZips { get; set; }
     public string ScanCommand { get; set; } = "\"%ProgramFiles%\\Windows Defender\\MpCmdRun.exe\" -Scan -ScanType 3 -DisableRemediation -File";
 }
 
