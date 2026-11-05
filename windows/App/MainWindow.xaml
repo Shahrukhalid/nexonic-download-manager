@@ -57,7 +57,7 @@
     </Style>
     <Style x:Key="Glyph" TargetType="TextBlock">
       <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
-      <Setter Property="FontSize" Value="20" />
+      <Setter Property="FontSize" Value="22" />
       <Setter Property="Foreground" Value="{StaticResource Accent}" />
       <Setter Property="HorizontalAlignment" Value="Center" />
     </Style>
@@ -68,57 +68,97 @@
     </Style>
   </Window.Resources>
   <DockPanel>
+    <Menu x:Name="MainMenu" DockPanel.Dock="Top" Background="White" Padding="4,2">
+      <MenuItem Header="_Tasks">
+        <MenuItem Header="_Add URL…" InputGestureText="Ctrl+N" Click="OnAdd" />
+        <MenuItem Header="Add _Torrent…" InputGestureText="Ctrl+Shift+T" Click="OnTorrents" />
+        <MenuItem Header="Add _Batch Download…" InputGestureText="Ctrl+Shift+B" Click="OnBatch" />
+        <MenuItem Header="Site _Grabber…" InputGestureText="Ctrl+Shift+G" Click="OnGrabber" />
+        <Separator />
+        <MenuItem Header="_Options…" Click="OnSettings" />
+        <Separator />
+        <MenuItem Header="E_xit" Click="OnExit" />
+      </MenuItem>
+      <MenuItem Header="_Downloads">
+        <MenuItem Header="_Resume" InputGestureText="Ctrl+R" Click="OnResume" />
+        <MenuItem Header="_Stop" InputGestureText="Ctrl+." Click="OnPause" />
+        <Separator />
+        <MenuItem Header="Resume _All" InputGestureText="Ctrl+Shift+R" Click="OnResumeAll" />
+        <MenuItem Header="Stop A_ll" InputGestureText="Ctrl+Shift+P" Click="OnPauseAll" />
+        <Separator />
+        <MenuItem Header="_Open" InputGestureText="Ctrl+O" Click="OnOpen" />
+        <MenuItem Header="Show in _Folder" Click="OnShowInFolder" />
+        <MenuItem Header="_Properties…" InputGestureText="Ctrl+I" Click="OnProperties" />
+        <Separator />
+        <MenuItem Header="_Delete…" InputGestureText="Del" Click="OnRemove" />
+        <MenuItem Header="Delete _Completed…" Click="OnClear" />
+        <Separator />
+        <MenuItem x:Name="UnzipItem" Header="_Unzip Finished .zip Files" IsCheckable="True" Click="OnToggleUnzip"
+                  ToolTip="Unpack each finished .zip download into a folder next to it" />
+        <Separator />
+        <MenuItem Header="S_cheduler…" Click="OnScheduler" />
+        <MenuItem Header="Start _Queue" Click="OnStartQueue" />
+        <MenuItem Header="Stop Q_ueue" Click="OnStopQueue" />
+      </MenuItem>
+      <MenuItem Header="_View">
+        <MenuItem x:Name="ShowToolbarItem" Header="Show _Toolbar Buttons" IsCheckable="True" Click="OnToggleToolbar" />
+        <MenuItem x:Name="ShowNamesItem" Header="Show Button _Names" IsCheckable="True" Click="OnToggleNames" />
+      </MenuItem>
+      <MenuItem Header="_Help">
+        <MenuItem Header="_Help" InputGestureText="F1" Click="OnHelp" />
+        <MenuItem Header="_About Nexonic Download Manager" Click="OnAbout" />
+      </MenuItem>
+    </Menu>
     <Border DockPanel.Dock="Top" Background="White" BorderBrush="#E3E8EF" BorderThickness="0,0,0,1" Padding="6,4">
       <WrapPanel>
-        <Button Style="{StaticResource ToolButton}" Click="OnTorrents" ToolTip="Torrent Manager">
-          <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE896;" /><TextBlock Style="{StaticResource Caption}" Text="Torrents" /></StackPanel>
-        </Button>
+        <WrapPanel x:Name="Toolbar">
         <Button Style="{StaticResource ToolButton}" Click="OnAdd" ToolTip="Add one or more links (Ctrl+N)">
-          <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE710;" /><TextBlock Style="{StaticResource Caption}" Text="Add URL" /></StackPanel>
+          <StackPanel><TextBlock Style="{StaticResource Glyph}" Foreground="#2DA44E" Text="&#xE710;" /><TextBlock Style="{StaticResource Caption}" Text="Add URL" /></StackPanel>
         </Button>
-        <Button Style="{StaticResource ToolButton}" Click="OnResume" ToolTip="Resume the selected downloads">
-          <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE768;" /><TextBlock Style="{StaticResource Caption}" Text="Resume" /></StackPanel>
+        <Button Style="{StaticResource ToolButton}" Click="OnTorrents" ToolTip="Torrent Manager: add a .torrent file, torrent link or magnet">
+          <StackPanel><TextBlock Style="{StaticResource Glyph}" Foreground="#6E40C9" Text="&#xE896;" /><TextBlock Style="{StaticResource Caption}" Text="Torrents" /></StackPanel>
         </Button>
-        <Button Style="{StaticResource ToolButton}" Click="OnPause" ToolTip="Stop the selected downloads">
-          <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE769;" /><TextBlock Style="{StaticResource Caption}" Text="Stop" /></StackPanel>
+        <Border Width="1" Height="36" Background="#E3E8EF" Margin="6,0" VerticalAlignment="Center" />
+        <Button x:Name="ResumeButton" Style="{StaticResource ToolButton}" Click="OnResume" ToolTip="Resume the selected downloads (Ctrl+R)">
+          <StackPanel><TextBlock Style="{StaticResource Glyph}" Foreground="#1F6FEB" Text="&#xE768;" /><TextBlock Style="{StaticResource Caption}" Text="Resume" /></StackPanel>
+        </Button>
+        <Button x:Name="StopButton" Style="{StaticResource ToolButton}" Click="OnPause" ToolTip="Stop the selected downloads">
+          <StackPanel><TextBlock Style="{StaticResource Glyph}" Foreground="#D97706" Text="&#xE769;" /><TextBlock Style="{StaticResource Caption}" Text="Stop" /></StackPanel>
         </Button>
         <Button Style="{StaticResource ToolButton}" Click="OnPauseAll" ToolTip="Stop every download">
-          <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE71A;" /><TextBlock Style="{StaticResource Caption}" Text="Stop All" /></StackPanel>
+          <StackPanel><TextBlock Style="{StaticResource Glyph}" Foreground="#CF222E" Text="&#xE71A;" /><TextBlock Style="{StaticResource Caption}" Text="Stop All" /></StackPanel>
         </Button>
+        <Border Width="1" Height="36" Background="#E3E8EF" Margin="6,0" VerticalAlignment="Center" />
         <Button Style="{StaticResource ToolButton}" Click="OnSelectAll" ToolTip="Select every download in this list (click again to deselect)">
-          <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE762;" /><TextBlock Style="{StaticResource Caption}" Text="Select All" /></StackPanel>
+          <StackPanel><TextBlock Style="{StaticResource Glyph}" Foreground="#0E9F9F" Text="&#xE762;" /><TextBlock Style="{StaticResource Caption}" Text="Select All" /></StackPanel>
         </Button>
-        <Button Style="{StaticResource ToolButton}" Click="OnRemove" ToolTip="Remove the selected downloads from the list">
-          <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE74D;" /><TextBlock Style="{StaticResource Caption}" Text="Delete" /></StackPanel>
+        <Button x:Name="DeleteButton" Style="{StaticResource ToolButton}" Click="OnRemove" ToolTip="Remove the selected downloads from the list">
+          <StackPanel><TextBlock Style="{StaticResource Glyph}" Foreground="#CF222E" Text="&#xE74D;" /><TextBlock Style="{StaticResource Caption}" Text="Delete" /></StackPanel>
         </Button>
         <Button Style="{StaticResource ToolButton}" Click="OnClear" ToolTip="Remove finished downloads from the list">
-          <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE73E;" /><TextBlock Style="{StaticResource Caption}" Text="Delete Completed" /></StackPanel>
+          <StackPanel><TextBlock Style="{StaticResource Glyph}" Foreground="#2DA44E" Text="&#xE73E;" /><TextBlock Style="{StaticResource Caption}" Text="Delete Completed" /></StackPanel>
         </Button>
-        <Separator Margin="6,4" />
+        <Border Width="1" Height="36" Background="#E3E8EF" Margin="6,0" VerticalAlignment="Center" />
         <Button Style="{StaticResource ToolButton}" Click="OnScheduler" ToolTip="Queues and timetables">
-          <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE787;" /><TextBlock Style="{StaticResource Caption}" Text="Scheduler" /></StackPanel>
+          <StackPanel><TextBlock Style="{StaticResource Glyph}" Foreground="#8250DF" Text="&#xE787;" /><TextBlock Style="{StaticResource Caption}" Text="Scheduler" /></StackPanel>
         </Button>
         <Button Style="{StaticResource ToolButton}" Click="OnStartQueue" ToolTip="Start the selected queue">
-          <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE768;" /><TextBlock Style="{StaticResource Caption}" Text="Start Queue" /></StackPanel>
+          <StackPanel><TextBlock Style="{StaticResource Glyph}" Foreground="#10B981" Text="&#xE768;" /><TextBlock Style="{StaticResource Caption}" Text="Start Queue" /></StackPanel>
         </Button>
         <Button Style="{StaticResource ToolButton}" Click="OnStopQueue" ToolTip="Stop the selected queue">
-          <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE71A;" /><TextBlock Style="{StaticResource Caption}" Text="Stop Queue" /></StackPanel>
+          <StackPanel><TextBlock Style="{StaticResource Glyph}" Foreground="#DB2777" Text="&#xE71A;" /><TextBlock Style="{StaticResource Caption}" Text="Stop Queue" /></StackPanel>
         </Button>
+        <Border Width="1" Height="36" Background="#E3E8EF" Margin="6,0" VerticalAlignment="Center" />
         <Button Style="{StaticResource ToolButton}" Click="OnGrabber" ToolTip="Download files from a website section">
-          <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE774;" /><TextBlock Style="{StaticResource Caption}" Text="Grabber" /></StackPanel>
+          <StackPanel><TextBlock Style="{StaticResource Glyph}" Foreground="#1F6FEB" Text="&#xE774;" /><TextBlock Style="{StaticResource Caption}" Text="Grabber" /></StackPanel>
         </Button>
         <Button Style="{StaticResource ToolButton}" Click="OnBatch" ToolTip="Download a numbered series of files">
-          <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE8FD;" /><TextBlock Style="{StaticResource Caption}" Text="Batch" /></StackPanel>
+          <StackPanel><TextBlock Style="{StaticResource Glyph}" Foreground="#9A6700" Text="&#xE8FD;" /><TextBlock Style="{StaticResource Caption}" Text="Batch" /></StackPanel>
         </Button>
         <Button Style="{StaticResource ToolButton}" Click="OnSettings" ToolTip="Options">
-          <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE713;" /><TextBlock Style="{StaticResource Caption}" Text="Options" /></StackPanel>
+          <StackPanel><TextBlock Style="{StaticResource Glyph}" Foreground="#6E7781" Text="&#xE713;" /><TextBlock Style="{StaticResource Caption}" Text="Options" /></StackPanel>
         </Button>
-        <Button Style="{StaticResource ToolButton}" Click="OnHelp" ToolTip="Help (F1)">
-          <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE897;" /><TextBlock Style="{StaticResource Caption}" Text="Help" /></StackPanel>
-        </Button>
-        <Button Style="{StaticResource ToolButton}" Click="OnAbout" ToolTip="About Nexonic Download Manager">
-          <StackPanel><TextBlock Style="{StaticResource Glyph}" Text="&#xE946;" /><TextBlock Style="{StaticResource Caption}" Text="About" /></StackPanel>
-        </Button>
+        </WrapPanel>
         <Border Margin="12,6,4,6" Width="220" Height="30" CornerRadius="6" BorderBrush="#D0D7DE" BorderThickness="1" Background="White" VerticalAlignment="Center">
           <Grid>
             <TextBlock Text="&#xE721;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#8B949E" Margin="8,0,0,0" VerticalAlignment="Center" />
