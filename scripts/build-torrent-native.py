@@ -66,7 +66,10 @@ def build(target, test):
                f'-DNDM_TORRENT_TESTS={"ON" if test and not mobile else "OFF"}', f'-DCMAKE_INSTALL_PREFIX={stage}']
     if os.name != 'nt': command += ['-G', 'Ninja']
     if target.startswith('android-'):
-        command += ['-DANDROID_STL=c++_static']
+        # vcpkg's toolchain only cross-compiles the dependencies; chain-load the NDK's so this library is built for the phone too.
+        abi = {'android-arm64': 'arm64-v8a', 'android-arm': 'armeabi-v7a', 'android-x64': 'x86_64'}[target]
+        command += [f'-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE={Path(env["ANDROID_NDK_HOME"]) / "build/cmake/android.toolchain.cmake"}',
+                    f'-DANDROID_ABI={abi}', '-DANDROID_PLATFORM=android-29', '-DANDROID_STL=c++_static']
     if target.startswith('mac-'):
         command += [f'-DCMAKE_OSX_ARCHITECTURES={"arm64" if "arm64" in triplet else "x86_64"}', '-DCMAKE_OSX_DEPLOYMENT_TARGET=13.0']
     if target.startswith('ios-'):
@@ -88,7 +91,7 @@ def build(target, test):
     headers = set()
     for source in upstream.rglob('*'):
         if not source.is_file() or source.suffix not in ('.cpp', '.hpp', '.h', '.c'): continue
-        text = source.read_text(errors='replace').lstrip('\ufeff\n\r ')
+        text = source.read_text(errors='replace').lstrip('﻿\n\r ')
         block = text[:text.find('*/')+2] if text.startswith('/*') and '*/' in text else '\n'.join(line for line in text.splitlines()[:80] if line.startswith('//'))
         if 'opyright' in block: headers.add(block)
     if headers: (notices/'libtorrent-embedded-notices.txt').write_text('\n\n'.join(sorted(headers))+'\n')
