@@ -1,3 +1,11 @@
+## 0.11.3
+
+- **Fixed: torrents wouldn't load** with the message "Torrents require No proxy". The default proxy setting ("Use the
+  system settings") blocked every torrent. Torrents now follow your proxy setting instead: No proxy connects
+  directly, an HTTP or SOCKS5 proxy from Settings carries peer, tracker and DHT traffic, and system settings use your
+  computer's proxy when one is turned on. Mac, Windows and Linux.
+- The speed limit for all downloads now also caps each torrent, instead of stopping torrents.
+
 ## 0.11.2
 
 - **Mac: open torrents from anywhere.** Double-click a `.torrent` file in Finder or click a magnet link in your browser
