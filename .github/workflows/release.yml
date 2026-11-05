@@ -79,11 +79,18 @@ jobs:
           cp "build/NexonicExtension-$V.zip" up/NexonicExtension-Chrome.zip
           cp "build/NexonicFirefoxAddon-$V.xpi" up/NexonicAddon-Firefox.xpi
           cat packaging/RELEASE-HEADER.md CHANGELOG.md > build/release-notes.md
-          # A GitHub server error can leave the draft created but the step failed: a re-run then adds the files to it.
-          if ! gh release create "$GITHUB_REF_NAME" --draft --title "Nexonic Download Manager $V" --notes-file build/release-notes.md up/*; then
-            sleep 10
-            gh release view "$GITHUB_REF_NAME" >/dev/null && gh release upload "$GITHUB_REF_NAME" up/* --clobber
-          fi
+          # Create the draft without files first, then upload with retries: a GitHub server error during a large upload
+          # (0.12.0, 0.14.0) used to fail the whole release. A re-run reuses the draft that is already there.
+          draft() { gh release list --json tagName,isDraft -q ".[] | select(.isDraft and .tagName == \"$GITHUB_REF_NAME\") | .tagName" | grep -qx "$GITHUB_REF_NAME"; }
+          for try in 1 2 3; do
+            draft || gh release create "$GITHUB_REF_NAME" --draft --title "Nexonic Download Manager $V" --notes-file build/release-notes.md && break
+            echo "Creating the draft failed (try $try)"; sleep 20
+          done
+          for try in 1 2 3 4; do
+            gh release upload "$GITHUB_REF_NAME" up/* --clobber && exit 0
+            echo "Upload failed (try $try); retrying"; sleep 30
+          done
+          exit 1
   ffmpeg-windows:
     runs-on: ubuntu-latest
     timeout-minutes: 30
