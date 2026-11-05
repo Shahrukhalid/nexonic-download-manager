@@ -1,3 +1,13 @@
+## 0.9.1
+
+- Replace application artwork with the official white tile, gradient N, orbital swoosh and blue download arrow on Windows, macOS, Linux, Android, iPhone/iPad and browser extensions.
+- Generate platform sizes and formats from the owner-supplied master, with cropped small icons, adaptive Android icons and explicit window/menu-bar resources.
+- Install every Linux launcher size and refresh existing icon files during integration updates.
+- Keep application identifiers, settings, download history, data locations and update compatibility unchanged.
+- Restrict screenshot publishing to main; review builds produce artifacts only.
+
+Torrent functionality is unchanged from v0.9.0. Native all-platform torrent development remains under review and is not part of this release.
+
 ## 0.9.0
 
 - **New icon:** the approved Nexonic design across the desktop and mobile apps, installers and browser extensions.
