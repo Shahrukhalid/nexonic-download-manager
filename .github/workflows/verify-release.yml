@@ -1,0 +1,75 @@
+name: Release verification
+# Adds proof to a published release, without touching how it is built: GitHub build attestations for every file,
+# SHA256SUMS.txt signed with Sigstore (keyless) and a software bill of materials (docs/VERIFY.md).
+on:
+  schedule:
+    - cron: "17 */6 * * *"   # releases are published by the release workflow, which can't trigger this one directly
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag (empty = latest)
+        required: false
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+concurrency: { group: verify-release, cancel-in-progress: false }
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Pick the release
+        id: pick
+        run: |
+          tag="${{ inputs.tag }}"
+          [ -n "$tag" ] || tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName -q .tagName)
+          assets=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets -q '.assets[].name')
+          if echo "$assets" | grep -qx 'SHA256SUMS.txt.sigstore.json' && [ -z "${{ inputs.tag }}" ]; then
+            echo "Already verified: $tag"; echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # Wait until the release is complete (Android, Windows and Mac files are added by separate jobs).
+          for f in NexonicDownloadManager-Android.apk Android-GPL-Sources.tar.gz; do
+            echo "$assets" | grep -qx "$f" || { echo "Not complete yet ($f missing): $tag"; echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0; }
+          done
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        if: steps.pick.outputs.skip != 'true'
+        with:
+          ref: ${{ steps.pick.outputs.tag }}
+          path: source
+      - name: Download the release files
+        if: steps.pick.outputs.skip != 'true'
+        run: |
+          mkdir dist
+          gh release download "${{ steps.pick.outputs.tag }}" --repo "$GITHUB_REPOSITORY" --dir dist
+          rm -f dist/SHA256SUMS.txt dist/SHA256SUMS.txt.sigstore.json dist/sbom.spdx.json
+          (cd dist && sha256sum -- * > ../SHA256SUMS.txt)
+          cat SHA256SUMS.txt
+      - uses: actions/attest-build-provenance@v2
+        if: steps.pick.outputs.skip != 'true'
+        with:
+          subject-path: dist/*
+      - uses: sigstore/cosign-installer@v3
+        if: steps.pick.outputs.skip != 'true'
+      - name: Sign the checksum list
+        if: steps.pick.outputs.skip != 'true'
+        run: cosign sign-blob --yes --bundle SHA256SUMS.txt.sigstore.json SHA256SUMS.txt
+      - uses: anchore/sbom-action@v0
+        if: steps.pick.outputs.skip != 'true'
+        with:
+          path: source
+          format: spdx-json
+          output-file: sbom.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+      - name: Attach to the release
+        if: steps.pick.outputs.skip != 'true'
+        run: |
+          gh release upload "${{ steps.pick.outputs.tag }}" SHA256SUMS.txt SHA256SUMS.txt.sigstore.json sbom.spdx.json \
+            --clobber --repo "$GITHUB_REPOSITORY"
