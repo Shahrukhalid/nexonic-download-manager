@@ -13,7 +13,9 @@ try {
 $version = (Get-Content VERSION).Trim()
 $candidate = (Resolve-Path "build/NexonicDownloadManager-Setup-$version.exe").Path
 $old = Join-Path $env:RUNNER_TEMP 'Nexonic-0.8.1-Setup.exe'
-Invoke-WebRequest 'https://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v0.8.1/NexonicDownloadManager-Windows-Setup.exe' -OutFile $old
+Write-Host 'Downloading checksum-pinned v0.8.1 installer (bounded retries)'
+& curl.exe --fail --location --retry 3 --retry-delay 3 --connect-timeout 15 --max-time 180 --output $old 'https://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v0.8.1/NexonicDownloadManager-Windows-Setup.exe'
+if ($LASTEXITCODE -ne 0) { throw 'Cannot download the pinned v0.8.1 installer within the retry limit.' }
 if ((Get-FileHash $old -Algorithm SHA256).Hash.ToLower() -ne '3cf58fecc3d2674ff2eb0c2f2202c86fa090af586987cdc073dbe2ed4ea38f19') { throw 'v0.8.1 installer checksum mismatch.' }
 New-Item -ItemType Directory -Force $support | Out-Null
 $folder = Join-Path $env:RUNNER_TEMP 'upgrade-downloads'
@@ -30,6 +32,7 @@ $partHash = (Get-FileHash $part -Algorithm SHA256).Hash
 $exe = Join-Path $env:LOCALAPPDATA 'Programs/Nexonic Download Manager/NexonicDownloadManager.exe'
 function Install-And-Check([string]$Setup, [string]$Expected) {
     $log = Join-Path $env:RUNNER_TEMP "nexonic-upgrade-$Expected.log"
+    Write-Host "Installing and checking $Expected"
     $setupProcess = Start-Process $Setup -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',"/LOG=`"$log`"") -PassThru
     # Start-Process -Wait includes the auto-launched app's lifetime. Wait only for the installer.
     if (-not $setupProcess.WaitForExit(180000)) {
