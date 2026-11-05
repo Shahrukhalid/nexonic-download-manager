@@ -66,6 +66,10 @@ The same guide is built into the app: **Help → Nexonic Download Manager Help**
 
 **Proxy and sign-in.** Set a proxy in Settings. For password-protected downloads, add the user name and password in the Add window or under Properties.
 
+**Unzip when finished.** Turn on Downloads › Unzip Finished .zip Files and each finished `.zip` is unpacked into a folder next to it.
+
+**Toolbar and menus.** The coloured toolbar has the same commands as the Tasks and Downloads menus. View › Show Toolbar Buttons and Show Button Names hide the buttons or just their names.
+
 ## Site Settings, Backup and Network
 
 *Windows, Linux and Mac. On Mac they are under Settings → Sites, Backup and Connection; DNS over HTTPS and Check the
@@ -110,11 +114,18 @@ in the code, never cookies or passwords, so downloads that need you to be signed
 
 ## Keyboard Shortcuts
 
-**Downloads.** ⌘N  Add URL  
-⇧⌘P  Stop all  
-⇧⌘R  Resume all  
-⌘,  Settings  
-⌘?  Help
+**Mac.** ⌘N  Add URL  
+⇧⌘T  Add torrent  
+⌘R  Resume · ⌘.  Stop  
+⇧⌘R  Resume all · ⇧⌘P  Stop all  
+⌘O  Open · ⌘I  Properties  
+⌘,  Settings · ⌘?  Help
+
+**Windows and Linux.** Ctrl+N  Add URL · Ctrl+Shift+T  Add torrent  
+Ctrl+R  Resume · Ctrl+.  Stop  
+Ctrl+Shift+R  Resume all · Ctrl+Shift+P  Stop all  
+Ctrl+O  Open · Ctrl+Shift+B  Batch · Ctrl+Shift+G  Grabber  
+Ctrl+F  Search · Del  Delete · F1  Help
 
 ## Still stuck?
 
