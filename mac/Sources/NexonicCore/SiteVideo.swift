@@ -351,7 +351,7 @@ public enum SiteVideoTools {
     static func engines() -> [(dir: URL, version: String)] {
         let fm = FileManager.default
         let names = (try? fm.contentsOfDirectory(atPath: folder.path)) ?? []
-        return names.filter { $0.hasPrefix(enginePrefix) && !$0.hasSuffix(".tmp") }.compactMap { n in
+        return names.filter { $0.hasPrefix(enginePrefix) && !$0.hasSuffix(".tmp") }.compactMap { n -> (dir: URL, version: String)? in
             let d = folder.appendingPathComponent(n, isDirectory: true)
             guard let v = version(of: d), fm.isExecutableFile(atPath: d.appendingPathComponent(engineName).path) else { return nil }
             return (d, v)
@@ -432,13 +432,12 @@ public enum SiteVideoTools {
         var head = URLRequest(url: latest, timeoutInterval: 30)
         head.httpMethod = "HEAD"
         guard let tag = fetch(head)?.response.url?.lastPathComponent, versionParts(tag).count >= 3,
-              tag.allSatisfy({ $0.isNumber || $0 == "." }), newer(tag, than: current),
-              let sumsURL = URL(string: "\(base)/download/\(tag)/SHA2-256SUMS"),
-              let zipURL = URL(string: "\(base)/download/\(tag)/\(engineName).zip"),
+              tag.allSatisfy({ $0.isNumber || $0 == "." }), newer(tag, than: current) else { return }
+        let zipName = engineName + ".zip"
+        guard let sumsURL = URL(string: base + "/download/" + tag + "/SHA2-256SUMS"),
+              let zipURL = URL(string: base + "/download/" + tag + "/" + zipName),
               let sums = fetch(URLRequest(url: sumsURL, timeoutInterval: 30))?.data,
-              let want = String(decoding: sums, as: UTF8.self).split(separator: "\n").lazy
-                .map({ $0.split(separator: " ", omittingEmptySubsequences: true) })
-                .first(where: { $0.count == 2 && $0[1] == "\(engineName).zip" })?[0].lowercased(),
+              let want = checksum(of: zipName, in: sums),
               let zip = fetch(URLRequest(url: zipURL, timeoutInterval: 300))?.data,
               hex(zip) == want else { return }
         let fm = FileManager.default
@@ -447,13 +446,28 @@ public enum SiteVideoTools {
         let file = work.appendingPathComponent("engine.zip"), out = work.appendingPathComponent("x", isDirectory: true)
         guard (try? fm.createDirectory(at: work, withIntermediateDirectories: true)) != nil, (try? zip.write(to: file)) != nil,
               run("/usr/bin/ditto", ["-x", "-k", file.path, out.path]) != nil,
-              let exe = fm.enumerator(at: out, includingPropertiesForKeys: nil)?.compactMap({ $0 as? URL })
-                .first(where: { $0.lastPathComponent == engineName }),
+              let exe = findEngine(in: out),
               run(exe.path, ["--version"])?.trimmingCharacters(in: .whitespacesAndNewlines) == tag else { return }
         lock.lock()
         let ok = install(from: exe.deletingLastPathComponent(), version: tag)
         lock.unlock()
         if ok, let dir = engines().first(where: { $0.version == tag })?.dir { warm(dir) }
+    }
+
+    static func findEngine(in dir: URL) -> URL? {
+        guard let items = FileManager.default.enumerator(at: dir, includingPropertiesForKeys: nil) else { return nil }
+        for case let u as URL in items where u.lastPathComponent == engineName { return u }
+        return nil
+    }
+
+    /// The SHA-256 for one file in a SHA2-256SUMS list ("<hash>  <name>" per line).
+    static func checksum(of name: String, in sums: Data) -> String? {
+        let text = String(decoding: sums, as: UTF8.self)
+        for line in text.split(separator: "\n") {
+            let parts: [Substring] = line.split(separator: " ", omittingEmptySubsequences: true)
+            if parts.count == 2, String(parts[1]) == name { return String(parts[0]).lowercased() }
+        }
+        return nil
     }
 
     private static func hex(_ data: Data) -> String { SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined() }
