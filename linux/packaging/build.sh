@@ -30,7 +30,8 @@ cp "$OUT/host"/nexonic-host "$OUT/host"/nexonic-host.dll "$OUT/host"/nexonic-hos
 rm -rf "$OUT/host"
 find "$APP" -name "*.pdb" -delete
 
-cp "$ROOT/.native-cache/sdk/$RID/lib/libnexonic_torrent.so" "$APP/"
+# Strip the symbol table (exported symbols stay): about 3 MB smaller.
+strip --strip-unneeded -o "$APP/libnexonic_torrent.so" "$ROOT/.native-cache/sdk/$RID/lib/libnexonic_torrent.so"
 cp -R "$ROOT/.native-cache/sdk/$RID/notices" "$APP/torrent-licenses"
 cp "$ROOT/.native-cache/sdk/$RID/native-components.json" "$APP/torrent-components.json"
 echo "== Video engine and browser extension"

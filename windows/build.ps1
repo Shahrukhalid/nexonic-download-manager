@@ -6,12 +6,19 @@ python scripts/build-torrent-native.py win-x64
 if ($LASTEXITCODE -ne 0) { throw "Native torrent engine build failed" }
 $out = "build\win"
 if (Test-Path build) { Remove-Item build -Recurse -Force }
-$common = @("-c", "Release", "-r", "win-x64", "--self-contained", "true", "-p:PublishSingleFile=true",
-            "-p:IncludeNativeLibrariesForSelfExtract=true", "-p:Version=$version", "-o", $out)
-dotnet publish windows\App\App.csproj @common
+# The app and the browser helper (also the ndm command) share one .NET runtime in the app folder, as on Linux:
+# the helper adds only its own files instead of carrying a second copy of the runtime.
+$common = @("-c", "Release", "-r", "win-x64", "--self-contained", "true", "-p:Version=$version")
+dotnet publish windows\App\App.csproj @common -o $out
 if ($LASTEXITCODE -ne 0) { throw "App build failed" }
-dotnet publish windows\Host\Host.csproj @common
+dotnet publish windows\Host\Host.csproj @common -o build\host
 if ($LASTEXITCODE -ne 0) { throw "Helper build failed" }
+foreach ($f in "nexonic-host.exe", "nexonic-host.dll", "nexonic-host.deps.json", "nexonic-host.runtimeconfig.json") {
+  Copy-Item "build\host\$f" $out
+}
+# The helper uses the app's copy of the shared code; both come from the same build.
+if ((Get-FileHash build\host\Nexonic.Core.dll).Hash -ne (Get-FileHash "$out\Nexonic.Core.dll").Hash) { throw "Helper and app were built from different code" }
+Remove-Item build\host -Recurse -Force
 Get-ChildItem $out -Filter *.pdb | Remove-Item
 # Small bundled ffmpeg (re-packs streamed video into .mp4), cross-built on Linux by scripts/build-ffmpeg.sh windows.
 if (Test-Path .ffmpeg-cache\windows\ffmpeg.exe) {

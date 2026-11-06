@@ -1,3 +1,10 @@
+## 0.17.1
+
+- **Smaller downloads, same features.** The Android apps no longer carry the torrent engine's build-time debugging
+  information, and on Windows the browser helper and `ndm` command now share the app's .NET runtime instead of
+  bundling a second copy (as on Linux). The Linux torrent engine is smaller too. Nothing else changes: settings,
+  downloads, torrents and their progress stay where they are, and updating works as before.
+
 ## 0.17.0
 
 - **Android: playlists and channels.** Tap the playlist button on the Downloads screen, or share or paste a YouTube
