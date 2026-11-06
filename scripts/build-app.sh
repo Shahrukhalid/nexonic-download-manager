@@ -70,7 +70,7 @@ mkdir -p "$EXTRA"
 cp -R "$APP/Contents/Resources/Extension" "$EXTRA/Browser Extension"
 cp "$APP/Contents/Resources/Firefox Add-on.xpi" "$EXTRA/Firefox Add-on.xpi"
 tiffutil -cathidpicheck packaging/dmg-background.png packaging/dmg-background@2x.png -out build/dmg-background.tiff 2>/dev/null
-python3 -m venv build/venv && build/venv/bin/pip install -q "dmgbuild>=1.6,<2"
+python3 -m venv build/venv && build/venv/bin/pip install -q --require-hashes -r packaging/dmg-requirements.txt
 build/venv/bin/dmgbuild -s packaging/dmg-settings.py \
   -D app="$APP" -D extension="$EXTRA/Browser Extension" -D xpi="$EXTRA/Firefox Add-on.xpi" \
   -D icns="$APP/Contents/Resources/AppIcon.icns" -D background=build/dmg-background.tiff \
