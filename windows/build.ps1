@@ -27,12 +27,14 @@ if (Test-Path .ffmpeg-cache\windows\ffmpeg.exe) {
   Write-Warning "No .ffmpeg-cache\windows\ffmpeg.exe: streamed video will be saved without joining picture and sound"
 }
 # Video engine for YouTube and other sites (scripts/fetch-video-tools.sh windows .tools-cache/windows).
-if (Test-Path .tools-cache\windows\yt-dlp.exe) {
-  Copy-Item .tools-cache\windows\yt-dlp.exe, .tools-cache\windows\qjs.exe $out
+if (Test-Path .tools-cache\windows\yt-dlp\yt-dlp.exe) {
+  # The unpacked engine folder (starts at once; the one-file edition unpacked itself before every video).
+  Copy-Item .tools-cache\windows\yt-dlp "$out\yt-dlp" -Recurse
+  Copy-Item .tools-cache\windows\qjs.exe $out
   Get-Content packaging\THIRD-PARTY-NOTICES.txt, .ffmpeg-cache\windows\NOTICE-video-tools-1.txt, .tools-cache\windows\NOTICE-video-tools-2.txt |
     Set-Content "$out\THIRD-PARTY-NOTICES.txt"
 } else {
-  Write-Warning "No .tools-cache\windows\yt-dlp.exe: videos from YouTube and other sites will not work in this build"
+  Write-Warning "No .tools-cache\windows\yt-dlp\yt-dlp.exe: videos from YouTube and other sites will not work in this build"
 }
 Copy-Item .native-cache\sdk\win-x64\bin\nexonic_torrent.dll $out
 Copy-Item .native-cache\sdk\win-x64\notices "$out\torrent-licenses" -Recurse

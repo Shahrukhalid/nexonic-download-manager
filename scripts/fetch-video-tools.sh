@@ -47,8 +47,16 @@ case "$TARGET" in
     chmod +x "$OUT/yt-dlp-engine/yt-dlp_macos" "$OUT/qjs"
     ;;
   windows)
-    get "$YT/yt-dlp.exe" "$OUT/yt-dlp.exe"
-    check "$OUT/yt-dlp.exe" "$(ytsum yt-dlp.exe)"
+    # The unpacked edition (folder with yt-dlp.exe): the one-file edition unpacks itself before every video.
+    get "$YT/yt-dlp_win.zip" "$OUT/yt-dlp.zip"
+    check "$OUT/yt-dlp.zip" "$(ytsum yt-dlp_win.zip)"
+    rm -rf "$OUT/yt-dlp" "$OUT/x" && mkdir -p "$OUT/x"
+    python3 -c 'import sys, zipfile; zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])' "$OUT/yt-dlp.zip" "$OUT/x"
+    EXE="$(find "$OUT/x" -type f -name yt-dlp.exe -print -quit)"
+    [ -n "$EXE" ] || { echo "yt-dlp.exe missing from the zip" >&2; exit 1; }
+    mv "$(dirname "$EXE")" "$OUT/yt-dlp"
+    rm -rf "$OUT/x" "$OUT/yt-dlp.zip"
+    printf '%s\n' "$YTTAG" > "$OUT/yt-dlp/VERSION"
     get "$QJ/qjs-windows-x86_64.exe" "$OUT/qjs.exe"
     check "$OUT/qjs.exe" 55a1b69cd4fdb6b0d3f8fdd910d0e89519f5330e408462084140c7b3b964fdae
     ;;

@@ -192,7 +192,7 @@
           <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <DataGrid x:Name="Grid" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Extended" HeadersVisibility="Column"
-                  MouseDoubleClick="OnOpen" SelectionChanged="OnSelection" Background="White"
+                  MouseDoubleClick="OnRowDoubleClick" SelectionChanged="OnSelection" Background="White"
                   BorderThickness="0" RowHeight="30" CanUserReorderColumns="True" CanUserSortColumns="True"
                   HorizontalGridLinesBrush="#EEF1F4" GridLinesVisibility="Horizontal">
           <DataGrid.ContextMenu>

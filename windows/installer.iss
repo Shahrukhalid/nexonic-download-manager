@@ -23,6 +23,10 @@ WizardStyle=modern
 ArchitecturesInstallIn64BitMode=x64compatible
 ChangesEnvironment=yes
 
+[InstallDelete]
+; The one-file video engine of versions before 0.18.0 (now the yt-dlp folder).
+Type: files; Name: "{app}\yt-dlp.exe"
+
 [Files]
 Source: "..\build\win\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
 
