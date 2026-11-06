@@ -175,7 +175,7 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
             Hint("No account, no ads, no tracking. Cookies and passwords for downloads are encrypted on this phone and sent only to their own site.")
 
             Section("Video engine")
-            Hint("Saves videos from YouTube, Facebook, Instagram, TikTok, X and 1,000+ other sites (yt-dlp with ffmpeg, like the desktop apps). It updates itself once a day.")
+            Hint("Saves videos from YouTube, Facebook, Instagram, TikTok, X and 1,000+ other sites (the same video engine as the desktop apps). It updates itself once a day.")
             Text(tr("Version: ") + (engineVersion ?: "starting…"), style = MaterialTheme.typography.bodyMedium)
             TextButton(enabled = !updating, onClick = {
                 updating = true

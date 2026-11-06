@@ -411,7 +411,7 @@ public static partial class Dialogs
         var (folderRow, folder) = Form.FolderRow(f.Window, s.Folder);
         general.Children.Add(folderRow);
         var sort = Tick(general, "Put each type in its own folder (Video, Music, Documents, Programs, Compressed, Images)", s.SortIntoCategoryFolders);
-        var torrents = Tick(general, "Enable experimental torrents (bundled native libtorrent engine)", s.TorrentsEnabled);
+        var torrents = Tick(general, "Enable experimental torrents (built-in torrent engine)", s.TorrentsEnabled);
         var notify = Tick(general, "Notifications", s.Notifications);
         var updates = Tick(general, "Check for updates when the app opens", s.CheckForUpdates);
         general.Children.Add(new TextBlock { Text = "Language", Margin = new Thickness(0, 10, 0, 3) });

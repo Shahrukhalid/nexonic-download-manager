@@ -39,8 +39,12 @@ strip "$APP/Contents/MacOS/NexonicDownloadManager" "$APP/Contents/MacOS/nexonic-
 if [ ! -x .ffmpeg-cache/mac/ffmpeg ]; then bash scripts/build-ffmpeg.sh mac .ffmpeg-cache/mac; fi
 cp .ffmpeg-cache/mac/ffmpeg .ffmpeg-cache/mac/ffprobe "$APP/Contents/MacOS/"
 # Video engine for YouTube and other sites (yt-dlp + QuickJS); fetched fresh unless .tools-cache/mac already has it.
-if [ ! -x .tools-cache/mac/yt-dlp ]; then bash scripts/fetch-video-tools.sh mac .tools-cache/mac; fi
-cp .tools-cache/mac/yt-dlp .tools-cache/mac/qjs "$APP/Contents/MacOS/"
+if [ ! -x .tools-cache/mac/yt-dlp-engine/yt-dlp_macos ]; then bash scripts/fetch-video-tools.sh mac .tools-cache/mac; fi
+cp .tools-cache/mac/qjs "$APP/Contents/MacOS/"
+cp -R .tools-cache/mac/yt-dlp-engine "$APP/Contents/Resources/yt-dlp"
+# MacOS/yt-dlp starts the unpacked engine (for the command line and checks; the app runs the engine directly).
+printf '#!/bin/sh\nexec "$(dirname "$0")/../Resources/yt-dlp/yt-dlp_macos" "$@"\n' > "$APP/Contents/MacOS/yt-dlp"
+chmod +x "$APP/Contents/MacOS/yt-dlp"
 cat packaging/THIRD-PARTY-NOTICES.txt .ffmpeg-cache/mac/NOTICE-video-tools-1.txt .tools-cache/mac/NOTICE-video-tools-2.txt \
   > "$APP/Contents/Resources/THIRD-PARTY-NOTICES.txt"
 cp packaging/TERMS.txt "$APP/Contents/Resources/TERMS.txt"
@@ -56,6 +60,8 @@ cp branding/universal/generated/macos/MenuBarIcon.png "$APP/Contents/Resources/M
 
 if [ -n "${SIGN_IDENTITY:-}" ]; then
   codesign --force --options runtime --timestamp -s "$SIGN_IDENTITY" "$APP/Contents/MacOS/nexonic-host"
+  find "$APP/Contents/Resources/yt-dlp" -type f \( -perm -u+x -o -name '*.dylib' -o -name '*.so' \) \
+    -exec codesign --force --options runtime --timestamp -s "$SIGN_IDENTITY" {} \;
   for tool in ffmpeg ffprobe qjs yt-dlp; do
     codesign --force --options runtime --timestamp -s "$SIGN_IDENTITY" "$APP/Contents/MacOS/$tool"
   done

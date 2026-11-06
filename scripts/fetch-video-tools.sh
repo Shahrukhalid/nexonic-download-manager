@@ -28,15 +28,23 @@ ytsum() { awk -v f="$1" '$2 == f { print $1 }' "$SUMS"; }
 
 case "$TARGET" in
   mac)
-    get "$YT/yt-dlp_macos" "$OUT/yt-dlp"
-    check "$OUT/yt-dlp" "$(ytsum yt-dlp_macos)"
+    # The unpacked edition: the one-file edition unpacks itself on every run, and macOS checks it each time (~18 s).
+    get "$YT/yt-dlp_macos.zip" "$OUT/yt-dlp.zip"
+    check "$OUT/yt-dlp.zip" "$(ytsum yt-dlp_macos.zip)"
+    rm -rf "$OUT/yt-dlp-engine" "$OUT/x" && mkdir -p "$OUT/x"
+    ditto -x -k "$OUT/yt-dlp.zip" "$OUT/x"
+    EXE="$(find "$OUT/x" -type f -name yt-dlp_macos -print -quit)"
+    [ -n "$EXE" ] || { echo "yt-dlp_macos missing from the zip" >&2; exit 1; }
+    mv "$(dirname "$EXE")" "$OUT/yt-dlp-engine"
+    rm -rf "$OUT/x" "$OUT/yt-dlp.zip"
+    printf '%s\n' "$YTTAG" > "$OUT/yt-dlp-engine/VERSION"
     get "$QJ/qjs-darwin-arm64" "$OUT/qjs-arm64"
     check "$OUT/qjs-arm64" 9a24e7435036906c098d539daf47bcc8e7e8ad2f3aa084a0bce9313c6c3527e0
     get "$QJ/qjs-darwin-x86_64" "$OUT/qjs-x86_64"
     check "$OUT/qjs-x86_64" 5982a1ebb20e1a9bf6162bafd29d445823616084cfeddee8881f8d69d6e0fd74
     lipo -create "$OUT/qjs-arm64" "$OUT/qjs-x86_64" -output "$OUT/qjs"
     rm "$OUT/qjs-arm64" "$OUT/qjs-x86_64"
-    chmod +x "$OUT/yt-dlp" "$OUT/qjs"
+    chmod +x "$OUT/yt-dlp-engine/yt-dlp_macos" "$OUT/qjs"
     ;;
   windows)
     get "$YT/yt-dlp.exe" "$OUT/yt-dlp.exe"

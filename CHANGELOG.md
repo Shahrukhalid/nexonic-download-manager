@@ -1,3 +1,10 @@
+## 0.17.4
+
+- **Mac: videos start much sooner.** The video engine now ships unpacked. Before, it unpacked itself on every run and
+  macOS checked it each time, which added about 18 seconds before every video and before the quality list appeared.
+  Now it starts in a fraction of a second (macOS checks it once, right after installing or updating). It still keeps
+  itself up to date once a day, checked against the official fingerprints. Sites and qualities are unchanged.
+
 ## 0.17.3
 
 - **Mac: Cancel keeps the download in the list** as Canceled (like IDM) instead of removing it. What was downloaded
