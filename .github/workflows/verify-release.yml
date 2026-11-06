@@ -51,7 +51,7 @@ jobs:
           rm -f dist/SHA256SUMS.txt dist/SHA256SUMS.txt.sigstore.json dist/sbom.spdx.json
           (cd dist && sha256sum -- * > ../SHA256SUMS.txt)
           cat SHA256SUMS.txt
-      - uses: actions/attest-build-provenance@v2
+      - uses: actions/attest-build-provenance@v4
         if: steps.pick.outputs.skip != 'true'
         with:
           subject-path: dist/*
