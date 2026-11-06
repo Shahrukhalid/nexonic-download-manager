@@ -271,8 +271,19 @@ jobs:
             Start-Sleep -Seconds 30
           }
           if (-not $ready) { throw "Release assets incomplete: $($missing -join ', ')" }
-          gh release download $tag --dir dl --pattern "Nexonic*"
-          if ($LASTEXITCODE -ne 0) { throw "Cannot download release assets for update checksums" }
+          # Fetch each update file on its own, retrying GitHub's occasional server errors, so one failed transfer
+          # can't stop the release.
+          New-Item -ItemType Directory -Force dl | Out-Null
+          foreach ($name in $required) {
+            $ok = $false
+            for ($try = 1; $try -le 6 -and -not $ok; $try++) {
+              gh release download $tag --dir dl --pattern $name --clobber
+              if ($LASTEXITCODE -eq 0 -and (Test-Path "dl/$name")) { $ok = $true; break }
+              Write-Host "Download of $name failed (attempt $try); retrying"
+              Start-Sleep -Seconds (15 * $try)
+            }
+            if (-not $ok) { throw "Cannot download $name for update checksums" }
+          }
           foreach ($name in $required) {
             if (-not (Test-Path "dl/$name")) { throw "Missing update asset: $name" }
           }
