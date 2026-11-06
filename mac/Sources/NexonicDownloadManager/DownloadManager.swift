@@ -205,14 +205,35 @@ final class DownloadManager: ObservableObject {
 
     // MARK: control
 
+    /// Downloads canceled while their transfer was still stopping.
+    private var canceled = Set<UUID>()
+
     func pause(_ id: UUID) {
         if let t = transfers[id] { t.pause() } else { update(id) { if $0.status != .finished { $0.status = .paused } } }
     }
 
     func resume(_ id: UUID) {
+        canceled.remove(id)
         update(id) { if [.paused, .failed].contains($0.status) { $0.status = .queued; $0.error = nil } }
         if let q = items.first(where: { $0.id == id })?.queue, let i = queues.firstIndex(where: { $0.id == q }), !queues[i].running {
             queues[i].running = true  // resuming a download starts its queue
+        }
+        schedule()
+    }
+
+    /// Stops a download and deletes what was downloaded so far, keeping it in the list as Canceled (like IDM).
+    /// Resume or Try Again starts it again from the beginning.
+    func cancel(_ id: UUID) {
+        canceled.insert(id)  // late updates from the stopped transfer are ignored
+        transfers.removeValue(forKey: id)?.discard()
+        try? FileManager.default.removeItem(at: AppPaths.parts.appendingPathComponent(id.uuidString))
+        update(id) { r in
+            guard r.status != .finished else { return }
+            r.status = .failed
+            r.error = DownloadRecord.canceledMessage
+            r.segments = []
+            r.videoParts = nil; r.videoStep = nil
+            r.streamDone = nil; r.streamBytes = nil
         }
         schedule()
     }
@@ -408,6 +429,7 @@ final class DownloadManager: ObservableObject {
     }
 
     private func changed(_ rec: DownloadRecord) {
+        if canceled.contains(rec.id) { return }
         guard let i = items.firstIndex(where: { $0.id == rec.id }) else { return }
         let before = items[i].status
         var rec = rec

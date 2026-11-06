@@ -1,3 +1,10 @@
+## 0.17.3
+
+- **Mac: Cancel keeps the download in the list** as Canceled (like IDM) instead of removing it. What was downloaded
+  is deleted; Resume starts it again from the beginning.
+- **Mac: double-click a download that isn't finished** to open its progress window; a finished one still opens its
+  file.
+
 ## 0.17.2
 
 - **Mac: a smaller download.** The app and its browser helper ship without build-time symbol tables, as apps built

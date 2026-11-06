@@ -65,6 +65,9 @@ public struct DownloadRecord: Codable, Identifiable, Sendable {
     public var awaitingRefresh: Bool?
     // Added in 0.3.0: streamed video
     public var isStream: Bool?
+    /// Shown for downloads the user canceled (kept in the list, nothing downloaded).
+    public static let canceledMessage = "Canceled"
+    public var isCanceled: Bool { status == .failed && error == Self.canceledMessage }
     public var streamDone: Int?
     public var streamTotal: Int?
     public var streamBytes: Int64?

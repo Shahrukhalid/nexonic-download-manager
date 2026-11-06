@@ -209,7 +209,7 @@ struct ContentView: View {
             TableColumn("Status") { r in
                 HStack(spacing: 5) {
                     Circle().fill(statusColor(r)).frame(width: 7, height: 7)
-                    Text(statusText(r)).foregroundStyle(r.status == .failed ? .red : .primary)
+                    Text(statusText(r)).foregroundStyle(r.status == .failed && !r.isCanceled ? .red : .primary)
                 }
             }.width(120)
             TableColumn("Queue") { r in Text(manager.queueName(r.queue)).foregroundStyle(.secondary) }.width(90)
@@ -218,7 +218,10 @@ struct ContentView: View {
         .contextMenu(forSelectionType: UUID.self) { ids in
             rowMenu(ids)
         } primaryAction: { ids in
-            if let id = ids.first { manager.open(id) }
+            // Like IDM: a finished download opens its file; any other shows its progress window.
+            guard let id = ids.first else { return }
+            if manager.items.first(where: { $0.id == id })?.status == .finished { manager.open(id) }
+            else { ProgressWindow.show(id, manager: manager) }
         }
     }
 
@@ -451,7 +454,7 @@ func statusText(_ r: DownloadRecord) -> String {
     case .downloading: return "\(Int(r.progress * 100))%"
     case .paused: return r.awaitingRefresh == true ? "Waiting for link" : "Stopped"
     case .finished: return r.checksumResult.map { $0.contains("not") ? "Checksum failed" : "Complete" } ?? "Complete"
-    case .failed: return "Error"
+    case .failed: return r.isCanceled ? "Canceled" : "Error"
     }
 }
 

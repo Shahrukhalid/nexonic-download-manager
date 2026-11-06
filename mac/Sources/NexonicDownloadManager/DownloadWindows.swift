@@ -375,7 +375,7 @@ struct DownloadProgressView: View {
                 } else if [.paused, .failed].contains(item.status) {
                     Button("Resume") { manager.resume(id) }.keyboardShortcut(.defaultAction)
                 }
-                Button("Cancel") { cancel(item) }
+                if !item.isCanceled && item.status != .finished { Button("Cancel") { cancel(item) } }
                 Button("Close") { close() }.keyboardShortcut(.cancelAction)
             }
         }
@@ -399,7 +399,7 @@ struct DownloadProgressView: View {
         case .downloading: return "Receiving data…"
         case .paused: return "Paused"
         case .finished: return "Complete"
-        case .failed: return "Failed"
+        case .failed: return item.isCanceled ? "Canceled" : "Failed"
         }
     }
 
@@ -464,12 +464,12 @@ struct DownloadProgressView: View {
     private func cancel(_ item: DownloadRecord) {
         let alert = NSAlert()
         alert.messageText = "Cancel this download?"
-        alert.informativeText = "\(item.fileName) is removed from the list and the part already downloaded is deleted."
+        alert.informativeText = "The part of \(item.fileName) already downloaded is deleted. It stays in the list as Canceled; Resume starts it again."
         alert.addButton(withTitle: "Cancel Download")
         alert.addButton(withTitle: "Keep Downloading")
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         close()
-        manager.remove(id)
+        manager.cancel(id)
     }
 }
 
