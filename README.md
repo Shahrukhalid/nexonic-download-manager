@@ -143,7 +143,10 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
 - **Torrents on every platform**, like a BitTorrent client: open a magnet link or a `.torrent` file, choose the files,
   and see seeds, peers, speeds, trackers and pieces. Change limits, connections and upload slots while it runs. Every
   piece is checked and each file gets a SHA-256. Works with your proxy; off until you turn it on.
-- **An IDM-style toolbar** on Mac with large buttons and their names, and menus for every command.
+- **Playlists and channels:** list a YouTube playlist or channel (or a Vimeo, SoundCloud or Bandcamp list) and pick
+  the videos to save. Optional **subtitles** inside videos, and a **Media Library** of your finished videos and music
+  with preview pictures.
+- **An IDM-style toolbar** on Mac, Windows and Linux with large buttons and their names, and menus for every command.
 - **Updates inside the app:** a new version shows up when you open the app, with what's new and Update Now, Remind
   Me Later or Skip This Version.
 - **Same app on Mac, Windows and Linux**, light and dark mode, no account, no tracking.
@@ -182,6 +185,17 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
 
 ## What's new
 
+- **0.17.0: playlists, subtitles and the Media Library on phones.** Android lists a playlist's or channel's videos
+  so you can pick which to save, keeps subtitles inside videos (optional) and has a Media Library with preview
+  pictures. iPhone and iPad get the Media Library too.
+- **0.16.0: playlists, subtitles and a Media Library** on Mac, Windows and Linux. Add a YouTube playlist or channel,
+  Vimeo showcase, SoundCloud set or Bandcamp album and tick the videos you want (up to 500). Keep subtitles in your
+  language inside videos (optional). Browse finished videos and music with preview pictures, search and Play.
+- **0.15.0: videos keep their details and chapters.** Title, channel or artist, date, description and chapter marks
+  are saved inside the file on every platform.
+- **0.14.0: an IDM-style toolbar and menus on Windows and Linux**, with large coloured buttons, keyboard shortcuts
+  and Tasks, Downloads, View and Help menus. Also: unzip finished `.zip` files automatically (optional, Mac, Windows
+  and Linux).
 - **0.13.0: torrents on Android, iPhone and iPad.** Open a magnet link or `.torrent` file, choose the files and
   download; every piece is checked. Android downloads in the background; iPhone and iPad download while the app is
   open and continue when you come back. Also: torrent details, Peers and Trackers windows and live settings on
