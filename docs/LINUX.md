@@ -15,12 +15,37 @@ Download from the [latest release](https://github.com/Shahrukhalid/nexonic-downl
 | Any distribution, 64-bit ARM | `NexonicDownloadManager-Linux-aarch64.AppImage` |
 | Ubuntu, Debian, Linux Mint, Pop!_OS, elementary OS, Zorin OS | `nexonic-download-manager_<version>_amd64.deb` (`_arm64.deb` on ARM) |
 | Fedora, openSUSE, RHEL, AlmaLinux, Rocky Linux | `nexonic-download-manager-<version>-1.x86_64.rpm` (`.aarch64.rpm` on ARM) |
-| Arch Linux, Manjaro, EndeavourOS, SteamOS | the AppImage |
+| Arch Linux, Manjaro, EndeavourOS, CachyOS | the AUR (`nexonic-download-manager-bin`) or the AppImage |
+| SteamOS | the AppImage |
 
 Everything is included: the .NET runtime, the video engine and the torrent engine (no Python or other system packages
 needed). Torrents remain off by default. See [setup, supported features and restrictions](TORRENTS.md).
 
 ## Install
+
+**One line** (any distribution, installs or updates to the latest release):
+
+```bash
+curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | bash
+```
+
+Options: `--to DIR` installs the AppImage into another folder, `--system` installs system-wide into
+`/opt` (needs sudo), `--no-launch` skips opening the app. The download is checked against the SHA-256
+checksum GitHub publishes for the release.
+
+**Arch Linux, Manjaro, EndeavourOS, CachyOS** (also installs or updates to the latest release):
+
+```bash
+yay -S nexonic-download-manager-bin
+# or: paru -S nexonic-download-manager-bin
+# or, to always build the latest git main from source:
+yay -S nexonic-download-manager-git
+```
+
+The `-bin` package is refreshed on the AUR on every release, so a normal system upgrade
+(`yay -Syu`) always brings the newest version. It installs the same files as the `.deb`/`.rpm`
+into `/opt/nexonic-download-manager` with `nexonic-download-manager` and `ndm` in `/usr/bin`,
+so it runs without FUSE.
 
 **AppImage** (works on every distribution and updates itself):
 

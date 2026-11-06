@@ -3,10 +3,11 @@
   packaging/winget/   winget manifests (to submit to microsoft/winget-pkgs)
   bucket/             Scoop bucket (scoop bucket add nexonic https://github.com/Shahrukhalid/nexonic-download-manager)
   packaging/homebrew/ Homebrew cask (for a tap repository named homebrew-nexonic)
+  packaging/aur/nexonic-download-manager-bin/  AUR binary package (pushed to aur.archlinux.org)
 Usage: scripts/package-manifests.py [VERSION]   (default: the VERSION file; the release must be published)
 Nothing is submitted anywhere; the files are only written into this repository for review.
 """
-import json, sys, urllib.request
+import json, re, sys, urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -19,7 +20,8 @@ DESCRIPTION = ("Free, open-source download manager: up to 32 connections per fil
 with urllib.request.urlopen(f"{BASE}/latest.json", timeout=60) as r:
     release = json.load(r)
 sha = {a["name"]: a["digest"].split(":", 1)[1] for a in release["assets"] if a.get("digest", "").startswith("sha256:")}
-for need in ("NexonicDownloadManager-Windows-Setup.exe", "NexonicDownloadManager-Windows-Portable.zip", "NexonicDownloadManager-Mac.dmg"):
+for need in ("NexonicDownloadManager-Windows-Setup.exe", "NexonicDownloadManager-Windows-Portable.zip", "NexonicDownloadManager-Mac.dmg",
+             "NexonicDownloadManager-Linux-x86_64.AppImage", "NexonicDownloadManager-Linux-aarch64.AppImage"):
     if need not in sha:
         sys.exit(f"{need} has no checksum in v{VERSION}'s latest.json")
 
@@ -123,4 +125,35 @@ cask "nexonic-download-manager" do
   ]
 end
 """)
-print(f"Wrote the winget, Scoop and Homebrew files for {VERSION}")
+
+aur = ROOT / "packaging" / "aur" / "nexonic-download-manager-bin"
+aur.mkdir(parents=True, exist_ok=True)
+pkgbuild = (aur / "PKGBUILD").read_text()
+pkgbuild = re.sub(r"^pkgver=\S+", f"pkgver={VERSION}", pkgbuild, flags=re.M)
+pkgbuild = re.sub(r"^sha256sums_x86_64=\('?[0-9a-fA-F]+'?\)",
+                  f"sha256sums_x86_64=('{sha['NexonicDownloadManager-Linux-x86_64.AppImage']}')",
+                  pkgbuild, flags=re.M)
+pkgbuild = re.sub(r"^sha256sums_aarch64=\('?[0-9a-fA-F]+'?\)",
+                  f"sha256sums_aarch64=('{sha['NexonicDownloadManager-Linux-aarch64.AppImage']}')",
+                  pkgbuild, flags=re.M)
+(aur / "PKGBUILD").write_text(pkgbuild)
+# Keep .SRCINFO in sync (it is what the AUR actually parses). The fields the
+# release changes are pkgver, the versioned source URLs and the checksums.
+srcinfo = aur / ".SRCINFO"
+if srcinfo.exists():
+    text = srcinfo.read_text()
+    text = re.sub(r"(?m)^\tpkgver = \S+", f"\tpkgver = {VERSION}", text)
+    text = re.sub(r"(?m)^\tsource_x86_64 = .*",
+                  f"\tsource_x86_64 = NexonicDownloadManager-Linux-x86_64.AppImage::https://github.com/{REPO}/releases/download/v{VERSION}/NexonicDownloadManager-Linux-x86_64.AppImage",
+                  text)
+    text = re.sub(r"(?m)^\tsource_aarch64 = .*",
+                  f"\tsource_aarch64 = NexonicDownloadManager-Linux-aarch64.AppImage::https://github.com/{REPO}/releases/download/v{VERSION}/NexonicDownloadManager-Linux-aarch64.AppImage",
+                  text)
+    text = re.sub(r"(?m)^\tsha256sums_x86_64 = \S+",
+                  f"\tsha256sums_x86_64 = {sha['NexonicDownloadManager-Linux-x86_64.AppImage']}", text)
+    text = re.sub(r"(?m)^\tsha256sums_aarch64 = \S+",
+                  f"\tsha256sums_aarch64 = {sha['NexonicDownloadManager-Linux-aarch64.AppImage']}", text)
+    srcinfo.write_text(text)
+    print("Updated packaging/aur/nexonic-download-manager-bin/.SRCINFO")
+print(f"Wrote the winget, Scoop, Homebrew and AUR files for {VERSION}")
+print("Next: cd packaging/aur/nexonic-download-manager-bin && makepkg --printsrcinfo > .SRCINFO")

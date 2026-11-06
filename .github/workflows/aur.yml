@@ -1,0 +1,69 @@
+name: AUR
+# Keeps the AUR binary package on the latest release, so `yay -S
+# nexonic-download-manager-bin` (or `paru`) always installs the newest version.
+# The -git package (packaging/aur/nexonic-download-manager-git) always builds
+# the latest git main via its pkgver() function.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version without the leading v (empty = VERSION file)
+        required: false
+permissions:
+  contents: read
+concurrency: aur
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Resolve the version
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ -n "${{ inputs.version }}" ]; then
+            V="${{ inputs.version }}"
+          elif [ "${{ github.event_name }}" = "release" ]; then
+            V="${{ github.event.release.tag_name }}"
+            V="${V#v}"
+          else
+            V="$(tr -d '[:space:]' < VERSION)"
+          fi
+          [[ "$V" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Invalid version: $V"; exit 1; }
+          # The release (with its latest.json checksums) must be published first.
+          gh release view "v$V" --repo "$GITHUB_REPOSITORY" --json tagName -q .tagName >/dev/null
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "Publishing AUR nexonic-download-manager-bin v$V"
+      - name: Update the AUR package files
+        run: |
+          set -euo pipefail
+          python3 scripts/package-manifests.py "${{ steps.version.outputs.version }}"
+          git -C "$GITHUB_WORKSPACE" status --short
+      - name: Push to the AUR
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${AUR_SSH_PRIVATE_KEY:-}" ]; then
+            echo "::warning::AUR_SSH_PRIVATE_KEY is not set; skipping the AUR push. Add the AUR SSH key as a repository secret (see docs/PACKAGES.md)."
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > ~/.ssh/aur-publish
+          chmod 600 ~/.ssh/aur-publish
+          ssh-keyscan -t ed25519 aur.archlinux.org >> ~/.ssh/known_hosts 2>/dev/null
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/aur-publish -o StrictHostKeyChecking=yes"
+          rm -rf /tmp/aur-bin && git clone "ssh://aur@aur.archlinux.org/nexonic-download-manager-bin.git" /tmp/aur-bin
+          cp packaging/aur/nexonic-download-manager-bin/PKGBUILD packaging/aur/nexonic-download-manager-bin/.SRCINFO /tmp/aur-bin/
+          cd /tmp/aur-bin
+          git config user.name "Shahrukh Khalid"
+          git config user.email "90670731+Shahrukhalid@users.noreply.github.com"
+          git add PKGBUILD .SRCINFO
+          git diff --cached --quiet || git commit -m "v${{ steps.version.outputs.version }}"
+          git push origin master
+          echo "Pushed nexonic-download-manager-bin v${{ steps.version.outputs.version }} to the AUR"

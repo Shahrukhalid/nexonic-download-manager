@@ -41,25 +41,41 @@ The standard file, video and torrent engines are included. Torrents work on Mac,
 iPad with the same built-in engine and are off until you turn them on; see [the torrent guide](docs/TORRENTS.md).
 
 Windows with [Scoop](https://scoop.sh): `scoop bucket add nexonic https://github.com/Shahrukhalid/nexonic-download-manager` then
-`scoop install nexonic-download-manager`. More package managers: [docs/PACKAGES.md](docs/PACKAGES.md).
+`scoop install nexonic-download-manager`. Arch Linux: `yay -S nexonic-download-manager-bin` (always the latest
+release; or `nexonic-download-manager-git` for the latest source). More package managers: [docs/PACKAGES.md](docs/PACKAGES.md).
 
-> **Mac users:** the easiest way is one command in Terminal. It installs or updates the app and opens it without the
-> "Apple could not verify" message:
+> **One-line install (Mac, Linux, Windows).** It installs or updates to the latest release:
 >
 > ```bash
+> # Mac or Linux, in Terminal:
 > curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | bash
 > ```
 >
-> Prefer the `.dmg`? That works too: macOS asks once (System Settings → Privacy & Security → **Open Anyway**), and
-> never again for that version.
+> ```powershell
+> # Windows, in PowerShell:
+> irm https://shahrukhalid.github.io/nexonic-download-manager/install.ps1 | iex
+> ```
+>
+> Prefer a file? The `.dmg` (Mac) and `.exe` (Windows) below work too: on Mac, macOS asks once
+> (System Settings → Privacy & Security → **Open Anyway**), and never again for that version.
 
 ## Install
 
-**Mac, quickest:** paste this into Terminal. It installs (or updates) the app in Applications and opens it, with no
-security warning:
+**Mac or Linux, quickest:** paste this into Terminal. It installs (or updates to) the latest release and opens
+the app — on Mac with no security warning, on Linux into `~/Applications`:
 
 ```bash
 curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | bash
+```
+
+Linux options: `--to DIR` (another folder), `--system` (system-wide into `/opt`, needs sudo), `--no-launch`.
+Arch Linux can also use the AUR instead: `yay -S nexonic-download-manager-bin` (always the latest release;
+`nexonic-download-manager-git` builds the latest source). Details: [docs/LINUX.md](docs/LINUX.md).
+
+**Windows, quickest:** paste this into PowerShell. It installs (or updates to) the latest release:
+
+```powershell
+irm https://shahrukhalid.github.io/nexonic-download-manager/install.ps1 | iex
 ```
 
 **Mac, from the disk image**
@@ -75,7 +91,8 @@ curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | 
 
 **Windows**
 
-1. Run the Setup file. If Windows says "Windows protected your PC", click **More info → Run anyway**.
+1. Easiest: the one line above (`install.ps1` runs the Setup for you, silently).
+   Or run the Setup file by hand: if Windows says "Windows protected your PC", click **More info → Run anyway**.
 2. Read the Terms of Use, choose **I accept the agreement** and follow the steps.
 
 **Android**

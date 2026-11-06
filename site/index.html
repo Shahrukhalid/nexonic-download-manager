@@ -396,8 +396,16 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
     </div>
 
     <div class="cmd">
-      <div class="txt"><h4>Mac: install with one command</h4><p>Installs or updates the app in Applications and opens it, with no security warning.</p></div>
+      <div class="txt"><h4>Mac or Linux: install with one command</h4><p>Installs or updates to the latest release and opens it. Mac: no security warning. Linux: into ~/Applications.</p></div>
       <div class="box"><code id="cmd">curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | bash</code><button class="copy" data-copy="cmd" type="button">Copy</button></div>
+    </div>
+    <div class="cmd">
+      <div class="txt"><h4>Windows: install with one command</h4><p>In PowerShell. Installs or updates to the latest release.</p></div>
+      <div class="box"><code id="cmd-win">irm https://shahrukhalid.github.io/nexonic-download-manager/install.ps1 | iex</code><button class="copy" data-copy="cmd-win" type="button">Copy</button></div>
+    </div>
+    <div class="cmd">
+      <div class="txt"><h4>Arch Linux: install from the AUR</h4><p>Always the latest release (the <code>-git</code> package builds the latest source).</p></div>
+      <div class="box"><code id="cmd-aur">yay -S nexonic-download-manager-bin</code><button class="copy" data-copy="cmd-aur" type="button">Copy</button></div>
     </div>
     <p class="dl-note">Download links always fetch the latest release from GitHub. Every file is listed with its SHA-256 on the <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest">release page</a>. Installation help: <a href="#install">Install guide</a>.</p>
   </div>
@@ -596,10 +604,20 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <div class="panel">
         <h3><svg class="i"><use href="#i-win"/></svg>Windows</h3>
         <ol>
-          <li>Run <code>NexonicDownloadManager-Windows-Setup.exe</code>.</li>
+          <li><b>Quickest:</b> in PowerShell, run the one-line command from <a href="#download">Download</a>.</li>
+          <li><b>Or</b> run <code>NexonicDownloadManager-Windows-Setup.exe</code>.</li>
           <li>If Windows says <i>Windows protected your PC</i>, click <b>More info → Run anyway</b>.</li>
           <li>Choose <b>I accept the agreement</b> and follow the steps.</li>
           <li>No install wanted? Unzip the portable version and run <code>NexonicDownloadManager.exe</code>.</li>
+        </ol>
+      </div>
+      <div class="panel">
+        <h3><svg class="i"><use href="#i-term"/></svg>Linux</h3>
+        <ol>
+          <li><b>Quickest:</b> in Terminal, run the one-line command from <a href="#download">Download</a> (any distribution).</li>
+          <li><b>Arch, Manjaro, EndeavourOS:</b> <code>yay -S nexonic-download-manager-bin</code> — always the latest release.</li>
+          <li><b>Or</b> make the <code>.AppImage</code> executable and run it once; it registers the menu entry, the browser helper and <code>ndm</code>.</li>
+          <li><b>Ubuntu, Debian, Fedora, openSUSE:</b> install the <code>.deb</code>/<code>.rpm</code> instead (see the <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/docs/LINUX.md">Linux guide</a>).</li>
         </ol>
       </div>
       <div class="panel">
