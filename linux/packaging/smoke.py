@@ -26,9 +26,14 @@ class H(http.server.SimpleHTTPRequestHandler):
     slow = False
     def __init__(s, *a, **k): super().__init__(*a, directory=files, **k)
     def log_message(s, *a): pass
+    def local(s):
+        # Only files inside the test folder are served.
+        root = os.path.realpath(files)
+        path = os.path.realpath(os.path.join(root, s.path.split("?")[0].lstrip("/")))
+        return path if path.startswith(root + os.sep) and os.path.isfile(path) else None
     def do_GET(s):
-        path = os.path.join(files, s.path.split("?")[0].lstrip("/"))
-        if not os.path.isfile(path): return s.send_error(404)
+        path = s.local()
+        if not path: return s.send_error(404)
         body = open(path, "rb").read(); start, end = 0, len(body) - 1
         rng = s.headers.get("Range")
         if rng and rng.startswith("bytes="):
@@ -44,8 +49,11 @@ class H(http.server.SimpleHTTPRequestHandler):
                 s.wfile.write(chunk[i:i + step])
                 if H.slow: time.sleep(0.2)
         except (BrokenPipeError, ConnectionResetError): pass
-    do_HEAD = lambda s: (s.send_response(200), s.send_header("Accept-Ranges", "bytes"),
-                         s.send_header("Content-Length", str(os.path.getsize(os.path.join(files, s.path.lstrip("/"))))), s.end_headers())
+    def do_HEAD(s):
+        path = s.local()
+        if not path: return s.send_error(404)
+        s.send_response(200); s.send_header("Accept-Ranges", "bytes")
+        s.send_header("Content-Length", str(os.path.getsize(path))); s.end_headers()
 srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), H); threading.Thread(target=srv.serve_forever, daemon=True).start()
 BASE = f"http://127.0.0.1:{srv.server_port}"
 
