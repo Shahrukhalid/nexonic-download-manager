@@ -1,3 +1,8 @@
+## 0.17.2
+
+- **Mac: a smaller download.** The app and its browser helper ship without build-time symbol tables, as apps built
+  with Xcode do. Nothing else changes: settings, downloads, torrents and updates work as before.
+
 ## 0.17.1
 
 - **Smaller downloads, same features.** The Android apps no longer carry the torrent engine's build-time debugging

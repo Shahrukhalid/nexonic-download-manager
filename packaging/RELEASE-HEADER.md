@@ -1,6 +1,6 @@
-# Nexonic Download Manager 0.17.1
+# Nexonic Download Manager 0.17.2
 
-**Smaller downloads, same features.** The Android, Windows and Linux downloads are smaller: the Android torrent engine no longer includes debugging information, and the Windows browser helper shares the app's runtime. Every feature, setting and download stays as it was. Android APK licensing and corresponding-source requirements remain unchanged; the release must include `Android-GPL-Sources.tar.gz`; the torrent engine's sources are in `Android-Torrent-Sources.tar.gz`.
+**A smaller Mac download, same features.** The Mac app and its browser helper no longer carry build-time symbol tables. 0.17.1 already made the Android, Windows and Linux downloads smaller. Every feature, setting and download stays as it was. Android APK licensing and corresponding-source requirements remain unchanged; the release must include `Android-GPL-Sources.tar.gz`; the torrent engine's sources are in `Android-Torrent-Sources.tar.gz`.
 
 **Mac, first launch:** macOS says it *could not verify* the app because it's free and not sold through Apple. Click **Done**, open **System Settings → Privacy & Security**, click **Open Anyway**, then **Open Anyway** again and enter your Mac password. Only once; updates installed with **Update Now** open without a warning. [Pictures of each step](https://github.com/Shahrukhalid/nexonic-download-manager#first-launch-on-mac)
 
