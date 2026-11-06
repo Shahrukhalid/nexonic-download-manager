@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { cookieHeader, downloadKey, extensionOf, isWebLink, shouldTakeOver, siteListed, siteOf } from "./helpers.js";
+import { cookieHeader, downloadKey, extensionOf, isWebLink, mayBeMedia, originOf, shouldTakeOver, siteListed, siteOf } from "./helpers.js";
 
 test("only web links go to the app", () => {
   assert.equal(isWebLink("https://example.com/a.zip"), true);
@@ -107,4 +107,21 @@ test("sites kept in the browser, and pausing", () => {
 test("the same download is recognized", () => {
   assert.equal(downloadKey("https://e.com/a.zip#start"), downloadKey("https://e.com/a.zip"));
   assert.notEqual(downloadKey("https://e.com/a.zip?v=1"), downloadKey("https://e.com/a.zip?v=2"));
+});
+
+test("script requests that may be media: by address or content type", () => {
+  assert.equal(mayBeMedia("https://cdn.e.com/hls/playlist?id=7", "application/vnd.apple.mpegurl"), true);
+  assert.equal(mayBeMedia("https://cdn.e.com/stream", "application/x-mpegURL; charset=utf-8"), true);
+  assert.equal(mayBeMedia("https://cdn.e.com/manifest", "application/dash+xml"), true);
+  assert.equal(mayBeMedia("https://cdn.e.com/v/1", "video/mp4"), true);
+  assert.equal(mayBeMedia("https://cdn.e.com/master.m3u8?t=1", "text/plain"), true);
+  assert.equal(mayBeMedia("https://e.com/api/user", "application/json"), false);
+  assert.equal(mayBeMedia("https://e.com/app.js", "text/javascript"), false);
+  assert.equal(mayBeMedia("blob:https://e.com/1", "video/mp4"), false);
+});
+
+test("origins", () => {
+  assert.equal(originOf("https://e.com/a/b?c"), "https://e.com");
+  assert.equal(originOf("chrome://settings"), "");
+  assert.equal(originOf("nope"), "");
 });

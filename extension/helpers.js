@@ -137,6 +137,29 @@ export function addMedia(list, item) {
 }
 
 /** Is this response a streamed-video playlist (HLS)? */
+/**
+ * Whether a script request (XHR or fetch) could be audio, video or a stream playlist, judged from its address or its
+ * content type alone, so it is cheap to ask for every request. Many players load playlists from addresses without a
+ * file extension (for example /playlist?id=1), which only the content type gives away.
+ */
+export function mayBeMedia(url, contentType) {
+  if (!/^https?:\/\//i.test(url || "")) return false;
+  const type = String(contentType || "").toLowerCase();
+  if (/mpegurl|dash\+xml|^(video|audio)\//.test(type)) return true;
+  const ext = extensionOf(url);
+  return ext === "m3u8" || ext === "mpd" || MEDIA_TYPES.includes(ext);
+}
+
+/** The origin of an address ("https://e.com"), or "" when it isn't one. */
+export function originOf(url) {
+  try {
+    const u = new URL(url);
+    return /^https?:$/.test(u.protocol) ? u.origin : "";
+  } catch (_) {
+    return "";
+  }
+}
+
 export function isStreamPlaylist(url, contentType) {
   if (!/^https?:\/\//i.test(url || "")) return false;
   return extensionOf(url) === "m3u8" || /mpegurl/i.test(String(contentType || ""));

@@ -102,6 +102,8 @@ public static class SiteVideo
         msg = Regex.Replace(msg, @"^\[[^\]]+\] [^:]+: ", "");
         if (msg.Length == 0) return "The video could not be downloaded";
         if (msg.Contains("DRM", StringComparison.OrdinalIgnoreCase)) return "This video is copy-protected and can't be saved";
+        if (msg.Contains("anti-bot", StringComparison.OrdinalIgnoreCase) || msg.Contains("Cloudflare", StringComparison.OrdinalIgnoreCase))
+            return "This site checks that a real browser is visiting, so the app can't open the page by itself. Play the video in your browser, then click Download this video: the browser hands the video over with your session";
         string[] signIn = { "sign in", "sign-in", "login", "log in", "logged-in", "logged in", "account credentials", "--cookies" };
         if (signIn.Any(s => msg.Contains(s, StringComparison.OrdinalIgnoreCase)))
             return "The site only lets signed-in users download this video. Open it in your browser while signed in and click Download this video (your sign-in is sent along), or enter your account under Properties → Login";

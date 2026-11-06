@@ -1,6 +1,6 @@
 import {
-  DEFAULTS, HOST, TROUBLESHOOT, addMedia, cookieHeader, downloadKey, header, isMedia, isStreamPlaylist, isVideoSite, isWebLink, nameFromUrl, shouldTakeOver, sortMedia,
-  summarizePlaylist, titleToName,
+  DEFAULTS, HOST, TROUBLESHOOT, addMedia, cookieHeader, downloadKey, header, isMedia, isStreamPlaylist, isVideoSite, isWebLink, mayBeMedia, nameFromUrl,
+  originOf, shouldTakeOver, sortMedia, summarizePlaylist, titleToName,
 } from "./helpers.js";
 
 async function settings() {
@@ -168,11 +168,33 @@ async function addStream(tabId, url) {
   });
 }
 
+/**
+ * The tab a request belongs to. Players that load the video from a worker (common on streaming sites) make requests
+ * that belong to no tab (tabId -1): those go to the tab showing the page that started them, or else the tab in front.
+ */
+async function tabOf(d) {
+  if (d.tabId >= 0) return d.tabId;
+  const origin = originOf(d.initiator || d.documentUrl || d.originUrl || "");
+  if (!origin) return -1;
+  try {
+    const tabs = await chrome.tabs.query({});
+    const same = tabs.filter((t) => originOf(t.url || "") === origin);
+    const pick = same.find((t) => t.active) || same[0] || (await chrome.tabs.query({ active: true, lastFocusedWindow: true }))[0];
+    return pick && pick.id !== undefined ? pick.id : -1;
+  } catch (_) {
+    return -1;
+  }
+}
+
 async function onMediaResponse(d) {
-    if (d.tabId < 0 || d.statusCode >= 400) return;
+    if (d.statusCode >= 400) return;
+    const type = header(d.responseHeaders, "content-type");
+    if ((d.type === "xmlhttprequest" || d.type === "other") && !mayBeMedia(d.url, type)) return; // most requests: cheap no
     // On video sites the app's video engine saves the whole video, so the small pieces the player loads are skipped.
     if (isVideoSite(d.initiator || d.documentUrl || d.originUrl || "")) return;
-    const type = header(d.responseHeaders, "content-type");
+    const tabId = await tabOf(d);
+    if (tabId < 0) return;
+    d = { ...d, tabId };
     if (isStreamPlaylist(d.url, type)) return addStream(d.tabId, d.url);
     const range = header(d.responseHeaders, "content-range");
     const total = range.includes("/") ? Number(range.split("/").pop()) : Number(header(d.responseHeaders, "content-length") || -1);
@@ -181,13 +203,11 @@ async function onMediaResponse(d) {
     await serial(async () => setMedia(d.tabId, sortMedia(addMedia(await mediaOf(d.tabId), item))));
 }
 
-// Only responses that can be audio, video or a stream playlist reach the extension: players' own requests (media, object)
-// and script requests whose address looks like a media file. Watching every request of every page cost a lot of
-// processing on busy sites.
-const MEDIA_URLS = ["m3u8", "mpd", "mp4", "m4v", "m4a", "webm", "mkv", "mov", "mp3", "aac", "flac", "ogg", "opus", "wav"]
-  .map((ext) => `*://*/*.${ext}*`);
+// Players' own requests (media, object) and script requests (XHR, fetch, workers). Script requests are checked by
+// address and content type first, a cheap test, so streams served from addresses without a file extension are found
+// too; everything else returns at once.
 chrome.webRequest.onResponseStarted.addListener(onMediaResponse, { urls: ["<all_urls>"], types: ["media", "object"] }, ["responseHeaders"]);
-chrome.webRequest.onResponseStarted.addListener(onMediaResponse, { urls: MEDIA_URLS, types: ["xmlhttprequest", "other"] }, ["responseHeaders"]);
+chrome.webRequest.onResponseStarted.addListener(onMediaResponse, { urls: ["<all_urls>"], types: ["xmlhttprequest", "other"] }, ["responseHeaders"]);
 
 chrome.tabs.onUpdated.addListener((tabId, change) => {
   if (change.status === "loading" && change.url) {
