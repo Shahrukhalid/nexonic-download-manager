@@ -11,14 +11,16 @@ on:
         required: false
 
 permissions:
-  contents: write
-  id-token: write
-  attestations: write
+  contents: read
 
 concurrency: { group: verify-release, cancel-in-progress: false }
 
 jobs:
   verify:
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -26,11 +28,13 @@ jobs:
     steps:
       - name: Pick the release
         id: pick
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
         run: |
-          tag="${{ inputs.tag }}"
+          tag="$INPUT_TAG"
           [ -n "$tag" ] || tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName -q .tagName)
           assets=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets -q '.assets[].name')
-          if echo "$assets" | grep -qx 'SHA256SUMS.txt.sigstore.json' && [ -z "${{ inputs.tag }}" ]; then
+          if echo "$assets" | grep -qx 'SHA256SUMS.txt.sigstore.json' && [ -z "$INPUT_TAG" ]; then
             echo "Already verified: $tag"; echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
           # Wait until the release is complete (Android, Windows and Mac files are added by separate jobs).
@@ -38,7 +42,7 @@ jobs:
             echo "$assets" | grep -qx "$f" || { echo "Not complete yet ($f missing): $tag"; echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0; }
           done
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         if: steps.pick.outputs.skip != 'true'
         with:
           ref: ${{ steps.pick.outputs.tag }}
@@ -51,16 +55,16 @@ jobs:
           rm -f dist/SHA256SUMS.txt dist/SHA256SUMS.txt.sigstore.json dist/sbom.spdx.json
           (cd dist && sha256sum -- * > ../SHA256SUMS.txt)
           cat SHA256SUMS.txt
-      - uses: actions/attest-build-provenance@v4
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4
         if: steps.pick.outputs.skip != 'true'
         with:
           subject-path: dist/*
-      - uses: sigstore/cosign-installer@v3
+      - uses: sigstore/cosign-installer@398d4b0eeef1380460a10c8013a76f728fb906ac # v3
         if: steps.pick.outputs.skip != 'true'
       - name: Sign the checksum list
         if: steps.pick.outputs.skip != 'true'
         run: cosign sign-blob --yes --bundle SHA256SUMS.txt.sigstore.json SHA256SUMS.txt
-      - uses: anchore/sbom-action@v0
+      - uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
         if: steps.pick.outputs.skip != 'true'
         with:
           path: source

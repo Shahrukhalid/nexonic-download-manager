@@ -10,14 +10,14 @@ jobs:
     runs-on: macos-15
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/cache@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .ffmpeg-cache/mac
           key: ffmpeg-mac-${{ hashFiles('scripts/build-ffmpeg.sh') }}
       - name: Native torrent build tools
         run: brew list ninja pkgconf >/dev/null 2>&1 || brew install ninja pkgconf
-      - uses: actions/cache@v4
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: |
             .native-cache/installed
@@ -29,13 +29,17 @@ jobs:
       - name: Tests
         run: swift test --package-path mac
       - name: Build the app
-        run: UNIVERSAL=${{ startsWith(github.head_ref, 'release/') && '1' || '0' }} bash scripts/build-app.sh
+        env:
+          UNIVERSAL: ${{ startsWith(github.head_ref, 'release/') && '1' || '0' }}
+        run: bash scripts/build-app.sh
       - name: Check the bundle
+        env:
+          RELEASE_BRANCH: ${{ startsWith(github.head_ref, 'release/') }}
         run: |
           V="$(cat VERSION)"
           A="build/Nexonic Download Manager.app/Contents"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$A/Info.plist")" = "$V"
-          if [ "${{ startsWith(github.head_ref, 'release/') }}" = "true" ]; then
+          if [ "$RELEASE_BRANCH" = "true" ]; then
             for f in NexonicDownloadManager nexonic-host ffmpeg; do
               archs="$(lipo -archs "$A/MacOS/$f")"
               [[ "$archs" == *x86_64* && "$archs" == *arm64* ]] || { echo "$f is not universal"; exit 1; }
@@ -66,7 +70,7 @@ jobs:
           popd
           plutil -lint "build/Nexonic Download Manager.app/Contents/Info.plist"
           python3 scripts/host-ping.py "build/Nexonic Download Manager.app/Contents/MacOS/nexonic-host"
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: nexonic-download-manager
           path: build/*.dmg
@@ -74,21 +78,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/cache@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: cache
         with:
           path: .ffmpeg-cache/windows
           key: ffmpeg-windows-${{ hashFiles('scripts/build-ffmpeg.sh') }}
       - if: steps.cache.outputs.cache-hit != 'true'
         run: sudo apt-get install -y -qq mingw-w64 && bash scripts/build-ffmpeg.sh windows .ffmpeg-cache/windows
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ffmpeg-windows
           path: .ffmpeg-cache/windows
       - name: Video engine for Windows
         run: bash scripts/fetch-video-tools.sh windows .tools-cache/windows
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: tools-windows
           path: .tools-cache/windows
@@ -97,19 +101,19 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v8
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: ffmpeg-windows
           path: .ffmpeg-cache/windows
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: tools-windows
           path: .tools-cache/windows
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: "8.0.x"
-      - uses: actions/cache@v4
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: |
             .native-cache/installed
@@ -152,15 +156,15 @@ jobs:
           $s.Write([BitConverter]::GetBytes($body.Length), 0, 4); $s.Write($body, 0, $body.Length); $s.Close()
           $out = $p.StandardOutput.ReadToEnd(); $p.WaitForExit()
           if ($out -notmatch '"ok":true') { throw "no ping answer: $out" }
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: nexonic-download-manager-windows
           path: build/*.exe
   extension:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
       - run: node --test

@@ -4,22 +4,24 @@ on:
     tags: ["v*"]
   workflow_dispatch:  # run by "Tag release" with --ref vX.Y.Z (tags made with the workflow token start no push runs)
 permissions:
-  contents: write
+  contents: read
 jobs:
   release:
+    permissions:
+      contents: write
     runs-on: macos-15
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Validate release version and tag
         run: python3 scripts/check-release.py
-      - uses: actions/cache@v4
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .ffmpeg-cache/mac
           key: ffmpeg-mac-${{ hashFiles('scripts/build-ffmpeg.sh') }}
       - name: Native torrent build tools
         run: brew list ninja pkgconf >/dev/null 2>&1 || brew install ninja pkgconf
-      - uses: actions/cache@v4
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: |
             .native-cache/installed
@@ -92,28 +94,32 @@ jobs:
           done
           exit 1
   ffmpeg-windows:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/cache@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: cache
         with:
           path: .ffmpeg-cache/windows
           key: ffmpeg-windows-${{ hashFiles('scripts/build-ffmpeg.sh') }}
       - if: steps.cache.outputs.cache-hit != 'true'
         run: sudo apt-get install -y -qq mingw-w64 && bash scripts/build-ffmpeg.sh windows .ffmpeg-cache/windows
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ffmpeg-windows
           path: .ffmpeg-cache/windows
       - name: Video engine for Windows
         run: bash scripts/fetch-video-tools.sh windows .tools-cache/windows
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: tools-windows
           path: .tools-cache/windows
   linux:
+    permissions:
+      contents: write
     needs: release
     strategy:
       matrix:
@@ -129,8 +135,8 @@ jobs:
       DOTNET_CLI_TELEMETRY_OPTOUT: 1
       AVALONIA_TELEMETRY_OPTOUT: 1
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: "8.0.x"
       - name: Build and test tools
@@ -142,7 +148,7 @@ jobs:
             echo "Package install failed or stalled (try $try); retrying"; sleep 20
           done
           exit 1
-      - uses: actions/cache@v4
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: ffmpeg
         with:
           path: .ffmpeg-cache/linux-${{ matrix.arch }}
@@ -151,7 +157,7 @@ jobs:
         run: bash scripts/build-ffmpeg.sh linux .ffmpeg-cache/linux-${{ matrix.arch }}
       - name: Video engine
         run: bash scripts/fetch-video-tools.sh linux-${{ matrix.arch }} .tools-cache/linux-${{ matrix.arch }}
-      - uses: actions/cache@v4
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: |
             .native-cache/installed
@@ -180,23 +186,25 @@ jobs:
           O=build/linux-${{ matrix.arch }}
           gh release upload "$GITHUB_REF_NAME" "$O"/*.AppImage "$O"/*.deb "$O"/*.rpm "$O"/SHA256SUMS-linux-*.txt
   windows:
+    permissions:
+      contents: write
     needs: [release, ffmpeg-windows, linux]
     runs-on: windows-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v8
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: ffmpeg-windows
           path: .ffmpeg-cache/windows
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: tools-windows
           path: .tools-cache/windows
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: "8.0.x"
-      - uses: actions/cache@v4
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: |
             .native-cache/installed
