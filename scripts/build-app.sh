@@ -33,6 +33,8 @@ rm -rf build && mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 python3 scripts/build-extensions.py
 cp "$BIN/NexonicDownloadManager" "$APP/Contents/MacOS/"
 cp "$BIN/nexonic-host" "$APP/Contents/MacOS/"
+# Release apps ship without symbol tables, as Xcode does (about 20 MB smaller for both chips); signing comes after.
+strip "$APP/Contents/MacOS/NexonicDownloadManager" "$APP/Contents/MacOS/nexonic-host"
 # Small bundled ffmpeg (re-packs streamed video into .mp4); built once and kept in .ffmpeg-cache/.
 if [ ! -x .ffmpeg-cache/mac/ffmpeg ]; then bash scripts/build-ffmpeg.sh mac .ffmpeg-cache/mac; fi
 cp .ffmpeg-cache/mac/ffmpeg .ffmpeg-cache/mac/ffprobe "$APP/Contents/MacOS/"
