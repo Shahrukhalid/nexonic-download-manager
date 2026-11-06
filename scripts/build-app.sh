@@ -41,9 +41,20 @@ cp .ffmpeg-cache/mac/ffmpeg .ffmpeg-cache/mac/ffprobe "$APP/Contents/MacOS/"
 # Video engine for YouTube and other sites (yt-dlp + QuickJS); fetched fresh unless .tools-cache/mac already has it.
 if [ ! -x .tools-cache/mac/yt-dlp-engine/yt-dlp_macos ]; then bash scripts/fetch-video-tools.sh mac .tools-cache/mac; fi
 cp .tools-cache/mac/qjs "$APP/Contents/MacOS/"
-cp -R .tools-cache/mac/yt-dlp-engine "$APP/Contents/Resources/yt-dlp"
-# MacOS/yt-dlp starts the unpacked engine (for the command line and checks; the app runs the engine directly).
-printf '#!/bin/sh\nexec "$(dirname "$0")/../Resources/yt-dlp/yt-dlp_macos" "$@"\n' > "$APP/Contents/MacOS/yt-dlp"
+# The unpacked engine, packed small with xz (about 26 MB instead of 52); the app unpacks it once on first launch.
+tar --options xz:compression-level=9 -C .tools-cache/mac/yt-dlp-engine -cJf "$APP/Contents/Resources/yt-dlp.tar.xz" \
+  --exclude VERSION .
+cp .tools-cache/mac/yt-dlp-engine/VERSION "$APP/Contents/Resources/yt-dlp-version.txt"
+# MacOS/yt-dlp starts the engine from the command line and checks (unpacking it once into a temporary folder).
+cat > "$APP/Contents/MacOS/yt-dlp" <<'SH'
+#!/bin/sh
+R="$(cd "$(dirname "$0")/../Resources" && pwd)"
+D="${TMPDIR:-/tmp}/nexonic-video-engine-$(cat "$R/yt-dlp-version.txt")"
+if [ ! -x "$D/yt-dlp_macos" ]; then
+  T="$D.$$" && mkdir -p "$T" && /usr/bin/tar -xJf "$R/yt-dlp.tar.xz" -C "$T" && rm -rf "$D" && mv "$T" "$D" || exit 1
+fi
+exec "$D/yt-dlp_macos" "$@"
+SH
 chmod +x "$APP/Contents/MacOS/yt-dlp"
 cat packaging/THIRD-PARTY-NOTICES.txt .ffmpeg-cache/mac/NOTICE-video-tools-1.txt .tools-cache/mac/NOTICE-video-tools-2.txt \
   > "$APP/Contents/Resources/THIRD-PARTY-NOTICES.txt"
@@ -60,8 +71,6 @@ cp branding/universal/generated/macos/MenuBarIcon.png "$APP/Contents/Resources/M
 
 if [ -n "${SIGN_IDENTITY:-}" ]; then
   codesign --force --options runtime --timestamp -s "$SIGN_IDENTITY" "$APP/Contents/MacOS/nexonic-host"
-  find "$APP/Contents/Resources/yt-dlp" -type f \( -perm -u+x -o -name '*.dylib' -o -name '*.so' \) \
-    -exec codesign --force --options runtime --timestamp -s "$SIGN_IDENTITY" {} \;
   for tool in ffmpeg ffprobe qjs yt-dlp; do
     codesign --force --options runtime --timestamp -s "$SIGN_IDENTITY" "$APP/Contents/MacOS/$tool"
   done

@@ -314,17 +314,22 @@ public enum SiteVideoTools {
     public static var bundled: URL? { Bundle.main.executableURL?.deletingLastPathComponent() }
     public static var folder: URL { AppPaths.support.appendingPathComponent("Tools", isDirectory: true) }
 
-    /// The video engine ships as an unpacked folder (Resources/yt-dlp). The one-file edition unpacked itself into a new
-    /// temporary folder on every run, and macOS checked it each time: about 18 s before every video. The folder is
-    /// copied to Tools/yt-dlp-engine-<version> (where it can be updated) and checked by macOS once.
+    /// The video engine is the unpacked edition (the one-file edition unpacked itself into a new temporary folder on
+    /// every run, and macOS checked it each time: about 18 s before every video). It ships packed small in
+    /// Resources/yt-dlp.tar.xz, is unpacked once into Tools/yt-dlp-engine-<version> (where it can be updated) and
+    /// checked by macOS once.
     static let enginePrefix = "yt-dlp-engine-"
     static let engineName = "yt-dlp_macos"
-    static var bundledEngine: URL? { bundled?.deletingLastPathComponent().appendingPathComponent("Resources/yt-dlp", isDirectory: true) }
+    static var resources: URL? { bundled?.deletingLastPathComponent().appendingPathComponent("Resources", isDirectory: true) }
+    static var bundledArchive: URL? { resources?.appendingPathComponent("yt-dlp.tar.xz") }
+    static var bundledVersion: String? {
+        guard let f = resources?.appendingPathComponent("yt-dlp-version.txt") else { return nil }
+        return (try? String(contentsOf: f, encoding: .utf8))?.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 
-    /// The newest engine ready to use: the copied or updated folders first, then the app's own files.
+    /// The newest engine ready to use; before the first unpack, the launcher next to the app (unpacks on its own).
     public static var ytdlp: URL {
         if let best = engines().first { return best.dir.appendingPathComponent(engineName) }
-        if let b = bundledEngine?.appendingPathComponent(engineName), FileManager.default.isExecutableFile(atPath: b.path) { return b }
         return bundled?.appendingPathComponent("yt-dlp") ?? folder.appendingPathComponent("yt-dlp")
     }
 
@@ -368,8 +373,12 @@ public enum SiteVideoTools {
         defer { lock.unlock() }
         let fm = FileManager.default
         try? fm.createDirectory(at: folder, withIntermediateDirectories: true)
-        if let src = bundledEngine, let bv = version(of: src), !engines().contains(where: { !newer(bv, than: $0.version) }) {
-            install(from: src, version: bv)
+        if let archive = bundledArchive, let bv = bundledVersion, !bv.isEmpty,
+           !engines().contains(where: { !newer(bv, than: $0.version) }) {
+            install(version: bv) { dir in
+                (try? fm.createDirectory(at: dir, withIntermediateDirectories: true)) != nil
+                    && run("/usr/bin/tar", ["-xJf", archive.path, "-C", dir.path]) != nil
+            }
         }
         // The one-file edition and its stamp from earlier versions.
         for old in ["yt-dlp", "bundled-date"] { try? fm.removeItem(at: folder.appendingPathComponent(old)) }
@@ -388,14 +397,17 @@ public enum SiteVideoTools {
         }
     }
 
-    /// Copies a folder into Tools as a new engine; the VERSION file is written last.
+    /// Adds a new engine to Tools: `fill` puts its files into a new folder; the VERSION file is written last.
     @discardableResult
-    static func install(from src: URL, version v: String) -> Bool {
+    static func install(version v: String, fill: (URL) -> Bool) -> Bool {
         let fm = FileManager.default
         let tmp = folder.appendingPathComponent(enginePrefix + v + ".tmp", isDirectory: true)
         let dest = folder.appendingPathComponent(enginePrefix + v, isDirectory: true)
         try? fm.removeItem(at: tmp)
-        guard (try? fm.copyItem(at: src, to: tmp)) != nil else { return false }
+        guard fill(tmp), fm.isExecutableFile(atPath: tmp.appendingPathComponent(engineName).path) else {
+            try? fm.removeItem(at: tmp)
+            return false
+        }
         _ = run("/usr/bin/xattr", ["-dr", "com.apple.quarantine", tmp.path])
         try? fm.removeItem(at: tmp.appendingPathComponent("VERSION"))
         try? fm.removeItem(at: dest)
@@ -449,7 +461,8 @@ public enum SiteVideoTools {
               let exe = findEngine(in: out),
               run(exe.path, ["--version"])?.trimmingCharacters(in: .whitespacesAndNewlines) == tag else { return }
         lock.lock()
-        let ok = install(from: exe.deletingLastPathComponent(), version: tag)
+        let src = exe.deletingLastPathComponent()
+        let ok = install(version: tag) { dir in (try? fm.copyItem(at: src, to: dir)) != nil }
         lock.unlock()
         if ok, let dir = engines().first(where: { $0.version == tag })?.dir { warm(dir) }
     }

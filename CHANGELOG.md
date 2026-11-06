@@ -1,3 +1,9 @@
+## 0.17.5
+
+- **Mac: smaller download again, same fast video start.** The video engine is packed small inside the app (about
+  26 MB instead of 52) and unpacked once the first time the app opens after installing or updating. Sites,
+  qualities, speed and updates are unchanged.
+
 ## 0.17.4
 
 - **Mac: videos start much sooner.** The video engine now ships unpacked. Before, it unpacked itself on every run and
