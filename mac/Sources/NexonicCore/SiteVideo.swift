@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 
 /// Videos from YouTube, Instagram, Facebook, X, TikTok and 1,000+ other sites, saved with the bundled yt-dlp
@@ -312,40 +313,161 @@ public enum SiteVideo {
 public enum SiteVideoTools {
     public static var bundled: URL? { Bundle.main.executableURL?.deletingLastPathComponent() }
     public static var folder: URL { AppPaths.support.appendingPathComponent("Tools", isDirectory: true) }
-    public static var ytdlp: URL { folder.appendingPathComponent("yt-dlp") }
+
+    /// The video engine ships as an unpacked folder (Resources/yt-dlp). The one-file edition unpacked itself into a new
+    /// temporary folder on every run, and macOS checked it each time: about 18 s before every video. The folder is
+    /// copied to Tools/yt-dlp-engine-<version> (where it can be updated) and checked by macOS once.
+    static let enginePrefix = "yt-dlp-engine-"
+    static let engineName = "yt-dlp_macos"
+    static var bundledEngine: URL? { bundled?.deletingLastPathComponent().appendingPathComponent("Resources/yt-dlp", isDirectory: true) }
+
+    /// The newest engine ready to use: the copied or updated folders first, then the app's own files.
+    public static var ytdlp: URL {
+        if let best = engines().first { return best.dir.appendingPathComponent(engineName) }
+        if let b = bundledEngine?.appendingPathComponent(engineName), FileManager.default.isExecutableFile(atPath: b.path) { return b }
+        return bundled?.appendingPathComponent("yt-dlp") ?? folder.appendingPathComponent("yt-dlp")
+    }
 
     public static var quickJS: String? {
         guard let p = bundled?.appendingPathComponent("qjs").path, FileManager.default.isExecutableFile(atPath: p) else { return nil }
         return p
     }
 
-    /// Copies the shipped yt-dlp into the tools folder (first run, or after an app update brings a newer one)
-    /// and lets it update itself once a day, because video sites change often.
-    public static func prepare() {
-        let fm = FileManager.default
-        guard let src = bundled?.appendingPathComponent("yt-dlp"), fm.isExecutableFile(atPath: src.path) else { return }
-        try? fm.createDirectory(at: folder, withIntermediateDirectories: true)
-        let srcDate = (try? fm.attributesOfItem(atPath: src.path)[.modificationDate] as? Date) ?? nil
-        let stamp = folder.appendingPathComponent("bundled-date")
-        let copied = (try? String(contentsOf: stamp, encoding: .utf8)) ?? ""
-        let srcKey = srcDate.map { String($0.timeIntervalSince1970) } ?? ""
-        if !fm.isExecutableFile(atPath: ytdlp.path) || copied != srcKey {
-            try? fm.removeItem(at: ytdlp)
-            try? fm.copyItem(at: src, to: ytdlp)
-            removexattr(ytdlp.path, "com.apple.quarantine", 0)
-            try? fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: ytdlp.path)
-            try? srcKey.write(to: stamp, atomically: true, encoding: .utf8)
+    /// "2026.10.26" or "2026.10.26.1" → comparable numbers.
+    static func versionParts(_ v: String) -> [Int] { v.trimmingCharacters(in: .whitespacesAndNewlines).split(separator: ".").map { Int($0) ?? 0 } }
+    static func newer(_ a: String, than b: String) -> Bool {
+        let x = versionParts(a), y = versionParts(b)
+        for i in 0..<max(x.count, y.count) {
+            let l = i < x.count ? x[i] : 0, r = i < y.count ? y[i] : 0
+            if l != r { return l > r }
         }
+        return false
+    }
+    static func version(of dir: URL) -> String? {
+        (try? String(contentsOf: dir.appendingPathComponent("VERSION"), encoding: .utf8))?.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// Ready engine folders, newest first. A folder counts once its VERSION file is written (the last step).
+    static func engines() -> [(dir: URL, version: String)] {
+        let fm = FileManager.default
+        let names = (try? fm.contentsOfDirectory(atPath: folder.path)) ?? []
+        return names.filter { $0.hasPrefix(enginePrefix) && !$0.hasSuffix(".tmp") }.compactMap { n in
+            let d = folder.appendingPathComponent(n, isDirectory: true)
+            guard let v = version(of: d), fm.isExecutableFile(atPath: d.appendingPathComponent(engineName).path) else { return nil }
+            return (d, v)
+        }.sorted { newer($0.version, than: $1.version) }
+    }
+
+    private static let lock = NSLock()
+    private static var updating = false
+
+    /// Makes the engine ready (first run, or after an app update brings a newer one) and keeps it current once a day,
+    /// because video sites change often.
+    public static func prepare() {
+        lock.lock()
+        defer { lock.unlock() }
+        let fm = FileManager.default
+        try? fm.createDirectory(at: folder, withIntermediateDirectories: true)
+        if let src = bundledEngine, let bv = version(of: src), !engines().contains(where: { !newer(bv, than: $0.version) }) {
+            install(from: src, version: bv)
+        }
+        // The one-file edition and its stamp from earlier versions.
+        for old in ["yt-dlp", "bundled-date"] { try? fm.removeItem(at: folder.appendingPathComponent(old)) }
+        let list = engines()
+        for extra in list.dropFirst(2) { try? fm.removeItem(at: extra.dir) }  // keep the newest two (one may still be running)
+        if let best = list.first { warm(best.dir) }
         let checked = folder.appendingPathComponent("last-update")
         let last = (try? fm.attributesOfItem(atPath: checked.path)[.modificationDate] as? Date) ?? nil
-        guard last.map({ Date().timeIntervalSince($0) > 86_400 }) ?? true else { return }
+        guard !updating, last.map({ Date().timeIntervalSince($0) > 86_400 }) ?? true else { return }
         fm.createFile(atPath: checked.path, contents: Data())
+        updating = true
+        let current = list.first?.version ?? "0"
+        DispatchQueue.global(qos: .utility).async {
+            update(from: current)
+            lock.lock(); updating = false; lock.unlock()
+        }
+    }
+
+    /// Copies a folder into Tools as a new engine; the VERSION file is written last.
+    @discardableResult
+    static func install(from src: URL, version v: String) -> Bool {
+        let fm = FileManager.default
+        let tmp = folder.appendingPathComponent(enginePrefix + v + ".tmp", isDirectory: true)
+        let dest = folder.appendingPathComponent(enginePrefix + v, isDirectory: true)
+        try? fm.removeItem(at: tmp)
+        guard (try? fm.copyItem(at: src, to: tmp)) != nil else { return false }
+        _ = run("/usr/bin/xattr", ["-dr", "com.apple.quarantine", tmp.path])
+        try? fm.removeItem(at: tmp.appendingPathComponent("VERSION"))
+        try? fm.removeItem(at: dest)
+        guard (try? fm.moveItem(at: tmp, to: dest)) != nil else { try? fm.removeItem(at: tmp); return false }
+        return (try? v.write(to: dest.appendingPathComponent("VERSION"), atomically: true, encoding: .utf8)) != nil
+    }
+
+    /// The first run of a new engine is slow while macOS checks it; do that now instead of during a download.
+    static func warm(_ dir: URL) {
+        let mark = dir.appendingPathComponent(".checked")
+        guard !FileManager.default.fileExists(atPath: mark.path) else { return }
+        if run(dir.appendingPathComponent(engineName).path, ["--version"]) != nil { FileManager.default.createFile(atPath: mark.path, contents: Data()) }
+    }
+
+    /// Runs a program and returns what it printed, or nil when it failed.
+    static func run(_ tool: String, _ args: [String]) -> String? {
         let p = Process()
-        p.executableURL = ytdlp
-        p.arguments = ["-U"]
-        p.standardOutput = FileHandle.nullDevice
+        p.executableURL = URL(fileURLWithPath: tool)
+        p.arguments = args
+        let out = Pipe()
+        p.standardOutput = out
         p.standardError = FileHandle.nullDevice
-        try? p.run()
+        guard (try? p.run()) != nil else { return nil }
+        let data = out.fileHandleForReading.readDataToEndOfFile()
+        p.waitUntilExit()
+        return p.terminationStatus == 0 ? String(decoding: data, as: UTF8.self) : nil
+    }
+
+    /// Fetches a newer official engine (checked against the release's SHA2-256SUMS), unpacks and checks it, then
+    /// adds it beside the current one. Any failure leaves the current engine as it is.
+    static func update(from current: String) {
+        let base = "https://github.com/yt-dlp/yt-dlp/releases"
+        guard let latest = URL(string: base + "/latest") else { return }
+        var head = URLRequest(url: latest, timeoutInterval: 30)
+        head.httpMethod = "HEAD"
+        guard let tag = fetch(head)?.response.url?.lastPathComponent, versionParts(tag).count >= 3,
+              tag.allSatisfy({ $0.isNumber || $0 == "." }), newer(tag, than: current),
+              let sumsURL = URL(string: "\(base)/download/\(tag)/SHA2-256SUMS"),
+              let zipURL = URL(string: "\(base)/download/\(tag)/\(engineName).zip"),
+              let sums = fetch(URLRequest(url: sumsURL, timeoutInterval: 30))?.data,
+              let want = String(decoding: sums, as: UTF8.self).split(separator: "\n").lazy
+                .map({ $0.split(separator: " ", omittingEmptySubsequences: true) })
+                .first(where: { $0.count == 2 && $0[1] == "\(engineName).zip" })?[0].lowercased(),
+              let zip = fetch(URLRequest(url: zipURL, timeoutInterval: 300))?.data,
+              hex(zip) == want else { return }
+        let fm = FileManager.default
+        let work = folder.appendingPathComponent("update-\(UUID().uuidString)", isDirectory: true)
+        defer { try? fm.removeItem(at: work) }
+        let file = work.appendingPathComponent("engine.zip"), out = work.appendingPathComponent("x", isDirectory: true)
+        guard (try? fm.createDirectory(at: work, withIntermediateDirectories: true)) != nil, (try? zip.write(to: file)) != nil,
+              run("/usr/bin/ditto", ["-x", "-k", file.path, out.path]) != nil,
+              let exe = fm.enumerator(at: out, includingPropertiesForKeys: nil)?.compactMap({ $0 as? URL })
+                .first(where: { $0.lastPathComponent == engineName }),
+              run(exe.path, ["--version"])?.trimmingCharacters(in: .whitespacesAndNewlines) == tag else { return }
+        lock.lock()
+        let ok = install(from: exe.deletingLastPathComponent(), version: tag)
+        lock.unlock()
+        if ok, let dir = engines().first(where: { $0.version == tag })?.dir { warm(dir) }
+    }
+
+    private static func hex(_ data: Data) -> String { SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined() }
+
+    private static func fetch(_ request: URLRequest) -> (data: Data, response: URLResponse)? {
+        final class Box: @unchecked Sendable { var value: (data: Data, response: URLResponse)? }
+        let done = DispatchSemaphore(value: 0)
+        let box = Box()
+        URLSession.shared.dataTask(with: request) { d, r, e in
+            if e == nil, let d, let r, ((r as? HTTPURLResponse)?.statusCode ?? 0) == 200 { box.value = (d, r) }
+            done.signal()
+        }.resume()
+        done.wait()
+        return box.value
     }
 }
 
