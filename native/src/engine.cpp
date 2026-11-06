@@ -203,7 +203,7 @@ std::vector<lt::download_priority_t> priorities(json const& input, int count) {
         for (int i = 0; i < count; ++i) {
             if (!input[i].is_number_integer()) throw std::runtime_error("Invalid file priority");
             int p = input[i].get<int>(); if (p < 0 || p > 7) throw std::runtime_error("File priorities range from 0 (skip) to 7");
-            result[i] = lt::download_priority_t(p);
+            result[i] = lt::download_priority_t(static_cast<std::uint8_t>(p));  // 0..7, checked above
         }
     }
     if (std::none_of(result.begin(), result.end(), [](auto p) { return p != lt::dont_download; })) throw std::runtime_error("Select at least one file");

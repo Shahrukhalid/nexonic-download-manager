@@ -4,6 +4,7 @@
   what Activity Monitor, Task Manager and the app's folder show. The engine's messages use plain wording, and the
   third-party notices list it as "the video engine", with every licence of its bundled parts kept in full.
   Nothing else changes: the engine moves to its new folder by itself the first time the app opens.
+- The torrent engine builds without compiler warnings on every platform.
 
 ## 0.18.0
 
