@@ -1,3 +1,13 @@
+## 0.17.3
+
+- **Mac: Cancel keeps the download in the list** as Canceled (like IDM) instead of removing it. What was downloaded
+  is deleted; Resume starts it again from the beginning.
+- **Mac: double-click a download that isn't finished** to open its progress window; a finished one still opens its
+  file.
+- **Mac: video links start faster and show their qualities.** Paste one video link in Add Download and the app looks
+  it up while the window is open: pick Best, a lower quality (1080p, 720p…) or Sound only, and see the size. Start
+  then begins downloading at once instead of looking the video up again.
+
 ## 0.17.2
 
 - **Mac: a smaller download.** The app and its browser helper ship without build-time symbol tables, as apps built

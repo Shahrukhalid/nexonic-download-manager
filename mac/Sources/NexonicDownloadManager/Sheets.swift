@@ -33,6 +33,98 @@ struct SaveOptions: View {
 
 // MARK: Add
 
+/// Looks a video link up while the Add window is open (best quality, title), as the browser download window does.
+/// Start then reuses the saved details, so the download begins at once instead of looking the video up again.
+@MainActor final class VideoPrefetch: ObservableObject {
+    @Published private(set) var busy = false
+    @Published private(set) var choices: SiteVideo.Choices?  // qualities on offer, once looked up
+    @Published private(set) var info: SiteVideo.Info?
+    private var link: String?
+    private var path: String?
+    private var wait: Task<Void, Never>?
+    private var done = false
+
+    /// The one video link in the window, or nil. Looked up shortly after it stops changing.
+    func want(_ wanted: String?, proxy: ProxySettings?) {
+        guard !done, wanted != link else { return }
+        wait?.cancel()
+        drop()
+        link = wanted
+        busy = false
+        choices = nil
+        info = nil
+        guard let wanted, let url = URL(string: wanted) else { return }
+        wait = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 600_000_000)
+            guard !Task.isCancelled else { return }
+            self?.run(url, link: wanted, proxy: proxy)
+        }
+    }
+
+    private func run(_ url: URL, link wanted: String, proxy: ProxySettings?) {
+        busy = true
+        let file = AppPaths.parts.appendingPathComponent("info-\(UUID().uuidString).json")
+        let args = SiteVideo.infoArguments(url: url, quickJS: SiteVideoTools.quickJS, audioOnly: false, referrer: nil,
+                                           cookies: nil, userAgent: nil, username: nil, password: nil)
+        DispatchQueue.global(qos: .userInitiated).async {
+            SiteVideoTools.prepare()
+            try? FileManager.default.createDirectory(at: AppPaths.parts, withIntermediateDirectories: true)
+            let prepared = try? SiteVideo.prepare(args, proxy: proxy)
+            defer { if let f = prepared?.configFile { try? FileManager.default.removeItem(at: f) } }
+            var saved = false
+            var found: SiteVideo.Info?, offered: SiteVideo.Choices?
+            if let prepared {
+                let p = Process()
+                p.executableURL = SiteVideoTools.ytdlp
+                p.arguments = prepared.args
+                let out = Pipe()
+                p.standardOutput = out
+                p.standardError = FileHandle.nullDevice
+                if (try? p.run()) != nil {
+                    let data = out.fileHandleForReading.readDataToEndOfFile()
+                    p.waitUntilExit()
+                    found = p.terminationStatus == 0 ? SiteVideo.info(data) : nil
+                    saved = found != nil && (try? data.write(to: file)) != nil
+                    if saved { offered = SiteVideo.choices(data) }
+                }
+            }
+            let i = found, c = offered
+            Task { @MainActor [weak self] in
+                guard saved else { if self?.link == wanted { self?.busy = false }; return }
+                guard let self, !self.done, self.link == wanted, self.path == nil else {
+                    try? FileManager.default.removeItem(at: file)  // the window moved on: nothing keeps it
+                    return
+                }
+                self.path = file.path
+                self.info = i
+                self.choices = c
+                self.busy = false
+            }
+        }
+    }
+
+    /// The saved details for this link, handed to the download (which deletes them when it is removed).
+    func take(for wanted: String) -> String? {
+        done = true
+        wait?.cancel()
+        guard wanted == link, let p = path else { drop(); return nil }
+        path = nil
+        return p
+    }
+
+    /// The window closed without using them.
+    func discard() {
+        done = true
+        wait?.cancel()
+        drop()
+    }
+
+    private func drop() {
+        if let p = path { try? FileManager.default.removeItem(atPath: p) }
+        path = nil
+    }
+}
+
 struct AddSheet: View {
     @EnvironmentObject var manager: DownloadManager
     @Environment(\.dismiss) private var dismiss
@@ -48,6 +140,24 @@ struct AddSheet: View {
     @State private var limit = 0
     @State private var more = false
     @State private var audioOnly = false
+    @StateObject private var prefetch = VideoPrefetch()
+    @State private var quality = 0  // one video link: 0 = best, -1 = sound only, otherwise the highest picture height
+
+    /// The size of the chosen quality, when the video's details tell it.
+    private var qualitySize: Int64? {
+        guard let c = prefetch.choices else { return nil }
+        switch quality {
+        case 0: return prefetch.info?.size ?? c.video.first?.size
+        case -1: return c.soundSize
+        default: return c.video.first { $0.height == quality }?.size
+        }
+    }
+
+    /// The link, when the window holds exactly one video-site link.
+    private var oneVideo: String? {
+        guard lines.count == 1, let u = URL(string: lines[0]), SiteVideo.isSupported(u) else { return nil }
+        return lines[0]
+    }
 
     private var hasSiteVideo: Bool { lines.contains { URL(string: $0).map(SiteVideo.isSupported) ?? false } }
 
@@ -63,10 +173,27 @@ struct AddSheet: View {
                 .overlay(RoundedRectangle(cornerRadius: 6).stroke(.quaternary))
             Form {
                 if lines.count <= 1 {
-                    TextField("File name", text: $name, prompt: Text(lines.first.flatMap { URL(string: $0) }.map(FileNames.fromURL) ?? "From the link"))
+                    TextField("File name", text: $name, prompt: Text(prefetch.info.map { FileNames.sanitize("\($0.title).\($0.ext)") }
+                        ?? lines.first.flatMap { URL(string: $0) }.map(FileNames.fromURL) ?? "From the link"))
                 }
                 SaveOptions(folder: $folder, queueID: $queueID)
-                if hasSiteVideo {
+                if oneVideo != nil {
+                    Picker("Quality", selection: $quality) {
+                        Text(prefetch.choices?.video.first.map { "Best (\(SiteVideo.qualityName($0.height)))" } ?? "Best available").tag(0)
+                        ForEach(prefetch.choices?.video.dropFirst().map(\.height) ?? [], id: \.self) { h in
+                            Text(SiteVideo.qualityName(h)).tag(h)
+                        }
+                        Text("Sound only").tag(-1)
+                    }
+                    if prefetch.busy {
+                        HStack(spacing: 6) {
+                            ProgressView().controlSize(.small)
+                            Text("Finding the qualities on offer…").font(.caption).foregroundStyle(.secondary)
+                        }
+                    } else if let size = qualitySize {
+                        LabeledContent("Size", value: bytes(size))
+                    }
+                } else if hasSiteVideo {
                     Toggle("Sound only (video sites)", isOn: $audioOnly)
                     Text("Video sites are saved in the best quality available, with picture and sound joined.")
                         .font(.caption).foregroundStyle(.secondary)
@@ -95,6 +222,15 @@ struct AddSheet: View {
             text = request.links
             folder = manager.settings.folder
             queueID = request.queueID
+            prefetch.want(oneVideo, proxy: manager.settings.proxy)
+        }
+        .onChange(of: text) { _ in
+            prefetch.want(oneVideo, proxy: manager.settings.proxy)
+            if oneVideo == nil { quality = 0 }
+        }
+        .onChange(of: prefetch.choices) { c in
+            // A quality the new link doesn't offer goes back to the best one.
+            if quality > 0, !(c?.video.contains { $0.height == quality } ?? false) { quality = 0 }
         }
     }
 
@@ -116,11 +252,19 @@ struct AddSheet: View {
         o.checksum = Checksum.parse(checksum) == nil ? "" : checksum
         o.speedLimitKBps = max(0, limit)
         o.audioOnly = audioOnly
+        if oneVideo != nil {
+            o.audioOnly = quality == -1
+            o.maxHeight = quality > 0 ? quality : nil
+        }
+        // Reuse the details looked up while the window was open (not when a login is needed to see the video).
+        if let one = oneVideo { o.infoJSON = username.isEmpty ? prefetch.take(for: one) : nil }
+        prefetch.discard()
         manager.add(links: text, options: o)
         close()
     }
 
     private func close() {
+        prefetch.discard()
         onClose()
         dismiss()
     }
