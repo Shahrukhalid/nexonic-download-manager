@@ -184,7 +184,7 @@ if night:
     check("queue start downloads it and the checksum matches", os.path.isfile(cli_path) and hashlib.sha256(open(cli_path, "rb").read()).hexdigest() == small_sha)
 
 # ---- video tools present and runnable ----
-for tool, arg in (("yt-dlp", "--version"), ("ffmpeg", "-version"), ("qjs", "--help")):
+for tool, arg in (("nexonic-video-engine", "--version"), ("ffmpeg", "-version"), ("qjs", "--help")):
     r = subprocess.run([os.path.join(APP, tool), arg], capture_output=True, text=True, timeout=60)
     check(f"bundled {tool} runs", r.returncode == 0 or tool == "qjs", (r.stdout or r.stderr).splitlines()[0][:60] if (r.stdout or r.stderr) else "")
 

@@ -53,7 +53,7 @@ jobs:
           "build/Nexonic Download Manager.app/Contents/MacOS/nexonic-host" help | grep -q "ndm batch"
           "build/Nexonic Download Manager.app/Contents/MacOS/ffmpeg" -hide_banner -muxers | grep -q " mp4 "
           lipo -archs "build/Nexonic Download Manager.app/Contents/MacOS/ffmpeg"
-          "build/Nexonic Download Manager.app/Contents/MacOS/yt-dlp" --version
+          "build/Nexonic Download Manager.app/Contents/MacOS/nexonic-video-engine" --version
           "build/Nexonic Download Manager.app/Contents/MacOS/qjs" -e 'console.log("qjs ok")'
       - name: Video engine joins picture and sound (local test video)
         run: |
@@ -64,7 +64,7 @@ jobs:
           python3 -m http.server 8777 >/dev/null 2>&1 &
           sleep 1
           M="$GITHUB_WORKSPACE/build/Nexonic Download Manager.app/Contents/MacOS"
-          "$M/yt-dlp" --ignore-config --ffmpeg-location "$M" -f "bv*+ba/b" --merge-output-format "mp4/mkv" -P /tmp/out \
+          "$M/nexonic-video-engine" --ignore-config --ffmpeg-location "$M" -f "bv*+ba/b" --merge-output-format "mp4/mkv" -P /tmp/out \
             -o "test.%(ext)s" http://127.0.0.1:8777/dash.mpd
           "$M/ffprobe" -v error -show_entries stream=codec_type -of csv /tmp/out/test.mp4 | sort | tr '\n' ' ' | grep -q "stream,audio stream,video"
           popd
@@ -136,8 +136,8 @@ jobs:
           if (-not (Test-Path build\win\ffmpeg.exe)) { throw "ffmpeg.exe missing from the app folder" }
           $m = & build\win\ffmpeg.exe -hide_banner -muxers 2>&1 | Out-String
           if ($m -notmatch " mp4 ") { throw "ffmpeg has no mp4 muxer: $m" }
-          & build\win\yt-dlp\yt-dlp.exe --version
-          if ($LASTEXITCODE -ne 0) { throw "yt-dlp.exe does not run" }
+          & build\win\video-engine\nexonic-video-engine.exe --version
+          if ($LASTEXITCODE -ne 0) { throw "the video engine does not run" }
       - name: Upgrade from v0.8.1 preserves data
         if: startsWith(github.head_ref, 'release/')
         shell: pwsh

@@ -2,7 +2,7 @@ import Foundation
 import NexonicCore
 
 // Browser helper (native messaging) and the `ndm` command line: both hand downloads to the app through the inbox.
-let version = "0.18.0"
+let version = "0.18.1"
 
 func openApp(_ url: String) {
     let p = Process()
@@ -56,7 +56,7 @@ func qualities(_ m: [String: Any]) -> [String: Any] {
         return ["ok": false, "error": "Not a video site link"]
     }
     let fm = FileManager.default
-    let tools = [SiteVideoTools.ytdlp.path, SiteVideoTools.bundled?.appendingPathComponent("yt-dlp").path].compactMap { $0 }
+    let tools = [SiteVideoTools.ytdlp.path, SiteVideoTools.bundled?.appendingPathComponent("nexonic-video-engine").path].compactMap { $0 }
     guard let tool = tools.first(where: fm.isExecutableFile(atPath:)) else { return ["ok": false, "error": "The video engine is missing"] }
     let args = SiteVideo.infoArguments(url: url, quickJS: SiteVideoTools.quickJS, audioOnly: false, referrer: m["referrer"] as? String,
                                        cookies: m["cookies"] as? String, userAgent: m["userAgent"] as? String, username: nil, password: nil)

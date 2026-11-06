@@ -78,7 +78,7 @@ case "$TARGET" in
 esac
 
 cat > "$OUT/NOTICE-video-tools-2.txt" <<TXT
-- yt-dlp (public domain, The Unlicense): https://github.com/yt-dlp/yt-dlp
+- The video engine (public domain, The Unlicense), version $YTTAG.
   The app keeps its own copy up to date once a day, because video sites change often.
 - QuickJS-ng $QJS (MIT License): https://github.com/quickjs-ng/quickjs
 They are used unmodified.
@@ -89,7 +89,7 @@ get "https://raw.githubusercontent.com/quickjs-ng/quickjs/$QJS/LICENSE" "$OUT/qj
 cat "$OUT/qjs-license.txt" >> "$OUT/NOTICE-video-tools-2.txt" && rm "$OUT/qjs-license.txt"
 # The yt-dlp program is a bundle that also contains Python and other libraries (some GPL/LGPL); their licenses,
 # and where to get their source, are in yt-dlp's THIRD_PARTY_LICENSES.txt for the same version.
-printf '\n\nyt-dlp %s bundled components (from its THIRD_PARTY_LICENSES.txt):\n\n' "$YTTAG" >> "$OUT/NOTICE-video-tools-2.txt"
+printf '\n\nVideo engine %s: bundled components and their licenses (from its THIRD_PARTY_LICENSES.txt):\n\n' "$YTTAG" >> "$OUT/NOTICE-video-tools-2.txt"
 get "https://raw.githubusercontent.com/yt-dlp/yt-dlp/$YTTAG/THIRD_PARTY_LICENSES.txt" "$OUT/ytdlp-licenses.txt"
 cat "$OUT/ytdlp-licenses.txt" >> "$OUT/NOTICE-video-tools-2.txt" && rm "$OUT/ytdlp-licenses.txt"
 echo "Fetched the video engine for $TARGET into $OUT"

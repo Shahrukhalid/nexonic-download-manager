@@ -44,8 +44,7 @@ COMPONENTS INCLUDED IN THE APK
     Graphite2, Fontconfig, libass, libxml2, zimg, Little CMS, libsamplerate,
     libopenmpt, libsodium, Brotli, bzip2, XZ (liblzma), zlib, PCRE2, libffi,
     SQLite (public domain), OpenCL ICD loader.
-- yt-dlp (downloaded and updated by the app): The Unlicense (public domain).
-  https://github.com/yt-dlp/yt-dlp
+- The video engine (downloaded and updated by the app): The Unlicense (public domain).
 - Apache Commons Compress (used by youtubedl-android): Apache-2.0.
 - AndroidX, Jetpack Compose, Material components: Apache-2.0. Copyright The
   Android Open Source Project.

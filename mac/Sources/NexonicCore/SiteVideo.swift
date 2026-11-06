@@ -107,7 +107,8 @@ public enum SiteVideo {
         if signIn.contains(where: { msg.localizedCaseInsensitiveContains($0) }) {
             return "The site only lets signed-in users download this video. Open it in your browser while signed in and click Download this video (your sign-in is sent along), or enter your account under Properties → Login"
         }
-        return msg
+        // The engine's own name stays out of the app.
+        return msg.replacingOccurrences(of: #"yt[-_]?dlp"#, with: "the video engine", options: [.regularExpression, .caseInsensitive])
     }
 
     /// What the download window shows for a video, read from the info the video engine looked up.
@@ -270,7 +271,7 @@ public enum SiteVideo {
         let (rest, config) = privateOptions(args, proxy: proxy.flatMap(proxyURL))
         guard !config.isEmpty else { return (rest, nil) }
         try FileManager.default.createDirectory(at: AppPaths.parts, withIntermediateDirectories: true)
-        let file = AppPaths.parts.appendingPathComponent("yt-dlp-\(UUID().uuidString).conf")
+        let file = AppPaths.parts.appendingPathComponent("engine-\(UUID().uuidString).conf")
         guard FileManager.default.createFile(atPath: file.path, contents: Data(config.utf8), attributes: [.posixPermissions: 0o600])
         else { throw CocoaError(.fileWriteUnknown, userInfo: [NSFilePathErrorKey: file.path]) }
         return (["--config-locations", file.path] + rest, file)
@@ -321,19 +322,20 @@ public enum SiteVideoTools {
     /// every run, and macOS checked it each time: about 18 s before every video). It ships packed small in
     /// Resources/yt-dlp.tar.xz, is unpacked once into Tools/yt-dlp-engine-<version> (where it can be updated) and
     /// checked by macOS once.
-    static let enginePrefix = "yt-dlp-engine-"
-    static let engineName = "yt-dlp_macos"
+    static let enginePrefix = "video-engine-"
+    static let engineName = "nexonic-video-engine"  // the program inside the engine folder, renamed from the upstream name
+    static let upstreamName = "yt-dlp_macos"       // the name in the official release, used only for updates
     static var resources: URL? { bundled?.deletingLastPathComponent().appendingPathComponent("Resources", isDirectory: true) }
-    static var bundledArchive: URL? { resources?.appendingPathComponent("yt-dlp.tar.xz") }
+    static var bundledArchive: URL? { resources?.appendingPathComponent("video-engine.tar.xz") }
     static var bundledVersion: String? {
-        guard let f = resources?.appendingPathComponent("yt-dlp-version.txt") else { return nil }
+        guard let f = resources?.appendingPathComponent("video-engine-version.txt") else { return nil }
         return (try? String(contentsOf: f, encoding: .utf8))?.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     /// The newest engine ready to use; before the first unpack, the launcher next to the app (unpacks on its own).
     public static var ytdlp: URL {
         if let best = engines().first { return best.dir.appendingPathComponent(engineName) }
-        return bundled?.appendingPathComponent("yt-dlp") ?? folder.appendingPathComponent("yt-dlp")
+        return bundled?.appendingPathComponent(engineName) ?? folder.appendingPathComponent(engineName)
     }
 
     public static var quickJS: String? {
@@ -384,7 +386,11 @@ public enum SiteVideoTools {
             }
         }
         // The one-file edition and its stamp from earlier versions.
+        // Older layouts: the one-file engine, its stamp, and engine folders under their earlier name.
         for old in ["yt-dlp", "bundled-date"] { try? fm.removeItem(at: folder.appendingPathComponent(old)) }
+        for old in ((try? fm.contentsOfDirectory(atPath: folder.path)) ?? []) where old.hasPrefix("yt-dlp-engine-") {
+            try? fm.removeItem(at: folder.appendingPathComponent(old))
+        }
         let list = engines()
         for extra in list.dropFirst(2) { try? fm.removeItem(at: extra.dir) }  // keep the newest two (one may still be running)
         if let best = list.first { warm(best.dir) }
@@ -448,7 +454,7 @@ public enum SiteVideoTools {
         head.httpMethod = "HEAD"
         guard let tag = fetch(head)?.response.url?.lastPathComponent, versionParts(tag).count >= 3,
               tag.allSatisfy({ $0.isNumber || $0 == "." }), newer(tag, than: current) else { return }
-        let zipName = engineName + ".zip"
+        let zipName = upstreamName + ".zip"
         guard let sumsURL = URL(string: base + "/download/" + tag + "/SHA2-256SUMS"),
               let zipURL = URL(string: base + "/download/" + tag + "/" + zipName),
               let sums = fetch(URLRequest(url: sumsURL, timeoutInterval: 30))?.data,
@@ -461,7 +467,9 @@ public enum SiteVideoTools {
         let file = work.appendingPathComponent("engine.zip"), out = work.appendingPathComponent("x", isDirectory: true)
         guard (try? fm.createDirectory(at: work, withIntermediateDirectories: true)) != nil, (try? zip.write(to: file)) != nil,
               run("/usr/bin/ditto", ["-x", "-k", file.path, out.path]) != nil,
-              let exe = findEngine(in: out),
+              let found = findEngine(in: out) else { return }
+        let exe = found.deletingLastPathComponent().appendingPathComponent(engineName)
+        guard (try? fm.moveItem(at: found, to: exe)) != nil,
               run(exe.path, ["--version"])?.trimmingCharacters(in: .whitespacesAndNewlines) == tag else { return }
         lock.lock()
         let src = exe.deletingLastPathComponent()
@@ -472,7 +480,7 @@ public enum SiteVideoTools {
 
     static func findEngine(in dir: URL) -> URL? {
         guard let items = FileManager.default.enumerator(at: dir, includingPropertiesForKeys: nil) else { return nil }
-        for case let u as URL in items where u.lastPathComponent == engineName { return u }
+        for case let u as URL in items where u.lastPathComponent == upstreamName { return u }
         return nil
     }
 

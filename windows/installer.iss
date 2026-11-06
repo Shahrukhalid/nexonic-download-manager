@@ -26,6 +26,7 @@ ChangesEnvironment=yes
 [InstallDelete]
 ; The one-file video engine of versions before 0.18.0 (now the yt-dlp folder).
 Type: files; Name: "{app}\yt-dlp.exe"
+Type: filesandordirs; Name: "{app}\yt-dlp"
 
 [Files]
 Source: "..\build\win\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
