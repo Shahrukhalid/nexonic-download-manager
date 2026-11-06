@@ -26,6 +26,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.PlaylistAdd
+import androidx.compose.material.icons.outlined.VideoLibrary
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.Archive
@@ -159,6 +161,8 @@ fun DownloadsScreen(items: List<DownloadItem>, ui: UiState, onOpenBrowser: () ->
                     title = { Text(tr("Downloads"), fontWeight = FontWeight.SemiBold) },
                     actions = {
                         IconButton(onClick = { searching = true }) { Icon(Icons.Outlined.Search, tr("Search")) }
+                        IconButton(onClick = { ui.addPlaylist = "" }) { Icon(Icons.AutoMirrored.Outlined.PlaylistAdd, tr("Add playlist or channel")) }
+                        IconButton(onClick = { ui.showLibrary = true }) { Icon(Icons.Outlined.VideoLibrary, tr("Media library")) }
                         if (running > 0) IconButton(onClick = { Downloads.pauseAll() }) { Icon(Icons.Outlined.Pause, tr("Pause all")) }
                         else if (later > 0) IconButton(onClick = { Downloads.startAll() }) { Icon(Icons.Outlined.PlayArrow, tr("Start all")) }
                     },

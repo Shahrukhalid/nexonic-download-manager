@@ -36,6 +36,7 @@ struct DownloadsView: View {
     @State private var view: ListView = .all
     @State private var category: FileCategory?
     @State private var query = ""
+    @State private var showLibrary = false
 
     private var shown: [DownloadJob] {
         model.jobs.filter { view.includes($0) && (category == nil || $0.category == category)
@@ -63,6 +64,7 @@ struct DownloadsView: View {
             }
         }
         .sheet(isPresented: Binding(get: { model.showPaste }, set: { model.showPaste = $0 })) { PasteView() }
+        .sheet(isPresented: $showLibrary) { MediaLibraryView() }
     }
 
     private func list(selection: Binding<UUID?>?) -> some View {
@@ -115,6 +117,7 @@ struct DownloadsView: View {
                     }
                     Divider()
                     Button("Add Torrent…", systemImage: "arrow.down.circle.dotted") { model.torrentRequest = TorrentRequest(source: "") }
+                    Button("Media Library", systemImage: "play.rectangle.on.rectangle") { showLibrary = true }
                     if model.activeCount > 0 { Button("Pause All", systemImage: "pause") { model.pauseAll() } }
                     Button("Start All", systemImage: "play") { model.startLater() }
                     Button("Clear Finished", systemImage: "checkmark.circle") { model.clearFinished() }

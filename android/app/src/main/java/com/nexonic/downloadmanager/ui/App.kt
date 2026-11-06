@@ -38,6 +38,7 @@ import com.nexonic.downloadmanager.browser.Browser
 import com.nexonic.downloadmanager.browser.Offer
 import com.nexonic.downloadmanager.core.DownloadRequest
 import com.nexonic.downloadmanager.core.Http
+import com.nexonic.downloadmanager.core.Playlists
 import com.nexonic.downloadmanager.data.Downloads
 import com.nexonic.downloadmanager.data.NewDownload
 import com.nexonic.downloadmanager.data.Secrets
@@ -91,7 +92,13 @@ fun App(ui: UiState, browser: Browser) {
     LaunchedEffect(ui.addText) {
         val t = ui.addText?.trim()
         if (t != null && t.startsWith("magnet:?", true) && !t.contains('\n')) { ui.addText = null; ui.addTorrent = t }
+        // A playlist or channel link lists its videos first, so you choose which ones to save.
+        else if (t != null && !t.contains('\n') && Playlists.isPlaylist(t)) { ui.addText = null; ui.addPlaylist = t }
     }
+    ui.addPlaylist?.let { link ->
+        PlaylistSheet(link, onAdd = { links -> ui.addPlaylist = null; ui.addText = links }, onDismiss = { ui.addPlaylist = null })
+    }
+    if (ui.showLibrary) MediaLibrarySheet(items, onDismiss = { ui.showLibrary = false }) { ui.message = it }
     ui.addTorrent?.let { source ->
         TorrentSheet(source) { msg -> ui.addTorrent = null; if (msg != null) ui.message = msg }
     }

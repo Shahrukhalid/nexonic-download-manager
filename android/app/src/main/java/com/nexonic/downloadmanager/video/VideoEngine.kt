@@ -7,6 +7,8 @@ import com.nexonic.downloadmanager.core.Job
 import com.nexonic.downloadmanager.core.StreamFormat
 import com.nexonic.downloadmanager.core.VideoChoice
 import com.nexonic.downloadmanager.core.VideoPages
+import com.nexonic.downloadmanager.core.Playlists
+import com.nexonic.downloadmanager.core.VideoSubtitles
 import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
@@ -121,7 +123,7 @@ object VideoEngine {
      * yt-dlp keeps its .part files, so a paused download continues where it stopped.
      */
     fun download(id: String, url: String, choice: VideoChoice, dir: File, rateKB: Long, userAgent: String?, referer: String?,
-                 progress: (Float, Long, Long?, Long?) -> Unit): File {
+                 subtitles: Boolean = false, progress: (Float, Long, Long?, Long?) -> Unit): File {
         ensure()
         dir.mkdirs()
         val req = base(resolve(url), userAgent, referer).apply {
@@ -132,6 +134,7 @@ object VideoEngine {
             // Title, artist, date, description and chapters stay inside the saved file (as on the desktop apps).
             addOption("--embed-metadata")
             addOption("--embed-chapters")
+            if (!choice.audioOnly && subtitles) VideoSubtitles.arguments().forEach { addOption(it) }
             if (rateKB > 0) addOption("--limit-rate", "${rateKB}K")
         }
         try {
@@ -150,6 +153,40 @@ object VideoEngine {
         return dir.listFiles()?.filter { it.isFile && !it.name.endsWith(".part") && !it.name.endsWith(".ytdl") && it.length() > 0 }
             ?.maxByOrNull { it.length() }
             ?: throw VideoException("The video could not be saved.")
+    }
+
+    /**
+     * Lists the videos of a playlist or channel without downloading them (up to [Playlists.MAX_ENTRIES], two minutes at
+     * most). Throws [VideoException] with a readable message.
+     */
+    fun readPlaylist(url: String): Playlists.Result {
+        ensure()
+        val target = Playlists.normalize(url)
+        val req = YoutubeDLRequest(target).apply {
+            addOption("--flat-playlist")
+            addOption("-J")
+            addOption("--playlist-end", Playlists.MAX_ENTRIES.toString())
+            addOption("--socket-timeout", "30")
+            cookiesFile(target)?.let { addOption("--cookies", it.absolutePath) }
+        }
+        val pid = "playlist-" + System.nanoTime()
+        val timer = Thread({
+            try { Thread.sleep(120_000); cancel(pid) } catch (e: InterruptedException) { }
+        }, "nexonic-playlist-timer").apply { isDaemon = true; start() }
+        val out = try {
+            YoutubeDL.getInstance().execute(req, pid).out
+        } catch (e: Exception) {
+            Log.w(TAG, "playlist read failed", e)
+            throw VideoException(VideoPages.friendlyError(e.message))
+        } catch (e: Throwable) {
+            Log.e(TAG, "playlist read failed", e)
+            throw VideoException(VideoPages.engineError(e.javaClass.simpleName, e.message))
+        } finally {
+            timer.interrupt()
+        }
+        val r = Playlists.parse(out) ?: throw VideoException("The list of videos could not be read.")
+        if (r.entries.isEmpty()) throw VideoException("No videos were found at this link.")
+        return r
     }
 
     /** Short share links (facebook.com/share/…, fb.watch) point to the real video page: follow them first. */
@@ -197,7 +234,8 @@ class VideoJob(
     override fun start() {
         Thread({
             try {
-                val file = VideoEngine.download(id.toString(), url, choice, dir, rateKB, userAgent, referer) { p, eta, total, speed ->
+                val file = VideoEngine.download(id.toString(), url, choice, dir, rateKB, userAgent, referer,
+                    com.nexonic.downloadmanager.data.Downloads.settings.videoSubtitles) { p, eta, total, speed ->
                     if (!stopped.get()) onProgress(p, eta, total, speed)
                 }
                 if (!stopped.get()) onDone(file)

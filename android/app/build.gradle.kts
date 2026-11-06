@@ -100,4 +100,6 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     testImplementation("junit:junit:4.13.2")
+    // The real org.json for unit tests (the Android one is only a stub there).
+    testImplementation("org.json:json:20240303")
 }

@@ -1,3 +1,14 @@
+## 0.17.0
+
+- **Android: playlists and channels.** Tap the playlist button on the Downloads screen, or share or paste a YouTube
+  playlist or channel, Vimeo showcase, SoundCloud set or Bandcamp album link. Nexonic lists its videos (up to 500);
+  tick the ones you want and they open in the Add window.
+- **Android: subtitles** (Settings › Save subtitles with videos, off by default): videos keep the subtitles the site
+  offers in your phone's language and in English, inside the file. A missing subtitle never stops the video.
+- **Media Library on Android, iPhone and iPad:** your finished videos and music with preview pictures; tap one to play
+  it. Android: the library button on the Downloads screen. iPhone and iPad: Downloads › More › Media Library, with
+  search, Share and Show in Files.
+
 ## 0.16.0
 
 - **Playlists and channels** (Mac, Windows and Linux): Tasks › Add Playlist or Channel… (Ctrl+Shift+L, ⇧⌘L on Mac)

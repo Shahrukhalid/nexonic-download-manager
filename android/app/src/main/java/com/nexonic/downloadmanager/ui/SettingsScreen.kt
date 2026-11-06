@@ -60,6 +60,7 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
     var wifiOnly by remember { mutableStateOf(s.wifiOnly) }
     var ask by remember { mutableStateOf(s.askBeforeDownload) }
     var folders by remember { mutableStateOf(s.categoryFolders) }
+    var subtitles by remember { mutableStateOf(s.videoSubtitles) }
     var schedule by remember { mutableStateOf(s.scheduleEnabled) }
     var minutes by remember { mutableStateOf(s.scheduleMinutes) }
     var pickTime by remember { mutableStateOf(false) }
@@ -112,6 +113,7 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
             }
             Toggle("Ask before downloading", "Show the download window when the browser starts a download.", ask) { ask = it; s.askBeforeDownload = it }
             Toggle("Folders by type", "Save into Nexonic/Video, /Music, /Documents…", folders) { folders = it; s.categoryFolders = it }
+            Toggle("Save subtitles with videos", "Subtitles in your phone's language and English, inside the video file.", subtitles) { subtitles = it; s.videoSubtitles = it }
             Text(tr("Save to"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp))
             Hint(if (treeName.isEmpty()) "Downloads/Nexonic on this phone" else treeName)
             Row {

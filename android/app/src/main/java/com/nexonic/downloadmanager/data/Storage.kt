@@ -136,6 +136,8 @@ class Settings(context: Context) {
     var saveTree: String? get() = p.getString("saveTree", null); set(v) = p.edit().putString("saveTree", v).apply()
     var saveTreeName: String get() = p.getString("saveTreeName", "") ?: ""; set(v) = p.edit().putString("saveTreeName", v).apply()
     /** Torrents stay off until the user turns them on (peers and trackers can see the phone's IP address). */
+    /** Keep the site's subtitles (phone language and English) inside saved videos. Off by default. */
+    var videoSubtitles: Boolean get() = p.getBoolean("videoSubtitles", false); set(v) = p.edit().putBoolean("videoSubtitles", v).apply()
     var torrentsEnabled: Boolean get() = p.getBoolean("torrents", false); set(v) = p.edit().putBoolean("torrents", v).apply()
 }
 

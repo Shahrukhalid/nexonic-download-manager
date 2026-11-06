@@ -50,6 +50,8 @@ The same guide is built into the app: **Help → Nexonic Download Manager Help**
 
 **Media Library.** Downloads › Media Library… shows your finished videos and music with preview pictures. Double-click one to play it.
 
+**On phones.** Android: the playlist button on the Downloads screen lists a playlist's or channel's videos (sharing such a link to Nexonic does the same), Settings › Save subtitles with videos keeps subtitles, and the library button opens the Media Library. iPhone and iPad: Downloads › More › Media Library.
+
 **Streamed video.** Streams (.m3u8) are found by the extension, downloaded in parallel and joined into one .mp4. Copy-protected services are not supported.
 
 ## Queues and Scheduler

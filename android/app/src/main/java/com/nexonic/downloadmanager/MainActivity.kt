@@ -45,6 +45,9 @@ class UiState {
     var addText by mutableStateOf<String?>(null)
     /** A magnet link or .torrent file to show in the Add Torrent window. */
     var addTorrent by mutableStateOf<String?>(null)
+    /** A playlist or channel link to list in the Add Playlist window ("" opens it empty). */
+    var addPlaylist by mutableStateOf<String?>(null)
+    var showLibrary by mutableStateOf(false)
     var longPress by mutableStateOf<Pair<Offer, Boolean>?>(null)
     var detailId by mutableStateOf<Long?>(null)
     var message by mutableStateOf<String?>(null)
