@@ -107,6 +107,8 @@ final class DownloadManager: ObservableObject {
         var checksum = ""
         var speedLimitKBps = 0
         var audioOnly = false
+        var maxHeight: Int?  // a single video link's highest picture quality (nil = best)
+        var infoJSON: String?  // a single video link's details, already looked up in the Add window
     }
 
     func add(links text: String, options: AddOptions = AddOptions()) {
@@ -114,6 +116,7 @@ final class DownloadManager: ObservableObject {
         for line in lines {
             var job = DownloadJob(url: line)
             if lines.count == 1, let n = options.fileName, !n.isEmpty { job.fileName = n }
+            if lines.count == 1 { job.infoJSON = options.infoJSON; job.maxHeight = options.maxHeight }
             if job.validURL != nil { add(job, options: options) }
         }
     }
