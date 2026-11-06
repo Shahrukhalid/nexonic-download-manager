@@ -1,6 +1,6 @@
 # Torrent downloads
 
-Since **v0.10.0**, Windows and Linux use a bundled libtorrent 2.0.11 engine, and Mac since **v0.11.0**; the earlier optional Python bridge of v0.9.0 is no longer needed. Android and iPhone/iPad have torrents since **v0.13.0** (phones don't seed; iPhone/iPad download while the app is open).
+Since **v0.10.0**, Windows and Linux use the built-in torrent engine, and Mac since **v0.11.0**; the earlier optional Python bridge of v0.9.0 is no longer needed. Android and iPhone/iPad have torrents since **v0.13.0** (phones don't seed; iPhone/iPad download while the app is open).
 
 ## Mac
 
@@ -20,7 +20,7 @@ Peers and trackers can see your IP address (or your proxy's). Torrents follow th
 
 ## Data, recovery and integrity
 
-Each task writes to `Save to/Nexonic torrents/<task-id>/`. Metadata and destination paths are validated before libtorrent receives them, including v1/v2/hybrid file trees, traversal, duplicate paths, symbolic links, existing hard links, metadata size and file counts. The engine checks pieces during transfer, forces another piece check before completion, then reports SHA-256 for every selected real file. Skipped files can still require shared boundary pieces.
+Each task writes to `Save to/Nexonic torrents/<task-id>/`. Metadata and destination paths are validated before the engine receives them, including v1/v2/hybrid file trees, traversal, duplicate paths, symbolic links, existing hard links, metadata size and file counts. The engine checks pieces during transfer, forces another piece check before completion, then reports SHA-256 for every selected real file. Skipped files can still require shared boundary pieces.
 
 Native manifests and raw resume checkpoints live under application data in `Parts/<task-id>/native/`, use atomic private writes and flush on graceful pause/shutdown. Earlier Linux Base64 checkpoints are imported once and checked against current metadata and paths. Corrupt, mismatched or missing checkpoints trigger piece checking; they cannot override the current destination, file selection or safe flags. A quick resume waits for the previous worker to finish saving. Abrupt termination recovers from periodic checkpoints and verifies remaining pieces.
 
@@ -28,8 +28,8 @@ Removing a task retains payload files, including partial files. Multi-file torre
 
 ## Build and validation
 
-`scripts/build-torrent-native.py` builds pinned libtorrent and its native dependencies; Windows/Linux packaging includes the engine and component notices. No Python interpreter is needed by those application torrent providers. The previous Python bridge remains as a compatibility test fixture, not an embedded application runtime.
+`scripts/build-torrent-native.py` builds the pinned torrent engine and its native dependencies; Windows/Linux packaging includes the engine and component notices. No Python interpreter is needed by those application torrent providers. The previous Python bridge remains as a compatibility test fixture, not an embedded application runtime.
 
 `native/tests/engine_test.cpp` transfers generated legal files between real loopback peers, tests metadata-only safeguards, magnets, selection, pause/restart checkpoints, tracker changes, piece checks and SHA-256. `native/tests/dotnet` repeats real transfers through the managed C ABI, UTF-8 paths, concurrent polling and disposal, then tests the actual queue provider resolving an HTTP descriptor into verified payload contents. Native CI covers Windows, macOS, Linux x64 and ARM64; app CI exercises bundled Windows/Linux providers. Device/emulator frontend testing is still required for mobile integration. Tests opt into loopback peers explicitly; production sessions do not.
 
-The engine is [libtorrent-rasterbar](https://www.libtorrent.org/), whose [BSD license and embedded notices](https://github.com/arvidn/libtorrent/blob/v2.0.11/COPYING) are included alongside its dependencies' notices. Existing application licenses and Android GPL obligations remain unchanged.
+Third-party licenses for the engine and its dependencies are in the app's [notices](../packaging/THIRD-PARTY-NOTICES.txt). Existing application licenses and Android GPL obligations remain unchanged.
