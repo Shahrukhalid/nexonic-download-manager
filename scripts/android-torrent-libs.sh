@@ -3,12 +3,26 @@
 #   bash scripts/android-torrent-libs.sh arm64 arm
 set -euo pipefail
 cd "$(dirname "$0")/.."
+# The NDK compiles with debug information; Gradle does not strip libraries placed in jniLibs, so strip here.
+# --strip-unneeded keeps every exported (dynamic) symbol, including the JNI entry points.
+ndk="${ANDROID_NDK_HOME:-${ANDROID_NDK_ROOT:-${ANDROID_NDK_LATEST_HOME:-}}}"
+sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+if [ -z "$ndk" ] && [ -n "$sdk" ]; then ndk="$(ls -d "$sdk"/ndk/* 2>/dev/null | sort -V | tail -1)"; fi
+strip_tool="$(ls "$ndk"/toolchains/llvm/prebuilt/*/bin/llvm-strip 2>/dev/null | head -1)"
+nm_tool="$(dirname "$strip_tool")/llvm-nm"
+[ -x "$strip_tool" ] || { echo "llvm-strip from the Android NDK is required" >&2; exit 1; }
 declare -A ABI=([arm64]=arm64-v8a [arm]=armeabi-v7a [x64]=x86_64)
 for t in "$@"; do
   python3 scripts/build-torrent-native.py "android-$t"
   dest="android/app/src/main/jniLibs/${ABI[$t]}"
   mkdir -p "$dest"
-  cp ".native-cache/sdk/android-$t/lib/libnexonic_torrent.so" "$dest/"
+  src=".native-cache/sdk/android-$t/lib/libnexonic_torrent.so"
+  "$strip_tool" --strip-unneeded -o "$dest/libnexonic_torrent.so" "$src"
+  # Same exported symbols before and after, and the JNI entry points are there.
+  diff <("$nm_tool" -D --defined-only "$src" | sort) <("$nm_tool" -D --defined-only "$dest/libnexonic_torrent.so" | sort) >/dev/null \
+    || { echo "Stripping changed the exported symbols of $src" >&2; exit 1; }
+  "$nm_tool" -D --defined-only "$dest/libnexonic_torrent.so" | grep -q Java_com_nexonic_downloadmanager_torrent_NativeTorrent_create \
+    || { echo "JNI entry points missing in $dest/libnexonic_torrent.so" >&2; exit 1; }
 done
 first="$1"
 notices=android/app/src/main/assets/licenses/Torrent-engine-NOTICES.txt
