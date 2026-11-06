@@ -342,9 +342,9 @@ public static class DownloadWindows
         right.Children.Add(pause);
         right.Children.Add(Ui.Button("Cancel", async () =>
         {
-            if (!await Ui.Confirm(w, "Cancel this download?", row.Record.Torrent != null ? $"{row.Record.FileName} is removed from the list. Torrent files stay on disk." : $"{row.Record.FileName} is removed from the list and the part already downloaded is deleted.", "Cancel Download", "Keep")) return;
+            if (!await Ui.Confirm(w, "Cancel this download?", row.Record.Torrent != null ? $"{row.Record.FileName} is removed from the list. Torrent files stay on disk." : $"The part of {row.Record.FileName} already downloaded is deleted. It stays in the list as Canceled; Resume starts it again.", "Cancel Download", "Keep")) return;
             w.Close();
-            m.Remove(row);
+            m.Cancel(row);
         }));
         right.Children.Add(Ui.Button("Close", w.Close, isCancel: true));
         buttons.Children.Add(right);
@@ -384,7 +384,7 @@ public static class DownloadWindows
                 DownloadStatus.Probing => "Connecting…",
                 DownloadStatus.Downloading => "Receiving data…",
                 DownloadStatus.Paused => "Paused",
-                DownloadStatus.Failed => "Failed",
+                DownloadStatus.Failed => r.IsCanceled ? "Canceled" : "Failed",
                 _ => "Complete",
             };
             values[1].Text = r.Size is long s ? Row.Bytes(s) : "Unknown";

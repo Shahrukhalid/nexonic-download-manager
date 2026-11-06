@@ -19,6 +19,8 @@ public sealed class AddOptions
     public string Checksum { get; set; } = "";
     public int SpeedLimitKBps { get; set; }
     public bool AudioOnly { get; set; }
+    public int? MaxHeight { get; set; }    // a single video link's highest picture quality (null = best)
+    public string? InfoJson { get; set; }  // a single video link's details, already looked up in the Add window
 }
 
 /// <summary>Queues, scheduler, persistence and after-download actions (UI thread only).</summary>
@@ -99,6 +101,7 @@ public sealed partial class DownloadManager
         foreach (var line in lines)
         {
             var job = new DownloadJob(line, lines.Count == 1 && !string.IsNullOrWhiteSpace(o.FileName) ? o.FileName : null);
+            if (lines.Count == 1) job = job with { InfoJson = o.InfoJson, MaxHeight = o.MaxHeight };
             if (job.IsValid) { Add(job, o); n++; }
         }
         return n;
@@ -288,6 +291,27 @@ public sealed partial class DownloadManager
         }
         if (Queues.FirstOrDefault(q => q.Id == row.Record.Queue) is { Running: false } queue) queue.Running = true;
         row.Refresh();
+        Schedule();
+    }
+
+    /// <summary>Stops the download and deletes what was downloaded, but keeps it in the list as Canceled (Resume starts it
+    /// again from the beginning). Torrents are removed from the list as before; their files stay on disk.</summary>
+    public void Cancel(Row row)
+    {
+        var r = row.Record;
+        if (r.Torrent != null) { Remove(row); return; }
+        if (transfers.Remove(r.Id, out var t)) t.Discard();
+        if (r.Status == DownloadStatus.Finished) return;
+        try { Directory.Delete(Path.Combine(AppPaths.Parts, r.Id.ToString("N")), true); } catch { }
+        r.Status = DownloadStatus.Failed;
+        r.Error = DownloadRecord.CanceledMessage;
+        r.Segments = new();
+        r.VideoParts = null;
+        r.VideoStep = null;
+        r.StreamDone = null;
+        r.StreamBytes = null;
+        row.Refresh();
+        Save();
         Schedule();
     }
 
@@ -655,7 +679,7 @@ public sealed class Row : System.ComponentModel.INotifyPropertyChanged
         DownloadStatus.Seeding => "Seeding",
         DownloadStatus.Paused => L.T(Record.AwaitingRefresh == true ? "Waiting for link" : "Stopped"),
         DownloadStatus.Finished => L.T(Record.ChecksumResult?.Contains("not") == true ? "Checksum failed" : "Complete"),
-        _ => L.T("Error"),
+        _ => L.T(Record.IsCanceled ? "Canceled" : "Error"),
     };
     public string Queue => queueName(Record.Queue);
     public System.Windows.Media.ImageSource? Icon => FileIcon.For(Record.FileName);
@@ -665,7 +689,7 @@ public sealed class Row : System.ComponentModel.INotifyPropertyChanged
         DownloadStatus.Queued => Theme.Waiting,
         DownloadStatus.Paused => Theme.Idle,
         DownloadStatus.Finished => Record.ChecksumResult?.Contains("not") == true ? Theme.Bad : Theme.Good,
-        _ => Theme.Bad,
+        _ => Record.IsCanceled ? Theme.Idle : Theme.Bad,
     };
     public string Added => Record.Added.ToString("d MMM yyyy, HH:mm");
     public string Category => Record.Category.ToString();

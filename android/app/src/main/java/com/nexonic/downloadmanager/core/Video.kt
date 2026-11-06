@@ -155,6 +155,8 @@ object VideoPages {
         val l = line.lowercase()
         return when {
             "unsupported url" in l -> "No video found on this page."
+            "anti-bot" in l || "cloudflare" in l ->
+                "This site checks that a real browser is visiting. Open the page in the app's Browser tab, play the video, then download it there."
             "sign in" in l || "login" in l || "log in" in l || "cookies" in l ->
                 "This video needs you to be signed in. Open it in the app's Browser tab, sign in, then download it there."
             "private" in l -> "This video is private."

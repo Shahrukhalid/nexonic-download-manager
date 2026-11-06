@@ -68,6 +68,10 @@ public sealed class DownloadRecord
 
     public TorrentMetadata? Torrent { get; set; }
 
+    /// <summary>The error text of a download the user canceled: it stays in the list, and Resume starts it again.</summary>
+    public const string CanceledMessage = "Canceled";
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool IsCanceled => Status == DownloadStatus.Failed && Error == CanceledMessage;
     public long Received { get { if (Torrent != null) return Torrent.Received; if (IsStream == true || SiteVideo == true) return StreamBytes ?? 0; lock (Segments) return Segments.Sum(s => s.Written); } }
     public double Progress => IsStream == true
         ? (StreamTotal is > 0 ? Math.Min(1, (double)(StreamDone ?? 0) / StreamTotal.Value) : 0)

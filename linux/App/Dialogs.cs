@@ -23,8 +23,53 @@ public static partial class Dialogs
         var name = f.Text("File name (one link only; empty = from the link)");
         var folder = f.Folder(m.Settings.Folder);
         var queue = f.Queue(m, queueId);
+        // One video link: looked up while the window is open, with its qualities and sizes. Several links: sound only or not.
+        var qualityPanel = new StackPanel { IsVisible = false };
+        qualityPanel.Children.Add(new TextBlock { Text = "Quality", Margin = new Thickness(0, 8, 0, 3) });
+        var quality = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch };
+        qualityPanel.Children.Add(quality);
+        var qualityNote = Ui.Muted("");
+        qualityNote.Margin = new Thickness(0, 4, 0, 4);
+        qualityPanel.Children.Add(qualityNote);
+        f.Body.Children.Add(qualityPanel);
         var audio = f.Check("Sound only (for YouTube and other video sites)", false);
         f.Note("Video sites are saved in the best quality available, with picture and sound joined.");
+        var tags = new List<int> { 0 };
+        int Chosen() => quality.SelectedIndex >= 0 && quality.SelectedIndex < tags.Count ? tags[quality.SelectedIndex] : 0;
+        string? OneVideo()
+        {
+            var ls = Links.Split(text.Text ?? "");
+            return ls.Count == 1 && SiteVideo.IsSupported(ls[0]) && engine.SelectedIndex is 0 or 3 ? ls[0] : null;
+        }
+        VideoPrefetch? prefetch = null;
+        void ShowNote()
+        {
+            if (prefetch == null) return;
+            var size = VideoPrefetch.SizeFor(prefetch.Info, prefetch.Choices, Chosen());
+            qualityNote.Text = prefetch.Busy ? "Finding the qualities on offer…"
+                : prefetch.Info is { } info ? info.Title + (size is long b ? " · " + Ui.Bytes(b) : "")
+                : "The qualities are found when the download starts.";
+        }
+        void Refresh()
+        {
+            var one = OneVideo() != null;
+            qualityPanel.IsVisible = one;
+            audio.IsVisible = !one;
+            if (!one || prefetch == null) return;
+            var keep = Chosen();
+            var options = VideoPrefetch.Options(prefetch.Choices);
+            tags = options.Select(o => o.Tag).ToList();
+            quality.ItemsSource = options.Select(o => o.Label).ToList();
+            quality.SelectedIndex = Math.Max(0, tags.IndexOf(keep));
+            ShowNote();
+        }
+        var pf = prefetch = new VideoPrefetch(() => m.Settings.Proxy, () => Avalonia.Threading.Dispatcher.UIThread.Post(Refresh));
+        quality.SelectionChanged += (_, _) => ShowNote();
+        text.TextChanged += (_, _) => { pf.Want(OneVideo()); Refresh(); };
+        engine.SelectionChanged += (_, _) => { pf.Want(OneVideo()); Refresh(); };
+        f.Window.Closed += (_, _) => pf.Dispose();
+        pf.Want(OneVideo());
+        Refresh();
         var inner = new StackPanel { Margin = new Thickness(0, 4, 0, 0) };
         TextBox Inner(string label, bool password = false)
         {
@@ -60,7 +105,10 @@ public static partial class Dialogs
                 Password = pass.Text ?? "",
                 Checksum = (sum.Text ?? "").Trim(),
                 SpeedLimitKBps = Ui.Number(limit.Text),
-                AudioOnly = audio.IsChecked == true,
+                AudioOnly = OneVideo() != null ? Chosen() == -1 : audio.IsChecked == true,
+                MaxHeight = OneVideo() != null && Chosen() > 0 ? Chosen() : null,
+                // Reuse the details looked up while the window was open (not when a login is needed to see the video).
+                InfoJson = OneVideo() is { } one && (user.Text ?? "").Trim().Length == 0 ? pf.Take(one) : null,
                 Engine = engine.SelectedIndex switch { 1 => DownloadEngine.File, 2 => DownloadEngine.Hls, 3 => DownloadEngine.Video, _ => DownloadEngine.Auto },
             });
             if (n == 0) { error.Text = "Paste at least one http or https link."; return; }

@@ -351,10 +351,11 @@ public static class DownloadWindows
         });
         Btn(right, "Cancel", () =>
         {
-            if (MessageBox.Show(w, $"{row.Record.FileName} is removed from the list and the part already downloaded is deleted.",
-                    "Cancel this download?", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+            var what = row.Record.Torrent != null ? $"{row.Record.FileName} is removed from the list. Torrent files stay on disk."
+                : $"The part of {row.Record.FileName} already downloaded is deleted. It stays in the list as Canceled; Resume starts it again.";
+            if (MessageBox.Show(w, what, "Cancel this download?", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
             w.Close();
-            m.Remove(row);
+            m.Cancel(row);
         });
         Btn(right, "Close", w.Close, cancel: true);
         buttons.Children.Add(right);
@@ -378,7 +379,7 @@ public static class DownloadWindows
                 DownloadStatus.Probing => "Connecting…",
                 DownloadStatus.Downloading => "Receiving data…",
                 DownloadStatus.Paused => "Paused",
-                DownloadStatus.Failed => "Failed",
+                DownloadStatus.Failed => r.IsCanceled ? "Canceled" : "Failed",
                 _ => "Complete",
             };
             values[1].Text = r.Size is long s ? Nexonic.App.Row.Bytes(s) : "Unknown";

@@ -1,3 +1,19 @@
+## 0.18.0
+
+- **Windows: videos start sooner.** The video engine now ships unpacked. Before, it unpacked itself before every
+  video and Windows scanned it each time. It still keeps itself up to date once a day, checked against the official
+  fingerprints. Sites and qualities are unchanged.
+- **Windows and Linux: Add Download finds the qualities.** Paste one video link and the window looks it up while it
+  is open: pick Best, a lower quality (1080p, 720p…) or Sound only and see the size. Start then begins at once.
+- **Windows and Linux: Cancel keeps the download in the list** as Canceled instead of removing it. What was
+  downloaded is deleted; Resume starts it again. (Torrents are still removed; their files stay on disk.)
+- **Browser extension finds more streamed videos (#108).** Players that load their stream from an address without a
+  file extension, or from a background worker (common on streaming sites), are now detected while the video plays,
+  and the browser hands the video over with your session. Sites that check for a real browser now get a clear
+  message instead of a raw error when the app is asked to open the page by itself.
+- **Windows: double-click a download that isn't finished** to open its progress window; a finished one still opens
+  its file (as on Linux and Mac).
+
 ## 0.17.5
 
 - **Mac: smaller download again, same fast video start.** The video engine is packed small inside the app (about

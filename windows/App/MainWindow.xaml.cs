@@ -325,6 +325,14 @@ public partial class MainWindow : Window
         if (One?.Record.SavedPath is { } p) Process.Start(new ProcessStartInfo(p) { UseShellExecute = true });
     }
 
+    /// <summary>Double-click: a finished download opens its file; any other shows its progress window.</summary>
+    void OnRowDoubleClick(object s, RoutedEventArgs e)
+    {
+        if (One is not { } row) return;
+        if (row.Record.Status == DownloadStatus.Finished && row.Record.SavedPath is { } p) Process.Start(new ProcessStartInfo(p) { UseShellExecute = true });
+        else DownloadWindows.ShowProgress(manager, row);
+    }
+
     void OnShowInFolder(object s, RoutedEventArgs e)
     {
         if (One?.Record.SavedPath is { } p) Process.Start("explorer.exe", $"/select,\"{p}\"");

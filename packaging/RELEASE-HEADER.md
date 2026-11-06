@@ -1,6 +1,6 @@
-# Nexonic Download Manager 0.17.5
+# Nexonic Download Manager 0.18.0
 
-**Mac: smaller download, same fast video start.** The video engine is packed small inside the app and unpacked once the first time the app opens after updating. Android APK licensing and corresponding-source requirements remain unchanged; the release must include `Android-GPL-Sources.tar.gz`; the torrent engine's sources are in `Android-Torrent-Sources.tar.gz`.
+**Windows and Linux: faster, clearer video downloads.** Videos start sooner on Windows, Add Download shows the qualities and sizes of a video link (Best, lower qualities or Sound only), and Cancel keeps a download in the list as Canceled so Resume can start it again. Android APK licensing and corresponding-source requirements remain unchanged; the release must include `Android-GPL-Sources.tar.gz`; the torrent engine's sources are in `Android-Torrent-Sources.tar.gz`.
 
 **Mac, first launch:** macOS says it *could not verify* the app because it's free and not sold through Apple. Click **Done**, open **System Settings → Privacy & Security**, click **Open Anyway**, then **Open Anyway** again and enter your Mac password. Only once; updates installed with **Update Now** open without a warning. [Pictures of each step](https://github.com/Shahrukhalid/nexonic-download-manager#first-launch-on-mac)
 

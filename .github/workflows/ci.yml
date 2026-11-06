@@ -136,7 +136,7 @@ jobs:
           if (-not (Test-Path build\win\ffmpeg.exe)) { throw "ffmpeg.exe missing from the app folder" }
           $m = & build\win\ffmpeg.exe -hide_banner -muxers 2>&1 | Out-String
           if ($m -notmatch " mp4 ") { throw "ffmpeg has no mp4 muxer: $m" }
-          & build\win\yt-dlp.exe --version
+          & build\win\yt-dlp\yt-dlp.exe --version
           if ($LASTEXITCODE -ne 0) { throw "yt-dlp.exe does not run" }
       - name: Upgrade from v0.8.1 preserves data
         if: startsWith(github.head_ref, 'release/')
