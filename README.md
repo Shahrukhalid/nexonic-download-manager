@@ -16,6 +16,7 @@ Download faster, pause and resume anytime, and save videos from YouTube, Instagr
 ![Android 10+](https://img.shields.io/badge/Android-10%2B-3DDC84)
 ![iOS 17+ (testing)](https://img.shields.io/badge/iPhone%20%26%20iPad-testing-555555)
 [![MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](LICENSE)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16392/badge)](https://www.bestpractices.dev/projects/16392)
 [![Website](https://img.shields.io/badge/website-online-2563eb)](https://shahrukhalid.github.io/nexonic-download-manager/)
 
 <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/mac-main.png" alt="Nexonic Download Manager" width="880">
