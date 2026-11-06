@@ -176,6 +176,8 @@ public class SiteVideoTests
         Assert.Equal(@"C:\Users\me\Downloads\Talk [abc].mp4", SiteVideo.SavedFile(@"NDMF C:\Users\me\Downloads\Talk [abc].mp4"));
         Assert.Equal("Video unavailable", SiteVideo.Error("WARNING: x\nERROR: [youtube] abc: Video unavailable"));
         Assert.Contains("copy-protected", SiteVideo.Error("ERROR: This video is DRM protected"));
+        Assert.Contains("real browser", SiteVideo.Error("ERROR: [generic] x: Got HTTP Error 403 caused by Cloudflare anti-bot challenge"));
+        Assert.Equal("Please update the video engine to the latest version", SiteVideo.Error("ERROR: Please update yt-dlp to the latest version"));
         Assert.True(SiteVideo.Error("ERROR: [vimeo] 1111417978: The web client only works when logged-in. Use --cookies, --cookies-from-browser, --username and --password, --netrc-cmd, or --netrc (vimeo) to provide account credentials.").StartsWith("The site only lets signed-in users"));
     }
 

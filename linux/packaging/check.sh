@@ -10,7 +10,7 @@ APP="$OUT/app"
 V="$(tr -d '[:space:]' < "$ROOT/VERSION")"
 fail() { echo "FAILED: $*" >&2; exit 1; }
 
-for f in NexonicDownloadManager nexonic-host ffmpeg ffprobe yt-dlp qjs Extension/manifest.json "Firefox Add-on.xpi" \
+for f in NexonicDownloadManager nexonic-host ffmpeg ffprobe nexonic-video-engine qjs Extension/manifest.json "Firefox Add-on.xpi" \
          nexonic-download-manager.png THIRD-PARTY-NOTICES.txt LICENSE.txt; do
   [ -e "$APP/$f" ] || fail "missing from the app folder: $f"
 done
@@ -18,7 +18,7 @@ done
 "$APP/nexonic-host" help | grep -q "ndm batch" || fail "ndm help"
 python3 "$ROOT/scripts/host-ping.py" "$APP/nexonic-host"
 "$APP/ffmpeg" -hide_banner -muxers 2>&1 | grep -q " mp4 " || fail "ffmpeg has no mp4 muxer"
-"$APP/yt-dlp" --version
+"$APP/nexonic-video-engine" --version
 "$APP/qjs" -e 'console.log("qjs ok")'
 
 if command -v ffmpeg >/dev/null && [ "$(command -v ffmpeg)" != "$APP/ffmpeg" ]; then
@@ -29,7 +29,7 @@ if command -v ffmpeg >/dev/null && [ "$(command -v ffmpeg)" != "$APP/ffmpeg" ]; 
   ( cd "$SITE" && exec python3 -m http.server 8777 >/dev/null 2>&1 ) &
   SERVER=$!
   sleep 1
-  "$APP/yt-dlp" --ignore-config --ffmpeg-location "$APP" -f "bv*+ba/b" --merge-output-format "mp4/mkv" -P "$SITE/out" \
+  "$APP/nexonic-video-engine" --ignore-config --ffmpeg-location "$APP" -f "bv*+ba/b" --merge-output-format "mp4/mkv" -P "$SITE/out" \
     -o "test.%(ext)s" http://127.0.0.1:8777/dash.mpd
   kill $SERVER
   "$APP/ffprobe" -v error -show_entries stream=codec_type -of csv "$SITE/out/test.mp4" | sort | tr '\n' ' ' | grep -q "stream,audio stream,video" \

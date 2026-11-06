@@ -35,8 +35,9 @@ strip --strip-unneeded -o "$APP/libnexonic_torrent.so" "$ROOT/.native-cache/sdk/
 cp -R "$ROOT/.native-cache/sdk/$RID/notices" "$APP/torrent-licenses"
 cp "$ROOT/.native-cache/sdk/$RID/native-components.json" "$APP/torrent-components.json"
 echo "== Video engine and browser extension"
-cp "$FF/ffmpeg" "$FF/ffprobe" "$TOOLS/yt-dlp" "$TOOLS/qjs" "$APP/"
-chmod 755 "$APP/ffmpeg" "$APP/ffprobe" "$APP/yt-dlp" "$APP/qjs" "$APP/NexonicDownloadManager" "$APP/nexonic-host"
+cp "$FF/ffmpeg" "$FF/ffprobe" "$TOOLS/qjs" "$APP/"
+cp "$TOOLS/yt-dlp" "$APP/nexonic-video-engine"  # the video engine, under the app's own name
+chmod 755 "$APP/ffmpeg" "$APP/ffprobe" "$APP/nexonic-video-engine" "$APP/qjs" "$APP/NexonicDownloadManager" "$APP/nexonic-host"
 python3 "$ROOT/scripts/build-extensions.py" >/dev/null
 cp -R "$ROOT/build/extension-chrome" "$APP/Extension"
 cp "$ROOT/build/NexonicFirefoxAddon-$VERSION.xpi" "$APP/Firefox Add-on.xpi"

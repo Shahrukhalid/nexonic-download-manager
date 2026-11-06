@@ -2,7 +2,7 @@ using System.Diagnostics;
 using Nexonic.Core;
 
 // Browser helper (native messaging) and the ndm command line: both hand downloads to the app through the inbox.
-const string Version = "0.18.0";
+const string Version = "0.18.1";
 
 if (CommandLineTool.IsCommand(args))
 {
@@ -61,7 +61,7 @@ static object Qualities(System.Text.Json.Nodes.JsonNode msg)
     string? Text(string k) => msg[k] is System.Text.Json.Nodes.JsonValue v && v.TryGetValue<string>(out var s) ? s : null;
     var url = Text("url") ?? "";
     if (!new DownloadJob(url).IsValid || !SiteVideo.IsSupported(url)) return new { ok = false, error = "Not a video site link" };
-    var tool = new[] { SiteVideoTools.YtDlp, Path.Combine(AppContext.BaseDirectory, OperatingSystem.IsWindows() ? @"yt-dlp\yt-dlp.exe" : "yt-dlp") }
+    var tool = new[] { SiteVideoTools.YtDlp, Path.Combine(AppContext.BaseDirectory, OperatingSystem.IsWindows() ? @"video-engine\nexonic-video-engine.exe" : "nexonic-video-engine") }
         .FirstOrDefault(File.Exists);
     if (tool == null) return new { ok = false, error = "The video engine is missing" };
     try

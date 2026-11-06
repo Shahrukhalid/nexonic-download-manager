@@ -28,8 +28,10 @@ if (Test-Path .ffmpeg-cache\windows\ffmpeg.exe) {
 }
 # Video engine for YouTube and other sites (scripts/fetch-video-tools.sh windows .tools-cache/windows).
 if (Test-Path .tools-cache\windows\yt-dlp\yt-dlp.exe) {
-  # The unpacked engine folder (starts at once; the one-file edition unpacked itself before every video).
-  Copy-Item .tools-cache\windows\yt-dlp "$out\yt-dlp" -Recurse
+  # The unpacked engine folder (starts at once; the one-file edition unpacked itself before every video), its program
+  # renamed nexonic-video-engine.exe.
+  Copy-Item .tools-cache\windows\yt-dlp "$out\video-engine" -Recurse
+  Rename-Item "$out\video-engine\yt-dlp.exe" "nexonic-video-engine.exe"
   Copy-Item .tools-cache\windows\qjs.exe $out
   Get-Content packaging\THIRD-PARTY-NOTICES.txt, .ffmpeg-cache\windows\NOTICE-video-tools-1.txt, .tools-cache\windows\NOTICE-video-tools-2.txt |
     Set-Content "$out\THIRD-PARTY-NOTICES.txt"

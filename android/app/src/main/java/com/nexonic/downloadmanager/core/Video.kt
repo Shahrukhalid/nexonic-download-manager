@@ -163,7 +163,7 @@ object VideoPages {
             "not available" in l || "unavailable" in l -> "This video is not available."
             "unable to download webpage" in l || "network" in l || "timed out" in l -> "Could not reach the site. Check the connection and try again."
             line.isEmpty() -> "The video could not be read."
-            else -> line.take(200)
+            else -> line.take(200).replace(Regex("yt[-_]?dlp", RegexOption.IGNORE_CASE), "the video engine")
         }
     }
 }

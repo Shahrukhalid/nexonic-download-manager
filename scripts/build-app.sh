@@ -41,21 +41,24 @@ cp .ffmpeg-cache/mac/ffmpeg .ffmpeg-cache/mac/ffprobe "$APP/Contents/MacOS/"
 # Video engine for YouTube and other sites (yt-dlp + QuickJS); fetched fresh unless .tools-cache/mac already has it.
 if [ ! -x .tools-cache/mac/yt-dlp-engine/yt-dlp_macos ]; then bash scripts/fetch-video-tools.sh mac .tools-cache/mac; fi
 cp .tools-cache/mac/qjs "$APP/Contents/MacOS/"
-# The unpacked engine, packed small with xz (about 26 MB instead of 52); the app unpacks it once on first launch.
-tar --options xz:compression-level=9 -C .tools-cache/mac/yt-dlp-engine -cJf "$APP/Contents/Resources/yt-dlp.tar.xz" \
-  --exclude VERSION .
-cp .tools-cache/mac/yt-dlp-engine/VERSION "$APP/Contents/Resources/yt-dlp-version.txt"
-# MacOS/yt-dlp starts the engine from the command line and checks (unpacking it once into a temporary folder).
-cat > "$APP/Contents/MacOS/yt-dlp" <<'SH'
+# The unpacked engine, its program renamed nexonic-video-engine, packed small with xz (about 26 MB instead of 52);
+# the app unpacks it once on first launch.
+ENGINE=build/video-engine
+rm -rf "$ENGINE" && cp -R .tools-cache/mac/yt-dlp-engine "$ENGINE" && mv "$ENGINE/yt-dlp_macos" "$ENGINE/nexonic-video-engine"
+tar --options xz:compression-level=9 -C "$ENGINE" -cJf "$APP/Contents/Resources/video-engine.tar.xz" --exclude VERSION .
+cp "$ENGINE/VERSION" "$APP/Contents/Resources/video-engine-version.txt"
+rm -rf "$ENGINE"
+# MacOS/nexonic-video-engine starts the engine from the command line and checks (unpacking it once into a temporary folder).
+cat > "$APP/Contents/MacOS/nexonic-video-engine" <<'SH'
 #!/bin/sh
 R="$(cd "$(dirname "$0")/../Resources" && pwd)"
-D="${TMPDIR:-/tmp}/nexonic-video-engine-$(cat "$R/yt-dlp-version.txt")"
-if [ ! -x "$D/yt-dlp_macos" ]; then
-  T="$D.$$" && mkdir -p "$T" && /usr/bin/tar -xJf "$R/yt-dlp.tar.xz" -C "$T" && rm -rf "$D" && mv "$T" "$D" || exit 1
+D="${TMPDIR:-/tmp}/nexonic-video-engine-$(cat "$R/video-engine-version.txt")"
+if [ ! -x "$D/nexonic-video-engine" ]; then
+  T="$D.$$" && mkdir -p "$T" && /usr/bin/tar -xJf "$R/video-engine.tar.xz" -C "$T" && rm -rf "$D" && mv "$T" "$D" || exit 1
 fi
-exec "$D/yt-dlp_macos" "$@"
+exec "$D/nexonic-video-engine" "$@"
 SH
-chmod +x "$APP/Contents/MacOS/yt-dlp"
+chmod +x "$APP/Contents/MacOS/nexonic-video-engine"
 cat packaging/THIRD-PARTY-NOTICES.txt .ffmpeg-cache/mac/NOTICE-video-tools-1.txt .tools-cache/mac/NOTICE-video-tools-2.txt \
   > "$APP/Contents/Resources/THIRD-PARTY-NOTICES.txt"
 cp packaging/TERMS.txt "$APP/Contents/Resources/TERMS.txt"
@@ -71,7 +74,7 @@ cp branding/universal/generated/macos/MenuBarIcon.png "$APP/Contents/Resources/M
 
 if [ -n "${SIGN_IDENTITY:-}" ]; then
   codesign --force --options runtime --timestamp -s "$SIGN_IDENTITY" "$APP/Contents/MacOS/nexonic-host"
-  for tool in ffmpeg ffprobe qjs yt-dlp; do
+  for tool in ffmpeg ffprobe qjs nexonic-video-engine; do
     codesign --force --options runtime --timestamp -s "$SIGN_IDENTITY" "$APP/Contents/MacOS/$tool"
   done
   codesign --force --options runtime --timestamp -s "$SIGN_IDENTITY" "$APP"

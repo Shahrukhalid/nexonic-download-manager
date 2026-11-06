@@ -107,7 +107,7 @@ public static class SiteVideo
         string[] signIn = { "sign in", "sign-in", "login", "log in", "logged-in", "logged in", "account credentials", "--cookies" };
         if (signIn.Any(s => msg.Contains(s, StringComparison.OrdinalIgnoreCase)))
             return "The site only lets signed-in users download this video. Open it in your browser while signed in and click Download this video (your sign-in is sent along), or enter your account under Properties → Login";
-        return msg;
+        return Regex.Replace(msg, @"yt[-_]?dlp", "the video engine", RegexOptions.IgnoreCase);  // the engine's own name stays out of the app
     }
 
     public sealed record Info(string Title, string Ext, long? Size);
@@ -287,7 +287,7 @@ public static class SiteVideo
     {
         if (config.Length == 0) return null;
         Directory.CreateDirectory(AppPaths.Parts);
-        var path = Path.Combine(AppPaths.Parts, $"yt-dlp-{Guid.NewGuid():N}.conf");
+        var path = Path.Combine(AppPaths.Parts, $"engine-{Guid.NewGuid():N}.conf");
         File.WriteAllText(path, config);
         if (!OperatingSystem.IsWindows()) File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
         return path;
@@ -364,9 +364,12 @@ public static class SiteVideoTools
     // Windows uses the unpacked edition of the video engine (a folder with yt-dlp.exe): the one-file edition unpacked
     // itself into a new temporary folder before every video, and Windows scanned it each time. The app's copy in
     // yt-dlp\ is copied to Tools\yt-dlp-engine-<version> (writable, so it can be updated) and kept current daily.
-    const string EnginePrefix = "yt-dlp-engine-";
+    const string EnginePrefix = "video-engine-";
+    const string EngineName = "nexonic-video-engine";      // the engine program, renamed from its upstream name
+    const string EngineExe = EngineName + ".exe";
+    const string UpstreamExe = "yt-dlp.exe";                // the name in the official release, used only for updates
     const string EngineZip = "yt-dlp_win.zip";
-    static string BundledEngine => Path.Combine(AppContext.BaseDirectory, "yt-dlp");
+    static string BundledEngine => Path.Combine(AppContext.BaseDirectory, "video-engine");
     static readonly object gate = new();
     static bool updating;
 
@@ -375,11 +378,11 @@ public static class SiteVideoTools
     {
         get
         {
-            if (!OperatingSystem.IsWindows()) return Path.Combine(Folder, Exe("yt-dlp"));
+            if (!OperatingSystem.IsWindows()) return Path.Combine(Folder, Exe(EngineName));
             var best = Engines().FirstOrDefault();
-            if (best.Dir != null) return Path.Combine(best.Dir, "yt-dlp.exe");
-            var bundled = Path.Combine(BundledEngine, "yt-dlp.exe");
-            return File.Exists(bundled) ? bundled : Path.Combine(Folder, "yt-dlp.exe");
+            if (best.Dir != null) return Path.Combine(best.Dir, EngineExe);
+            var bundled = Path.Combine(BundledEngine, EngineExe);
+            return File.Exists(bundled) ? bundled : Path.Combine(Folder, EngineExe);
         }
     }
 
@@ -408,7 +411,7 @@ public static class SiteVideoTools
         {
             if (!Directory.Exists(Folder)) return new();
             return Directory.GetDirectories(Folder, EnginePrefix + "*")
-                .Where(d => !d.EndsWith(".tmp", StringComparison.Ordinal) && File.Exists(Path.Combine(d, "yt-dlp.exe")))
+                .Where(d => !d.EndsWith(".tmp", StringComparison.Ordinal) && File.Exists(Path.Combine(d, EngineExe)))
                 .Select(d => (Dir: d, Version: VersionOf(d) ?? ""))
                 .Where(e => e.Version.Length > 0)
                 .OrderByDescending(e => e.Version, Comparer<string>.Create((a, b) => Newer(a, b) ? 1 : Newer(b, a) ? -1 : 0))
@@ -431,8 +434,9 @@ public static class SiteVideoTools
 
     static void PrepareOneFile()
     {
-        var src = Path.Combine(AppContext.BaseDirectory, Exe("yt-dlp"));
+        var src = Path.Combine(AppContext.BaseDirectory, Exe(EngineName));
         if (!File.Exists(src)) return;
+        try { File.Delete(Path.Combine(Folder, Exe("yt-dlp"))); } catch { } // the copy under its earlier name
         var stamp = Path.Combine(Folder, "bundled-date");
         var key = File.GetLastWriteTimeUtc(src).Ticks.ToString();
         if (!File.Exists(YtDlp) || (File.Exists(stamp) ? File.ReadAllText(stamp) : "") != key)
@@ -458,10 +462,12 @@ public static class SiteVideoTools
         lock (gate)
         {
             var bv = VersionOf(BundledEngine);
-            if (bv != null && File.Exists(Path.Combine(BundledEngine, "yt-dlp.exe")) && !Engines().Any(e => !Newer(bv, e.Version)))
+            if (bv != null && File.Exists(Path.Combine(BundledEngine, EngineExe)) && !Engines().Any(e => !Newer(bv, e.Version)))
                 Install(bv, dir => { CopyDirectory(BundledEngine, dir); return true; });
             foreach (var old in new[] { "yt-dlp.exe", "bundled-date" })
                 try { File.Delete(Path.Combine(Folder, old)); } catch { } // the one-file edition from earlier versions
+            foreach (var old in Directory.GetDirectories(Folder, "yt-dlp-engine-*"))
+                try { Directory.Delete(old, true); } catch { }            // engine folders under their earlier name
             list = Engines();
             foreach (var extra in list.Skip(2)) try { Directory.Delete(extra.Dir, true); } catch { } // may still be running
             if (list.Count > 0) Warm(list[0].Dir);
@@ -484,7 +490,7 @@ public static class SiteVideoTools
         try
         {
             if (Directory.Exists(tmp)) Directory.Delete(tmp, true);
-            if (!fill(tmp) || !File.Exists(Path.Combine(tmp, "yt-dlp.exe"))) { if (Directory.Exists(tmp)) Directory.Delete(tmp, true); return false; }
+            if (!fill(tmp) || !File.Exists(Path.Combine(tmp, EngineExe))) { if (Directory.Exists(tmp)) Directory.Delete(tmp, true); return false; }
             File.Delete(Path.Combine(tmp, "VERSION"));
             if (Directory.Exists(dest)) Directory.Delete(dest, true);
             Directory.Move(tmp, dest);
@@ -512,7 +518,7 @@ public static class SiteVideoTools
     {
         var mark = Path.Combine(dir, ".checked");
         if (File.Exists(mark)) return;
-        if (RunVersion(Path.Combine(dir, "yt-dlp.exe")) != null) try { File.WriteAllText(mark, ""); } catch { }
+        if (RunVersion(Path.Combine(dir, EngineExe)) != null) try { File.WriteAllText(mark, ""); } catch { }
     }
 
     static string? RunVersion(string exe)
@@ -562,8 +568,11 @@ public static class SiteVideoTools
             await File.WriteAllBytesAsync(file, zip);
             var unpacked = Path.Combine(work, "x");
             System.IO.Compression.ZipFile.ExtractToDirectory(file, unpacked);
-            var exe = Directory.GetFiles(unpacked, "yt-dlp.exe", SearchOption.AllDirectories).FirstOrDefault();
-            if (exe == null || RunVersion(exe) != tag) return;
+            var found = Directory.GetFiles(unpacked, UpstreamExe, SearchOption.AllDirectories).FirstOrDefault();
+            if (found == null) return;
+            var exe = Path.Combine(Path.GetDirectoryName(found)!, EngineExe);
+            File.Move(found, exe);
+            if (RunVersion(exe) != tag) return;
             var src = Path.GetDirectoryName(exe)!;
             bool ok;
             lock (gate) ok = Install(tag, dir => { CopyDirectory(src, dir); return true; });

@@ -67,7 +67,6 @@ Tags:
   - download-manager
   - downloader
   - video-downloader
-  - yt-dlp
   - queue
   - resume
 ReleaseNotesUrl: https://github.com/{REPO}/releases/tag/v{VERSION}
