@@ -79,6 +79,7 @@ public static class SiteVideo
         if (line.StartsWith("[Merger]")) return "Joining picture and sound…";
         if (line.StartsWith("[ExtractAudio]")) return "Converting the sound…";
         if (line.StartsWith("[Fixup") || line.StartsWith("[VideoConvertor]") || line.StartsWith("[VideoRemuxer]")) return "Finishing the file…";
+        if (line.StartsWith("[EmbedSubtitle]")) return "Adding subtitles…";
         return null;
     }
 
@@ -322,6 +323,7 @@ public static class SiteVideo
         if (ffmpeg != null) a.AddRange(new[] { "--ffmpeg-location", Path.GetDirectoryName(ffmpeg)! }); // folder: ffmpeg and ffprobe
         a.AddRange(Format(audioOnly, maxHeight));
         if (ffmpeg != null) a.AddRange(MediaDetails);
+        if (ffmpeg != null && !audioOnly && VideoSubtitles.Enabled) a.AddRange(VideoSubtitles.Arguments());
         if (!string.IsNullOrEmpty(referrer)) a.AddRange(new[] { "--referer", referrer });
         if (!string.IsNullOrEmpty(userAgent)) a.AddRange(new[] { "--user-agent", userAgent });
         if (!string.IsNullOrEmpty(cookies)) a.AddRange(new[] { "--add-header", $"Cookie:{cookies}" });

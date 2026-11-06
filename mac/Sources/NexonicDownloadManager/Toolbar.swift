@@ -125,6 +125,7 @@ struct MainMenus: Commands {
     @AppStorage("toolbarText") private var showText = true
     @AppStorage("showToolbar") private var showToolbar = true
     @AppStorage("extractZips") private var extractZips = false
+    @AppStorage(VideoSubtitles.key) private var videoSubtitles = false
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {
@@ -132,6 +133,7 @@ struct MainMenus: Commands {
             Button("Add Torrent…") { MainActions.shared.send(.addTorrent) }.keyboardShortcut("t", modifiers: [.command, .shift])
             Button("Add Batch Download…") { MainActions.shared.send(.batch) }.keyboardShortcut("b", modifiers: [.command, .shift])
             Button("Site Grabber…") { MainActions.shared.send(.grabber) }.keyboardShortcut("g", modifiers: [.command, .shift])
+            Button("Add Playlist or Channel…") { MediaWindows.showPlaylist() }.keyboardShortcut("l", modifiers: [.command, .shift])
         }
         CommandMenu("Downloads") {
             Button("Resume") { MainActions.shared.send(.resume) }.keyboardShortcut("r")
@@ -148,6 +150,8 @@ struct MainMenus: Commands {
             Button("Delete Completed…") { MainActions.shared.send(.deleteCompleted) }
             Divider()
             Toggle("Unzip Finished .zip Files", isOn: $extractZips)
+            Toggle("Save Subtitles With Videos", isOn: $videoSubtitles)
+            Button("Media Library…") { MediaWindows.showLibrary() }.keyboardShortcut("l")
             Divider()
             Button("Scheduler…") { MainActions.shared.send(.scheduler) }
             Button("Start Queue") { MainActions.shared.send(.startQueue) }

@@ -74,6 +74,7 @@ public enum SiteVideo {
         if line.hasPrefix("[Merger]") { return "Joining picture and sound…" }
         if line.hasPrefix("[ExtractAudio]") { return "Converting the sound…" }
         if line.hasPrefix("[Fixup") || line.hasPrefix("[VideoConvertor]") || line.hasPrefix("[VideoRemuxer]") { return "Finishing the file…" }
+        if line.hasPrefix("[EmbedSubtitle]") { return "Adding subtitles…" }
         return nil
     }
 
@@ -291,6 +292,7 @@ public enum SiteVideo {
         if let ffmpeg { a += ["--ffmpeg-location", (ffmpeg as NSString).deletingLastPathComponent] }  // folder: ffmpeg and ffprobe
         a += format(audioOnly: audioOnly, maxHeight: maxHeight)
         if ffmpeg != nil { a += mediaDetails }
+        if ffmpeg != nil, !audioOnly, UserDefaults.standard.bool(forKey: VideoSubtitles.key) { a += VideoSubtitles.arguments() }
         if let referrer, !referrer.isEmpty { a += ["--referer", referrer] }
         if let userAgent, !userAgent.isEmpty { a += ["--user-agent", userAgent] }
         if let cookies, !cookies.isEmpty { a += ["--add-header", "Cookie:\(cookies)"] }

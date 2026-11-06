@@ -1,3 +1,15 @@
+## 0.16.0
+
+- **Playlists and channels** (Mac, Windows and Linux): Tasks › Add Playlist or Channel… (Ctrl+Shift+L, ⇧⌘L on Mac)
+  lists the videos of a YouTube playlist or channel, a Vimeo showcase, a SoundCloud set, a Bandcamp album and more (up
+  to 500). Tick the ones you want and they open in the Add window. On Windows and Linux, a playlist or channel link
+  pasted into Add URL opens this window by itself.
+- **Subtitles** (Mac, Windows and Linux; Downloads › Save Subtitles With Videos, off by default): videos keep the
+  subtitles the site offers in your computer's language and in English, inside the file. A missing subtitle never
+  stops the video.
+- **Media Library** (Downloads › Media Library…, Ctrl+L, ⌘L on Mac): your finished videos and music in one window,
+  with preview pictures, search, Videos/Music filter, Play and Show in Folder.
+
 ## 0.15.0
 
 - **Videos keep their details and chapters** (Mac, Windows, Linux and Android): saved videos and sound files now

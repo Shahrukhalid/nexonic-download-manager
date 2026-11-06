@@ -91,6 +91,9 @@ public sealed class MainWindow : Window
         Shortcut(Key.B, KeyModifiers.Control | KeyModifiers.Shift, OpenBatch);
         Shortcut(Key.G, KeyModifiers.Control | KeyModifiers.Shift, OpenGrabber);
         Shortcut(Key.Q, KeyModifiers.Control, manager.RequestQuit);
+        Shortcut(Key.L, KeyModifiers.Control | KeyModifiers.Shift, () => _ = OpenPlaylist(""));
+        Shortcut(Key.L, KeyModifiers.Control, OpenLibrary);
+        VideoSubtitles.Enabled = manager.Settings.VideoSubtitles;
         UpdateButtons();
 
         DragDrop.SetAllowDrop(this, true);
@@ -175,6 +178,17 @@ public sealed class MainWindow : Window
     readonly MenuItem showToolbarItem = new() { Header = "Show _Toolbar Buttons", ToggleType = MenuItemToggleType.CheckBox };
     readonly MenuItem showNamesItem = new() { Header = "Show Button _Names", ToggleType = MenuItemToggleType.CheckBox };
     readonly MenuItem unzipItem = new() { Header = "_Unzip Finished .zip Files", ToggleType = MenuItemToggleType.CheckBox };
+    readonly MenuItem subtitlesItem = new() { Header = "Save Su_btitles With Videos", ToggleType = MenuItemToggleType.CheckBox };
+
+    void OpenLibrary() => Dialogs.MediaLibraryWindow(this, manager);
+
+    /// <summary>Playlists and channels: pick their videos first, then they open in the Add window.</summary>
+    async Task OpenPlaylist(string link)
+    {
+        var queue = CurrentQueue;
+        Bring();
+        await Dialogs.Playlist(this, manager, link, links => ShowAdd(links, queue));
+    }
 
     void OpenTorrents() => _ = Dialogs.TorrentManager(this, manager, CurrentQueue);
     void OpenGrabber() => _ = Dialogs.Grabber(this, manager, CurrentQueue);
@@ -205,12 +219,20 @@ public sealed class MainWindow : Window
         showNamesItem.Click += (_, _) => { manager.Settings.ToolbarText = !manager.Settings.ToolbarText; manager.ApplySettings(manager.Settings); ApplyToolbar(); };
         ToolTip.SetTip(unzipItem, "Unpack each finished .zip download into a folder next to it");
         unzipItem.Click += (_, _) => { manager.Settings.ExtractZips = !manager.Settings.ExtractZips; manager.ApplySettings(manager.Settings); ApplyToolbar(); };
+        ToolTip.SetTip(subtitlesItem, "Videos keep subtitles in your language and English when the site has them");
+        subtitlesItem.Click += (_, _) =>
+        {
+            manager.Settings.VideoSubtitles = VideoSubtitles.Enabled = !manager.Settings.VideoSubtitles;
+            manager.ApplySettings(manager.Settings);
+            ApplyToolbar();
+        };
         var menu = new Menu();
         menu.Items.Add(Group("_Tasks",
             Item("_Add URL…", () => _ = OnAdd(), "Ctrl+N"),
             Item("Add _Torrent…", OpenTorrents, "Ctrl+Shift+T"),
             Item("Add _Batch Download…", OpenBatch, "Ctrl+Shift+B"),
             Item("Site _Grabber…", OpenGrabber, "Ctrl+Shift+G"),
+            Item("Add _Playlist or Channel…", () => _ = OpenPlaylist(""), "Ctrl+Shift+L"),
             Line(),
             Item("_Options…", () => _ = Dialogs.Options(this, manager)),
             Line(),
@@ -228,6 +250,8 @@ public sealed class MainWindow : Window
             Item("Delete _Completed…", () => _ = OnClear()),
             Line(),
             unzipItem,
+            subtitlesItem,
+            Item("_Media Library…", OpenLibrary, "Ctrl+L"),
             Line(),
             Item("S_cheduler…", () => _ = OnScheduler()),
             Item("Start _Queue", StartQueue),
@@ -249,6 +273,7 @@ public sealed class MainWindow : Window
         showNamesItem.IsChecked = showNames;
         showNamesItem.IsEnabled = showToolbar;
         unzipItem.IsChecked = manager.Settings.ExtractZips;
+        subtitlesItem.IsChecked = manager.Settings.VideoSubtitles;
         foreach (var b in toolbar.Children.OfType<Button>())
             if (b.Content is StackPanel p && p.Children.Count > 1) p.Children[1].IsVisible = showNames;
     }
@@ -651,6 +676,8 @@ public sealed class MainWindow : Window
         try
         {
             Bring();
+            var one = links.Trim();
+            if (!one.Contains('\n') && Playlists.IsPlaylist(one)) { adding = false; await OpenPlaylist(one); return; }
             await Dialogs.Add(this, manager, links, queueId ?? DownloadQueue.MainId);
         }
         finally { adding = false; }

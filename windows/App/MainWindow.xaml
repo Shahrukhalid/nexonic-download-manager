@@ -74,6 +74,7 @@
         <MenuItem Header="Add _Torrent…" InputGestureText="Ctrl+Shift+T" Click="OnTorrents" />
         <MenuItem Header="Add _Batch Download…" InputGestureText="Ctrl+Shift+B" Click="OnBatch" />
         <MenuItem Header="Site _Grabber…" InputGestureText="Ctrl+Shift+G" Click="OnGrabber" />
+        <MenuItem Header="Add _Playlist or Channel…" InputGestureText="Ctrl+Shift+L" Click="OnPlaylist" />
         <Separator />
         <MenuItem Header="_Options…" Click="OnSettings" />
         <Separator />
@@ -95,6 +96,9 @@
         <Separator />
         <MenuItem x:Name="UnzipItem" Header="_Unzip Finished .zip Files" IsCheckable="True" Click="OnToggleUnzip"
                   ToolTip="Unpack each finished .zip download into a folder next to it" />
+        <MenuItem x:Name="SubtitlesItem" Header="Save Su_btitles With Videos" IsCheckable="True" Click="OnToggleSubtitles"
+                  ToolTip="Videos keep subtitles in your language and English when the site has them" />
+        <MenuItem Header="_Media Library…" InputGestureText="Ctrl+L" Click="OnLibrary" />
         <Separator />
         <MenuItem Header="S_cheduler…" Click="OnScheduler" />
         <MenuItem Header="Start _Queue" Click="OnStartQueue" />

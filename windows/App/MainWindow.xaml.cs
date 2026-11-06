@@ -39,6 +39,9 @@ public partial class MainWindow : Window
         Shortcut(Key.T, ModifierKeys.Control | ModifierKeys.Shift, OnTorrents);
         Shortcut(Key.B, ModifierKeys.Control | ModifierKeys.Shift, OnBatch);
         Shortcut(Key.G, ModifierKeys.Control | ModifierKeys.Shift, OnGrabber);
+        Shortcut(Key.L, ModifierKeys.Control | ModifierKeys.Shift, OnPlaylist);
+        Shortcut(Key.L, ModifierKeys.Control, OnLibrary);
+        VideoSubtitles.Enabled = manager.Settings.VideoSubtitles;
         ApplyToolbar();
         UpdateButtons();
         UpdateStatus();
@@ -187,12 +190,29 @@ public partial class MainWindow : Window
         ShowNamesItem.IsChecked = showNames;
         ShowNamesItem.IsEnabled = showToolbar;
         UnzipItem.IsChecked = manager.Settings.ExtractZips;
+        SubtitlesItem.IsChecked = manager.Settings.VideoSubtitles;
         foreach (var b in Toolbar.Children.OfType<Button>())
             if (b.Content is StackPanel p && p.Children.Count > 1) p.Children[1].Visibility = showNames ? Visibility.Visible : Visibility.Collapsed;
     }
 
     void OnToggleToolbar(object s, RoutedEventArgs e) { manager.Settings.ShowToolbar = ShowToolbarItem.IsChecked; manager.ApplySettings(manager.Settings); ApplyToolbar(); }
     void OnToggleUnzip(object s, RoutedEventArgs e) { manager.Settings.ExtractZips = UnzipItem.IsChecked; manager.ApplySettings(manager.Settings); }
+    void OnToggleSubtitles(object s, RoutedEventArgs e)
+    {
+        manager.Settings.VideoSubtitles = VideoSubtitles.Enabled = SubtitlesItem.IsChecked;
+        manager.ApplySettings(manager.Settings);
+    }
+    void OnPlaylist(object s, RoutedEventArgs e) => ShowPlaylist("");
+    void OnLibrary(object s, RoutedEventArgs e) => Dialogs.MediaLibraryWindow(this, manager);
+
+    /// <summary>Playlists and channels: pick their videos first, then they open in the Add window.</summary>
+    void ShowPlaylist(string link)
+    {
+        var queue = CurrentQueue;
+        Bring();
+        Dialogs.Playlist(this, manager, link, links => Dispatcher.BeginInvoke(() => ShowAdd(links, queue)));
+    }
+
     void OnToggleNames(object s, RoutedEventArgs e) { manager.Settings.ToolbarText = ShowNamesItem.IsChecked; manager.ApplySettings(manager.Settings); ApplyToolbar(); }
 
     void ShowDetails()
@@ -235,6 +255,7 @@ public partial class MainWindow : Window
         try
         {
             Bring();
+            if (links.Trim() is var one && !one.Contains('\n') && Playlists.IsPlaylist(one)) { adding = false; ShowPlaylist(one); return; }
             if (SmartDownload.Detect(links) == DownloadEngine.Torrent) Dialogs.Torrent(this, manager, links, queueId ?? DownloadQueue.MainId);
             else Dialogs.Add(this, manager, links, queueId ?? DownloadQueue.MainId);
         }

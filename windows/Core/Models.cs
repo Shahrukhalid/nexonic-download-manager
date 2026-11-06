@@ -204,6 +204,8 @@ public sealed class AppSettings
     public bool ToolbarText { get; set; } = true;
     /// <summary>Unzip finished .zip downloads into a folder next to them (off unless turned on).</summary>
     public bool ExtractZips { get; set; }
+    /// <summary>Save subtitles (the computer's language and English) inside downloaded videos (added in 0.16.0, off unless turned on).</summary>
+    public bool VideoSubtitles { get; set; }
     public string ScanCommand { get; set; } = "\"%ProgramFiles%\\Windows Defender\\MpCmdRun.exe\" -Scan -ScanType 3 -DisableRemediation -File";
 }
 

@@ -44,6 +44,12 @@ The same guide is built into the app: **Help → Nexonic Download Manager Help**
 
 **Sound only.** Choose Sound only in the Add window to save just the audio.
 
+**Playlists and channels.** Choose Add Playlist or Channel… (Tasks menu on Windows and Linux, File menu on Mac), paste the link and pick the videos you want; they open in the Add window.
+
+**Subtitles.** Turn on Downloads › Save Subtitles With Videos to keep the subtitles a site offers in your language and in English inside the video.
+
+**Media Library.** Downloads › Media Library… shows your finished videos and music with preview pictures. Double-click one to play it.
+
 **Streamed video.** Streams (.m3u8) are found by the extension, downloaded in parallel and joined into one .mp4. Copy-protected services are not supported.
 
 ## Queues and Scheduler
@@ -119,12 +125,14 @@ in the code, never cookies or passwords, so downloads that need you to be signed
 ⌘R  Resume · ⌘.  Stop  
 ⇧⌘R  Resume all · ⇧⌘P  Stop all  
 ⌘O  Open · ⌘I  Properties  
+⇧⌘L  Add playlist · ⌘L  Media Library  
 ⌘,  Settings · ⌘?  Help
 
 **Windows and Linux.** Ctrl+N  Add URL · Ctrl+Shift+T  Add torrent  
 Ctrl+R  Resume · Ctrl+.  Stop  
 Ctrl+Shift+R  Resume all · Ctrl+Shift+P  Stop all  
 Ctrl+O  Open · Ctrl+Shift+B  Batch · Ctrl+Shift+G  Grabber  
+Ctrl+Shift+L  Add playlist · Ctrl+L  Media Library  
 Ctrl+F  Search · Del  Delete · F1  Help
 
 ## Still stuck?
