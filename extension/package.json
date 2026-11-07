@@ -1,2 +1,2 @@
 { "name": "nexonic-extension", "private": true, "type": "module", "scripts": { "test": "node --test" },
-  "devDependencies": { "fast-check": "3.23.2" } }
+  "devDependencies": { "fast-check": "4.10.2" } }
