@@ -3,6 +3,23 @@
         Title="Meteor Download Manager" Width="1100" Height="620" MinWidth="760" MinHeight="420"
         AllowDrop="True" Drop="OnDrop" DragOver="OnDragOver" Background="{DynamicResource WindowBrush}">
   <Window.Resources>
+    <!-- Search already has its outer border: do not use theme-specific TextBox borders or focus rings. -->
+    <Style x:Key="SearchTextBoxStyle" TargetType="{x:Type TextBox}">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+      <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="{x:Type TextBox}">
+            <ScrollViewer x:Name="PART_ContentHost" Background="Transparent"
+                          Focusable="False" Margin="0"/>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
     <!-- This style is always used for sidebar rows so theme templates cannot drop hierarchy indentation. -->
     <Style x:Key="SidebarEntryStyle" TargetType="{x:Type ListBoxItem}">
       <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
@@ -196,7 +213,7 @@
         <Border Margin="12,6,4,6" Width="220" Height="30" CornerRadius="6" BorderBrush="{DynamicResource BorderBrushTheme}" BorderThickness="1" Background="{DynamicResource SurfaceBrush}" VerticalAlignment="Center">
           <Grid>
             <TextBlock Text="&#xE721;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="{DynamicResource MutedBrush}" Margin="8,0,0,0" VerticalAlignment="Center" />
-            <TextBox x:Name="Search" BorderThickness="0" Background="Transparent" Margin="28,0,6,0" VerticalContentAlignment="Center" TextChanged="OnSearch" ToolTip="Search downloads (Ctrl+F)" />
+            <TextBox x:Name="Search" Style="{StaticResource SearchTextBoxStyle}" BorderThickness="0" Background="Transparent" Margin="28,0,6,0" VerticalContentAlignment="Center" TextChanged="OnSearch" ToolTip="Search downloads (Ctrl+F)" />
             <TextBlock x:Name="SearchHint" Text="Search downloads" Foreground="{DynamicResource MutedBrush}" Margin="31,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" />
           </Grid>
         </Border>
