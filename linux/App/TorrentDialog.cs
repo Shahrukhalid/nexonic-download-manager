@@ -1,4 +1,5 @@
 using System.IO;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Platform.Storage;
@@ -9,82 +10,93 @@ namespace Nexonic.App;
 
 public static partial class Dialogs
 {
+    /// <summary>
+    /// Add Torrent. The torrent's files load by themselves as soon as there is a source (opened, dropped, chosen or
+    /// pasted), the message for any problem sits right under the source, and the rarely changed limits, seeding and
+    /// trackers are folded away so Start Download is always on screen.
+    /// </summary>
     public static async Task Torrent(Window owner, DownloadManager manager, string source, string queueId)
     {
         var f = new Form(owner, "Add Torrent", 640);
-        f.Note("Torrent peers and trackers can see your IP address. Only download material you may share. " +
-               "The bundled native engine downloads and verifies the actual files. " +
-               "It uses your proxy setting (HTTP or SOCKS5) and the speed limit for all downloads; DNS over HTTPS must be off. " +
-               "Web seeds and local-network peers are disabled. Seeding uses your chosen ratio/time limits; partial files are retained on removal.");
-        var enabled = f.Check("Enable experimental torrents", manager.Settings.TorrentsEnabled);
+        var enabled = f.Check("Turn on torrents (peers and trackers can see your IP address)", manager.Settings.TorrentsEnabled);
+        enabled.IsVisible = !manager.Settings.TorrentsEnabled;
+        var input = new TextBox { Text = source };
+        var choose = new Button { Content = "Choose File…", Margin = new Thickness(6, 0, 0, 0) };
+        var sourceRow = new DockPanel();
+        DockPanel.SetDock(choose, Dock.Right); sourceRow.Children.Add(choose); sourceRow.Children.Add(input);
+        f.Field("Magnet link, torrent link or .torrent file", sourceRow);
+        var status = f.Note(source.Length == 0 ? "Paste a magnet link or choose a .torrent file." : "");
+        var normal = status.Foreground;
+        var folder = f.Folder(manager.Settings.Folder);
+        var queue = f.Queue(manager, queueId);
+        var fileList = new TorrentFileSelection();
+        f.Field("Files — choose Skip, Low, Normal or High", fileList);
+        var filesLabel = f.Target.Children[f.Target.Children.Count - 2];
+        void ShowFiles(bool show) { fileList.IsVisible = filesLabel.IsVisible = show; }
+        ShowFiles(false);
+        var draft = new TorrentMetadata();
+        NativeTorrentOptionsForm? options = null;
+        f.Collapsed("More options: speed limits, connections, seeding and trackers", () => options = new NativeTorrentOptionsForm(f, draft, 0));
+        f.Note("Only download what you may share. Torrents use your proxy setting and the speed limit for all downloads. Local-network peers and web seeds are off.");
+        using var cancel = new CancellationTokenSource();
+        f.Window.Closed += (_, _) => cancel.Cancel();
+        TorrentMetadata? metadata = null; string? previewSource = null; Task<bool>? loading = null;
+
+        void Say(string text, bool problem = false) { status.Text = text; status.Foreground = problem ? Ui.Bad : normal; }
+        Task<bool> Load()
+        {
+            var requested = (input.Text ?? "").Trim();
+            if (metadata != null && previewSource == requested) return Task.FromResult(true);
+            if (loading != null) return loading;
+            return loading = Run();
+            async Task<bool> Run()
+            {
+                try
+                {
+                    if (requested.Length == 0) { Say("Paste a magnet link or choose a .torrent file.", true); return false; }
+                    if (SmartDownload.Detect(requested) != DownloadEngine.Torrent) { Say("This isn't a magnet link, a torrent link or a .torrent file.", true); return false; }
+                    if (enabled.IsChecked != true) { Say("Torrents are off. Tick \"Turn on torrents\" above to load this torrent.", true); return false; }
+                    if (TorrentRuntime.Unavailable(manager.Settings) is { } reason) { Say(reason, true); return false; }
+                    Say("Loading the torrent's files… (a magnet link can take up to a minute while peers are found)");
+                    var found = await TorrentRuntime.PreviewAsync(requested, cancel.Token, manager.Settings.Proxy);
+                    if (requested != (input.Text ?? "").Trim()) return false;
+                    metadata = found; previewSource = requested; fileList.Load(found); ShowFiles(true);
+                    Say($"{found.Name}\n{Row.Bytes(found.Size)} · {found.Files.Count(x => !x.Pad)} files");
+                    return true;
+                }
+                catch (OperationCanceledException) { return false; }
+                catch (Exception e) { Say("Couldn't load the torrent: " + e.Message, true); return false; }
+                finally { loading = null; }
+            }
+        }
+
         enabled.PropertyChanged += (_, change) =>
         {
             if (change.Property != ToggleButton.IsCheckedProperty) return;
             var settings = manager.Settings;
             settings.TorrentsEnabled = enabled.IsChecked == true;
             manager.ApplySettings(settings);
+            if (settings.TorrentsEnabled) _ = Load();
         };
-        var input = f.Text("Magnet, HTTP(S) torrent link or local .torrent file", source);
-        var pick = new Button { Content = "Choose .torrent…" };
-        f.Body.Children.Add(pick);
-        pick.Click += async (_, _) =>
+        input.TextChanged += (_, _) => { metadata = null; previewSource = null; fileList.Load(null); ShowFiles(false); };
+        input.LostFocus += (_, _) => { if ((input.Text ?? "").Trim().Length > 0) _ = Load(); };
+        choose.Click += async (_, _) =>
         {
             var files = await f.Window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             { Title = "Choose torrent", AllowMultiple = false, FileTypeFilter = new[] { new FilePickerFileType("BitTorrent") { Patterns = new[] { "*.torrent" } } } });
-            if (files.FirstOrDefault()?.TryGetLocalPath() is { } path) input.Text = path;
+            if (files.FirstOrDefault()?.TryGetLocalPath() is { } path) { input.Text = path; _ = Load(); }
         };
-        var folder = f.Folder(manager.Settings.Folder);
-        var queue = f.Queue(manager, queueId);
-        var draft = new TorrentMetadata();
-        var options = new NativeTorrentOptionsForm(f, draft, 0);
-        var preview = f.Note("Load metadata to preview the name, size and files before starting.");
-        var fileList = f.Field("Files — choose Skip, Low, Normal or High", new TorrentFileSelection());
-        var error = f.Error();
-        using var cancel = new CancellationTokenSource();
-        f.Window.Closed += (_, _) => cancel.Cancel();
-        TorrentMetadata? metadata = null;
-        string? previewSource = null;
-        var busy = false;
-        void Invalidate() { metadata = null; previewSource = null; fileList.Load(null); }
-        input.TextChanged += (_, _) => Invalidate();
-        f.AddButton("Cancel", f.Close, isCancel: true);
-        f.AddButton("Load metadata", async () =>
+
+        async void Add(bool start)
         {
-            if (busy) return;
-            error.Text = "";
-            Invalidate();
-            if (enabled.IsChecked != true) { error.Text = "Enable experimental torrents first."; return; }
-            var settings = manager.Settings;
-            settings.TorrentsEnabled = true;
-            manager.ApplySettings(settings);
-            if (TorrentRuntime.Unavailable(settings) is { } reason) { error.Text = reason; return; }
-            busy = true;
-            preview.Text = "Loading metadata… (up to 90 seconds; Cancel stops the connection)";
-            var requestedSource = (input.Text ?? "").Trim();
             try
             {
-                var found = await TorrentRuntime.PreviewAsync(requestedSource, cancel.Token, settings.Proxy);
-                if (requestedSource != (input.Text ?? "").Trim()) { preview.Text = "Source changed. Load metadata again."; return; }
-                metadata = found;
-                previewSource = requestedSource;
-                preview.Text = $"{found.Name}\n{Row.Bytes(found.Size)} · {found.Files.Count} files · Hash {found.InfoHash}";
-                fileList.Load(found);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception e) { error.Text = e.Message; preview.Text = "Metadata could not be loaded."; }
-            finally { busy = false; }
-        });
-        void Add(bool start)
-        {
-            if (busy || metadata == null || previewSource == null) { error.Text = "Load metadata before adding the torrent."; return; }
-            if (enabled.IsChecked != true) { error.Text = "Enable experimental torrents first."; return; }
-            try
-            {
+                if (!await Load() || metadata == null || previewSource == null) return;
                 metadata.FilePriorities = fileList.Priorities.ToList();
                 _ = metadata.SelectedSize; // Reject empty selection before creating a task.
                 var destination = (folder.Text ?? "").Trim();
-                if (!Path.IsPathFullyQualified(destination)) { error.Text = "Choose an absolute destination folder."; return; }
-                var limit = options.Save(draft);
+                if (!Path.IsPathFullyQualified(destination)) { Say("Choose an absolute destination folder.", true); return; }
+                var limit = options!.Save(draft);
                 metadata.Seed = draft.Seed; metadata.Dht = draft.Dht; metadata.RatioLimit = draft.RatioLimit; metadata.SeedSeconds = draft.SeedSeconds;
                 metadata.UploadLimitKBps = draft.UploadLimitKBps; metadata.MaxConnections = draft.MaxConnections;
                 metadata.MaxUploads = draft.MaxUploads; metadata.Sequential = draft.Sequential;
@@ -93,10 +105,12 @@ public static partial class Dialogs
                     QueueId = Form.QueueId(queue), Start = start, SpeedLimitKBps = limit });
                 f.Close();
             }
-            catch (Exception e) { error.Text = e.Message; }
+            catch (Exception e) { Say(e.Message, true); }
         }
+        f.AddButton("Cancel", f.Close, isCancel: true);
         f.AddButton("Download Later", () => Add(false));
-        f.AddButton("Start Download", () => Add(true));
+        f.AddButton("Start Download", () => Add(true), isDefault: true);
+        f.Window.Opened += (_, _) => { if (source.Trim().Length > 0) _ = Load(); else input.Focus(); };
         await f.Show();
     }
     public static async Task TorrentFiles(Window owner, DownloadManager manager, Row row)

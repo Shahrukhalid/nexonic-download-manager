@@ -361,9 +361,22 @@ public partial class MainWindow : Window
         base.OnContextMenuOpening(e);
     }
 
+    /// <summary>A dropped .torrent file opens Add Torrent; dropped links (or text) open Add Download.</summary>
     void OnDrop(object s, DragEventArgs e)
     {
+        if (e.Data.GetData(DataFormats.FileDrop) is string[] files && files.Length > 0)
+        {
+            var torrent = files.FirstOrDefault(p => p.EndsWith(".torrent", StringComparison.OrdinalIgnoreCase) && System.IO.File.Exists(p));
+            if (torrent != null) Dialogs.Torrent(this, manager, torrent, CurrentQueue);
+            return;
+        }
         if (e.Data.GetData(DataFormats.Text) is string text) ShowAdd(text, CurrentQueue);
+    }
+
+    void OnDragOver(object s, DragEventArgs e)
+    {
+        e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) || e.Data.GetDataPresent(DataFormats.Text) ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
     }
 
     sealed class Cmd(Action run) : ICommand

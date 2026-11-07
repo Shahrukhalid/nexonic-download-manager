@@ -208,10 +208,13 @@ public sealed class Form
     public readonly StackPanel Body = new() { Margin = new Thickness(20, 16, 20, 16) };
     readonly StackPanel buttons = new() { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 14, 0, 0) };
     readonly Window? owner;
+    /// <summary>Where Note, Error, Field and Check add their controls: the window's body, or a section made by <see cref="Collapsed"/>.</summary>
+    public Panel Target;
 
     public Form(Window? owner, string title, double width = 520)
     {
         this.owner = owner;
+        Target = Body;
         Body.Children.Add(new TextBlock { Text = title, FontSize = 18, FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 0, 0, 8) });
         Window = new Window
         {
@@ -225,21 +228,21 @@ public sealed class Form
     {
         var t = Ui.Muted(text);
         t.Margin = new Thickness(0, 0, 0, 8);
-        Body.Children.Add(t);
+        Target.Children.Add(t);
         return t;
     }
 
     public TextBlock Error()
     {
         var t = new TextBlock { Foreground = Ui.Bad, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 0) };
-        Body.Children.Add(t);
+        Target.Children.Add(t);
         return t;
     }
 
     public T Field<T>(string label, T control) where T : Control
     {
-        Body.Children.Add(new TextBlock { Text = label, Margin = new Thickness(0, 8, 0, 3) });
-        Body.Children.Add(control);
+        Target.Children.Add(new TextBlock { Text = label, Margin = new Thickness(0, 8, 0, 3) });
+        Target.Children.Add(control);
         return control;
     }
 
@@ -260,8 +263,19 @@ public sealed class Form
     public CheckBox Check(string label, bool value)
     {
         var c = new CheckBox { Content = label, IsChecked = value, Margin = new Thickness(0, 6, 0, 0) };
-        Body.Children.Add(c);
+        Target.Children.Add(c);
         return c;
+    }
+
+    /// <summary>A section that starts closed; the controls <paramref name="build"/> adds go inside it.</summary>
+    public Expander Collapsed(string header, Action build)
+    {
+        var inner = new StackPanel();
+        var section = new Expander { Header = header, Content = inner, IsExpanded = false, Margin = new Thickness(0, 10, 0, 4), HorizontalAlignment = HorizontalAlignment.Stretch };
+        Target.Children.Add(section);
+        var outer = Target; Target = inner;
+        try { build(); } finally { Target = outer; }
+        return section;
     }
 
     /// <summary>The queues by name; <see cref="QueueId"/> reads the choice.</summary>

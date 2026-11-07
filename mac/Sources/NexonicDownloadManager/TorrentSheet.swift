@@ -21,6 +21,7 @@ struct TorrentSheet: View {
     @State private var downloadLimit = 0
     @State private var loading: Task<Void, Never>?
     @State private var message = ""
+    @State private var showMore = false
 
     private static let levels = [0, 1, 4, 7]
     private static func levelName(_ value: Int) -> String { ["Skip", "Low", "", "", "Normal", "", "", "High"][value] }
@@ -75,6 +76,7 @@ struct TorrentSheet: View {
                 .frame(minHeight: 120, maxHeight: 200)
                 Form {
                     SaveOptions(folder: $folder, queueID: $queue)
+                    DisclosureGroup("More options: speed limits, connections, seeding and trackers", isExpanded: $showMore) {
                     LabeledContent("Download limit") { limitField($downloadLimit) }
                     LabeledContent("Upload limit") { limitField($options.uploadLimitKBps) }
                     TorrentConnectionFields(options: $options)
@@ -88,6 +90,7 @@ struct TorrentSheet: View {
                         LabeledContent("Stop after (minutes)") {
                             TextField("", value: minutesBinding, format: .number).frame(width: 70).help("0 means no time limit")
                         }
+                    }
                     }
                 }
                 .formStyle(.grouped)

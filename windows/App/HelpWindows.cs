@@ -151,11 +151,24 @@ public static class HelpWindows
     public static void ShowAbout(Window owner)
     {
         var p = new StackPanel { Margin = new Thickness(28, 24, 28, 22) };
-        if (owner.Icon is ImageSource icon)
-            p.Children.Add(new Image { Source = icon, Width = 80, Height = 80, Margin = new Thickness(0, 0, 0, 10) });
+        // The window icon is the .ico's first (16 px) picture, which looks blurry at 80 px: use its largest one.
+        ImageSource? icon = owner.Icon;
+        try
+        {
+            var decoder = new System.Windows.Media.Imaging.IconBitmapDecoder(new Uri("pack://application:,,,/app.ico", UriKind.Absolute),
+                System.Windows.Media.Imaging.BitmapCreateOptions.None, System.Windows.Media.Imaging.BitmapCacheOption.OnLoad);
+            icon = decoder.Frames.OrderByDescending(f => f.PixelWidth).First();
+        }
+        catch { }
+        if (icon != null)
+        {
+            var image = new Image { Source = icon, Width = 80, Height = 80, Margin = new Thickness(0, 0, 0, 10) };
+            RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.HighQuality);
+            p.Children.Add(image);
+        }
         p.Children.Add(new TextBlock { Text = "Nexonic Download Manager", FontSize = 20, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center });
         p.Children.Add(new TextBlock { Text = $"Version {Version}", Foreground = Brushes.DimGray, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 4, 0, 0) });
-        p.Children.Add(new TextBlock { Text = "Free, open-source download manager for Windows and Mac.", Foreground = Brushes.DimGray, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 6, 0, 0) });
+        p.Children.Add(new TextBlock { Text = "Free, open-source download manager for Mac, Windows, Linux, Android, iPhone and iPad.", Foreground = Brushes.DimGray, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 6, 0, 0) });
         var made = new TextBlock { HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 12, 0, 0) };
         made.Inlines.Add(new Run("Made by "));
         made.Inlines.Add(Link(Author, Website));

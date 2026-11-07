@@ -771,6 +771,10 @@ public sealed class MainWindow : Window
 
     void OnDrop(object? sender, DragEventArgs e)
     {
+        // A dropped .torrent file opens Add Torrent; dropped links (or shortcut files) open Add Download.
+        var torrent = e.Data.GetFiles()?.Select(f => f.TryGetLocalPathSafe())
+            .FirstOrDefault(p => p != null && p.EndsWith(".torrent", StringComparison.OrdinalIgnoreCase) && File.Exists(p));
+        if (torrent != null) { _ = Dialogs.Torrent(this, manager, torrent, CurrentQueue); return; }
         var text = e.Data.GetText();
         if (string.IsNullOrWhiteSpace(text) && e.Data.GetFiles() is { } files)
             text = string.Join("\n", files.Select(f => f.TryGetLocalPathSafe()).Where(p => p != null).SelectMany(p => LaunchArgs.LinksIn(p!)));
