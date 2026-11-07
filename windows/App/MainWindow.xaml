@@ -50,6 +50,7 @@
     </Style>
     <Style TargetType="DataGridRow">
       <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
       <Style.Triggers>
         <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource HoverBrush}" /></Trigger>
         <Trigger Property="IsSelected" Value="True"><Setter Property="Background" Value="{DynamicResource SelectedBrush}" /><Setter Property="Foreground" Value="{DynamicResource TextBrush}" /></Trigger>
@@ -58,7 +59,7 @@
     <Style x:Key="Glyph" TargetType="TextBlock">
       <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
       <Setter Property="FontSize" Value="22" />
-      <Setter Property="Foreground" Value="{StaticResource Accent}" />
+      <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
       <Setter Property="HorizontalAlignment" Value="Center" />
     </Style>
     <Style x:Key="Caption" TargetType="TextBlock">
@@ -227,7 +228,7 @@
             <DataGridTextColumn Header="Size" Binding="{Binding Size}" Width="80" />
             <DataGridTemplateColumn Header="Progress" Width="100">
               <DataGridTemplateColumn.CellTemplate>
-                <DataTemplate><ProgressBar Value="{Binding Percent, Mode=OneWay}" Height="10" Margin="4,0" Foreground="{StaticResource Accent}" /></DataTemplate>
+                <DataTemplate><ProgressBar Value="{Binding Percent, Mode=OneWay}" Height="10" Margin="4,0" Foreground="{DynamicResource AccentBrush}" /></DataTemplate>
               </DataGridTemplateColumn.CellTemplate>
             </DataGridTemplateColumn>
             <DataGridTextColumn Header="Speed" Binding="{Binding Speed}" Width="80" />
@@ -247,10 +248,10 @@
           </DataGrid.Columns>
         </DataGrid>
         <StackPanel x:Name="Empty" Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed" MaxWidth="400">
-          <TextBlock Text="&#xE896;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="52" Foreground="{StaticResource Accent}" HorizontalAlignment="Center" />
+          <TextBlock Text="&#xE896;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="52" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" />
           <TextBlock x:Name="EmptyTitle" Text="No downloads here yet" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,12,0,6" />
           <TextBlock Text="Click Add URL, paste a link, drop one on this window, or download from your browser with the extension." TextWrapping="Wrap" TextAlignment="Center" Foreground="{DynamicResource MutedBrush}" />
-          <Button Content="Add URL" Click="OnAdd" HorizontalAlignment="Center" Margin="0,14,0,0" Padding="18,6" Background="{StaticResource Accent}" Foreground="White" BorderThickness="0" Cursor="Hand" />
+          <Button Content="Add URL" Click="OnAdd" HorizontalAlignment="Center" Margin="0,14,0,0" Padding="18,6" Background="{DynamicResource AccentBrush}" Foreground="White" BorderThickness="0" Cursor="Hand" />
         </StackPanel>
         <Border x:Name="Details" Grid.Row="1" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrushTheme}" BorderThickness="0,1,0,0" Padding="12,8" Visibility="Collapsed">
           <StackPanel>
