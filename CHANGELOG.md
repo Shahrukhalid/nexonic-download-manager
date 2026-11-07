@@ -1,3 +1,14 @@
+## 0.19.1
+
+- **Add Torrent works the same everywhere (Windows and Linux, like the Mac).** The torrent's name, size and files load
+  by themselves as soon as it is opened, dropped, chosen or pasted; there is no Load metadata button. If torrents are
+  off, a "Turn on torrents" box at the top loads the torrent when ticked. Problems are shown right under the link
+  instead of at the bottom of the window.
+- **Start Download is always on screen:** speed limits, connections, seeding and trackers are folded into More
+  options.
+- **Drop a `.torrent` file onto the main window** to open it in Add Torrent (Windows, Linux and Mac).
+- Windows: the About window shows a sharp icon. About lists every platform the app runs on.
+
 ## 0.19.0
 
 - **Big downloads finish instantly (Mac, Windows, Linux).** Every connection now writes its part straight into one
