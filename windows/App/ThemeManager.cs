@@ -40,6 +40,11 @@ public static class ThemeManager
         if (activeTheme != null) resources.MergedDictionaries.Remove(activeTheme);
         if (next != null) resources.MergedDictionaries.Add(next);
         activeTheme = next;
+        // PaperGray's original grey gradient is used behind the toolbar.
+        // Other themes retain their own flat surface brush.
+        resources["ToolbarBackgroundBrush"] = name == "PaperGray"
+            ? next!["NormalBrush"]
+            : resources["SurfaceBrush"];
         CurrentTheme = name!;
         resources["ErrorBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(name is "Dark" or "Slate" ? "#FF938F" : "#C73434"));
         ThemeChanged?.Invoke();

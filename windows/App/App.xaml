@@ -4,6 +4,7 @@
   <SolidColorBrush x:Key="AccentBrush" Color="#1F6FEB"/>
   <SolidColorBrush x:Key="WindowBrush" Color="#F7F9FC"/>
   <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF"/>
+  <SolidColorBrush x:Key="ToolbarBackgroundBrush" Color="#FFFFFF"/>
   <SolidColorBrush x:Key="SidebarBrush" Color="#EEF2F7"/>
   <SolidColorBrush x:Key="TextBrush" Color="#1F2328"/>
   <SolidColorBrush x:Key="MutedBrush" Color="#57606A"/>

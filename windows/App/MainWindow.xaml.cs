@@ -78,7 +78,7 @@ public partial class MainWindow : Window
     {
         if (!IsInitialized) return;
         bool paper = ThemeManager.CurrentTheme == "PaperGray";
-        var toolbarStyle = (Style)FindResource(paper ? typeof(Button) : "ToolButton");
+        var toolbarStyle = (Style)FindResource(paper ? "PaperGrayToolbarButtonStyle" : "ToolButton");
         foreach (var button in Toolbar.Children.OfType<Button>()) button.Style = toolbarStyle;
         // Recreate rows to apply the PaperGray selection animations and padding-aware template.
         BuildSidebar();
@@ -107,7 +107,7 @@ public partial class MainWindow : Window
                 Width = 22, FontSize = 15, VerticalAlignment = VerticalAlignment.Center,
                 Foreground = (Brush)Application.Current.FindResource("AccentBrush") });
             row.Children.Add(new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center });
-            Sidebar.Items.Add(new ListBoxItem { Content = row, Tag = key, Style = (Style)FindResource("SidebarEntryStyle"), Padding = new Thickness(14 + indent * 16, 5, 4, 5), MinHeight = 32, HorizontalContentAlignment = HorizontalAlignment.Stretch });
+            Sidebar.Items.Add(new ListBoxItem { Content = row, Tag = key, Style = sidebarStyle, Padding = new Thickness(14 + indent * 16, 5, 4, 5), MinHeight = 32, HorizontalContentAlignment = HorizontalAlignment.Stretch });
         }
         // Like IDM: each list opens into the file types it holds (sorted automatically by file type).
         static string Label(string c) => L.T(c == nameof(FileCategory.Other) ? "General" : c);

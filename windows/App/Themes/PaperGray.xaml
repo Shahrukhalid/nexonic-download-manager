@@ -120,6 +120,17 @@
       </Trigger>
     </Style.Triggers>
   </Style>
+  <!-- Preserve the animated PaperGray button template; only restore toolbar geometry. -->
+  <Style x:Key="PaperGrayToolbarButtonStyle" TargetType="{x:Type Button}"
+         BasedOn="{StaticResource {x:Type Button}}">
+    <Setter Property="Margin" Value="3,0"/>
+    <Setter Property="Padding" Value="5,4"/>
+    <Setter Property="MinWidth" Value="72"/>
+    <Setter Property="MinHeight" Value="52"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+  </Style>
   <ControlTemplate x:Key="NuclearButton" TargetType="{x:Type Button}">
     <ControlTemplate.Resources>
       <Storyboard x:Key="MouseOver">
