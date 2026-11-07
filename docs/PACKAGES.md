@@ -16,10 +16,13 @@ installs with the regular setup; Homebrew installs the .dmg's app into Applicati
 
 1. Publish the release (its files and `latest.json` must be on GitHub).
 2. Run `python3 scripts/package-manifests.py <version>` and commit the changed files in a pull request.
-3. winget: submit `packaging/winget/` to microsoft/winget-pkgs (`wingetcreate submit packaging/winget`).
+3. winget: after the first version is accepted, the `Winget` workflow opens the pull request to microsoft/winget-pkgs
+   by itself when a release is published (it needs the secret `WINGET_TOKEN`, a classic token with the `public_repo`
+   scope, and a fork of microsoft/winget-pkgs under the owner's account). The first version is submitted by hand from
+   `packaging/winget/`.
    Homebrew: copy the cask into the tap repository (`Casks/nexonic-download-manager.rb`).
 
-Submitting to winget-pkgs and creating the tap are done by the owner; nothing is submitted automatically.
+Microsoft reviews every winget pull request; Scoop and Homebrew change only when the files here or in the tap change.
 
 On Mac the app is not notarized by Apple yet, so macOS asks once before opening it after a Homebrew install, the same as
 with the .dmg (System Settings → Privacy & Security → Open Anyway).
