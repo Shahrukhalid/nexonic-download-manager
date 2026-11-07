@@ -1882,7 +1882,7 @@
                   <Path Name="GlyphPanelpath" VerticalAlignment="Center" Fill="{TemplateBinding Control.Foreground}" Data="M0,2L0,4.8 2.5,7.4 7.1,2.8 7.1,0 2.5,4.6z" FlowDirection="LeftToRight" />
                 </Grid>
                 <ContentPresenter Name="HeaderHost" Grid.Column="1" RecognizesAccessKey="True" ContentSource="Header" Margin="0,0,0,0" VerticalAlignment="Center" />
-                <TextBlock Margin="{TemplateBinding Control.Padding}" Grid.Column="3" Text="{TemplateBinding MenuItem.InputGestureText}" />
+                <TextBlock Name="GesturePresenter" Margin="{TemplateBinding Control.Padding}" Grid.Column="3" Text="{TemplateBinding MenuItem.InputGestureText}" />
                 <Grid Name="ArrowPanel" Grid.Column="4" Margin="4,0,6,0" VerticalAlignment="Center">
                   <Path Name="ArrowPanelPath" VerticalAlignment="Center" Fill="{TemplateBinding Control.Foreground}" Data="M0,0L0,8 4,4z" />
                 </Grid>
@@ -1897,6 +1897,7 @@
           </Border>
           <ControlTemplate.Triggers>
             <Trigger Property="MenuItem.Role" Value="TopLevelHeader">
+              <Setter TargetName="GesturePresenter" Property="UIElement.Visibility" Value="Collapsed" />
               <Setter Property="FrameworkElement.Margin" Value="0,1,0,1" />
               <Setter Property="Control.Padding" Value="7,3,7,3" />
               <Setter Property="Grid.IsSharedSizeScope" Value="True" />
@@ -1909,6 +1910,7 @@
               <Setter TargetName="columnDefinition" Property="ColumnDefinition.Width" Value="0" />
             </Trigger>
             <Trigger Property="MenuItem.Role" Value="TopLevelItem">
+              <Setter TargetName="GesturePresenter" Property="UIElement.Visibility" Value="Collapsed" />
               <Setter Property="FrameworkElement.Margin" Value="0,1,0,1" />
               <Setter Property="Control.Padding" Value="7,3,7,3" />
               <Setter TargetName="ArrowPanel" Property="UIElement.Visibility" Value="Collapsed" />

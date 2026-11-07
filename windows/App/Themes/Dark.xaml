@@ -71,7 +71,7 @@
                 <ContentPresenter x:Name="HeaderPresenter" Grid.Column="1" ContentSource="Header"
                                   RecognizesAccessKey="True" VerticalAlignment="Center"
                                   Margin="{TemplateBinding Padding}"/>
-                <TextBlock Grid.Column="2" Text="{TemplateBinding InputGestureText}" Foreground="{StaticResource ThemeMuted}"
+                <TextBlock x:Name="GesturePresenter" Grid.Column="2" Text="{TemplateBinding InputGestureText}" Foreground="{StaticResource ThemeMuted}"
                            VerticalAlignment="Center" Margin="12,0,4,0"/>
                 <Path x:Name="SubmenuArrow" Grid.Column="3" Fill="{TemplateBinding Foreground}"
                       Data="M0,0 L4,4 L0,8 Z" VerticalAlignment="Center" HorizontalAlignment="Center"/>
@@ -93,6 +93,8 @@
           </Grid>
           <ControlTemplate.Triggers>
             <Trigger Property="Role" Value="TopLevelHeader">
+              <!-- No keyboard gesture, icon, or submenu arrow at the top level. -->
+              <Setter TargetName="GesturePresenter" Property="Visibility" Value="Collapsed"/>
               <Setter TargetName="PART_Popup" Property="Placement" Value="Bottom"/>
               <Setter TargetName="SubmenuArrow" Property="Visibility" Value="Collapsed"/>
               <Setter TargetName="IconPresenter" Property="Visibility" Value="Collapsed"/>
@@ -102,6 +104,8 @@
               <Setter Property="MinHeight" Value="0"/>
             </Trigger>
             <Trigger Property="Role" Value="TopLevelItem">
+              <!-- No keyboard gesture, icon, or submenu arrow at the top level. -->
+              <Setter TargetName="GesturePresenter" Property="Visibility" Value="Collapsed"/>
               <Setter TargetName="SubmenuArrow" Property="Visibility" Value="Collapsed"/>
               <Setter TargetName="IconPresenter" Property="Visibility" Value="Collapsed"/>
               <Setter TargetName="HeaderPresenter" Property="Margin" Value="7,3,7,3"/>
