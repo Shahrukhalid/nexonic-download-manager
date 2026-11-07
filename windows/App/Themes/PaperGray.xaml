@@ -123,10 +123,7 @@
   <!-- Preserve the animated PaperGray button template; only restore toolbar geometry. -->
   <Style x:Key="PaperGrayToolbarButtonStyle" TargetType="{x:Type Button}"
          BasedOn="{StaticResource {x:Type Button}}">
-    <Setter Property="Margin" Value="1,0"/>
-    <Setter Property="Padding" Value="4,2"/>
-    <Setter Property="MinWidth" Value="0"/>
-    <Setter Property="MinHeight" Value="44"/>
+    <!-- Toolbar geometry is shared with every theme and set by MainWindow. -->
     <Setter Property="Cursor" Value="Hand"/>
     <Setter Property="HorizontalContentAlignment" Value="Center"/>
     <Setter Property="VerticalContentAlignment" Value="Center"/>

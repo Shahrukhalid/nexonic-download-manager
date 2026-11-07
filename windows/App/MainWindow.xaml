@@ -51,9 +51,7 @@
     </Style>
     <SolidColorBrush x:Key="Accent" Color="#1F6FEB" />
     <Style x:Key="ToolButton" TargetType="Button">
-      <Setter Property="Margin" Value="1,0" />
-      <Setter Property="Padding" Value="5,3" />
-      <Setter Property="MinWidth" Value="56" />
+      <!-- Shared toolbar dimensions are applied by MainWindow for every theme. -->
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
       <Setter Property="Template">
@@ -162,8 +160,12 @@
             <TextBlock x:Name="SearchHint" Text="Search downloads" Foreground="{DynamicResource MutedBrush}" Margin="31,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" />
           </Grid>
         </Border>
-        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" CanContentScroll="False">
-          <StackPanel x:Name="Toolbar" Orientation="Horizontal">
+        <Grid x:Name="ToolbarHost" ClipToBounds="True">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <StackPanel x:Name="Toolbar" Orientation="Horizontal" Grid.Column="0" HorizontalAlignment="Left">
         <Button Style="{StaticResource ToolButton}" Click="OnAdd" ToolTip="Add one or more links (Ctrl+N)">
           <StackPanel><TextBlock Style="{StaticResource Glyph}" Foreground="#2DA44E" Text="&#xE710;" /><TextBlock Style="{StaticResource Caption}" Text="Add URL" /></StackPanel>
         </Button>
@@ -211,7 +213,13 @@
           <StackPanel><TextBlock Style="{StaticResource Glyph}" Foreground="#6E7781" Text="&#xE713;" /><TextBlock Style="{StaticResource Caption}" Text="Options" /></StackPanel>
         </Button>
           </StackPanel>
-        </ScrollViewer>
+          <Button x:Name="ToolbarOverflowButton" Grid.Column="1" Visibility="Collapsed"
+                  Content="&#xE712;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                  ToolTip="More toolbar actions" Width="33" MinHeight="36"
+                  Background="{DynamicResource SurfaceBrush}" Foreground="{DynamicResource TextBrush}"
+                  BorderBrush="{DynamicResource BorderBrushTheme}" BorderThickness="1" Margin="3,0,0,0"
+                  VerticalAlignment="Center" Click="OnToolbarOverflow" />
+        </Grid>
       </DockPanel>
     </Border>
     <Border DockPanel.Dock="Bottom" Background="{DynamicResource SidebarBrush}" BorderBrush="{DynamicResource BorderBrushTheme}" BorderThickness="0,1,0,0" Padding="12,4">
