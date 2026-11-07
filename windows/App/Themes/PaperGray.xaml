@@ -1871,11 +1871,11 @@
               <Border Name="Hover" Opacity="0" HorizontalAlignment="Stretch" Width="Auto" Background="{DynamicResource MouseOverBrush}" />
               <Grid Width="Auto" Height="Auto">
                 <Grid.ColumnDefinitions>
-                  <ColumnDefinition MinWidth="26" Width="Auto" SharedSizeGroup="MenuItemIconColumnGroup" />
+                  <ColumnDefinition x:Name="TopIconColumn" MinWidth="26" Width="Auto" SharedSizeGroup="MenuItemIconColumnGroup" />
                   <ColumnDefinition Width="*" />
                   <ColumnDefinition Name="columnDefinition" Width="37" />
                   <ColumnDefinition Width="Auto" SharedSizeGroup="MenuItemIGTColumnGroup" />
-                  <ColumnDefinition Width="14" />
+                  <ColumnDefinition x:Name="TopArrowColumn" Width="14" />
                 </Grid.ColumnDefinitions>
                 <ContentPresenter Name="Icon" Margin="4,0,6,0" VerticalAlignment="Center" ContentSource="Icon" />
                 <Grid Name="GlyphPanel" Visibility="Hidden" Margin="4,0,6,0" VerticalAlignment="Center">
@@ -1898,18 +1898,24 @@
           <ControlTemplate.Triggers>
             <Trigger Property="MenuItem.Role" Value="TopLevelHeader">
               <Setter Property="FrameworkElement.Margin" Value="0,1,0,1" />
-              <Setter Property="Control.Padding" Value="6,3,6,3" />
+              <Setter Property="Control.Padding" Value="7,3,7,3" />
               <Setter Property="Grid.IsSharedSizeScope" Value="True" />
               <Setter TargetName="SubMenuPopup" Property="Popup.Placement" Value="Bottom" />
               <Setter TargetName="ArrowPanel" Property="UIElement.Visibility" Value="Collapsed" />
-              <Setter TargetName="HeaderHost" Property="FrameworkElement.Margin" Value="-10,1,0,1" />
+              <Setter TargetName="HeaderHost" Property="FrameworkElement.Margin" Value="0" />
+              <Setter TargetName="TopIconColumn" Property="ColumnDefinition.MinWidth" Value="0" />
+              <Setter TargetName="TopIconColumn" Property="ColumnDefinition.Width" Value="0" />
+              <Setter TargetName="TopArrowColumn" Property="ColumnDefinition.Width" Value="0" />
               <Setter TargetName="columnDefinition" Property="ColumnDefinition.Width" Value="0" />
             </Trigger>
             <Trigger Property="MenuItem.Role" Value="TopLevelItem">
               <Setter Property="FrameworkElement.Margin" Value="0,1,0,1" />
-              <Setter Property="Control.Padding" Value="6,3,6,3" />
+              <Setter Property="Control.Padding" Value="7,3,7,3" />
               <Setter TargetName="ArrowPanel" Property="UIElement.Visibility" Value="Collapsed" />
-              <Setter TargetName="HeaderHost" Property="FrameworkElement.Margin" Value="-10,1,0,1" />
+              <Setter TargetName="HeaderHost" Property="FrameworkElement.Margin" Value="0" />
+              <Setter TargetName="TopIconColumn" Property="ColumnDefinition.MinWidth" Value="0" />
+              <Setter TargetName="TopIconColumn" Property="ColumnDefinition.Width" Value="0" />
+              <Setter TargetName="TopArrowColumn" Property="ColumnDefinition.Width" Value="0" />
               <Setter TargetName="columnDefinition" Property="ColumnDefinition.Width" Value="0" />
             </Trigger>
             <Trigger Property="MenuItem.Role" Value="SubmenuHeader">
