@@ -52,8 +52,8 @@
     <SolidColorBrush x:Key="Accent" Color="#1F6FEB" />
     <Style x:Key="ToolButton" TargetType="Button">
       <Setter Property="Margin" Value="1,0" />
-      <Setter Property="Padding" Value="8,5" />
-      <Setter Property="MinWidth" Value="66" />
+      <Setter Property="Padding" Value="5,3" />
+      <Setter Property="MinWidth" Value="56" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
       <Setter Property="Template">
@@ -97,13 +97,13 @@
 
     <Style x:Key="Glyph" TargetType="TextBlock">
       <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
-      <Setter Property="FontSize" Value="22" />
+      <Setter Property="FontSize" Value="19" />
       <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
       <Setter Property="HorizontalAlignment" Value="Center" />
     </Style>
     <Style x:Key="Caption" TargetType="TextBlock">
-      <Setter Property="FontSize" Value="11" />
-      <Setter Property="Margin" Value="0,3,0,0" />
+      <Setter Property="FontSize" Value="10" />
+      <Setter Property="Margin" Value="0,1,0,0" />
       <Setter Property="HorizontalAlignment" Value="Center" />
     </Style>
   </Window.Resources>
@@ -153,9 +153,17 @@
         <MenuItem Header="_About Meteor Download Manager" Click="OnAbout" />
       </MenuItem>
     </Menu>
-    <Border DockPanel.Dock="Top" Background="{DynamicResource ToolbarBackgroundBrush}" BorderBrush="{DynamicResource BorderBrushTheme}" BorderThickness="0,0,0,1" Padding="6,4">
-      <WrapPanel>
-        <WrapPanel x:Name="Toolbar">
+    <Border DockPanel.Dock="Top" Background="{DynamicResource ToolbarBackgroundBrush}" BorderBrush="{DynamicResource BorderBrushTheme}" BorderThickness="0,0,0,1" Padding="6,3">
+      <DockPanel LastChildFill="True">
+        <Border DockPanel.Dock="Right" Margin="8,0,4,0" Width="200" Height="28" CornerRadius="6" BorderBrush="{DynamicResource BorderBrushTheme}" BorderThickness="1" Background="{DynamicResource SurfaceBrush}" VerticalAlignment="Center">
+          <Grid>
+            <TextBlock Text="&#xE721;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="{DynamicResource MutedBrush}" Margin="8,0,0,0" VerticalAlignment="Center" />
+            <TextBox x:Name="Search" Style="{StaticResource SearchTextBoxStyle}" BorderThickness="0" Background="Transparent" Margin="28,0,6,0" VerticalContentAlignment="Center" TextChanged="OnSearch" ToolTip="Search downloads (Ctrl+F)" />
+            <TextBlock x:Name="SearchHint" Text="Search downloads" Foreground="{DynamicResource MutedBrush}" Margin="31,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" />
+          </Grid>
+        </Border>
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" CanContentScroll="False">
+          <StackPanel x:Name="Toolbar" Orientation="Horizontal">
         <Button Style="{StaticResource ToolButton}" Click="OnAdd" ToolTip="Add one or more links (Ctrl+N)">
           <StackPanel><TextBlock Style="{StaticResource Glyph}" Foreground="#2DA44E" Text="&#xE710;" /><TextBlock Style="{StaticResource Caption}" Text="Add URL" /></StackPanel>
         </Button>
@@ -202,15 +210,9 @@
         <Button Style="{StaticResource ToolButton}" Click="OnSettings" ToolTip="Options">
           <StackPanel><TextBlock Style="{StaticResource Glyph}" Foreground="#6E7781" Text="&#xE713;" /><TextBlock Style="{StaticResource Caption}" Text="Options" /></StackPanel>
         </Button>
-        </WrapPanel>
-        <Border Margin="12,6,4,6" Width="220" Height="30" CornerRadius="6" BorderBrush="{DynamicResource BorderBrushTheme}" BorderThickness="1" Background="{DynamicResource SurfaceBrush}" VerticalAlignment="Center">
-          <Grid>
-            <TextBlock Text="&#xE721;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="{DynamicResource MutedBrush}" Margin="8,0,0,0" VerticalAlignment="Center" />
-            <TextBox x:Name="Search" Style="{StaticResource SearchTextBoxStyle}" BorderThickness="0" Background="Transparent" Margin="28,0,6,0" VerticalContentAlignment="Center" TextChanged="OnSearch" ToolTip="Search downloads (Ctrl+F)" />
-            <TextBlock x:Name="SearchHint" Text="Search downloads" Foreground="{DynamicResource MutedBrush}" Margin="31,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" />
-          </Grid>
-        </Border>
-      </WrapPanel>
+          </StackPanel>
+        </ScrollViewer>
+      </DockPanel>
     </Border>
     <Border DockPanel.Dock="Bottom" Background="{DynamicResource SidebarBrush}" BorderBrush="{DynamicResource BorderBrushTheme}" BorderThickness="0,1,0,0" Padding="12,4">
       <DockPanel>
