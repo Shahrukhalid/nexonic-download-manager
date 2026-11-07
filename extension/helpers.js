@@ -95,8 +95,10 @@ export function isMedia(url, contentType, length) {
 
 export function nameFromUrl(url) {
   try {
-    const base = decodeURIComponent(new URL(url).pathname.split("/").pop() || "");
-    return base || "download";
+    // A decoded name can hold path separators or control characters (%2F, %5C, %00): never let them through.
+    const base = decodeURIComponent(new URL(url).pathname.split("/").pop() || "")
+      .replace(/[\\/\u0000-\u001f]+/g, " ").trim().slice(0, 200);
+    return base && base !== "." && base !== ".." ? base : "download";
   } catch (_) {
     return "download";
   }
@@ -199,8 +201,8 @@ export function summarizePlaylist(text, base) {
 
 /** A file name from a page title: "My Talk | Site" becomes "My Talk". */
 export function titleToName(title, fallback = "video") {
-  const t = String(title || "").split(/\s[|–—-]\s/)[0].replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim();
-  return (t || fallback).slice(0, 120);
+  const t = String(title || "").split(/\s[|–—-]\s/)[0].replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim();
+  return (t && t !== "." && t !== ".." ? t : fallback).slice(0, 120);
 }
 
 /** Best first: streams by picture height, then files by size. */
