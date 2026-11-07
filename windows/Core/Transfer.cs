@@ -4,8 +4,11 @@ using System.Net.Http.Headers;
 namespace Nexonic.Core;
 
 /// <summary>
-/// One download: probes the server, splits the file into byte ranges, downloads them in parallel into part files,
-/// splits the largest remaining range whenever a connection frees up, retries failed ranges and joins the parts.
+/// One download: probes the server, splits the file into byte ranges and downloads them in parallel straight into one
+/// file next to where it will be saved ("name.nxpart"), splits the largest remaining range whenever a connection frees
+/// up and retries failed ranges. When everything has arrived the file is only renamed, so even huge downloads finish
+/// at once and never need twice their size on disk. Downloads started by versions before 0.19 keep their separate
+/// part files and are joined at the end as before.
 /// </summary>
 public sealed class Transfer : IDownloader
 {
@@ -24,6 +27,26 @@ public sealed class Transfer : IDownloader
 
     string PartsFolder => Path.Combine(AppPaths.Parts, Record.Id.ToString("N"));
     string PartPath(int id) => Path.Combine(PartsFolder, $"{id}.part");
+    /// <summary>Written straight into one file (0.19+), or into one part file per range (started by an older version).</summary>
+    bool SingleFile => Record.WorkFile != null;
+
+    /// <summary>Removes what an unfinished download left on disk: the part files and the "name.nxpart" file.</summary>
+    public static void DeleteTemporaryFiles(DownloadRecord r)
+    {
+        try { Directory.Delete(Path.Combine(AppPaths.Parts, r.Id.ToString("N")), true); } catch { }
+        if (r.Status != DownloadStatus.Finished && r.WorkFile is { } work)
+        {
+            try { File.Delete(work); } catch { }
+            r.WorkFile = null;
+        }
+    }
+
+    string TargetFolder()
+    {
+        var folder = Record.Folder;
+        if (sortIntoCategories && FileCategories.Folder(Record.Category) is { } sub) folder = Path.Combine(folder, sub);
+        return folder;
+    }
 
     readonly TransferOptions options;
 
@@ -63,7 +86,7 @@ public sealed class Transfer : IDownloader
     public void Discard()
     {
         cts?.Cancel();
-        try { Directory.Delete(PartsFolder, true); } catch { }
+        DeleteTemporaryFiles(Record);
     }
 
     async Task RunAsync(CancellationToken ct)
@@ -77,7 +100,7 @@ public sealed class Transfer : IDownloader
             Record.Status = DownloadStatus.Downloading;
             Notify(true);
             await DownloadAllAsync(ct);
-            Join();
+            if (SingleFile) Finish(); else Join();
         }
         catch (Exception) when (ct.IsCancellationRequested) { /* paused or removed */ }
         catch (Exception e)
@@ -87,7 +110,7 @@ public sealed class Transfer : IDownloader
                 // Never mix two versions of a file: the next Resume starts from the beginning.
                 lock (Record.Segments) Record.Segments = new();
                 Record.Validator = null;
-                try { Directory.Delete(PartsFolder, true); } catch { }
+                DeleteTemporaryFiles(Record);
             }
             Record.Status = DownloadStatus.Failed;
             Record.Error = e.Message;
@@ -133,8 +156,22 @@ public sealed class Transfer : IDownloader
         // Resume only into the same file: same size and, when the server names its version, the same ETag/Last-Modified.
         var canResume = Record.Segments.Count > 0 && ranges && Record.AcceptsRanges && size == Record.Size
                         && Network.SameVersion(Record.Validator, validator);
-        Directory.CreateDirectory(PartsFolder);
-        if (canResume)
+        if (canResume && SingleFile && !File.Exists(Record.WorkFile)) canResume = false;  // the .nxpart file was deleted
+        if (canResume && !SingleFile && !Directory.Exists(PartsFolder)) canResume = false;
+        if (canResume && SingleFile)
+        {
+            // The last bytes written before the app stopped may not have reached the disk: fetch them again.
+            lock (Record.Segments)
+                foreach (var s in Record.Segments) s.Written = Math.Max(0, s.Written - Math.Min(s.Written, ResumeOverlap));
+            if (Record.Size is long full)
+            {
+                long have;
+                lock (Record.Segments) have = Record.Segments.Sum(s => s.Written);
+                if (DiskSpace.Problem(Path.GetDirectoryName(Record.WorkFile)!, full, have) is { } problem)
+                    throw new InvalidOperationException(problem);
+            }
+        }
+        else if (canResume)
         {
             foreach (var s in Record.Segments)
             {
@@ -146,8 +183,13 @@ public sealed class Transfer : IDownloader
         }
         else
         {
-            try { Directory.Delete(PartsFolder, true); } catch { }
-            Directory.CreateDirectory(PartsFolder);
+            DeleteTemporaryFiles(Record);
+            var folder = TargetFolder();
+            Directory.CreateDirectory(folder);
+            if (size is long need && DiskSpace.Problem(folder, need) is { } problem) throw new InvalidOperationException(problem);
+            var work = FileNames.Unique(Record.FileName + WorkSuffix, folder);
+            using (var f = new FileStream(work, FileMode.CreateNew, FileAccess.Write, FileShare.ReadWrite)) DiskSpace.MakeSparse(f);
+            Record.WorkFile = work;
             Record.Size = size;
             Record.AcceptsRanges = ranges;
             Record.Validator = validator;
@@ -217,9 +259,19 @@ public sealed class Transfer : IDownloader
                 if (res.StatusCode == HttpStatusCode.PartialContent && !Network.RangeMatches(res.Content.Headers.ContentRange, from, Record.Size))
                     throw new IOException("The server sent a different part of the file than asked for");
                 await using var body = await res.Content.ReadAsStreamAsync(ct);
-                await using var file = new FileStream(PartPath(seg.Id), FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read, 1 << 16, true);
-                file.SetLength(seg.Written);
-                file.Seek(seg.Written, SeekOrigin.Begin);
+                await using var file = new FileStream(SingleFile ? Record.WorkFile! : PartPath(seg.Id), FileMode.OpenOrCreate,
+                    FileAccess.Write, FileShare.ReadWrite, 1 << 16, true);
+                if (SingleFile)
+                {
+                    // Every range writes its own place in the one file; only a download without ranges starts it over.
+                    if (!Record.AcceptsRanges) file.SetLength(0);
+                    file.Seek(seg.Start + seg.Written, SeekOrigin.Begin);
+                }
+                else
+                {
+                    file.SetLength(seg.Written);
+                    file.Seek(seg.Written, SeekOrigin.Begin);
+                }
                 // A connection that stays silent is dropped and tried again instead of waiting forever.
                 using var silent = CancellationTokenSource.CreateLinkedTokenSource(ct);
                 while (true)
@@ -261,31 +313,79 @@ public sealed class Transfer : IDownloader
         }
     }
 
+    /// <summary>The in-progress file's name ends with this until the download is complete.</summary>
+    public const string WorkSuffix = ".nxpart";
+    const long ResumeOverlap = 256 * 1024;
+
+    /// <summary>Everything has arrived in the .nxpart file: check its size and give it its real name.</summary>
+    void Finish()
+    {
+        var work = Record.WorkFile!;
+        var length = new FileInfo(work).Length;
+        if (Record.Size is long size)
+        {
+            if (length < size)
+            {
+                // Never keep a short file: the next Resume downloads it again from the start.
+                lock (Record.Segments) Record.Segments = new();
+                DeleteTemporaryFiles(Record);
+                throw new IOException($"Size check failed: expected {size} bytes, got {length}. Resume to download it again");
+            }
+            if (length > size) using (var f = new FileStream(work, FileMode.Open, FileAccess.Write, FileShare.ReadWrite)) f.SetLength(size);
+        }
+        var target = FileNames.Unique(Record.FileName, Path.GetDirectoryName(work)!);
+        File.Move(work, target);
+        Record.WorkFile = null;
+        try { Directory.Delete(PartsFolder, true); } catch { }
+        Complete(target);
+    }
+
     sealed class FileChangedException() : Exception(
         "The file changed on the server since this download started. Resume to download the new version from the start");
 
+    /// <summary>Downloads started before 0.19: copies the part files into the final file, showing progress.</summary>
     void Join()
     {
-        var folder = Record.Folder;
-        if (sortIntoCategories && FileCategories.Folder(Record.Category) is { } sub) folder = Path.Combine(folder, sub);
+        var folder = TargetFolder();
         Directory.CreateDirectory(folder);
+        var total = Record.Size ?? Record.Segments.Sum(s => s.Written);
+        if (DiskSpace.Problem(folder, total) is { } problem) throw new InvalidOperationException(problem);
         var target = FileNames.Unique(Record.FileName, folder);
-        using (var output = new FileStream(target, FileMode.CreateNew))
+        try
         {
+            using var output = new FileStream(target, FileMode.CreateNew);
+            var buffer = new byte[1 << 20];
+            long copied = 0;
             foreach (var s in Record.Segments.OrderBy(s => s.Start))
             {
                 using var input = File.OpenRead(PartPath(s.Id));
-                input.CopyTo(output);
+                int n;
+                while ((n = input.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    if (cts?.IsCancellationRequested == true) throw new OperationCanceledException();
+                    output.Write(buffer, 0, n);
+                    copied += n;
+                    Record.VideoStep = total > 0 ? $"Joining parts… {copied * 100 / total}%" : "Joining parts…";
+                    Notify();
+                }
             }
-            var written = output.Length;
-            if (Record.Size is long size && written != size)
-            {
-                output.Close();
-                File.Delete(target);
-                throw new IOException($"Size check failed: expected {size} bytes, got {written}");
-            }
+            if (Record.Size is long size && output.Length != size)
+                throw new IOException($"Size check failed: expected {size} bytes, got {output.Length}");
         }
+        catch
+        {
+            // Keep the parts so Resume can try again, and never leave a half-written file behind.
+            try { File.Delete(target); } catch { }
+            Record.VideoStep = null;
+            throw;
+        }
+        Record.VideoStep = null;
         try { Directory.Delete(PartsFolder, true); } catch { }
+        Complete(target);
+    }
+
+    void Complete(string target)
+    {
         if (Checksum.Parse(Record.Checksum) != null)
         {
             Record.ChecksumResult = Checksum.Verify(Record.Checksum!, target);

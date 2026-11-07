@@ -305,7 +305,7 @@ public sealed partial class DownloadManager
         if (r.Torrent != null) { Remove(row); return; }
         if (transfers.Remove(r.Id, out var t)) t.Discard();
         if (r.Status == DownloadStatus.Finished) return;
-        try { Directory.Delete(Path.Combine(AppPaths.Parts, r.Id.ToString("N")), true); } catch { }
+        Transfer.DeleteTemporaryFiles(r);
         r.Status = DownloadStatus.Failed;
         r.Error = DownloadRecord.CanceledMessage;
         r.Segments = new();
@@ -321,7 +321,7 @@ public sealed partial class DownloadManager
     public void Remove(Row row)
     {
         if (transfers.Remove(row.Record.Id, out var t)) t.Discard();
-        try { Directory.Delete(Path.Combine(AppPaths.Parts, row.Record.Id.ToString("N")), true); } catch { }
+        Transfer.DeleteTemporaryFiles(row.Record);
         try { if (row.Record.InfoJson is { } info) File.Delete(info); } catch { }
         Rows.Remove(row);
         Save();

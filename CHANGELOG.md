@@ -1,3 +1,17 @@
+## 0.19.0
+
+- **Big downloads finish instantly (Mac, Windows, Linux).** Every connection now writes its part straight into one
+  file in the save folder, shown as `name.nxpart` while it downloads. When the last byte arrives the file is only
+  renamed, so there is no slow "joining" step at the end, and a 5 GB download no longer needs 10 GB of free space.
+- **Checks before a big download starts:** if the drive doesn't have enough free space, or is formatted as FAT32 and
+  can't hold a file over 4 GB, the download stops at once with a clear message instead of failing at the end.
+- **Downloads started with an older version** still finish: their pieces are joined with a "Joining parts… %"
+  message, and if that fails the half-written file is removed and the pieces are kept so Resume can try again.
+- Canceling or removing an unfinished download also deletes its `.nxpart` file.
+- Browser extension: suggested file names no longer turn `%2F` into "/", drop control characters, and never use "."
+  or ".." as a name.
+- New code signing policy and privacy policy ([docs/CODE-SIGNING.md](docs/CODE-SIGNING.md)).
+
 ## 0.18.1
 
 - **The video engine runs under the app's own name** (`nexonic-video-engine`) on Mac, Windows and Linux, so that is

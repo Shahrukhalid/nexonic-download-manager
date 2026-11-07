@@ -148,6 +148,110 @@ public class HardeningTests
         Assert.Equal("\"v2\"", r.Validator);
     }
 
+    static byte[] Pattern(int length)
+    {
+        var data = new byte[length];
+        for (var i = 0; i < length; i++) data[i] = (byte)(i * 31 + i / 997);
+        return data;
+    }
+
+    [Fact]
+    public async Task BigDownloadIsWrittenStraightIntoOneFile()
+    {
+        var content = Pattern(6 * 1024 * 1024 + 123);  // several ranges, and splits when connections free up
+        using var server = new Server((_, req) => Ranged(content, "\"v1\"", req));
+        var folder = TempFolder();
+        var rec = new DownloadRecord { Url = $"http://localhost:{server.Port}/big.zip", Folder = folder, FileName = "big.zip" };
+        var r = await Run(new Transfer(rec, 4, new SpeedLimiter()));
+        Assert.Equal(DownloadStatus.Finished, r.Status);
+        Assert.Equal(content, File.ReadAllBytes(r.SavedPath!));
+        Assert.Null(r.WorkFile);
+        Assert.Empty(Directory.GetFiles(folder, "*" + Transfer.WorkSuffix));  // nothing left behind
+        Assert.False(Directory.Exists(Path.Combine(AppPaths.Parts, rec.Id.ToString("N"))));  // no part files at all
+    }
+
+    [Fact]
+    public async Task ResumeContinuesTheSameFile()
+    {
+        var content = Pattern(2 * 1024 * 1024);
+        using var server = new Server((_, req) => Ranged(content, "\"v1\"", req));
+        var folder = TempFolder();
+        var work = Path.Combine(folder, "f.bin" + Transfer.WorkSuffix);
+        var half = content.Length / 2;
+        var onDisk = new byte[content.Length];
+        Array.Copy(content, onDisk, 700_000);                  // range 0: 700 000 of its bytes arrived
+        Array.Copy(content, half, onDisk, half, 300_000);      // range 1: 300 000 of its bytes arrived
+        File.WriteAllBytes(work, onDisk);
+        var rec = new DownloadRecord
+        {
+            Url = $"http://localhost:{server.Port}/f.bin", Folder = folder, FileName = "f.bin", WorkFile = work,
+            Size = content.Length, AcceptsRanges = true, Validator = "\"v1\"", Status = DownloadStatus.Paused,
+            Segments = new()
+            {
+                new Segment { Id = 0, Start = 0, End = half - 1, Written = 700_000 },
+                new Segment { Id = 1, Start = half, End = content.Length - 1, Written = 300_000 },
+            },
+        };
+        var r = await Run(new Transfer(rec, 2, new SpeedLimiter()));
+        Assert.Equal(DownloadStatus.Finished, r.Status);
+        Assert.Equal(content, File.ReadAllBytes(r.SavedPath!));
+        Assert.False(File.Exists(work));
+    }
+
+    [Fact]
+    public async Task DownloadStartedByAnOlderVersionIsStillJoined()
+    {
+        var content = Encoding.ASCII.GetBytes("AAAAABBBBB");
+        using var server = new Server((_, req) => Ranged(content, "\"v1\"", req));
+        var rec = new DownloadRecord
+        {
+            Url = $"http://localhost:{server.Port}/old.bin", Folder = TempFolder(), FileName = "old.bin",
+            Size = 10, AcceptsRanges = true, Validator = "\"v1\"", Status = DownloadStatus.Paused,
+            Segments = new() { new Segment { Id = 0, Start = 0, End = 4, Written = 5 }, new Segment { Id = 1, Start = 5, End = 9, Written = 2 } },
+        };
+        var parts = Path.Combine(AppPaths.Parts, rec.Id.ToString("N"));
+        Directory.CreateDirectory(parts);
+        File.WriteAllText(Path.Combine(parts, "0.part"), "AAAAA");
+        File.WriteAllText(Path.Combine(parts, "1.part"), "BB");
+        var r = await Run(new Transfer(rec, 2, new SpeedLimiter()));
+        Assert.Equal(DownloadStatus.Finished, r.Status);
+        Assert.Equal("AAAAABBBBB", File.ReadAllText(r.SavedPath!));
+        Assert.False(Directory.Exists(parts));
+        Assert.Null(r.VideoStep);
+    }
+
+    [Fact]
+    public async Task NotEnoughSpaceIsReportedBeforeDownloading()
+    {
+        var huge = long.MaxValue / 4;
+        Assert.Contains("Not enough free space", DiskSpace.Problem(TempFolder(), huge) ?? "");
+        Assert.Null(DiskSpace.Problem(TempFolder(), 1024));
+        Assert.Equal("5.0 GB", DiskSpace.Bytes(5L << 30));
+        Assert.Equal("12 MB", DiskSpace.Bytes(12L << 20));
+        using var server = new Server((_, req) =>
+        {
+            var h = new Dictionary<string, string> { ["Accept-Ranges"] = "bytes", ["Content-Range"] = $"bytes 0-0/{huge}" };
+            return (206, h, new byte[] { 0 });
+        });
+        var folder = TempFolder();
+        var rec = new DownloadRecord { Url = $"http://localhost:{server.Port}/huge.iso", Folder = folder, FileName = "huge.iso" };
+        var r = await Run(new Transfer(rec, 2, new SpeedLimiter()));
+        Assert.Equal(DownloadStatus.Failed, r.Status);
+        Assert.Contains("Not enough free space", r.Error);
+        Assert.Empty(Directory.GetFiles(folder));  // nothing was created
+    }
+
+    [Fact]
+    public async Task DownloadWithoutRangesStillWorks()
+    {
+        var content = Pattern(300_000);
+        using var server = new Server((_, _) => (200, new(), content));
+        var rec = new DownloadRecord { Url = $"http://localhost:{server.Port}/plain.bin", Folder = TempFolder(), FileName = "plain.bin" };
+        var r = await Run(new Transfer(rec, 4, new SpeedLimiter()));
+        Assert.Equal(DownloadStatus.Finished, r.Status);
+        Assert.Equal(content, File.ReadAllBytes(r.SavedPath!));
+    }
+
     [Fact]
     public void PrivateHeaderAndRangeRules()
     {

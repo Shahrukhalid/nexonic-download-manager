@@ -229,9 +229,9 @@ final class DownloadManager: ObservableObject {
     func cancel(_ id: UUID) {
         canceled.insert(id)  // late updates from the stopped transfer are ignored
         transfers.removeValue(forKey: id)?.discard()
-        try? FileManager.default.removeItem(at: AppPaths.parts.appendingPathComponent(id.uuidString))
         update(id) { r in
             guard r.status != .finished else { return }
+            Transfer.deleteTemporaryFiles(&r)
             r.status = .failed
             r.error = DownloadRecord.canceledMessage
             r.segments = []
@@ -246,7 +246,7 @@ final class DownloadManager: ObservableObject {
         if deleteFile, let path = items.first(where: { $0.id == id })?.savedPath {
             try? FileManager.default.trashItem(at: URL(fileURLWithPath: path), resultingItemURL: nil)
         }
-        try? FileManager.default.removeItem(at: AppPaths.parts.appendingPathComponent(id.uuidString))
+        if var r = items.first(where: { $0.id == id }) { Transfer.deleteTemporaryFiles(&r) }
         if let info = items.first(where: { $0.id == id })?.infoJSON { try? FileManager.default.removeItem(atPath: info) }
         items.removeAll { $0.id == id }
         persist()
