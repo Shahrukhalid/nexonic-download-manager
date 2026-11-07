@@ -131,7 +131,7 @@ struct AboutView: View {
             Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 96, height: 96)
             Text("Nexonic Download Manager").font(.title2.weight(.semibold))
             Text("Version \(AppLinks.version)").foregroundStyle(.secondary)
-            Text("Free, open-source download manager for Mac and Windows.")
+            Text("Free, open-source download manager for Mac, Windows, Linux, Android, iPhone and iPad.")
                 .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
             HStack(spacing: 4) {
                 Text("Made by")

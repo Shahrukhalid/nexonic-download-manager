@@ -137,7 +137,7 @@ public static class HelpWindows
         p.Children.Add(new Image { Source = Ui.AppIcon, Width = 80, Height = 80, Margin = new Thickness(0, 0, 0, 10) });
         p.Children.Add(new TextBlock { Text = "Nexonic Download Manager", FontSize = 20, FontWeight = FontWeight.SemiBold, HorizontalAlignment = HorizontalAlignment.Center });
         p.Children.Add(new TextBlock { Text = $"Version {Version}", Opacity = 0.7, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 4, 0, 0) });
-        p.Children.Add(new TextBlock { Text = "Free, open-source download manager for Linux, Windows, Mac and Android.", Opacity = 0.7, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 6, 0, 0) });
+        p.Children.Add(new TextBlock { Text = "Free, open-source download manager for Mac, Windows, Linux, Android, iPhone and iPad.", Opacity = 0.7, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 6, 0, 0) });
         p.Children.Add(new StackPanel
         {
             Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 12, 0, 0),
