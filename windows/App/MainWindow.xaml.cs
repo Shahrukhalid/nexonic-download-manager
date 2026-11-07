@@ -23,7 +23,7 @@ public partial class MainWindow : Window
     const double ToolbarButtonMinWidth = 56;
     const double ToolbarButtonMinHeight = 44;
     static readonly Thickness ToolbarButtonPadding = new(4, 2, 4, 2);
-    static readonly Thickness ToolbarButtonMargin = new(1, 0);
+    static readonly Thickness ToolbarButtonMargin = new(1, 0, 1, 0);
 
     static readonly FontFamily CategoryIconFont = new("Segoe Fluent Icons, Segoe MDL2 Assets");
     static string IconFor(string key)
@@ -146,7 +146,7 @@ public partial class MainWindow : Window
 
             // Keep the original ordering of actions. Hide the least prominent actions from
             // the right-hand end first, without splitting a button's icon and caption.
-            foreach (var button in toolbarButtons.Reverse())
+            foreach (var button in toolbarButtons.AsEnumerable().Reverse())
             {
                 if (TotalWidth() <= available) break;
                 button.Visibility = Visibility.Collapsed;
