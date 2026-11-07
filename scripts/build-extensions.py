@@ -11,7 +11,7 @@ SRC = ROOT / "extension"
 OUT = ROOT / "build"
 VERSION = (ROOT / "VERSION").read_text().strip()
 FIREFOX_ID = "{dec29d70-4c6f-43f7-aacd-af2ae04cd4c2}"
-SKIP = {"helpers.test.js", "package.json"}
+SKIP = {"helpers.test.js", "helpers.fuzz.test.js", "package.json", "package-lock.json", "node_modules"}
 
 
 def copy(dest: Path):
