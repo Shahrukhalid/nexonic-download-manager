@@ -243,6 +243,10 @@ addresses you download from, and to GitHub to keep its video engine up to date a
 By installing you agree to the **[Terms of Use and License Agreement](TERMS.md)**: download only what you have the
 right to, and respect copyright and each site's terms.
 
+**Code signing policy:** how release files are built and signed, who approves them, and the full privacy policy are in
+[docs/CODE-SIGNING.md](docs/CODE-SIGNING.md). Free code signing for Windows is provided by SignPath.io, certificate by
+SignPath Foundation (application in progress).
+
 ## Build from source
 
 ```bash
