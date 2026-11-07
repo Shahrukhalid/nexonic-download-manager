@@ -1,8 +1,10 @@
 import CFNetwork
 import Foundation
 
-/// One download: probes the server, splits the file into byte ranges, downloads them in parallel into part files,
-/// splits the largest remaining range whenever a connection frees up, retries failed ranges and joins the parts.
+/// One download: probes the server, splits the file into byte ranges and downloads them in parallel straight into one
+/// file next to where it will be saved ("name.nxpart"), splits the largest remaining range whenever a connection frees
+/// up and retries failed ranges. When everything has arrived the file is only renamed, so even huge downloads finish at
+/// once and never need twice their size on disk. Downloads started before 0.19 keep their part files and are joined.
 /// All state changes happen on `queue`; `onChange` is called with a copy of the record after each change.
 public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendable {
     public private(set) var record: DownloadRecord
@@ -31,6 +33,26 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
     }
 
     private var partsFolder: URL { AppPaths.parts.appendingPathComponent(record.id.uuidString, isDirectory: true) }
+    /// Written straight into one file (0.19+), or into one part file per range (started by an older version).
+    private var singleFile: Bool { record.workFile != nil }
+    /// The in-progress file's name ends with this until the download is complete.
+    public static let workSuffix = ".nxpart"
+    private static let resumeOverlap: Int64 = 256 * 1024
+
+    /// Removes what an unfinished download left on disk: the part files and the "name.nxpart" file.
+    public static func deleteTemporaryFiles(_ r: inout DownloadRecord) {
+        try? FileManager.default.removeItem(at: AppPaths.parts.appendingPathComponent(r.id.uuidString, isDirectory: true))
+        if r.status != .finished, let work = r.workFile {
+            try? FileManager.default.removeItem(atPath: work)
+            r.workFile = nil
+        }
+    }
+
+    private func targetFolder() -> URL {
+        var folder = record.folder
+        if sortIntoCategories, let sub = record.category.folder { folder.appendPathComponent(sub, isDirectory: true) }
+        return folder
+    }
 
     private let options: TransferOptions
 
@@ -79,7 +101,7 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
             self.stopping = true
             self.cancelAll()
             self.session.invalidateAndCancel()
-            try? FileManager.default.removeItem(at: self.partsFolder)
+            Transfer.deleteTemporaryFiles(&self.record)
         }
     }
 
@@ -134,9 +156,22 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
         }
         let validator = Network.validator(response)
         // Resume only into the same file: same size and, when the server names its version, the same ETag/Last-Modified.
-        let canResume = !record.segments.isEmpty && ranges && record.acceptsRanges && size != nil && size == record.size
+        var canResume = !record.segments.isEmpty && ranges && record.acceptsRanges && size != nil && size == record.size
             && Network.sameVersion(record.validator, validator)
-        if canResume {
+        let fm = FileManager.default
+        if canResume, let work = record.workFile, !fm.fileExists(atPath: work) { canResume = false }  // the .nxpart was deleted
+        if canResume, !singleFile, !fm.fileExists(atPath: partsFolder.path) { canResume = false }
+        if canResume, singleFile {
+            // The last bytes written before the app stopped may not have reached the disk: fetch them again.
+            for i in record.segments.indices {
+                record.segments[i].written = max(0, record.segments[i].written - min(record.segments[i].written, Transfer.resumeOverlap))
+            }
+            if let total = record.size, let work = record.workFile,
+               let problem = DiskSpace.problem(URL(fileURLWithPath: work).deletingLastPathComponent(), size: total,
+                                               already: record.segments.reduce(0) { $0 + $1.written }) {
+                return fail(problem)
+            }
+        } else if canResume {
             for i in record.segments.indices {
                 let file = partURL(record.segments[i].id)
                 let onDisk = (try? FileManager.default.attributesOfItem(atPath: file.path)[.size] as? Int64) ?? 0
@@ -145,14 +180,22 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
                 truncate(file, to: record.segments[i].written)
             }
         } else {
-            try? FileManager.default.removeItem(at: partsFolder)
+            Transfer.deleteTemporaryFiles(&record)
+            let folder = targetFolder()
+            do { try fm.createDirectory(at: folder, withIntermediateDirectories: true) } catch {
+                return fail("Cannot create the folder \(folder.path): \(error.localizedDescription)")
+            }
+            if let size, let problem = DiskSpace.problem(folder, size: size) { return fail(problem) }
+            let work = FileNames.unique(record.fileName + Transfer.workSuffix, in: folder)
+            guard fm.createFile(atPath: work.path, contents: nil) else { return fail("Cannot write to \(work.path)") }
+            record.workFile = work.path
             record.size = size
             record.acceptsRanges = ranges
             record.validator = validator
             record.segments = SegmentPlanner.plan(size: ranges ? size : nil, connections: ranges ? connections : 1, minSegment: options.minSegment)
             if !ranges, let size { record.segments = [Segment(id: 0, start: 0, end: size - 1)] }
         }
-        try? FileManager.default.createDirectory(at: partsFolder, withIntermediateDirectories: true)
+        if !singleFile { try? FileManager.default.createDirectory(at: partsFolder, withIntermediateDirectories: true) }
         record.status = .downloading
         notify(force: true)
         for seg in record.segments where !seg.isComplete { launch(seg.id) }
@@ -172,11 +215,24 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
     private func launch(_ segmentID: Int) {
         guard !stopping, let i = record.segments.firstIndex(where: { $0.id == segmentID }) else { return }
         let seg = record.segments[i]
-        let file = partURL(seg.id)
         if !record.acceptsRanges { record.segments[i].written = 0 }
-        truncate(file, to: record.segments[i].written)
-        guard let handle = try? FileHandle(forWritingTo: file) else { return fail("Cannot write to \(file.path)") }
-        _ = try? handle.seekToEnd()
+        let handle: FileHandle
+        if let work = record.workFile {
+            // Every range writes its own place in the one file; only a download without ranges starts it over.
+            let file = URL(fileURLWithPath: work)
+            if !record.acceptsRanges { truncate(file, to: 0) }
+            guard let h = try? FileHandle(forWritingTo: file) else { return fail("Cannot write to \(file.path)") }
+            do { try h.seek(toOffset: UInt64(seg.start + record.segments[i].written)) } catch {
+                return fail("Cannot write to \(file.path): \(error.localizedDescription)")
+            }
+            handle = h
+        } else {
+            let file = partURL(seg.id)
+            truncate(file, to: record.segments[i].written)
+            guard let h = try? FileHandle(forWritingTo: file) else { return fail("Cannot write to \(file.path)") }
+            _ = try? h.seekToEnd()
+            handle = h
+        }
         var range: String?
         let from = seg.start + record.segments[i].written
         if record.acceptsRanges {
@@ -323,38 +379,85 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
     private func finishIfDone() {
         guard !stopping, running.isEmpty, record.status == .downloading,
               !record.segments.isEmpty, record.segments.allSatisfy(\.isComplete) else { return }
+        if let work = record.workFile { finishSingleFile(URL(fileURLWithPath: work)) } else { joinParts() }
+    }
+
+    /// Everything has arrived in the .nxpart file: check its size and give it its real name.
+    private func finishSingleFile(_ work: URL) {
+        let fm = FileManager.default
+        let length = ((try? fm.attributesOfItem(atPath: work.path)[.size]) as? NSNumber)?.int64Value ?? 0
+        if let size = record.size {
+            if length < size {
+                // Never keep a short file: the next Resume downloads it again from the start.
+                record.segments = []
+                Transfer.deleteTemporaryFiles(&record)
+                return fail("Size check failed: expected \(size) bytes, got \(length). Resume to download it again")
+            }
+            if length > size { truncate(work, to: size) }
+        }
+        let target = FileNames.unique(record.fileName, in: work.deletingLastPathComponent())
+        do { try fm.moveItem(at: work, to: target) } catch {
+            return fail("Saving the file failed: \(error.localizedDescription)")
+        }
+        record.workFile = nil
+        try? fm.removeItem(at: partsFolder)
+        complete(target)
+    }
+
+    /// Downloads started before 0.19: copies the part files into the final file, showing progress.
+    private func joinParts() {
+        let fm = FileManager.default
+        let folder = targetFolder()
+        let total = record.size ?? record.segments.reduce(0) { $0 + $1.written }
+        do { try fm.createDirectory(at: folder, withIntermediateDirectories: true) } catch {
+            return fail("Joining the parts failed: \(error.localizedDescription)")
+        }
+        if let problem = DiskSpace.problem(folder, size: total) { return fail(problem) }
+        let target = FileNames.unique(record.fileName, in: folder)
         do {
-            var folder = record.folder
-            if sortIntoCategories, let sub = record.category.folder { folder.appendPathComponent(sub, isDirectory: true) }
-            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-            let target = FileNames.unique(record.fileName, in: folder)
-            FileManager.default.createFile(atPath: target.path, contents: nil)
+            fm.createFile(atPath: target.path, contents: nil)
             let out = try FileHandle(forWritingTo: target)
             defer { try? out.close() }
+            var copied: Int64 = 0
             for seg in record.segments.sorted(by: { $0.start < $1.start }) {
                 let input = try FileHandle(forReadingFrom: partURL(seg.id))
-                while let block = try input.read(upToCount: 4 << 20), !block.isEmpty { try out.write(contentsOf: block) }
-                try input.close()
+                defer { try? input.close() }
+                while let block = try input.read(upToCount: 4 << 20), !block.isEmpty {
+                    if stopping { throw CocoaError(.userCancelled) }
+                    try out.write(contentsOf: block)
+                    copied += Int64(block.count)
+                    record.videoStep = total > 0 ? "Joining parts… \(copied * 100 / total)%" : "Joining parts…"
+                    notify()
+                }
             }
             let written = try out.offset()
             if let size = record.size, Int64(written) != size {
-                return fail("Size check failed: expected \(size) bytes, got \(written)")
+                throw CocoaError(.fileWriteUnknown, userInfo: [NSLocalizedDescriptionKey: "size check failed: expected \(size) bytes, got \(written)"])
             }
-            try? FileManager.default.removeItem(at: partsFolder)
-            if let expected = record.checksum, let (algorithm, hex) = Checksum.parse(expected) {
-                let actual = (try? Checksum.compute(algorithm, file: target)) ?? ""
-                record.checksumResult = actual == hex ? "\(algorithm.rawValue) matches" : "\(algorithm.rawValue) does not match (got \(actual))"
-                if actual != hex { record.error = "The checksum does not match: the file may be damaged or not the one expected" }
-            }
-            record.savedPath = target.path
-            record.fileName = target.lastPathComponent
-            record.status = .finished
-            record.finished = Date()
-            notify(force: true)
-            session.finishTasksAndInvalidate()
         } catch {
-            fail("Joining the parts failed: \(error.localizedDescription)")
+            // Keep the parts so Resume can try again, and never leave a half-written file behind.
+            try? fm.removeItem(at: target)
+            record.videoStep = nil
+            if stopping { return }
+            return fail("Joining the parts failed: \(error.localizedDescription)")
         }
+        record.videoStep = nil
+        try? fm.removeItem(at: partsFolder)
+        complete(target)
+    }
+
+    private func complete(_ target: URL) {
+        if let expected = record.checksum, let (algorithm, hex) = Checksum.parse(expected) {
+            let actual = (try? Checksum.compute(algorithm, file: target)) ?? ""
+            record.checksumResult = actual == hex ? "\(algorithm.rawValue) matches" : "\(algorithm.rawValue) does not match (got \(actual))"
+            if actual != hex { record.error = "The checksum does not match: the file may be damaged or not the one expected" }
+        }
+        record.savedPath = target.path
+        record.fileName = target.lastPathComponent
+        record.status = .finished
+        record.finished = Date()
+        notify(force: true)
+        session.finishTasksAndInvalidate()
     }
 
     /// The file on the server is not the one this download started with: start again from the beginning next time.
@@ -363,7 +466,7 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
         fail("The file changed on the server since this download started. Resume to download the new version from the start")
         record.segments = []
         record.validator = nil
-        try? FileManager.default.removeItem(at: partsFolder)
+        Transfer.deleteTemporaryFiles(&record)
         notify(force: true)
     }
 

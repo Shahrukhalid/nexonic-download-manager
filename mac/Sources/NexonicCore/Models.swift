@@ -81,6 +81,8 @@ public struct DownloadRecord: Codable, Identifiable, Sendable {
     public var videoStep: String?
     // Added in 0.6.2: the file's ETag or Last-Modified when the download started, so a changed file is never resumed into
     public var validator: String?
+    // Added in 0.19.0: the file the download is written into ("name.nxpart" in the save folder), renamed when complete
+    public var workFile: String?
     // Added in 0.6.3: the highest picture quality chosen for a video (nil = the best on offer)
     public var torrent: TorrentTask?
     public var maxHeight: Int?
