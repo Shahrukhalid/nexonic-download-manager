@@ -15,6 +15,18 @@ public partial class MainWindow : Window
     string filter = "all";
     bool rebuilding;
 
+    static readonly FontFamily CategoryIconFont = new("Segoe Fluent Icons, Segoe MDL2 Assets");
+    static string IconFor(string key)
+    {
+        var category = key.StartsWith("cat:") ? key[4..] : key.StartsWith("ucat:") || key.StartsWith("fcat:") ? key[5..] : "";
+        return category switch
+        {
+            "Video" => "\uE714", "Music" => "\uE8D6", "Documents" => "\uE8A5",
+            "Programs" => "\uE8FC", "Compressed" => "\uE7B8", "Images" => "\uEB9F",
+            _ => key switch { "active" => "\uE768", "unfinished" => "\uE896", "finished" => "\uE73E", _ => "\uE8B7" },
+        };
+    }
+
     public MainWindow(DownloadManager manager)
     {
         InitializeComponent();
@@ -76,6 +88,9 @@ public partial class MainWindow : Window
             var count = new TextBlock { Text = CountFor(key), Foreground = Brushes.Gray, FontSize = 11, Margin = new Thickness(8, 0, 4, 0), VerticalAlignment = VerticalAlignment.Center };
             DockPanel.SetDock(count, Dock.Right);
             row.Children.Add(count);
+            row.Children.Add(new TextBlock { Text = IconFor(key), FontFamily = CategoryIconFont,
+                Width = 22, FontSize = 15, VerticalAlignment = VerticalAlignment.Center,
+                Foreground = (Brush)Application.Current.FindResource("AccentBrush") });
             row.Children.Add(new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center });
             Sidebar.Items.Add(new ListBoxItem { Content = row, Tag = key, Padding = new Thickness(14 + indent * 16, 5, 4, 5), HorizontalContentAlignment = HorizontalAlignment.Stretch });
         }

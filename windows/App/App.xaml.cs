@@ -34,6 +34,7 @@ public partial class App : Application
         Directory.CreateDirectory(AppPaths.Support);
         RegisterBrowserHost();
         var manager = new DownloadManager();
+        ThemeManager.Apply(manager.Settings.Theme);
         L.Use(manager.Settings.Language);
         Translate.Install();
         window = new MainWindow(manager);
@@ -47,7 +48,7 @@ public partial class App : Application
         tray = new System.Windows.Forms.NotifyIcon
         {
             Icon = System.Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath!),
-            Text = "Nexonic Download Manager",
+            Text = "Meteor Download Manager",
             Visible = true,
         };
         tray.DoubleClick += (_, _) => ShowWindow();
