@@ -3,7 +3,7 @@ using System.Windows.Media;
 
 namespace Nexonic.App;
 
-/// <summary>Runtime WPF palette selector; PaperGray references the supplied classic grey palette.</summary>
+/// <summary>Runtime WPF palettes, including a PaperGray-inspired color scheme.</summary>
 public static class ThemeManager
 {
     public static readonly string[] Names = ["Light", "Dark", "PaperGray", "Slate"];

@@ -68,7 +68,7 @@
     </Style>
   </Window.Resources>
   <DockPanel>
-    <Menu x:Name="MainMenu" DockPanel.Dock="Top" Background="{DynamicResource SurfaceBrush}" Padding="4,2">
+    <Menu x:Name="MainMenu" DockPanel.Dock="Top" Background="{DynamicResource SurfaceBrush}" Foreground="{DynamicResource TextBrush}" Padding="4,2">
       <MenuItem Header="_Tasks">
         <MenuItem Header="_Add URL…" InputGestureText="Ctrl+N" Click="OnAdd" />
         <MenuItem Header="Add _Torrent…" InputGestureText="Ctrl+Shift+T" Click="OnTorrents" />
@@ -184,7 +184,7 @@
         <ColumnDefinition Width="5" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
-      <ListBox x:Name="Sidebar" Grid.Column="0" BorderThickness="0" Background="{DynamicResource SidebarBrush}" SelectionChanged="OnFilter" Padding="0,6" />
+      <ListBox x:Name="Sidebar" Grid.Column="0" Foreground="{DynamicResource TextBrush}" BorderThickness="0" Background="{DynamicResource SidebarBrush}" SelectionChanged="OnFilter" Padding="0,6" />
       <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="{DynamicResource BorderBrushTheme}" />
       <Grid Grid.Column="2">
         <Grid.RowDefinitions>

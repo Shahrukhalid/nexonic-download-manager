@@ -48,10 +48,10 @@ Copy-Item build\extension-chrome "$out\Extension" -Recurse
 Copy-Item "build\NexonicFirefoxAddon-$version.xpi" "$out\Firefox Add-on.xpi"
 # The ndm command runs the helper in command-line mode; the installer puts this folder on the user's PATH.
 Set-Content -Path "$out\ndm.cmd" -Value "@echo off`r`n`"%~dp0nexonic-host.exe`" %*" -Encoding ascii -NoNewline
-Compress-Archive -Path "$out\*" -DestinationPath "build\NexonicDownloadManager-$version-windows-portable.zip"
+Compress-Archive -Path "$out\*" -DestinationPath "build\MeteorDownloadManager-$version-windows-portable.zip"
 $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
 if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
 $env:NDM_VERSION = $version
 & $iscc windows\installer.iss
 if ($LASTEXITCODE -ne 0) { throw "Installer build failed" }
-Write-Host "Built build\NexonicDownloadManager-Setup-$version.exe and the portable zip"
+Write-Host "Built build\MeteorDownloadManager-Setup-$version.exe and the portable zip"
