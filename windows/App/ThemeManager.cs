@@ -41,6 +41,7 @@ public static class ThemeManager
         if (next != null) resources.MergedDictionaries.Add(next);
         activeTheme = next;
         CurrentTheme = name!;
+        resources["ErrorBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(name is "Dark" or "Slate" ? "#FF938F" : "#C73434"));
         ThemeChanged?.Invoke();
     }
 }

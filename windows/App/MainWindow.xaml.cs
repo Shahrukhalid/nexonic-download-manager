@@ -35,6 +35,8 @@ public partial class MainWindow : Window
         this.manager = manager;
         Grid.ItemsSource = manager.Rows;
         BuildSidebar();
+        ApplyThemeControlStyles();
+        ThemeManager.ThemeChanged += ApplyThemeControlStyles;
         manager.Queues.CollectionChanged += (_, _) => BuildSidebar();
         InputBindings.Add(new KeyBinding(new Cmd(() => OnAdd(this, new RoutedEventArgs())), Key.N, ModifierKeys.Control));
         InputBindings.Add(new KeyBinding(new Cmd(() => OnRemove(this, new RoutedEventArgs())), Key.Delete, ModifierKeys.None));
@@ -71,15 +73,28 @@ public partial class MainWindow : Window
         Hide();
     }
 
+    // Explicit styles in the main window override theme dictionaries; switch them deliberately.
+    void ApplyThemeControlStyles()
+    {
+        if (!IsInitialized) return;
+        bool paper = ThemeManager.CurrentTheme == "PaperGray";
+        var toolbarStyle = (Style)FindResource(paper ? typeof(Button) : "ToolButton");
+        foreach (var button in Toolbar.Children.OfType<Button>()) button.Style = toolbarStyle;
+        // Recreate rows to apply the PaperGray selection animations and padding-aware template.
+        BuildSidebar();
+    }
+
     // ---- sidebar ----
 
     public void BuildSidebar()
     {
         rebuilding = true;
         Sidebar.Items.Clear();
+        var sidebarStyle = ThemeManager.CurrentTheme == "PaperGray"
+            ? (Style)FindResource(typeof(ListBoxItem)) : (Style)FindResource("SidebarEntryStyle");
         void Header(string text) => Sidebar.Items.Add(new ListBoxItem
         {
-            Content = text.ToUpperInvariant(), Style = (Style)FindResource("SidebarEntryStyle"), IsEnabled = false, FontSize = 11, FontWeight = FontWeights.SemiBold,
+            Content = text.ToUpperInvariant(), Style = sidebarStyle, IsEnabled = false, FontSize = 11, FontWeight = FontWeights.SemiBold,
             Foreground = Brushes.Gray, Margin = new Thickness(4, 8, 0, 2),
         });
         void Entry(string text, string key, int indent = 0)

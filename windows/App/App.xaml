@@ -10,6 +10,7 @@
   <SolidColorBrush x:Key="BorderBrushTheme" Color="#E3E8EF"/>
   <SolidColorBrush x:Key="HoverBrush" Color="#F3F7FE"/>
   <SolidColorBrush x:Key="SelectedBrush" Color="#DCE8FC"/>
+  <SolidColorBrush x:Key="ErrorBrush" Color="#C73434"/>
   <Style TargetType="{x:Type Window}">
    <Setter Property="Background" Value="{DynamicResource WindowBrush}"/>
    <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
