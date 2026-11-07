@@ -30,9 +30,12 @@ public static partial class Dialogs
         public readonly Window Window;
         public readonly StackPanel Body = new() { Margin = new Thickness(16) };
         readonly WrapPanel buttons = new() { HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 12, 0, 0) };
+        /// <summary>Where Note, Field and Check add their controls: the window's body, or a section made by <see cref="Collapsed"/>.</summary>
+        public Panel Target;
 
         public Form(Window owner, string title, double width = 520)
         {
+            Target = Body;
             Body.Children.Add(new TextBlock { Text = title, FontSize = 18, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 8) });
             var outer = new StackPanel();
             outer.Children.Add(Body);
@@ -48,15 +51,15 @@ public static partial class Dialogs
         public TextBlock Note(string text)
         {
             var t = new TextBlock { Text = text, Foreground = Muted, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8) };
-            Body.Children.Add(t);
+            Target.Children.Add(t);
             return t;
         }
 
         public T Field<T>(string label, T control) where T : FrameworkElement
         {
-            Body.Children.Add(new TextBlock { Text = label, Margin = new Thickness(0, 6, 0, 2) });
+            Target.Children.Add(new TextBlock { Text = label, Margin = new Thickness(0, 6, 0, 2) });
             control.Margin = new Thickness(0, 0, 0, 4);
-            Body.Children.Add(control);
+            Target.Children.Add(control);
             return control;
         }
 
@@ -77,8 +80,19 @@ public static partial class Dialogs
         public CheckBox Check(string label, bool value)
         {
             var c = new CheckBox { Content = label, IsChecked = value, Margin = new Thickness(0, 6, 0, 2) };
-            Body.Children.Add(c);
+            Target.Children.Add(c);
             return c;
+        }
+
+        /// <summary>A section that starts closed; the controls <paramref name="build"/> adds go inside it.</summary>
+        public Expander Collapsed(string header, Action build)
+        {
+            var inner = new StackPanel { Margin = new Thickness(18, 4, 0, 0) };
+            var section = new Expander { Header = header, Content = inner, IsExpanded = false, Margin = new Thickness(0, 8, 0, 4) };
+            Target.Children.Add(section);
+            var outer = Target; Target = inner;
+            try { build(); } finally { Target = outer; }
+            return section;
         }
 
         public ComboBox Queue(DownloadManager m, string selected)

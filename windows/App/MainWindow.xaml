@@ -1,7 +1,7 @@
 <Window x:Class="Nexonic.App.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:Nexonic.App"
         Title="Nexonic Download Manager" Width="1100" Height="620" MinWidth="760" MinHeight="420"
-        AllowDrop="True" Drop="OnDrop" Background="#F7F9FC">
+        AllowDrop="True" Drop="OnDrop" DragOver="OnDragOver" Background="#F7F9FC">
   <Window.Resources>
     <SolidColorBrush x:Key="Accent" Color="#1F6FEB" />
     <Style x:Key="ToolButton" TargetType="Button">

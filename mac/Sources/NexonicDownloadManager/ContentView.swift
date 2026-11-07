@@ -180,10 +180,14 @@ struct ContentView: View {
                 }
             }
         }
-        .onDrop(of: [.url, .plainText], isTargeted: nil) { providers in
+        .onDrop(of: [.fileURL, .url, .plainText], isTargeted: nil) { providers in
+            // A dropped .torrent file (or magnet link) opens Add Torrent; other links open Add Download.
             for p in providers {
                 _ = p.loadObject(ofClass: URL.self) { url, _ in
-                    if let url { Task { @MainActor in manager.addRequest = AddRequest(links: url.absoluteString) } }
+                    guard let url else { return }
+                    Task { @MainActor in
+                        if !TorrentInbox.shared.accept(url) { manager.addRequest = AddRequest(links: url.absoluteString) }
+                    }
                 }
             }
             return true

@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Threading;
 using Nexonic.Core;
 
@@ -13,7 +14,7 @@ public static partial class Dialogs
         readonly StackPanel body = new();
         readonly List<ComboBox> priorities = new();
         public int[] Priorities => priorities.Select(p => new[] { 0, 1, 4, 7 }[p.SelectedIndex]).ToArray();
-        public TorrentSelection() { Content = body; Height = 200; VerticalScrollBarVisibility = ScrollBarVisibility.Auto; }
+        public TorrentSelection() { Content = body; MaxHeight = 220; VerticalScrollBarVisibility = ScrollBarVisibility.Auto; }
         public void Load(TorrentMetadata? metadata)
         {
             body.Children.Clear(); priorities.Clear();
@@ -65,56 +66,91 @@ public static partial class Dialogs
             return down;
         }
     }
+    /// <summary>
+    /// Add Torrent. The torrent's files load by themselves as soon as there is a source (opened, dropped, chosen or
+    /// pasted), the message for any problem sits right under the source, and the rarely changed limits, seeding and
+    /// trackers are folded away so Start Download is always on screen.
+    /// </summary>
     public static void Torrent(Window owner, DownloadManager manager, string source, string queueId)
     {
-        var f = new Form(owner, "Add Torrent", 700);
-        f.Note("Torrent peers and trackers can see your IP address. Choose material you may download and share. The native engine uses your proxy setting (HTTP or SOCKS5) and the speed limit for all downloads; DNS over HTTPS must be off. Local-network peers and web seeds are disabled.");
-        var enabled = f.Check("Enable experimental torrents", manager.Settings.TorrentsEnabled);
-        var input = f.Text("Magnet, HTTP(S) torrent link or local .torrent file", source);
-        f.AddButton("Choose .torrent…", () =>
-        {
-            var pick = new Microsoft.Win32.OpenFileDialog { Filter = "Torrent files|*.torrent" };
-            if (pick.ShowDialog(f.Window) == true) input.Text = pick.FileName;
-        });
+        var f = new Form(owner, "Add Torrent", 640);
+        var enabled = f.Check("Turn on torrents (peers and trackers can see your IP address)", manager.Settings.TorrentsEnabled);
+        enabled.Visibility = manager.Settings.TorrentsEnabled ? Visibility.Collapsed : Visibility.Visible;
+        var input = new TextBox { Text = source, Padding = new Thickness(4, 3, 4, 3) };
+        var choose = new Button { Content = "Choose File…", Padding = new Thickness(10, 2, 10, 2), Margin = new Thickness(6, 0, 0, 0) };
+        var sourceRow = new DockPanel();
+        DockPanel.SetDock(choose, Dock.Right); sourceRow.Children.Add(choose); sourceRow.Children.Add(input);
+        f.Field("Magnet link, torrent link or .torrent file", sourceRow);
+        var status = f.Note(source.Length == 0 ? "Paste a magnet link or choose a .torrent file." : "");
         var folder = f.Folder(manager.Settings.Folder);
         var queue = f.Queue(manager, queueId);
-        var preview = f.Note("Load metadata before choosing files.");
-        var selection = f.Field("Files and priorities", new TorrentSelection());
+        var selection = new TorrentSelection();
+        var files = f.Field("Files", selection);
+        var filesLabel = f.Target.Children[f.Target.Children.Count - 2];
+        void ShowFiles(bool show) { files.Visibility = filesLabel.Visibility = show ? Visibility.Visible : Visibility.Collapsed; }
+        ShowFiles(false);
         var draft = new TorrentMetadata();
-        var options = new TorrentOptionsForm(f, draft, 0);
-        var error = f.Note("");
+        TorrentOptionsForm? options = null;
+        f.Collapsed("More options: speed limits, connections, seeding and trackers", () => options = new TorrentOptionsForm(f, draft, 0));
+        f.Note("Only download what you may share. Torrents use your proxy setting and the speed limit for all downloads. Local-network peers and web seeds are off.");
         using var cancel = new CancellationTokenSource();
         f.Window.Closed += (_, _) => cancel.Cancel();
-        TorrentMetadata? metadata = null; string? previewSource = null; bool busy = false;
-        input.TextChanged += (_, _) => { metadata = null; selection.Load(null); };
-        f.AddButton("Cancel", f.Close, isCancel: true);
-        f.AddButton("Load metadata", async () =>
+        TorrentMetadata? metadata = null; string? previewSource = null; Task<bool>? loading = null;
+
+        void Say(string text, bool problem = false)
         {
-            if (busy) return;
-            error.Text = "";
-            manager.Settings.TorrentsEnabled = enabled.IsChecked == true; manager.ApplySettings(manager.Settings);
-            if (TorrentRuntime.Unavailable(manager.Settings) is { } reason) { error.Text = reason; return; }
-            busy = true; var requested = input.Text.Trim(); preview.Text = "Loading metadata…";
-            try
+            status.Text = text;
+            status.Foreground = problem ? Brushes.Firebrick : Muted;
+        }
+        Task<bool> Load()
+        {
+            var requested = input.Text.Trim();
+            if (metadata != null && previewSource == requested) return Task.FromResult(true);
+            if (loading != null) return loading;
+            return loading = Run();
+            async Task<bool> Run()
             {
-                var found = await TorrentRuntime.PreviewAsync(requested, cancel.Token, manager.Settings.Proxy);
-                if (requested != input.Text.Trim()) return;
-                metadata = found; previewSource = requested; selection.Load(found);
-                preview.Text = $"{found.Name} · {Row.Bytes(found.Size)} · {found.Files.Count} files\n{found.InfoHash}";
+                try
+                {
+                    if (requested.Length == 0) { Say("Paste a magnet link or choose a .torrent file.", true); return false; }
+                    if (SmartDownload.Detect(requested) != DownloadEngine.Torrent) { Say("This isn't a magnet link, a torrent link or a .torrent file.", true); return false; }
+                    if (enabled.IsChecked != true) { Say("Torrents are off. Tick \"Turn on torrents\" above to load this torrent.", true); return false; }
+                    if (TorrentRuntime.Unavailable(manager.Settings) is { } reason) { Say(reason, true); return false; }
+                    Say("Loading the torrent's files… (a magnet link can take up to a minute while peers are found)");
+                    var found = await TorrentRuntime.PreviewAsync(requested, cancel.Token, manager.Settings.Proxy);
+                    if (requested != input.Text.Trim()) return false;
+                    metadata = found; previewSource = requested; selection.Load(found); ShowFiles(true);
+                    Say($"{found.Name}\n{Row.Bytes(found.Size)} · {found.Files.Count(x => !x.Pad)} files");
+                    return true;
+                }
+                catch (OperationCanceledException) { return false; }
+                catch (Exception e) { Say("Couldn't load the torrent: " + e.Message, true); return false; }
+                finally { loading = null; }
             }
-            catch (OperationCanceledException) { }
-            catch (Exception e) { error.Text = e.Message; }
-            finally { busy = false; }
-        });
-        void Add(bool start)
+        }
+
+        enabled.Checked += (_, _) =>
+        {
+            manager.Settings.TorrentsEnabled = true; manager.ApplySettings(manager.Settings);
+            _ = Load();
+        };
+        enabled.Unchecked += (_, _) => { manager.Settings.TorrentsEnabled = false; manager.ApplySettings(manager.Settings); };
+        input.TextChanged += (_, _) => { metadata = null; previewSource = null; selection.Load(null); ShowFiles(false); };
+        input.LostFocus += (_, _) => { if (input.Text.Trim().Length > 0) _ = Load(); };
+        choose.Click += (_, _) =>
+        {
+            var pick = new Microsoft.Win32.OpenFileDialog { Filter = "Torrent files|*.torrent" };
+            if (pick.ShowDialog(f.Window) == true) { input.Text = pick.FileName; _ = Load(); }
+        };
+
+        async void Add(bool start)
         {
             try
             {
-                if (busy || metadata == null || previewSource != input.Text.Trim()) throw new ArgumentException("Load metadata before adding this torrent.");
-                if (enabled.IsChecked != true) throw new ArgumentException("Enable torrents first.");
+                if (!await Load() || metadata == null || previewSource == null) return;
                 metadata.FilePriorities = selection.Priorities.ToList(); _ = metadata.SelectedSize;
                 if (!System.IO.Path.IsPathFullyQualified(folder.Text)) throw new ArgumentException("Choose an absolute destination folder.");
-                var limit = options.Save(draft);
+                var limit = options!.Save(draft);
                 metadata.Seed = draft.Seed; metadata.Dht = draft.Dht; metadata.RatioLimit = draft.RatioLimit; metadata.SeedSeconds = draft.SeedSeconds;
                 metadata.UploadLimitKBps = draft.UploadLimitKBps; metadata.MaxConnections = draft.MaxConnections;
                 metadata.MaxUploads = draft.MaxUploads; metadata.Sequential = draft.Sequential;
@@ -122,9 +158,13 @@ public static partial class Dialogs
                 manager.AddTorrent(previewSource, metadata, new AddOptions { Folder = folder.Text, QueueId = ((DownloadQueue)queue.SelectedItem).Id, Start = start, SpeedLimitKBps = limit });
                 f.Close();
             }
-            catch (Exception e) { error.Text = e.Message; }
+            catch (Exception e) { Say(e.Message, true); }
         }
-        f.AddButton("Download Later", () => Add(false)); f.AddButton("Start Download", () => Add(true)); f.Show();
+        f.AddButton("Cancel", f.Close, isCancel: true);
+        f.AddButton("Download Later", () => Add(false));
+        f.AddButton("Start Download", () => Add(true), isDefault: true);
+        f.Window.Loaded += (_, _) => { if (source.Trim().Length > 0) _ = Load(); else input.Focus(); };
+        f.Show();
     }
     public static void TorrentFiles(Window owner, DownloadManager manager, Row row)
     {
