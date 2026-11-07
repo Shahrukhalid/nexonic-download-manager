@@ -3,11 +3,13 @@ using System.Windows.Media;
 
 namespace Nexonic.App;
 
-/// <summary>Loads original full PaperGray styles and dark variants at runtime.</summary>
+/// <summary>Loads independent WPF control dictionaries for Dark, Slate and the original PaperGray.</summary>
 public static class ThemeManager
 {
     public static readonly string[] Names = ["Light", "Dark", "PaperGray", "Slate"];
     static ResourceDictionary? activeTheme;
+    public static string CurrentTheme { get; private set; } = "Light";
+    public static event Action? ThemeChanged;
 
     public static void Apply(string? name)
     {
@@ -29,7 +31,7 @@ public static class ThemeManager
         ResourceDictionary? next = null;
         if (name != "Light")
         {
-            var file = name == "PaperGray" ? "PaperGray" : "Dark";
+            var file = name;
             next = new ResourceDictionary
             {
                 Source = new Uri("pack://application:,,,/Themes/" + file + ".xaml", UriKind.Absolute)
@@ -38,5 +40,7 @@ public static class ThemeManager
         if (activeTheme != null) resources.MergedDictionaries.Remove(activeTheme);
         if (next != null) resources.MergedDictionaries.Add(next);
         activeTheme = next;
+        CurrentTheme = name!;
+        ThemeChanged?.Invoke();
     }
 }

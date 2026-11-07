@@ -60,6 +60,9 @@ public partial class App : Application
         menu.Items.Add(SpeedLimitMenu(manager));
         menu.Items.Add(L.T("Quit"), null, (_, _) => Quit(manager));
         tray.ContextMenuStrip = menu;
+        TrayTheme.Apply(menu);
+        menu.Opening += (_, _) => TrayTheme.Apply(menu);
+        ThemeManager.ThemeChanged += () => TrayTheme.Apply(menu);
         manager.Notify += (title, body) =>
         {
             if (manager.Settings.Notifications) tray.ShowBalloonTip(3000, title, body, System.Windows.Forms.ToolTipIcon.Info);

@@ -79,7 +79,7 @@ public partial class MainWindow : Window
         Sidebar.Items.Clear();
         void Header(string text) => Sidebar.Items.Add(new ListBoxItem
         {
-            Content = text.ToUpperInvariant(), IsEnabled = false, FontSize = 11, FontWeight = FontWeights.SemiBold,
+            Content = text.ToUpperInvariant(), Style = (Style)FindResource("SidebarEntryStyle"), IsEnabled = false, FontSize = 11, FontWeight = FontWeights.SemiBold,
             Foreground = Brushes.Gray, Margin = new Thickness(4, 8, 0, 2),
         });
         void Entry(string text, string key, int indent = 0)
@@ -92,7 +92,7 @@ public partial class MainWindow : Window
                 Width = 22, FontSize = 15, VerticalAlignment = VerticalAlignment.Center,
                 Foreground = (Brush)Application.Current.FindResource("AccentBrush") });
             row.Children.Add(new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center });
-            Sidebar.Items.Add(new ListBoxItem { Content = row, Tag = key, Padding = new Thickness(14 + indent * 16, 5, 4, 5), HorizontalContentAlignment = HorizontalAlignment.Stretch });
+            Sidebar.Items.Add(new ListBoxItem { Content = row, Tag = key, Style = (Style)FindResource("SidebarEntryStyle"), Padding = new Thickness(14 + indent * 16, 5, 4, 5), MinHeight = 32, HorizontalContentAlignment = HorizontalAlignment.Stretch });
         }
         // Like IDM: each list opens into the file types it holds (sorted automatically by file type).
         static string Label(string c) => L.T(c == nameof(FileCategory.Other) ? "General" : c);

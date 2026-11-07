@@ -3,6 +3,35 @@
         Title="Meteor Download Manager" Width="1100" Height="620" MinWidth="760" MinHeight="420"
         AllowDrop="True" Drop="OnDrop" DragOver="OnDragOver" Background="{DynamicResource WindowBrush}">
   <Window.Resources>
+    <!-- This style is always used for sidebar rows so theme templates cannot drop hierarchy indentation. -->
+    <Style x:Key="SidebarEntryStyle" TargetType="{x:Type ListBoxItem}">
+      <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="MinHeight" Value="32"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="{x:Type ListBoxItem}">
+            <Border x:Name="SidebarRow" Background="{TemplateBinding Background}" MinHeight="{TemplateBinding MinHeight}">
+              <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" Margin="{TemplateBinding Padding}"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="SidebarRow" Property="Background" Value="{DynamicResource HoverBrush}"/>
+              </Trigger>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="SidebarRow" Property="Background" Value="{DynamicResource SelectedBrush}"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
     <SolidColorBrush x:Key="Accent" Color="#1F6FEB" />
     <Style x:Key="ToolButton" TargetType="Button">
       <Setter Property="Margin" Value="1,0" />
@@ -185,7 +214,7 @@
         <ColumnDefinition Width="5" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
-      <ListBox x:Name="Sidebar" Grid.Column="0" Foreground="{DynamicResource TextBrush}" BorderThickness="0" SelectionChanged="OnFilter" Padding="0,6" />
+      <ListBox x:Name="Sidebar" Grid.Column="0" Foreground="{DynamicResource TextBrush}" Background="{DynamicResource SidebarBrush}" BorderThickness="0" SelectionChanged="OnFilter" Padding="0,6" />
       <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="{DynamicResource BorderBrushTheme}" />
       <Grid Grid.Column="2">
         <Grid.RowDefinitions>
