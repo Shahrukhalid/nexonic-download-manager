@@ -1,6 +1,6 @@
 {
   "language": "日本語",
-  "status": "Machine translation: needs review by a native speaker",
+  "status": "Reviewed",
   "strings": {
     "Add URL": "URL を追加",
     "Resume": "再開",
@@ -108,7 +108,7 @@
     "Download File Info": "ダウンロードファイル情報",
     "Download on Your Phone": "スマートフォンでダウンロード",
     "Same as the system": "システムと同じ",
-    "The new language is used after the app restarts. Translations other than English are machine translations that still need review.": "新しい言語はアプリの再起動後に使われます。英語以外の翻訳は機械翻訳で、まだ確認が必要です。",
+    "The new language is used after the app restarts.": "新しい言語はアプリの再起動後に使われます。",
     "Canceled": "キャンセル済み"
   }
 }

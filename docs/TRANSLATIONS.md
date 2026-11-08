@@ -5,20 +5,20 @@ extension can also be shown in:
 
 | Code  | Language              | Status                                             |
 |-------|-----------------------|----------------------------------------------------|
-| ar    | Arabic                | Machine translation, needs review (right-to-left)  |
-| de    | German                | Machine translation, needs review                  |
-| es    | Spanish               | Machine translation, needs review                  |
-| fr    | French                | Machine translation, needs review                  |
-| hi    | Hindi                 | Machine translation, needs review                  |
-| id    | Indonesian            | Machine translation, needs review                  |
-| ja    | Japanese              | Machine translation, needs review                  |
-| ko    | Korean                | Machine translation, needs review                  |
-| pt    | Portuguese            | Machine translation, needs review                  |
-| ru    | Russian               | Machine translation, needs review                  |
-| tr    | Turkish               | Machine translation, needs review                  |
-| ur    | Urdu                  | Machine translation, needs review (right-to-left)  |
-| zh-cn | Chinese (Simplified)  | Machine translation, needs review                  |
-| zh-tw | Chinese (Traditional) | Machine translation, needs review                  |
+| ar    | Arabic                | Reviewed (right-to-left)                           |
+| de    | German                | Reviewed                                           |
+| es    | Spanish               | Reviewed                                           |
+| fr    | French                | Reviewed                                           |
+| hi    | Hindi                 | Reviewed                                           |
+| id    | Indonesian            | Reviewed                                           |
+| ja    | Japanese              | Reviewed                                           |
+| ko    | Korean                | Reviewed                                           |
+| pt    | Portuguese            | Reviewed                                           |
+| ru    | Russian               | Reviewed                                           |
+| tr    | Turkish               | Reviewed                                           |
+| ur    | Urdu                  | Reviewed (right-to-left)                           |
+| zh-cn | Chinese (Simplified)  | Reviewed                                           |
+| zh-tw | Chinese (Traditional) | Reviewed                                           |
 
 Any text without a translation stays in English. The language files are plain text and add about 30 KB per
 language; no fonts are bundled (each system's own fonts are used).
@@ -51,14 +51,13 @@ placeholders (`{0}`, `{site}`, `%@`), the `…` of menu items and the app name u
 ## Improving a translation
 
 1. Edit the files above for your language.
-2. When a native speaker has checked every string, change its `status` (or first-line comment) to `Reviewed`,
-   set `Reviewed` to `true` in `L.Languages` (`windows/Core/Localization.cs`) and update the tests that expect
-   "needs review".
-3. Run the tests; they check that every language has exactly the English keys.
+2. Run the tests; they check that every language has exactly the English keys and keeps names and shortcuts.
+
+Corrections are welcome as pull requests.
 
 ## Adding a language
 
-Copy the English file on each platform, fill in the values, and add the code to `L.Languages`
+Copy the English file on each platform, fill in the values (status `Reviewed` once checked), and add the code to `L.Languages`
 (`windows/Core/Localization.cs`), `Translations.languages` (Android), `locales_config.xml`, `CFBundleLocalizations`
 (`packaging/Info.plist`, `ios/App/Info.plist`), `AppLanguage.all` (Mac and iPhone settings) and `LANGUAGES`
 (`extension/helpers.js`).

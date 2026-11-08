@@ -1,4 +1,4 @@
-/* Machine translation: needs review by a native speaker */
+/* Reviewed */
 
 "About" = "परिचय";
 "About Nexonic Download Manager" = "Nexonic Download Manager के बारे में";
@@ -42,7 +42,7 @@
 "Connection" = "कनेक्शन";
 "Connections per download (1-32)" = "प्रति डाउनलोड कनेक्शन (1-32)";
 "Copy Link" = "लिंक कॉपी करें";
-"Delete" = "हटाएँ";
+"Delete" = "मिटाएँ";
 "Delete Completed" = "पूरे हटाएँ";
 "Delete and Move File to Trash…" = "हटाएँ और फ़ाइल ट्रैश में डालें…";
 "Delete queue" = "कतार हटाएँ";
@@ -103,8 +103,8 @@
 "Options" = "विकल्प";
 "Paste one or more links, one per line." = "एक या अधिक लिंक चिपकाएँ, हर पंक्ति में एक।";
 "Pattern" = "पैटर्न";
-"Pause" = "रोकें";
-"Pause All" = "सभी रोकें";
+"Pause" = "विराम दें";
+"Pause All" = "सभी को विराम दें";
 "Piece" = "हिस्सा";
 "Play a sound" = "ध्वनि चलाएँ";
 "Port" = "पोर्ट";
@@ -118,7 +118,7 @@
 "Queue (name)" = "कतार (नाम)";
 "Queues" = "कतारें";
 "Queues and timetables" = "कतारें और समय-सारणी";
-"Quit" = "बंद करें";
+"Quit" = "ऐप बंद करें";
 "Reconnect after this many silent seconds" = "इतने सेकंड बिना डेटा के बाद फिर से जुड़ें";
 "Refresh Link" = "लिंक ताज़ा करें";
 "Refresh Link…" = "लिंक ताज़ा करें…";
@@ -209,5 +209,5 @@
 "Wi-Fi only" = "केवल Wi-Fi";
 "Language" = "भाषा";
 "Same as the system" = "सिस्टम के अनुसार";
-"The new language is used after the app restarts. Translations other than English are machine translations that still need review." = "नई भाषा ऐप दोबारा शुरू होने के बाद उपयोग होगी। अंग्रेज़ी के अलावा अनुवाद मशीन से किए गए हैं और अभी जाँच बाकी है।";
+"The new language is used after the app restarts." = "नई भाषा ऐप दोबारा शुरू होने के बाद उपयोग होगी।";
 "Restart Now" = "अभी पुनः आरंभ करें";

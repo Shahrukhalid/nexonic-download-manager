@@ -1,6 +1,6 @@
 {
   "language": "繁體中文",
-  "status": "Machine translation: needs review by a native speaker",
+  "status": "Reviewed",
   "strings": {
     "Add URL": "新增網址",
     "Resume": "繼續",
@@ -108,7 +108,7 @@
     "Download File Info": "下載檔案資訊",
     "Download on Your Phone": "在手機上下載",
     "Same as the system": "跟隨系統",
-    "The new language is used after the app restarts. Translations other than English are machine translations that still need review.": "新語言會在App重啟後使用。英語以外的翻譯均為機器翻譯,仍需審校。",
+    "The new language is used after the app restarts.": "新語言會在應用程式重新啟動後使用。",
     "Canceled": "已取消"
   }
 }

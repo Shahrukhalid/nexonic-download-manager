@@ -1,6 +1,6 @@
 {
   "language": "Русский",
-  "status": "Machine translation: needs review by a native speaker",
+  "status": "Reviewed",
   "strings": {
     "Add URL": "Добавить URL",
     "Resume": "Продолжить",
@@ -108,7 +108,7 @@
     "Download File Info": "Сведения о загружаемом файле",
     "Download on Your Phone": "Скачивание на телефоне",
     "Same as the system": "Как в системе",
-    "The new language is used after the app restarts. Translations other than English are machine translations that still need review.": "Новый язык будет использоваться после перезапуска приложения. Переводы, кроме английского, машинные и ещё требуют проверки.",
+    "The new language is used after the app restarts.": "Новый язык будет использоваться после перезапуска приложения.",
     "Canceled": "Отменено"
   }
 }

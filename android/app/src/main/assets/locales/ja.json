@@ -1,6 +1,6 @@
 {
   "language": "日本語",
-  "status": "Machine translation: needs review by a native speaker",
+  "status": "Reviewed",
   "strings": {
     "A notification you can tap to open the file.": "タップするとファイルを開ける通知。",
     "About": "情報",
@@ -54,7 +54,7 @@
     "Download file": "ファイルをダウンロード",
     "Download image": "画像をダウンロード",
     "Download later": "後でダウンロード",
-    "Download link": "ダウンロードリンク",
+    "Download link": "リンクをダウンロード",
     "Download started": "ダウンロードを開始しました",
     "Download this video": "この動画をダウンロード",
     "Download video": "動画をダウンロード",
@@ -112,7 +112,7 @@
     "Quality": "画質",
     "Refresh link": "リンクを更新",
     "Reload": "再読み込み",
-    "Remove": "削除",
+    "Remove": "取り除く",
     "Remove from the list?": "リストから削除しますか?",
     "Remove this download?": "このダウンロードを削除しますか?",
     "Remove this page": "このページを削除",

@@ -1,4 +1,4 @@
-/* Machine translation: needs review by a native speaker */
+/* Reviewed */
 
 "About" = "Tentang";
 "About Nexonic Download Manager" = "Tentang Nexonic Download Manager";
@@ -123,7 +123,7 @@
 "Refresh Link" = "Segarkan Tautan";
 "Refresh Link…" = "Segarkan Tautan…";
 "Release Notes" = "Catatan Rilis";
-"Remove" = "Hapus";
+"Remove" = "Singkirkan";
 "Remove and Delete File" = "Hapus dan Hapus File";
 "Remove finished downloads from the list" = "Hapus unduhan selesai dari daftar";
 "Remove from List" = "Hapus dari Daftar";
@@ -209,5 +209,5 @@
 "Wi-Fi only" = "Hanya Wi-Fi";
 "Language" = "Bahasa";
 "Same as the system" = "Sama seperti sistem";
-"The new language is used after the app restarts. Translations other than English are machine translations that still need review." = "Bahasa baru dipakai setelah aplikasi dimulai ulang. Terjemahan selain bahasa Inggris adalah terjemahan mesin yang masih perlu ditinjau.";
+"The new language is used after the app restarts." = "Bahasa baru dipakai setelah aplikasi dimulai ulang.";
 "Restart Now" = "Mulai Ulang Sekarang";

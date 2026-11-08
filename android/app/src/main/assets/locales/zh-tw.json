@@ -1,6 +1,6 @@
 {
   "language": "繁體中文",
-  "status": "Machine translation: needs review by a native speaker",
+  "status": "Reviewed",
   "strings": {
     "A notification you can tap to open the file.": "點按通知即可開啟檔案。",
     "About": "關於",
@@ -54,7 +54,7 @@
     "Download file": "下載檔案",
     "Download image": "下載圖片",
     "Download later": "稍後下載",
-    "Download link": "下載連結",
+    "Download link": "下載此連結",
     "Download started": "下載已開始",
     "Download this video": "下載此影片",
     "Download video": "下載影片",
@@ -88,7 +88,7 @@
     "Needs a login?": "需要登入?",
     "No": "否",
     "No (starts over if stopped)": "否(停止後會從頭開始)",
-    "No app can open this file": "沒有可以開啟此檔案的 App",
+    "No app can open this file": "沒有可以開啟此檔案的應用程式",
     "No bookmarks yet. Open a page and choose Add this page.": "還沒有書籤。開啟一個頁面並選擇“新增此頁面”。",
     "No downloads match.": "沒有匹配的下載。",
     "No downloads yet": "還沒有下載",

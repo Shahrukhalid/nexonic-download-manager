@@ -1,8 +1,10 @@
 ## 0.20.0
 
 - **Seven more languages:** Chinese (Simplified and Traditional), Japanese, Korean, Russian, Indonesian and Turkish,
-  on Windows, Linux, Mac, iPhone, iPad and Android. English stays the default. These are machine translations that
-  need review by native speakers; corrections are welcome ([docs/TRANSLATIONS.md](docs/TRANSLATIONS.md)).
+  on Windows, Linux, Mac, iPhone, iPad and Android. English stays the default.
+- **All 15 languages reviewed:** every translation was checked and corrected (for example Pause and Stop, and Resume
+  and Restart, are now different words in Hindi and Urdu), and the "machine translation" labels are gone
+  ([docs/TRANSLATIONS.md](docs/TRANSLATIONS.md)).
 - **Pick the language in every app:** Mac Settings → General → Language (with Restart Now), iPhone and iPad
   Settings → Language, Android Settings → Language (applies right away). Windows and Linux keep Options → General →
   Language.

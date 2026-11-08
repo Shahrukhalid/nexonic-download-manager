@@ -1,6 +1,6 @@
 {
   "language": "简体中文",
-  "status": "Machine translation: needs review by a native speaker",
+  "status": "Reviewed",
   "strings": {
     "A notification you can tap to open the file.": "点按通知即可打开文件。",
     "About": "关于",
@@ -54,7 +54,7 @@
     "Download file": "下载文件",
     "Download image": "下载图片",
     "Download later": "稍后下载",
-    "Download link": "下载链接",
+    "Download link": "下载此链接",
     "Download started": "下载已开始",
     "Download this video": "下载此视频",
     "Download video": "下载视频",

@@ -1,6 +1,6 @@
 {
   "language": "한국어",
-  "status": "Machine translation: needs review by a native speaker",
+  "status": "Reviewed",
   "strings": {
     "A notification you can tap to open the file.": "탭하면 파일을 여는 알림.",
     "About": "정보",
@@ -54,7 +54,7 @@
     "Download file": "파일 다운로드",
     "Download image": "이미지 다운로드",
     "Download later": "나중에 다운로드",
-    "Download link": "다운로드 링크",
+    "Download link": "링크 다운로드",
     "Download started": "다운로드를 시작했습니다",
     "Download this video": "이 동영상 다운로드",
     "Download video": "동영상 다운로드",

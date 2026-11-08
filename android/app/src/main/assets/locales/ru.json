@@ -1,6 +1,6 @@
 {
   "language": "Русский",
-  "status": "Machine translation: needs review by a native speaker",
+  "status": "Reviewed",
   "strings": {
     "A notification you can tap to open the file.": "Уведомление, нажав на которое можно открыть файл.",
     "About": "О программе",
@@ -54,7 +54,7 @@
     "Download file": "Скачать файл",
     "Download image": "Скачать изображение",
     "Download later": "Скачать позже",
-    "Download link": "Ссылка на загрузку",
+    "Download link": "Скачать ссылку",
     "Download started": "Загрузка начата",
     "Download this video": "Скачать это видео",
     "Download video": "Скачать видео",

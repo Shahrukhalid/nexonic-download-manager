@@ -1,4 +1,4 @@
-/* Machine translation: needs review by a native speaker */
+/* Reviewed */
 
 "About" = "情報";
 "About Nexonic Download Manager" = "Nexonic Download Manager について";
@@ -123,7 +123,7 @@
 "Refresh Link" = "リンクを更新";
 "Refresh Link…" = "リンクを更新…";
 "Release Notes" = "リリースノート";
-"Remove" = "削除";
+"Remove" = "取り除く";
 "Remove and Delete File" = "削除してファイルも消去";
 "Remove finished downloads from the list" = "完了したダウンロードをリストから削除";
 "Remove from List" = "リストから削除";
@@ -209,5 +209,5 @@
 "Wi-Fi only" = "Wi-Fi のみ";
 "Language" = "言語";
 "Same as the system" = "システムと同じ";
-"The new language is used after the app restarts. Translations other than English are machine translations that still need review." = "新しい言語はアプリの再起動後に使われます。英語以外の翻訳は機械翻訳で、まだ確認が必要です。";
+"The new language is used after the app restarts." = "新しい言語はアプリの再起動後に使われます。";
 "Restart Now" = "今すぐ再起動";

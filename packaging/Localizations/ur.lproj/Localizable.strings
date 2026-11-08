@@ -1,4 +1,4 @@
-/* Machine translation: needs review by a native speaker */
+/* Reviewed */
 
 "About" = "تعارف";
 "About Nexonic Download Manager" = "Nexonic Download Manager کے بارے میں";
@@ -21,7 +21,7 @@
 "Browser" = "براؤزر";
 "Browser downloads" = "براؤزر ڈاؤن لوڈز";
 "Browsers & Command Line" = "براؤزرز اور کمانڈ لائن";
-"Cancel" = "منسوخ";
+"Cancel" = "منسوخ کریں";
 "Category" = "زمرہ";
 "Check Now" = "ابھی چیک کریں";
 "Check for Updates" = "اپ ڈیٹس چیک کریں";
@@ -103,8 +103,8 @@
 "Options" = "اختیارات";
 "Paste one or more links, one per line." = "ایک یا زیادہ لنک پیسٹ کریں، ہر سطر میں ایک۔";
 "Pattern" = "پیٹرن";
-"Pause" = "روکیں";
-"Pause All" = "سب روکیں";
+"Pause" = "موقوف کریں";
+"Pause All" = "سب موقوف کریں";
 "Piece" = "حصہ";
 "Play a sound" = "آواز چلائیں";
 "Port" = "پورٹ";
@@ -118,7 +118,7 @@
 "Queue (name)" = "قطار (نام)";
 "Queues" = "قطاریں";
 "Queues and timetables" = "قطاریں اور اوقات";
-"Quit" = "بند کریں";
+"Quit" = "ایپ بند کریں";
 "Reconnect after this many silent seconds" = "اتنے سیکنڈ بغیر ڈیٹا کے بعد دوبارہ جڑیں";
 "Refresh Link" = "لنک تازہ کریں";
 "Refresh Link…" = "لنک تازہ کریں…";
@@ -130,9 +130,9 @@
 "Remove the selected downloads from the list" = "منتخب ڈاؤن لوڈز فہرست سے ہٹائیں";
 "Report a Problem" = "مسئلہ رپورٹ کریں";
 "Report a Problem…" = "مسئلہ رپورٹ کریں…";
-"Resume" = "دوبارہ شروع کریں";
-"Resume All" = "سب دوبارہ شروع کریں";
-"Resume the selected downloads" = "منتخب ڈاؤن لوڈز دوبارہ شروع کریں";
+"Resume" = "جاری کریں";
+"Resume All" = "سب جاری کریں";
+"Resume the selected downloads" = "منتخب ڈاؤن لوڈز جاری کریں";
 "Save" = "محفوظ کریں";
 "Save Extension Folder…" = "ایکسٹینشن فولڈر محفوظ کریں…";
 "Save Firefox Add-on…" = "Firefox ایڈ آن محفوظ کریں…";
@@ -209,5 +209,5 @@
 "Wi-Fi only" = "صرف Wi-Fi";
 "Language" = "زبان";
 "Same as the system" = "سسٹم کے مطابق";
-"The new language is used after the app restarts. Translations other than English are machine translations that still need review." = "نئی زبان ایپ دوبارہ شروع ہونے کے بعد استعمال ہوگی۔ انگریزی کے علاوہ تراجم مشینی ہیں اور ابھی جانچ طلب ہیں۔";
+"The new language is used after the app restarts." = "نئی زبان ایپ دوبارہ شروع ہونے کے بعد استعمال ہوگی۔";
 "Restart Now" = "ابھی دوبارہ شروع کریں";

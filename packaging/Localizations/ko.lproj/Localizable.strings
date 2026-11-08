@@ -1,4 +1,4 @@
-/* Machine translation: needs review by a native speaker */
+/* Reviewed */
 
 "About" = "정보";
 "About Nexonic Download Manager" = "Nexonic Download Manager 정보";
@@ -209,5 +209,5 @@
 "Wi-Fi only" = "Wi-Fi에서만";
 "Language" = "언어";
 "Same as the system" = "시스템과 동일";
-"The new language is used after the app restarts. Translations other than English are machine translations that still need review." = "새 언어는 앱을 다시 시작한 후에 적용됩니다. 영어 이외의 번역은 기계 번역이며 아직 검토가 필요합니다.";
+"The new language is used after the app restarts." = "새 언어는 앱을 다시 시작한 후에 적용됩니다.";
 "Restart Now" = "지금 다시 시작";

@@ -24,7 +24,7 @@ struct SettingsView: View {
                 .onChange(of: language) { v in AppLanguage.chosen = v; languageChanged = true }
                 if languageChanged {
                     HStack {
-                        Text("The new language is used after the app restarts. Translations other than English are machine translations that still need review.")
+                        Text("The new language is used after the app restarts.")
                             .font(.caption).foregroundStyle(.secondary)
                         Spacer()
                         Button("Restart Now") { AppLanguage.restart() }

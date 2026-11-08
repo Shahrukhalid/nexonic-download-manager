@@ -547,7 +547,7 @@ public static partial class Dialogs
             SelectedIndex = Math.Max(0, languageChoices.IndexOf(s.Language)),
         };
         general.Children.Add(language);
-        Hint(general, "The new language is used after the app restarts. Translations other than English are machine translations that still need review.");
+        Hint(general, "The new language is used after the app restarts.");
         general.Children.Add(new TextBlock { Text = "Browser downloads", FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 14, 0, 0) });
         var askDialog = Tick(general, "Show the download window when a link is clicked in the browser", s.ShowDownloadDialog);
         var progressWin = Tick(general, "Show a progress window for each download I start", s.ShowProgressWindow);

@@ -1,6 +1,6 @@
 {
   "language": "Türkçe",
-  "status": "Machine translation: needs review by a native speaker",
+  "status": "Reviewed",
   "strings": {
     "A notification you can tap to open the file.": "Dokunarak dosyayı açabileceğiniz bir bildirim.",
     "About": "Hakkında",
@@ -54,7 +54,7 @@
     "Download file": "Dosya indir",
     "Download image": "Görüntüyü indir",
     "Download later": "Sonra indir",
-    "Download link": "İndirme bağlantısı",
+    "Download link": "Bağlantıyı indir",
     "Download started": "İndirme başladı",
     "Download this video": "Bu videoyu indir",
     "Download video": "Videoyu indir",

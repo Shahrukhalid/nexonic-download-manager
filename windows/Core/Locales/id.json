@@ -1,6 +1,6 @@
 {
   "language": "Bahasa Indonesia",
-  "status": "Machine translation: needs review by a native speaker",
+  "status": "Reviewed",
   "strings": {
     "Add URL": "Tambah URL",
     "Resume": "Lanjutkan",
@@ -108,7 +108,7 @@
     "Download File Info": "Info File Unduhan",
     "Download on Your Phone": "Unduh di Ponsel Anda",
     "Same as the system": "Sama seperti sistem",
-    "The new language is used after the app restarts. Translations other than English are machine translations that still need review.": "Bahasa baru dipakai setelah aplikasi dimulai ulang. Terjemahan selain bahasa Inggris adalah terjemahan mesin yang masih perlu ditinjau.",
+    "The new language is used after the app restarts.": "Bahasa baru dipakai setelah aplikasi dimulai ulang.",
     "Canceled": "Dibatalkan"
   }
 }

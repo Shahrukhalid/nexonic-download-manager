@@ -19,7 +19,7 @@ class TranslationsTest {
             val (status, strings) = Translations.parse(File(dir, "$code.json").readText())
             assertEquals(code, english, strings.keys)
             assertTrue(code, strings.values.all { it.isNotEmpty() })
-            assertTrue("$code must stay marked as a machine translation until reviewed", status.contains("review"))
+            assertEquals(code, "Reviewed", status)
             assertTrue(code, strings.getValue("Downloads/Nexonic on this phone").contains("Downloads/Nexonic"))
         }
     }

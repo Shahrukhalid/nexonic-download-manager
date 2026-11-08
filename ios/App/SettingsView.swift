@@ -25,7 +25,7 @@ struct SettingsView: View {
                     }
                     .onChange(of: language) { _, v in AppLanguage.chosen = v }
                 } footer: {
-                    Text("The new language is used after the app restarts. Translations other than English are machine translations that still need review.")
+                    Text("The new language is used after the app restarts.")
                 }
 
                 Section("Downloads") {

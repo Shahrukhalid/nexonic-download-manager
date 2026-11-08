@@ -1,6 +1,6 @@
 {
   "language": "한국어",
-  "status": "Machine translation: needs review by a native speaker",
+  "status": "Reviewed",
   "strings": {
     "Add URL": "URL 추가",
     "Resume": "재개",
@@ -108,7 +108,7 @@
     "Download File Info": "다운로드 파일 정보",
     "Download on Your Phone": "휴대폰에서 다운로드",
     "Same as the system": "시스템과 동일",
-    "The new language is used after the app restarts. Translations other than English are machine translations that still need review.": "새 언어는 앱을 다시 시작한 후에 적용됩니다. 영어 이외의 번역은 기계 번역이며 아직 검토가 필요합니다.",
+    "The new language is used after the app restarts.": "새 언어는 앱을 다시 시작한 후에 적용됩니다.",
     "Canceled": "취소됨"
   }
 }

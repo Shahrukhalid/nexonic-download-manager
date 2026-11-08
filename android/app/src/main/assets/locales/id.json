@@ -1,6 +1,6 @@
 {
   "language": "Bahasa Indonesia",
-  "status": "Machine translation: needs review by a native speaker",
+  "status": "Reviewed",
   "strings": {
     "A notification you can tap to open the file.": "Notifikasi yang bisa diketuk untuk membuka file.",
     "About": "Tentang",
@@ -54,7 +54,7 @@
     "Download file": "Unduh file",
     "Download image": "Unduh gambar",
     "Download later": "Unduh nanti",
-    "Download link": "Tautan unduhan",
+    "Download link": "Unduh tautan",
     "Download started": "Unduhan dimulai",
     "Download this video": "Unduh video ini",
     "Download video": "Unduh video",
@@ -112,7 +112,7 @@
     "Quality": "Kualitas",
     "Refresh link": "Segarkan tautan",
     "Reload": "Muat ulang",
-    "Remove": "Hapus",
+    "Remove": "Singkirkan",
     "Remove from the list?": "Hapus dari daftar?",
     "Remove this download?": "Hapus unduhan ini?",
     "Remove this page": "Hapus halaman ini",
