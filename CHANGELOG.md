@@ -2,6 +2,8 @@
 
 - **The language changes at once:** picking a language in Settings (Options on Windows and Linux) switches every
   open window and menu right away, with no restart. Arabic and Urdu switch the layout to right-to-left as well.
+- **Mac: about 90 more texts translated** into all 15 languages (Settings, torrents, playlists, the Media Library, the
+  toolbar menus and the QR window), so these screens no longer show English.
 
 ## 0.20.1
 
