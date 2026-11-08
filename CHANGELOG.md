@@ -1,3 +1,12 @@
+## 0.19.2
+
+- **iPhone and iPad app for sideloading:** every release now includes `NexonicDownloadManager-iOS-unsigned.ipa`.
+  Install it with AltStore or Sideloadly; a free Apple ID re-signs it every 7 days. The App Store version needs a
+  paid Apple developer account and is not available yet.
+- **Website:** Mac and Windows screenshots are shown large with a row of thumbnails; dialog thumbnails are zoomed so
+  they are readable.
+- Build tools updated (.NET and Java setup, SBOM action, the extension's fuzz-test library).
+
 ## 0.19.1
 
 - **Add Torrent works the same everywhere (Windows and Linux, like the Mac).** The torrent's name, size and files load

@@ -179,6 +179,17 @@ p.sub{color:var(--muted);text-align:center;max-width:700px;margin:0 auto 44px;fo
 .phones{display:flex;gap:18px;justify-content:center;margin:0 auto 40px;max-width:760px}
 .phones img{width:31%;aspect-ratio:1080/2400;border-radius:22px;border:6px solid #0b1220;box-shadow:0 24px 60px rgba(15,23,42,.25);cursor:zoom-in;background:#0b1220}
 .gal figcaption{padding:12px 14px;font-size:14px;color:var(--muted)}.gal figcaption b{color:var(--fg);display:block;font-size:15px}
+/* desktop galleries: one large picture with a row of thumbnails (dialogs are zoomed in the thumbnails) */
+.stage{margin:0 0 16px;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);cursor:zoom-in}
+.stage[hidden]{display:none}.stage img{width:100%;display:block}
+.stage figcaption{display:flex;gap:10px;align-items:baseline;padding:14px 18px;border-top:1px solid var(--line);font-size:15px;color:var(--muted)}.stage figcaption b{color:var(--fg)}
+.gal.thumbs{grid-template-columns:repeat(6,1fr);gap:12px}
+.gal.thumbs figure{cursor:pointer;border-radius:12px}
+.gal.thumbs figure[aria-current="true"]{border-color:var(--brand);box-shadow:0 0 0 2px var(--brand)}
+.gal.thumbs .th{overflow:hidden;aspect-ratio:16/10}
+.gal.thumbs .th img{width:100%;height:100%;object-fit:cover;object-position:top left;aspect-ratio:auto;transition:transform .2s}
+.gal.thumbs .th img[data-focus]{transform:scale(1.75);transform-origin:var(--fx,50%) var(--fy,50%)}
+.gal.thumbs figcaption{padding:8px 10px;font-size:12px}.gal.thumbs figcaption b{font-size:13px}
 
 /* tables & misc */
 .tbl{width:100%;border-collapse:separate;border-spacing:0;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:15px}
@@ -233,7 +244,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
 .lb.on{display:flex}.lb img{max-height:92vh;width:auto;border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
 
 @media (max-width:980px){
-  .gal.android,.gal.ios{grid-template-columns:repeat(3,1fr)}.fl.two-col{grid-template-columns:1fr 1fr}
+  .gal.android,.gal.ios{grid-template-columns:repeat(3,1fr)}.gal.thumbs{grid-template-columns:repeat(3,1fr)}.fl.two-col{grid-template-columns:1fr 1fr}
   .hero h1{font-size:42px}.dl-grid,.f-grid,.gal,.steps,.fl{grid-template-columns:1fr 1fr}
   .split{grid-template-columns:1fr;gap:28px}.split.rev .media{order:0}
   .foot{grid-template-columns:1fr 1fr}.nav .links a:not(.navdl){display:none}
@@ -450,7 +461,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
           <li><svg class="i"><use href="#i-check"/></svg>Right-click any link → Download with Nexonic</li>
         </ul>
       </div>
-      <div class="media"><img src="img/mac-info.png" alt="Download File Info window with file name, size, category, folder and queue" width="1240" height="684" loading="lazy" data-zoom></div>
+      <div class="media"><img src="img/mac-info.png" data-focus style="--fx:50%;--fy:48%" alt="Download File Info window with file name, size, category, folder and queue" width="1240" height="684" loading="lazy" data-zoom></div>
     </div>
 
     <div class="split rev">
@@ -465,7 +476,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
           <li><svg class="i"><use href="#i-check"/></svg>Resume capability shown before you rely on it</li>
         </ul>
       </div>
-      <div class="media"><img src="img/mac-progress.png" alt="Progress window with transfer rate, speed graph and eight connections" width="1240" height="684" loading="lazy" data-zoom></div>
+      <div class="media"><img src="img/mac-progress.png" data-focus style="--fx:50%;--fy:47%" alt="Progress window with transfer rate, speed graph and eight connections" width="1240" height="684" loading="lazy" data-zoom></div>
     </div>
   </div>
 </section>
@@ -524,7 +535,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <img src="img/ios-main.png" alt="Downloads list on iPhone" width="1206" height="2622" loading="lazy" data-zoom>
       <img src="img/ios-browser.png" alt="Built-in browser on iPhone" width="1206" height="2622" loading="lazy" data-zoom>
     </div>
-    <p class="dl-note">The iPhone and iPad app is in testing and not on the App Store yet; you can <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/ios/README.md">install it with Xcode</a>. iOS runs background downloads itself (one connection per file); streaming and copy-protected video can't be saved.</p>
+    <p class="dl-note">The iPhone and iPad app is in testing and not on the App Store yet; you can <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/ios/README.md">install it with Xcode</a>, or sideload <code>NexonicDownloadManager-iOS-unsigned.ipa</code> from the <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest">latest release</a> with AltStore or Sideloadly (a free Apple ID re-signs it every 7 days). iOS runs background downloads itself (one connection per file); streaming and copy-protected video can't be saved.</p>
   </div>
 </section>
 
@@ -544,8 +555,8 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <figure><img src="img/mac-main-dark.png" alt="Main window in dark mode" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>Dark mode</b>Follows your system setting</figcaption></figure>
       <figure><img src="img/mac-info.png" alt="Download window from the browser" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>From the browser</b>Name, size, folder, Start</figcaption></figure>
       <figure><img src="img/mac-progress.png" alt="Progress window" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>Progress window</b>Speed graph and connections</figcaption></figure>
-      <figure><img src="img/mac-scheduler.png" alt="Scheduler" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>Scheduler</b>Start and stop queues on time</figcaption></figure>
-      <figure><img src="img/mac-batch.png" alt="Batch download" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>Batch download</b>Numbered series in one go</figcaption></figure>
+      <figure><img src="img/mac-scheduler.png" data-focus style="--fx:50%;--fy:42%" alt="Scheduler" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>Scheduler</b>Start and stop queues on time</figcaption></figure>
+      <figure><img src="img/mac-batch.png" data-focus style="--fx:50%;--fy:45%" alt="Batch download" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>Batch download</b>Numbered series in one go</figcaption></figure>
     </div>
     <div class="gal android" data-panel="android" hidden>
       <figure><img src="img/android-main.png" alt="Downloads list on Android" width="1080" height="2400" loading="lazy" data-zoom><figcaption><b>Downloads</b>Types, search and live progress</figcaption></figure>
@@ -804,13 +815,25 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
   var tabs=document.querySelectorAll('.tabs button');
   tabs.forEach(function(t){t.addEventListener('click',function(){
     tabs.forEach(function(x){x.setAttribute('aria-selected',x===t)});
-    document.querySelectorAll('[data-panel]').forEach(function(p){p.hidden=p.dataset.panel!==t.dataset.tab});
+    document.querySelectorAll('[data-panel]').forEach(function(p){p.hidden=p.dataset.panel!==t.dataset.tab;if(p._stage)p._stage.hidden=p.hidden});
   })});
   if(win)tabs[1].click();
   if(android)tabs[2].click();
   if(/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1))tabs[3].click();
 
   var lb=document.getElementById('lb'), lbi=lb.querySelector('img');
+  // Mac and Windows: a large picture above a row of thumbnails; clicking a thumbnail shows it large.
+  document.querySelectorAll('.gal.mac,.gal.win').forEach(function(g){
+    var figs=[].slice.call(g.querySelectorAll('figure'));if(!figs.length)return;
+    var st=document.createElement('figure');st.className='stage';st.hidden=g.hidden;
+    var big=document.createElement('img');var cap=document.createElement('figcaption');st.appendChild(big);st.appendChild(cap);
+    g.parentNode.insertBefore(st,g);g.classList.add('thumbs');g._stage=st;
+    function show(f){var i=f.querySelector('img');big.src=i.getAttribute('src');big.alt=i.alt;big.width=i.width;big.height=i.height;
+      cap.innerHTML=f.querySelector('figcaption').innerHTML;figs.forEach(function(x){x.setAttribute('aria-current',x===f?'true':'false')})}
+    figs.forEach(function(f){var i=f.querySelector('img');i.removeAttribute('data-zoom');var w=document.createElement('div');w.className='th';
+      f.insertBefore(w,i);w.appendChild(i);f.addEventListener('click',function(){show(f)})});
+    big.setAttribute('data-zoom','');show(figs[0]);
+  });
   document.querySelectorAll('img[data-zoom]').forEach(function(i){i.addEventListener('click',function(){lbi.src=i.currentSrc||i.src;lbi.alt=i.alt;lb.classList.add('on')})});
   lb.addEventListener('click',function(){lb.classList.remove('on')});
   document.addEventListener('keydown',function(e){if(e.key==='Escape')lb.classList.remove('on')});
