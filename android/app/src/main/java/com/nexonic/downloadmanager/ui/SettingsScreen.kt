@@ -220,6 +220,7 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
             TextButton(onClick = { openLink(context, "https://shahrukhalid.github.io/nexonic-download-manager/") }) { Text(tr("Website")) }
             TextButton(onClick = { openLink(context, "https://github.com/Shahrukhalid/nexonic-download-manager") }) { Text(tr("Source code and help")) }
             TextButton(onClick = { openLink(context, "https://github.com/Shahrukhalid/nexonic-download-manager/issues/new") }) { Text(tr("Report a problem")) }
+            TextButton(onClick = { openLink(context, "https://www.patreon.com/Shahrukhalid") }) { Text(tr("Support the Project")) }
             TextButton(onClick = { showLicenses = true }) { Text(tr("Open-source licenses")) }
             Hint("Only download what you have the right to save. Copy-protected services are not supported.")
             Spacer(Modifier.height(32.dp))

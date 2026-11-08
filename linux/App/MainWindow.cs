@@ -259,6 +259,7 @@ public sealed class MainWindow : Window
         menu.Items.Add(Group("_View", showToolbarItem, showNamesItem));
         menu.Items.Add(Group("_Help",
             Item("_Help", () => HelpWindows.ShowHelp(this), "F1"),
+            Item("Support the Project", () => LinuxSystem.Open(HelpWindows.Support)),
             Item("_About Nexonic Download Manager", () => _ = HelpWindows.ShowAbout(this))));
         return menu;
     }

@@ -85,6 +85,8 @@ struct AppCommands: Commands {
             Button("Website") { AppLinks.open(AppLinks.website) }
             Button("Source Code on GitHub") { AppLinks.open(AppLinks.project) }
             Button("Terms of Use and License") { AppLinks.open(AppLinks.terms) }
+            Divider()
+            Button("Support the Project") { AppLinks.open(AppLinks.support) }
         }
     }
 

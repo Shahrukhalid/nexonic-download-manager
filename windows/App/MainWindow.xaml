@@ -110,6 +110,7 @@
       </MenuItem>
       <MenuItem Header="_Help">
         <MenuItem Header="_Help" InputGestureText="F1" Click="OnHelp" />
+        <MenuItem Header="Support the Project" Click="OnSupport" />
         <MenuItem Header="_About Nexonic Download Manager" Click="OnAbout" />
       </MenuItem>
     </Menu>

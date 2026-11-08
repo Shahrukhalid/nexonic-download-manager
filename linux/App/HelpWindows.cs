@@ -18,6 +18,7 @@ public static class HelpWindows
     public const string OnlineHelp = Project + "/blob/main/docs/HELP.md";
     public const string Releases = Project + "/releases/latest";
     public const string ReportProblem = Project + "/issues/new";
+    public const string Support = "https://www.patreon.com/Shahrukhalid";
     public const string License = Project + "/blob/main/LICENSE";
     public const string Terms = Project + "/blob/main/TERMS.md";
 
@@ -111,7 +112,7 @@ public static class HelpWindows
             detail.Children.Add(new StackPanel
             {
                 Orientation = Orientation.Horizontal, Spacing = 20,
-                Children = { Ui.Link("Online Help", OnlineHelp), Ui.Link("Report a Problem", ReportProblem), Ui.LinkButton("Check for Updates", () => _ = Updater.Check(true)) },
+                Children = { Ui.Link("Online Help", OnlineHelp), Ui.Link("Report a Problem", ReportProblem), Ui.Link("Support the Project", Support), Ui.LinkButton("Check for Updates", () => _ = Updater.Check(true)) },
             });
         }
 
@@ -148,7 +149,7 @@ public static class HelpWindows
             HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 6, 0, 0),
             Children =
             {
-                Spaced(Ui.Link("Website", Website)), Spaced(Ui.Link("GitHub", GitHub)), Spaced(Ui.Link("Source Code", Project)), Spaced(Ui.Link("Report a Problem", ReportProblem)),
+                Spaced(Ui.Link("Website", Website)), Spaced(Ui.Link("GitHub", GitHub)), Spaced(Ui.Link("Source Code", Project)), Spaced(Ui.Link("Report a Problem", ReportProblem)), Spaced(Ui.Link("Support the Project", Support)),
             },
         });
         p.Children.Add(new Separator { Margin = new Thickness(0, 14, 0, 10) });
