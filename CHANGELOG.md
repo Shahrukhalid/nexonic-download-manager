@@ -1,3 +1,8 @@
+## 0.20.2
+
+- **The language changes at once:** picking a language in Settings (Options on Windows and Linux) switches every
+  open window and menu right away, with no restart. Arabic and Urdu switch the layout to right-to-left as well.
+
 ## 0.20.1
 
 - **Support the project:** a "Support the Project" item in the Help menu (Mac, Windows, Linux), in the About window,

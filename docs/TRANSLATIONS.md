@@ -27,9 +27,9 @@ language; no fonts are bundled (each system's own fonts are used).
 
 | App              | Where                                                    | When it applies            |
 |------------------|----------------------------------------------------------|----------------------------|
-| Windows, Linux   | Options → General → Language                             | After restarting the app   |
-| Mac              | Settings → General → Language, then **Restart Now**      | After the restart          |
-| iPhone and iPad  | Settings → Language                                      | Next time the app opens    |
+| Windows, Linux   | Options → General → Language                             | Right away                 |
+| Mac              | Settings → General → Language                            | Right away                 |
+| iPhone and iPad  | Settings → Language                                      | Right away                 |
 | Android          | Settings → Language (Android 13+: also the system's app language settings) | Right away |
 | Browser extension| The extension's menu → Settings → Language               | Right away                 |
 
