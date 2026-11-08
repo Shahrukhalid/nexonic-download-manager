@@ -7,7 +7,10 @@ struct NexonicDownloadManagerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var manager = DownloadManager.shared
 
-    init() { HostInstaller.install() }
+    init() {
+        AppLanguage.start()
+        HostInstaller.install()
+    }
 
     var body: some Scene {
         // A single main window: links from the browser are added to it instead of opening another window.
@@ -15,23 +18,24 @@ struct NexonicDownloadManagerApp: App {
             ContentView()
                 .environmentObject(manager)
                 .frame(minWidth: 900, minHeight: 480)
+                .liveLanguage()
         }
         .commands {
             AppCommands()
             MainMenus()
         }
         Settings {
-            SettingsView().environmentObject(manager)
+            SettingsView().environmentObject(manager).liveLanguage()
         }
         Window("About Nexonic Download Manager", id: "about") {
-            AboutView()
+            AboutView().liveLanguage()
         }
         .windowResizability(.contentSize)
         Window("Nexonic Download Manager Help", id: "help") {
-            HelpView()
+            HelpView().liveLanguage()
         }
         MenuBarExtra {
-            MenuBarView().environmentObject(manager)
+            MenuBarView().environmentObject(manager).liveLanguage()
         } label: {
             Image(nsImage: Self.menuBarIcon)
         }
@@ -69,6 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 /// Replaces the standard About panel and the empty Help menu.
 struct AppCommands: Commands {
     @Environment(\.openWindow) private var openWindow
+    @ObservedObject private var language = LanguageState.shared
 
     var body: some Commands {
         CommandGroup(replacing: .appInfo) {

@@ -23,9 +23,7 @@ struct SettingsView: View {
                         Text("Same as the system").tag("")
                         ForEach(AppLanguage.all, id: \.code) { Text(verbatim: $0.name).tag($0.code) }
                     }
-                    .onChange(of: language) { _, v in AppLanguage.chosen = v }
-                } footer: {
-                    Text("The new language is used after the app restarts.")
+                    .onChange(of: language) { _, v in AppLanguage.use(v) }
                 }
 
                 Section("Downloads") {
@@ -118,23 +116,5 @@ private struct Step: View {
             Text(text)
         }
         .padding(.vertical, 2)
-    }
-}
-
-/// The language picked in Settings ("" = same as the system). Kept as the app's AppleLanguages, read when the app starts.
-enum AppLanguage {
-    static let all: [(code: String, name: String)] = [
-        ("en", "English"), ("ar", "العربية"), ("de", "Deutsch"), ("es", "Español"), ("fr", "Français"),
-        ("hi", "हिन्दी"), ("id", "Bahasa Indonesia"), ("ja", "日本語"), ("ko", "한국어"), ("pt", "Português"),
-        ("ru", "Русский"), ("tr", "Türkçe"), ("ur", "اردو"), ("zh-Hans", "简体中文"), ("zh-Hant", "繁體中文"),
-    ]
-
-    static var chosen: String {
-        get { UserDefaults.standard.string(forKey: "NexonicLanguage") ?? "" }
-        set {
-            UserDefaults.standard.set(newValue, forKey: "NexonicLanguage")
-            if newValue.isEmpty { UserDefaults.standard.removeObject(forKey: "AppleLanguages") }
-            else { UserDefaults.standard.set([newValue], forKey: "AppleLanguages") }
-        }
     }
 }

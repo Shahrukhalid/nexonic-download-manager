@@ -122,6 +122,7 @@ private struct OptionsTileLabel: View {
 
 /// Menus in the menu bar like IDM's Tasks, Downloads and View menus.
 struct MainMenus: Commands {
+    @ObservedObject private var language = LanguageState.shared
     @AppStorage("toolbarText") private var showText = true
     @AppStorage("showToolbar") private var showToolbar = true
     @AppStorage("extractZips") private var extractZips = false

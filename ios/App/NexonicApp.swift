@@ -20,6 +20,8 @@ struct NexonicApp: App {
     @State private var browser = BrowserState()
     @Environment(\.scenePhase) private var phase
 
+    init() { AppLanguage.start() }
+
     var body: some Scene {
         WindowGroup {
             RootView()
@@ -31,6 +33,7 @@ struct NexonicApp: App {
                     if p == .background { TorrentStore.shared.enterBackground() }
                 }
                 .tint(Color(red: 0.15, green: 0.39, blue: 0.92))
+                .liveLanguage()
         }
     }
 }
