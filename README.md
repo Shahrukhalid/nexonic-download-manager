@@ -10,6 +10,7 @@ Download faster, pause and resume anytime, and save videos from YouTube, Instagr
 1,000+ other sites in the best quality.
 
 [![Latest release](https://img.shields.io/github/v/release/Shahrukhalid/nexonic-download-manager?label=download)](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest)
+[![Support on Patreon](https://img.shields.io/badge/support-Patreon-f96854?logo=patreon&logoColor=white)](https://www.patreon.com/Shahrukhalid)
 ![macOS 13+](https://img.shields.io/badge/macOS-13%2B-black)
 ![Windows 10+](https://img.shields.io/badge/Windows-10%2B-0078D6)
 ![Linux](https://img.shields.io/badge/Linux-x64%20%7C%20ARM64-FCC624)
@@ -239,6 +240,11 @@ right to save.
 - **Report a problem:** [open an issue](https://github.com/Shahrukhalid/nexonic-download-manager/issues/new) with your
   system, the app version (from About) and the link if it is public.
 - **What's new:** [CHANGELOG.md](CHANGELOG.md) and the [releases page](https://github.com/Shahrukhalid/nexonic-download-manager/releases).
+
+## Support the project
+
+Nexonic Download Manager is free and stays free for everyone. If it saves you time, you can support its development on
+[Patreon](https://www.patreon.com/Shahrukhalid), star the repo, or tell a friend. Thank you!
 
 ## Privacy and terms
 
