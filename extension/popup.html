@@ -9,6 +9,7 @@
   h1 { font-size: 14px; margin: 0 0 6px; }
   h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 14px 0 6px; }
   .row { display: flex; align-items: center; justify-content: space-between; margin: 6px 0; gap: 8px; }
+  select { padding: 4px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 5px; }
   input[type=text], input[type=number] { width: 100%; box-sizing: border-box; padding: 5px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 5px; }
   button:disabled { opacity: .5; cursor: default; }
   button { padding: 5px 10px; border: 0; border-radius: 5px; background: var(--accent); color: #fff; cursor: pointer; white-space: nowrap; }
@@ -58,6 +59,7 @@
     <label for="sites" class="muted">Keep downloads from these sites in the browser</label>
     <input type="text" id="sites" placeholder="e.g. example.com, files.example.org">
     <button class="plain" id="thisSite" hidden></button>
+    <div class="row"><label for="language">Language</label><select id="language"></select></div>
   </details>
   <script type="module" src="popup.js"></script>
 </body>

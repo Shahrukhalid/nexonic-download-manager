@@ -19,7 +19,7 @@ class TranslationsTest {
             val (status, strings) = Translations.parse(File(dir, "$code.json").readText())
             assertEquals(code, english, strings.keys)
             assertTrue(code, strings.values.all { it.isNotEmpty() })
-            assertTrue("$code must stay marked as a machine translation until reviewed", status.contains("review"))
+            assertEquals(code, "Reviewed", status)
             assertTrue(code, strings.getValue("Downloads/Nexonic on this phone").contains("Downloads/Nexonic"))
         }
     }
@@ -32,6 +32,19 @@ class TranslationsTest {
         Translations.use("xx", ::read)
         assertEquals("en", Translations.code)
         assertEquals("Later", tr("Later"))
+    }
+
+    @Test fun mapsSystemTagsToFiles() {
+        assertEquals("zh-tw", Translations.normalize("zh-Hant-TW"))
+        assertEquals("zh-tw", Translations.normalize("zh-HK"))
+        assertEquals("zh-cn", Translations.normalize("zh-Hans-CN"))
+        assertEquals("zh-cn", Translations.normalize("zh"))
+        assertEquals("id", Translations.normalize("in-ID"))
+        assertEquals("pt", Translations.normalize("pt_BR"))
+        Translations.use("ja-JP", ::read)
+        assertEquals("ja", Translations.code)
+        assertEquals("後で", tr("Later"))
+        for (code in Translations.languages) assertTrue(code, Translations.names.containsKey(code))
     }
 
     @Test fun readsEscapes() {

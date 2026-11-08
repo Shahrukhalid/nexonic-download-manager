@@ -232,3 +232,35 @@ export function isVideoSite(url) {
   }
 }
 
+
+/** Interface languages (locales/<code>.json, English text → translation). English is built in. */
+export const LANGUAGES = {
+  en: "English", ar: "العربية", de: "Deutsch", es: "Español", fr: "Français", hi: "हिन्दी", id: "Bahasa Indonesia",
+  ja: "日本語", ko: "한국어", pt: "Português", ru: "Русский", tr: "Türkçe", ur: "اردو", "zh-cn": "简体中文", "zh-tw": "繁體中文",
+};
+
+/** A browser language tag ("zh-TW", "pt-BR", "in") to one of LANGUAGES, English when there is none. */
+export function languageFor(tag) {
+  const t = String(tag || "").replace(/_/g, "-").toLowerCase();
+  const lang = t.split("-")[0];
+  const code = lang === "zh" ? (/hant|-(tw|hk|mo)\b/.test(t) ? "zh-tw" : "zh-cn") : lang === "in" ? "id" : lang;
+  return code in LANGUAGES ? code : "en";
+}
+
+/** t("Sent {count}", { count: 3 }): the translation in strings, or the English text, with {names} filled in. */
+export function translator(strings) {
+  return (english, vars = {}) =>
+    ((strings && strings[english]) || english).replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
+}
+
+/** The strings for a language code ("" = the browser's language). */
+export async function loadStrings(choice) {
+  const code = languageFor(choice || chrome.i18n.getUILanguage());
+  if (code === "en") return { code, strings: {} };
+  try {
+    const r = await fetch(chrome.runtime.getURL(`locales/${code}.json`));
+    return { code, strings: (await r.json()).strings || {} };
+  } catch (_) {
+    return { code: "en", strings: {} };
+  }
+}

@@ -1,4 +1,4 @@
-/* Machine translation: needs review by a native speaker */
+/* Reviewed */
 
 "About" = "Sobre";
 "About Nexonic Download Manager" = "Sobre o Nexonic Download Manager";
@@ -207,3 +207,7 @@
 "When the queue is done" = "Quando a fila terminar";
 "Where your files go" = "Onde seus arquivos ficam";
 "Wi-Fi only" = "Somente Wi-Fi";
+"Language" = "Idioma";
+"Same as the system" = "Igual ao sistema";
+"The new language is used after the app restarts." = "O novo idioma é usado depois que o app reinicia.";
+"Restart Now" = "Reiniciar agora";

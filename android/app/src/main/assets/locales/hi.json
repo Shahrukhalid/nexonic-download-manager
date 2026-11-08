@@ -1,6 +1,6 @@
 {
   "language": "हिन्दी",
-  "status": "Machine translation: needs review by a native speaker",
+  "status": "Reviewed",
   "strings": {
     "A notification you can tap to open the file.": "एक सूचना जिस पर टैप करके फ़ाइल खोल सकते हैं।",
     "About": "परिचय",
@@ -44,7 +44,7 @@
     "Copy link": "लिंक कॉपी करें",
     "Could not reach the server. You can still add it and try later.": "सर्वर तक नहीं पहुँच सके। आप इसे जोड़कर बाद में कोशिश कर सकते हैं।",
     "Could not update now. Try again later.": "अभी अपडेट नहीं हो सका। बाद में फिर कोशिश करें।",
-    "Delete": "हटाएँ",
+    "Delete": "मिटाएँ",
     "Deselect all": "सभी अचयनित करें",
     "Details": "विवरण",
     "Documents": "दस्तावेज़",
@@ -103,9 +103,9 @@
     "Password": "पासवर्ड",
     "Paste": "चिपकाएँ",
     "Paste a fresh link to the same file. The download continues where it stopped.": "उसी फ़ाइल का नया लिंक चिपकाएँ। डाउनलोड वहीं से जारी रहेगा जहाँ रुका था।",
-    "Pause": "रोकें",
-    "Pause all": "सभी रोकें",
-    "Paused": "रुका हुआ",
+    "Pause": "विराम दें",
+    "Pause all": "सभी को विराम दें",
+    "Paused": "विराम पर",
     "Preparing downloads": "डाउनलोड तैयार हो रहे हैं",
     "Programs": "प्रोग्राम",
     "Progress by connection": "प्रति कनेक्शन प्रगति",
@@ -175,6 +175,8 @@
     "When a download finishes": "जब कोई डाउनलोड पूरा हो",
     "Wi-Fi only": "केवल Wi-Fi",
     "Yes": "हाँ",
-    "Open-source licenses": "ओपन-सोर्स लाइसेंस"
+    "Open-source licenses": "ओपन-सोर्स लाइसेंस",
+    "Language": "भाषा",
+    "Same as the system": "सिस्टम के अनुसार"
   }
 }

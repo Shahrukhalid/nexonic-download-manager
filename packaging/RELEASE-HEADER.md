@@ -1,6 +1,6 @@
-# Nexonic Download Manager 0.19.2
+# Nexonic Download Manager 0.20.0
 
-**iPhone and iPad app for sideloading.** Each release now includes `NexonicDownloadManager-iOS-unsigned.ipa`: install it with AltStore or Sideloadly (a free Apple ID re-signs it every 7 days). Also: build tools updated. Includes 0.19.1 (torrents open easily on Windows and Linux) and 0.19.0 (big downloads finish instantly). Android APK licensing and corresponding-source requirements remain unchanged; the release must include `Android-GPL-Sources.tar.gz`; the torrent engine's sources are in `Android-Torrent-Sources.tar.gz`.
+**15 languages, chosen in every app.** New: Chinese (Simplified and Traditional), Japanese, Korean, Russian, Indonesian and Turkish, on Windows, Linux, Mac, iPhone, iPad, Android and the browser extension. Pick one in Settings (Options on Windows and Linux); English stays the default. Every translation has been reviewed and corrected. Includes 0.19.2 (iPhone and iPad app for sideloading). Android APK licensing and corresponding-source requirements remain unchanged; the release must include `Android-GPL-Sources.tar.gz`; the torrent engine's sources are in `Android-Torrent-Sources.tar.gz`.
 
 **Mac, first launch:** macOS says it *could not verify* the app because it's free and not sold through Apple. Click **Done**, open **System Settings → Privacy & Security**, click **Open Anyway**, then **Open Anyway** again and enter your Mac password. Only once; updates installed with **Update Now** open without a warning. [Pictures of each step](https://github.com/Shahrukhalid/nexonic-download-manager#first-launch-on-mac)
 

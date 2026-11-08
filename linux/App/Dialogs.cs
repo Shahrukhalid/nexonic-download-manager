@@ -470,7 +470,7 @@ public static partial class Dialogs
             SelectedIndex = Math.Max(0, languageChoices.IndexOf(s.Language)), MinWidth = 220,
         };
         general.Children.Add(language);
-        Hint(general, "The new language is used after the app restarts. Translations other than English are machine translations that still need review.");
+        Hint(general, "The new language is used after the app restarts.");
         general.Children.Add(new TextBlock { Text = "Appearance", Margin = new Thickness(0, 10, 0, 3) });
         var theme = new ComboBox { ItemsSource = new[] { "Same as the system", "Light", "Dark" }, SelectedIndex = prefs.Theme switch { "light" => 1, "dark" => 2, _ => 0 }, MinWidth = 220 };
         general.Children.Add(theme);

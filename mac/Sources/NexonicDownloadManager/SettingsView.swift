@@ -11,10 +11,25 @@ struct SettingsView: View {
     @State private var selectedSite: HostProfile.ID?
     @State private var takeSettings = false
     @State private var backupMessage = ""
+    @State private var language = AppLanguage.chosen
+    @State private var languageChanged = false
 
     var body: some View {
         TabView {
             Form {
+                Picker("Language", selection: $language) {
+                    Text("Same as the system").tag("")
+                    ForEach(AppLanguage.all, id: \.code) { Text(verbatim: $0.name).tag($0.code) }
+                }
+                .onChange(of: language) { v in AppLanguage.chosen = v; languageChanged = true }
+                if languageChanged {
+                    HStack {
+                        Text("The new language is used after the app restarts.")
+                            .font(.caption).foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Restart Now") { AppLanguage.restart() }
+                    }
+                }
                 Stepper("Connections per download: \(manager.settings.connections)", value: $manager.settings.connections, in: 1...32)
                 Stepper("Downloads at the same time: \(manager.settings.maxActive)", value: $manager.settings.maxActive, in: 1...10)
                 LabeledContent("Save to") {
@@ -325,5 +340,32 @@ struct SiteEditor: View {
         p.proxy = ownProxy ? proxy : nil
         onSave(p)
         dismiss()
+    }
+}
+
+/// The language picked in Settings ("" = same as the system). Kept as the app's AppleLanguages, read when the app starts.
+enum AppLanguage {
+    static let all: [(code: String, name: String)] = [
+        ("en", "English"), ("ar", "العربية"), ("de", "Deutsch"), ("es", "Español"), ("fr", "Français"),
+        ("hi", "हिन्दी"), ("id", "Bahasa Indonesia"), ("ja", "日本語"), ("ko", "한국어"), ("pt", "Português"),
+        ("ru", "Русский"), ("tr", "Türkçe"), ("ur", "اردو"), ("zh-Hans", "简体中文"), ("zh-Hant", "繁體中文"),
+    ]
+
+    static var chosen: String {
+        get { UserDefaults.standard.string(forKey: "NexonicLanguage") ?? "" }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "NexonicLanguage")
+            if newValue.isEmpty { UserDefaults.standard.removeObject(forKey: "AppleLanguages") }
+            else { UserDefaults.standard.set([newValue], forKey: "AppleLanguages") }
+        }
+    }
+
+    /// Opens a fresh copy of the app, then quits this one.
+    static func restart() {
+        let config = NSWorkspace.OpenConfiguration()
+        config.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: config) { _, _ in
+            DispatchQueue.main.async { NSApp.terminate(nil) }
+        }
     }
 }

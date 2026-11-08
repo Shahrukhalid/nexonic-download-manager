@@ -1,3 +1,18 @@
+## 0.20.0
+
+- **Seven more languages:** Chinese (Simplified and Traditional), Japanese, Korean, Russian, Indonesian and Turkish,
+  on Windows, Linux, Mac, iPhone, iPad and Android. English stays the default.
+- **All 15 languages reviewed:** every translation was checked and corrected (for example Pause and Stop, and Resume
+  and Restart, are now different words in Hindi and Urdu), and the "machine translation" labels are gone
+  ([docs/TRANSLATIONS.md](docs/TRANSLATIONS.md)).
+- **Pick the language in every app:** Mac Settings → General → Language (with Restart Now), iPhone and iPad
+  Settings → Language, Android Settings → Language (applies right away). Windows and Linux keep Options → General →
+  Language.
+- **The browser extension is translated** into all 15 languages: its menu, right-click items and the "Download this
+  video" button. Choose a language in the extension's Settings, or keep the browser's.
+- Android now follows the system's language for every translated language (it was English only on some phones).
+- Chinese follows the region: Traditional for Taiwan, Hong Kong and Macau, Simplified elsewhere.
+
 ## 0.19.2
 
 - **iPhone and iPad app for sideloading:** every release now includes `NexonicDownloadManager-iOS-unsigned.ipa`.

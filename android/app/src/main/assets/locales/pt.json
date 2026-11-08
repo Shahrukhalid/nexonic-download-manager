@@ -1,6 +1,6 @@
 {
   "language": "Português",
-  "status": "Machine translation: needs review by a native speaker",
+  "status": "Reviewed",
   "strings": {
     "A notification you can tap to open the file.": "Uma notificação que você toca para abrir o arquivo.",
     "About": "Sobre",
@@ -175,6 +175,8 @@
     "When a download finishes": "Quando um download terminar",
     "Wi-Fi only": "Somente Wi-Fi",
     "Yes": "Sim",
-    "Open-source licenses": "Licenças de código aberto"
+    "Open-source licenses": "Licenças de código aberto",
+    "Language": "Idioma",
+    "Same as the system": "Igual ao sistema"
   }
 }

@@ -1,6 +1,6 @@
 {
   "language": "Português",
-  "status": "Machine translation: needs review by a native speaker",
+  "status": "Reviewed",
   "strings": {
     "Add URL": "Adicionar URL",
     "Resume": "Retomar",
@@ -108,7 +108,7 @@
     "Download File Info": "Informações do arquivo",
     "Download on Your Phone": "Baixar no celular",
     "Same as the system": "Igual ao sistema",
-    "The new language is used after the app restarts. Translations other than English are machine translations that still need review.": "O novo idioma é usado depois que o app reinicia. As traduções que não são em inglês são automáticas e ainda precisam de revisão.",
+    "The new language is used after the app restarts.": "O novo idioma é usado depois que o app reinicia.",
     "Canceled": "Cancelado"
   }
 }

@@ -16,12 +16,12 @@ final class LocalizationTests: XCTestCase {
         let english = try table("en")
         XCTAssertGreaterThan(english.count, 100)
         for (key, value) in english { XCTAssertEqual(key, value) }
-        for code in ["ar", "de", "es", "fr", "hi", "pt", "ur"] {
+        for code in ["ar", "de", "es", "fr", "hi", "id", "ja", "ko", "pt", "ru", "tr", "ur", "zh-Hans", "zh-Hant"] {
             let other = try table(code)
             XCTAssertEqual(Set(other.keys), Set(english.keys), code)
             XCTAssertTrue(other.values.allSatisfy { !$0.isEmpty }, code)
             let text = try String(contentsOf: root.appendingPathComponent("\(code).lproj/Localizable.strings"), encoding: .utf8)
-            XCTAssertTrue(text.contains("needs review"), "\(code) must stay marked as a machine translation until reviewed")
+            XCTAssertTrue(text.hasPrefix("/* Reviewed */"), code)
             XCTAssertTrue(other["Install ndm Command…"]?.contains("ndm") ?? false, code)
         }
     }

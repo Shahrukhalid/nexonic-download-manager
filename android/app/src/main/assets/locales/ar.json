@@ -1,6 +1,6 @@
 {
   "language": "العربية",
-  "status": "Machine translation: needs review by a native speaker",
+  "status": "Reviewed",
   "strings": {
     "A notification you can tap to open the file.": "إشعار يمكنك لمسه لفتح الملف.",
     "About": "حول",
@@ -175,6 +175,8 @@
     "When a download finishes": "عند اكتمال تنزيل",
     "Wi-Fi only": "Wi-Fi فقط",
     "Yes": "نعم",
-    "Open-source licenses": "تراخيص المصادر المفتوحة"
+    "Open-source licenses": "تراخيص المصادر المفتوحة",
+    "Language": "اللغة",
+    "Same as the system": "مثل النظام"
   }
 }

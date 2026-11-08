@@ -1,7 +1,27 @@
 import {
   DEFAULTS, HOST, TROUBLESHOOT, addMedia, cookieHeader, downloadKey, header, isMedia, isStreamPlaylist, isVideoSite, isWebLink, mayBeMedia, nameFromUrl,
-  originOf, shouldTakeOver, sortMedia, summarizePlaylist, titleToName,
+  originOf, shouldTakeOver, sortMedia, summarizePlaylist, titleToName, loadStrings, translator,
 } from "./helpers.js";
+
+// ---- Interface language: the popup and the page buttons read the strings kept here ----
+
+let say = translator({});
+const MENUS = [
+  ["nexonic-download", "Download with Nexonic"],
+  ["nexonic-page-video", "Download this page's video with Nexonic"],
+  ["nexonic-all", "Download all links with Nexonic"],
+];
+async function useLanguage() {
+  const { language = "" } = await chrome.storage.sync.get("language");
+  const { code, strings } = await loadStrings(language);
+  say = translator(strings);
+  await chrome.storage.local.set({ uiLanguage: code, uiStrings: strings });
+  for (const [id, title] of MENUS) chrome.contextMenus.update(id, { title: say(title) }, () => void chrome.runtime.lastError);
+}
+useLanguage();
+chrome.storage.onChanged.addListener((c, area) => {
+  if (area === "sync" && c.language) useLanguage();
+});
 
 async function settings() {
   return { ...DEFAULTS, ...(await chrome.storage.sync.get(Object.keys(DEFAULTS))) };
@@ -38,7 +58,7 @@ async function send(url, extra = {}) {
 async function showStatus(ok) {
   await chrome.action.setBadgeText({ text: ok ? "" : "!" });
   if (!ok) await chrome.action.setBadgeBackgroundColor({ color: "#cf222e" }).catch(() => {});
-  await chrome.action.setTitle({ title: ok ? "Nexonic Download Manager" : TROUBLESHOOT }).catch(() => {});
+  await chrome.action.setTitle({ title: ok ? "Nexonic Download Manager" : say(TROUBLESHOOT) }).catch(() => {});
 }
 
 // ---- Browser downloads go to the app ----
@@ -77,10 +97,10 @@ chrome.downloads.onCreated.addListener(async (item) => {
 
 // ---- Right-click menu ----
 
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({ id: "nexonic-download", title: "Download with Nexonic", contexts: ["link", "video", "audio"] });
-  chrome.contextMenus.create({ id: "nexonic-page-video", title: "Download this page's video with Nexonic", contexts: ["page", "video"] });
-  chrome.contextMenus.create({ id: "nexonic-all", title: "Download all links with Nexonic", contexts: ["page", "selection"] });
+chrome.runtime.onInstalled.addListener(async () => {
+  await useLanguage();
+  const contexts = { "nexonic-download": ["link", "video", "audio"], "nexonic-page-video": ["page", "video"], "nexonic-all": ["page", "selection"] };
+  for (const [id, title] of MENUS) chrome.contextMenus.create({ id, title: say(title), contexts: contexts[id] }, () => void chrome.runtime.lastError);
 });
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {

@@ -1,9 +1,9 @@
 {
   "language": "اردو",
-  "status": "Machine translation: needs review by a native speaker",
+  "status": "Reviewed",
   "strings": {
     "Add URL": "یو آر ایل شامل کریں",
-    "Resume": "دوبارہ شروع کریں",
+    "Resume": "جاری کریں",
     "Stop": "روکیں",
     "Stop All": "سب روکیں",
     "Select All": "سب منتخب کریں",
@@ -18,7 +18,7 @@
     "Help": "مدد",
     "About": "تعارف",
     "Add one or more links (Ctrl+N)": "ایک یا زیادہ لنک شامل کریں (Ctrl+N)",
-    "Resume the selected downloads": "منتخب ڈاؤن لوڈز دوبارہ شروع کریں",
+    "Resume the selected downloads": "منتخب ڈاؤن لوڈز جاری کریں",
     "Stop the selected downloads": "منتخب ڈاؤن لوڈز روکیں",
     "Stop every download": "ہر ڈاؤن لوڈ روکیں",
     "Select every download in this list (click again to deselect)": "اس فہرست کے تمام ڈاؤن لوڈ منتخب کریں (دوبارہ کلک سے انتخاب ختم)",
@@ -78,11 +78,11 @@
     "Preparing video…": "ویڈیو تیار ہو رہی ہے…",
     "Show Downloads": "ڈاؤن لوڈز دکھائیں",
     "Add URL…": "یو آر ایل شامل کریں…",
-    "Resume All": "سب دوبارہ شروع کریں",
+    "Resume All": "سب جاری کریں",
     "Speed Limit": "رفتار کی حد",
     "No Limit": "کوئی حد نہیں",
-    "Quit": "بند کریں",
-    "Cancel": "منسوخ",
+    "Quit": "ایپ بند کریں",
+    "Cancel": "منسوخ کریں",
     "OK": "ٹھیک ہے",
     "Save": "محفوظ کریں",
     "Close": "بند کریں",
@@ -108,7 +108,7 @@
     "Download File Info": "ڈاؤن لوڈ فائل کی معلومات",
     "Download on Your Phone": "اپنے فون پر ڈاؤن لوڈ کریں",
     "Same as the system": "سسٹم کے مطابق",
-    "The new language is used after the app restarts. Translations other than English are machine translations that still need review.": "نئی زبان ایپ دوبارہ شروع ہونے کے بعد استعمال ہوگی۔ انگریزی کے علاوہ تراجم مشینی ہیں اور ابھی جانچ طلب ہیں۔",
+    "The new language is used after the app restarts.": "نئی زبان ایپ دوبارہ شروع ہونے کے بعد استعمال ہوگی۔",
     "Canceled": "منسوخ"
   }
 }

@@ -1,6 +1,6 @@
 {
   "language": "اردو",
-  "status": "Machine translation: needs review by a native speaker",
+  "status": "Reviewed",
   "strings": {
     "A notification you can tap to open the file.": "ایک اطلاع جس پر ٹیپ کر کے فائل کھول سکتے ہیں۔",
     "About": "تعارف",
@@ -25,7 +25,7 @@
     "Browser": "براؤزر",
     "Browser and privacy": "براؤزر اور رازداری",
     "Browser data cleared": "براؤزر ڈیٹا صاف ہو گیا",
-    "Cancel": "منسوخ",
+    "Cancel": "منسوخ کریں",
     "Cancel selection": "انتخاب منسوخ کریں",
     "Change search engine": "سرچ انجن تبدیل کریں",
     "Change time": "وقت تبدیل کریں",
@@ -103,9 +103,9 @@
     "Password": "پاس ورڈ",
     "Paste": "پیسٹ کریں",
     "Paste a fresh link to the same file. The download continues where it stopped.": "اسی فائل کا نیا لنک پیسٹ کریں۔ ڈاؤن لوڈ وہیں سے جاری رہے گا جہاں رکا تھا۔",
-    "Pause": "روکیں",
-    "Pause all": "سب روکیں",
-    "Paused": "رکا ہوا",
+    "Pause": "موقوف کریں",
+    "Pause all": "سب موقوف کریں",
+    "Paused": "موقوف",
     "Preparing downloads": "ڈاؤن لوڈز تیار ہو رہے ہیں",
     "Programs": "پروگرام",
     "Progress by connection": "ہر کنکشن کی پیش رفت",
@@ -117,7 +117,7 @@
     "Remove this download?": "یہ ڈاؤن لوڈ ہٹائیں؟",
     "Remove this page": "یہ صفحہ ہٹائیں",
     "Report a problem": "مسئلہ رپورٹ کریں",
-    "Resume": "دوبارہ شروع کریں",
+    "Resume": "جاری کریں",
     "Save": "محفوظ کریں",
     "Save into Nexonic/Video, /Music, /Documents…": "Nexonic/Video، /Music، /Documents… میں محفوظ کریں",
     "Save to": "یہاں محفوظ کریں",
@@ -175,6 +175,8 @@
     "When a download finishes": "جب کوئی ڈاؤن لوڈ مکمل ہو",
     "Wi-Fi only": "صرف Wi-Fi",
     "Yes": "ہاں",
-    "Open-source licenses": "اوپن سورس لائسنس"
+    "Open-source licenses": "اوپن سورس لائسنس",
+    "Language": "زبان",
+    "Same as the system": "سسٹم کے مطابق"
   }
 }

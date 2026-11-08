@@ -3,6 +3,14 @@
   if (window.__nexonicVideoButton) return;
   window.__nexonicVideoButton = true;
 
+  // The interface language's strings, kept by the background script ({} = English).
+  let strings = {};
+  const t = (english) => strings[english] || english;
+  chrome.storage.local.get({ uiStrings: {} }, (s) => (strings = s.uiStrings || {}));
+  chrome.storage.onChanged.addListener((c, area) => {
+    if (area === "local" && c.uiStrings) strings = c.uiStrings.newValue || {};
+  });
+
   let enabled = true;
   chrome.storage.sync.get({ videoButton: true }, (s) => (enabled = s.videoButton));
   chrome.storage.onChanged.addListener((c) => {
@@ -32,7 +40,7 @@
 
   const label = (m) =>
     m.kind === "stream"
-      ? ` (${[m.height ? `${m.height}p` : "", m.live ? "live" : "", "best quality"].filter(Boolean).join(", ")})`
+      ? ` (${[m.height ? `${m.height}p` : "", m.live ? t("live") : "", t("best quality")].filter(Boolean).join(", ")})`
       : m.size > 0 ? ` (${(m.size / 1048576).toFixed(1)} MB)` : "";
 
   function place() {
@@ -54,7 +62,7 @@
     if (!enabled) return;
     clearTimeout(hideTimer);
     target = el;
-    button.textContent = el.tagName === "AUDIO" ? "Download this audio" : "Download this video";
+    button.textContent = t(el.tagName === "AUDIO" ? "Download this audio" : "Download this video");
     if (!host.isConnected) document.documentElement.appendChild(host);
     place();
   }
@@ -79,7 +87,7 @@
     if (m.kind === "stream") Object.assign(msg, { stream: true, fileName: m.name });
     if (m.kind === "site") Object.assign(msg, { site: true, audioOnly: !!m.audioOnly });
     chrome.runtime.sendMessage(msg, (r) => {
-      button.textContent = r && r.ok ? "Sent to Nexonic" : "Open Nexonic first";
+      button.textContent = t(r && r.ok ? "Sent to Nexonic" : "Open Nexonic first");
       setTimeout(hide, 1500);
     });
   }
@@ -93,7 +101,7 @@
       const link = postLink(target);
       for (const [label, audioOnly] of [["Video, best quality", false], ["Sound only", true]]) {
         const li = document.createElement("li");
-        li.textContent = label;
+        li.textContent = t(label);
         li.onclick = () => send({ url: link, kind: "site", audioOnly });
         list.appendChild(li);
       }
@@ -108,9 +116,9 @@
       if (!media.length) {
         const li = document.createElement("li");
         li.className = "note";
-        li.textContent = r && r.locked
+        li.textContent = t(r && r.locked
           ? "This video is copy-protected by the site, so it can't be saved."
-          : "No video found yet. Play the video for a few seconds, then click again.";
+          : "No video found yet. Play the video for a few seconds, then click again.");
         li.style.whiteSpace = "normal";
         list.appendChild(li);
       }

@@ -125,3 +125,40 @@ test("origins", () => {
   assert.equal(originOf("chrome://settings"), "");
   assert.equal(originOf("nope"), "");
 });
+
+import { LANGUAGES, languageFor, translator } from "./helpers.js";
+import { readFileSync } from "node:fs";
+
+test("maps browser languages to the interface languages", () => {
+  assert.equal(languageFor("zh-TW"), "zh-tw");
+  assert.equal(languageFor("zh-HK"), "zh-tw");
+  assert.equal(languageFor("zh-CN"), "zh-cn");
+  assert.equal(languageFor("zh"), "zh-cn");
+  assert.equal(languageFor("pt-BR"), "pt");
+  assert.equal(languageFor("in"), "id");
+  assert.equal(languageFor("ja"), "ja");
+  assert.equal(languageFor("xx"), "en");
+  assert.equal(languageFor(""), "en");
+});
+
+test("translates and fills in names", () => {
+  const t = translator({ "Sent {count}": "{count} gesendet" });
+  assert.equal(t("Sent {count}", { count: 3 }), "3 gesendet");
+  assert.equal(t("Not translated {x}", { x: "y" }), "Not translated y");
+  assert.equal(translator(null)("Allow"), "Allow");
+});
+
+test("every language file has the same texts and keeps the names", () => {
+  const files = Object.keys(LANGUAGES).filter((c) => c !== "en").map((c) => [c, JSON.parse(readFileSync(new URL(`./locales/${c}.json`, import.meta.url)))]);
+  const keys = Object.keys(files[0][1].strings).sort();
+  assert.ok(keys.length > 40);
+  for (const [c, f] of files) {
+    assert.equal(f.language, LANGUAGES[c]);
+    assert.equal(f.status, "Reviewed");
+    assert.deepEqual(Object.keys(f.strings).sort(), keys, c);
+    for (const [en, tr] of Object.entries(f.strings)) {
+      assert.ok(tr, `${c}: ${en}`);
+      for (const name of en.match(/\{\w+\}/g) || []) assert.ok(tr.includes(name), `${c}: ${en}`);
+    }
+  }
+});

@@ -1,13 +1,13 @@
 {
   "language": "हिन्दी",
-  "status": "Machine translation: needs review by a native speaker",
+  "status": "Reviewed",
   "strings": {
     "Add URL": "URL जोड़ें",
     "Resume": "फिर शुरू करें",
     "Stop": "रोकें",
     "Stop All": "सब रोकें",
     "Select All": "सब चुनें",
-    "Delete": "हटाएँ",
+    "Delete": "मिटाएँ",
     "Delete Completed": "पूरे हटाएँ",
     "Scheduler": "शेड्यूलर",
     "Start Queue": "कतार शुरू करें",
@@ -81,7 +81,7 @@
     "Resume All": "सब फिर शुरू करें",
     "Speed Limit": "गति सीमा",
     "No Limit": "कोई सीमा नहीं",
-    "Quit": "बंद करें",
+    "Quit": "ऐप बंद करें",
     "Cancel": "रद्द करें",
     "OK": "ठीक है",
     "Save": "सहेजें",
@@ -108,7 +108,7 @@
     "Download File Info": "डाउनलोड फ़ाइल जानकारी",
     "Download on Your Phone": "अपने फ़ोन पर डाउनलोड करें",
     "Same as the system": "सिस्टम के अनुसार",
-    "The new language is used after the app restarts. Translations other than English are machine translations that still need review.": "नई भाषा ऐप दोबारा शुरू होने के बाद उपयोग होगी। अंग्रेज़ी के अलावा अनुवाद मशीन से किए गए हैं और अभी जाँच बाकी है।",
+    "The new language is used after the app restarts.": "नई भाषा ऐप दोबारा शुरू होने के बाद उपयोग होगी।",
     "Canceled": "रद्द किया गया"
   }
 }

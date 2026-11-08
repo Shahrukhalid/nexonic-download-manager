@@ -1,48 +1,63 @@
 # Translations
 
-English is the default language. The Windows and Linux apps can also show the
-main window, tray menu, menus, download statuses and dialog titles in:
+English is the default language. Every app (Windows, Linux, Mac, iPhone and iPad, Android) and the browser
+extension can also be shown in:
 
-| Code | Language   | Status                         |
-|------|------------|--------------------------------|
-| ar   | Arabic     | Machine translation, needs review (right-to-left) |
-| de   | German     | Machine translation, needs review |
-| es   | Spanish    | Machine translation, needs review |
-| fr   | French     | Machine translation, needs review |
-| hi   | Hindi      | Machine translation, needs review |
-| pt   | Portuguese | Machine translation, needs review |
-| ur   | Urdu       | Machine translation, needs review (right-to-left) |
+| Code  | Language              | Status                                             |
+|-------|-----------------------|----------------------------------------------------|
+| ar    | Arabic                | Reviewed (right-to-left)                           |
+| de    | German                | Reviewed                                           |
+| es    | Spanish               | Reviewed                                           |
+| fr    | French                | Reviewed                                           |
+| hi    | Hindi                 | Reviewed                                           |
+| id    | Indonesian            | Reviewed                                           |
+| ja    | Japanese              | Reviewed                                           |
+| ko    | Korean                | Reviewed                                           |
+| pt    | Portuguese            | Reviewed                                           |
+| ru    | Russian               | Reviewed                                           |
+| tr    | Turkish               | Reviewed                                           |
+| ur    | Urdu                  | Reviewed (right-to-left)                           |
+| zh-cn | Chinese (Simplified)  | Reviewed                                           |
+| zh-tw | Chinese (Traditional) | Reviewed                                           |
 
-Choose a language in **Options → General → Language** and restart the app.
-"Same as the system" follows `LANGUAGE`, `LC_ALL`, `LC_MESSAGES` or `LANG`
-on Linux and the Windows display language on Windows. Any text without a
-translation falls back to English.
+Any text without a translation stays in English. The language files are plain text and add about 30 KB per
+language; no fonts are bundled (each system's own fonts are used).
+
+## Choosing a language
+
+| App              | Where                                                    | When it applies            |
+|------------------|----------------------------------------------------------|----------------------------|
+| Windows, Linux   | Options → General → Language                             | After restarting the app   |
+| Mac              | Settings → General → Language, then **Restart Now**      | After the restart          |
+| iPhone and iPad  | Settings → Language                                      | Next time the app opens    |
+| Android          | Settings → Language (Android 13+: also the system's app language settings) | Right away |
+| Browser extension| The extension's menu → Settings → Language               | Right away                 |
+
+"Same as the system" follows `LANGUAGE`, `LC_ALL`, `LC_MESSAGES` or `LANG` on Linux and the display language
+elsewhere. Chinese picks Traditional for Taiwan, Hong Kong and Macau, Simplified otherwise.
+
+## Where the texts are
+
+Keys are always the English text; values are the translation. Keep keyboard shortcuts (`(Ctrl+N)`, `(F1)`),
+placeholders (`{0}`, `{site}`, `%@`), the `…` of menu items and the app name unchanged.
+
+| App              | Files                                                        | Tests                        |
+|------------------|--------------------------------------------------------------|------------------------------|
+| Windows, Linux   | `windows/Core/Locales/<code>.json`                           | `dotnet test linux/Tests`    |
+| Mac, iPhone, iPad| `packaging/Localizations/<code>.lproj/Localizable.strings` (`zh-Hans`, `zh-Hant` for Chinese) | `swift test --package-path mac` |
+| Android          | `android/app/src/main/assets/locales/<code>.json` and `res/values-<code>/strings.xml` | `gradle testDebugUnitTest` |
+| Extension        | `extension/locales/<code>.json` (store name and description: `extension/_locales`) | `npm test` in `extension` |
 
 ## Improving a translation
 
-1. Edit `windows/Core/Locales/<code>.json`. Keys are the English text; values
-   are the translation. Keep keyboard shortcuts, `{0}`-style placeholders and
-   the app name unchanged.
-2. When a native speaker has checked every string, change `status` to
-   `Reviewed` and set `Reviewed` to `true` for that language in
-   `L.Languages` (`windows/Core/Localization.cs`).
-3. Run the tests (`dotnet test linux/Tests`); they check that every language
-   has exactly the same keys as `en.json`.
+1. Edit the files above for your language.
+2. Run the tests; they check that every language has exactly the English keys and keeps names and shortcuts.
+
+Corrections are welcome as pull requests.
 
 ## Adding a language
 
-Copy `en.json` to `<code>.json`, fill in the values, and add the language to
-`L.Languages` in `windows/Core/Localization.cs`.
-
-## Mac and iPhone
-
-The Mac and iPhone apps share `packaging/Localizations/<code>.lproj/Localizable.strings`
-(same languages, also machine translations needing review). They follow the
-system language; pick a different one per app in System Settings → General →
-Language & Region → Applications (Mac) or Settings → Nexonic → Language
-(iPhone and iPad). Keys are the English text; anything missing stays in English.
-`swift test --package-path mac` checks that every language has the English keys. When a language
-has been reviewed, replace its first-line comment and update
-`mac/Tests/NexonicCoreTests/LocalizationTests.swift`.
-
-The Android app is English only for now.
+Copy the English file on each platform, fill in the values (status `Reviewed` once checked), and add the code to `L.Languages`
+(`windows/Core/Localization.cs`), `Translations.languages` (Android), `locales_config.xml`, `CFBundleLocalizations`
+(`packaging/Info.plist`, `ios/App/Info.plist`), `AppLanguage.all` (Mac and iPhone settings) and `LANGUAGES`
+(`extension/helpers.js`).
