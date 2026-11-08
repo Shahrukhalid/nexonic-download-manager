@@ -151,6 +151,9 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
 - **An IDM-style toolbar** on Mac, Windows and Linux with large buttons and their names, and menus for every command.
 - **Updates inside the app:** a new version shows up when you open the app, with what's new and Update Now, Remind
   Me Later or Skip This Version.
+- **15 languages** on every app and in the browser extension: English, Arabic, Chinese (Simplified and Traditional),
+  French, German, Hindi, Indonesian, Japanese, Korean, Portuguese, Russian, Spanish, Turkish and Urdu. Pick one in
+  Settings (Options on Windows and Linux).
 - **Same app on Mac, Windows and Linux**, light and dark mode, no account, no tracking.
 - **Android app** with the same download and video engines: videos from YouTube, Facebook, Instagram, TikTok and
   1,000+ sites with quality choices, up to 32 connections, pause and resume, queues, scheduler, Wi-Fi only,
@@ -187,10 +190,14 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
 
 ## What's new
 
+- **0.20.1: Support the Project** in the Help menu and the About window on every app (Settings → About on phones).
 - **0.20.0: 15 languages, chosen in every app.** Chinese (Simplified and Traditional), Japanese, Korean, Russian,
   Indonesian and Turkish join Arabic, French, German, Hindi, Portuguese, Spanish and Urdu, on every platform and in
   the browser extension. Pick one in Settings; English stays the default
   ([docs/TRANSLATIONS.md](docs/TRANSLATIONS.md)).
+- **0.19.0 – 0.19.2: big downloads finish instantly** (one file is written directly, with no joining step), Add
+  Torrent opens a torrent's files by itself on Windows and Linux, and an **iPhone and iPad app for sideloading** in
+  every release.
 - **0.17.0: playlists, subtitles and the Media Library on phones.** Android lists a playlist's or channel's videos
   so you can pick which to save, keeps subtitles inside videos (optional) and has a Media Library with preview
   pictures. iPhone and iPad get the Media Library too.
