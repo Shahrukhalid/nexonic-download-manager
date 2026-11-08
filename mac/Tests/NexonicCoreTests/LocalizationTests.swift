@@ -16,7 +16,7 @@ final class LocalizationTests: XCTestCase {
         let english = try table("en")
         XCTAssertGreaterThan(english.count, 100)
         for (key, value) in english { XCTAssertEqual(key, value) }
-        for code in ["ar", "de", "es", "fr", "hi", "pt", "ur"] {
+        for code in ["ar", "de", "es", "fr", "hi", "id", "ja", "ko", "pt", "ru", "tr", "ur", "zh-Hans", "zh-Hant"] {
             let other = try table(code)
             XCTAssertEqual(Set(other.keys), Set(english.keys), code)
             XCTAssertTrue(other.values.allSatisfy { !$0.isEmpty }, code)

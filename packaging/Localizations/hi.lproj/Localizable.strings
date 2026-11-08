@@ -207,3 +207,7 @@
 "When the queue is done" = "कतार पूरी होने पर";
 "Where your files go" = "आपकी फ़ाइलें कहाँ जाती हैं";
 "Wi-Fi only" = "केवल Wi-Fi";
+"Language" = "भाषा";
+"Same as the system" = "सिस्टम के अनुसार";
+"The new language is used after the app restarts. Translations other than English are machine translations that still need review." = "नई भाषा ऐप दोबारा शुरू होने के बाद उपयोग होगी। अंग्रेज़ी के अलावा अनुवाद मशीन से किए गए हैं और अभी जाँच बाकी है।";
+"Restart Now" = "अभी पुनः आरंभ करें";

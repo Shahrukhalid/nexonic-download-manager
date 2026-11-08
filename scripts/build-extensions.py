@@ -44,7 +44,7 @@ def main():
     m.pop("key", None)
     m.pop("minimum_chrome_version", None)
     # Firefox runs the background as a page script: join the helpers and the background into one classic script.
-    helpers = (SRC / "helpers.js").read_text().replace("export const ", "const ").replace("export function ", "function ")
+    helpers = re.sub(r"^export ", "", (SRC / "helpers.js").read_text(), flags=re.M)
     background = re.sub(r'^import .*?;\n', "", (SRC / "background.js").read_text(), flags=re.S | re.M)
     (firefox / "background.js").write_text("// Built from helpers.js and background.js\n" + helpers + "\n" + background)
     m["background"] = {"scripts": ["background.js"]}

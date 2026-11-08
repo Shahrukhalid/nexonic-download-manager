@@ -69,6 +69,8 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
     var home by remember { mutableStateOf(s.homePage) }
     var engine by remember { mutableStateOf(s.searchEngine) }
     var pickEngine by remember { mutableStateOf(false) }
+    var pickLanguage by remember { mutableStateOf(false) }
+    val language = remember { com.nexonic.downloadmanager.core.AppLanguage.chosen(context) }
     var notifyDone by remember { mutableStateOf(s.notifyFinished) }
     var notifyFail by remember { mutableStateOf(s.notifyFailed) }
     var treeName by remember { mutableStateOf(if (s.saveTree != null) s.saveTreeName else "") }
@@ -94,6 +96,29 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
     Column(Modifier.fillMaxSize()) {
         TopAppBar(title = { Text(tr("Settings"), fontWeight = FontWeight.SemiBold) })
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)) {
+            Section("Language")
+            val languageName = if (language.isEmpty()) tr("Same as the system") else com.nexonic.downloadmanager.core.Translations.names[language] ?: language
+            TextButton(onClick = { pickLanguage = true }) { Text(languageName) }
+            if (pickLanguage) AlertDialog(
+                onDismissRequest = { pickLanguage = false },
+                title = { Text(tr("Language")) },
+                text = {
+                    Column(Modifier.verticalScroll(rememberScrollState())) {
+                        (listOf("", "en") + com.nexonic.downloadmanager.core.Translations.languages).forEach { code ->
+                            val pick = {
+                                pickLanguage = false
+                                if (code != language) (context as? android.app.Activity)?.let { com.nexonic.downloadmanager.core.AppLanguage.choose(it, code) }
+                            }
+                            Row(Modifier.fillMaxWidth().clickable(onClick = pick).padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                androidx.compose.material3.RadioButton(selected = code == language, onClick = pick)
+                                Text(if (code.isEmpty()) tr("Same as the system") else com.nexonic.downloadmanager.core.Translations.names[code] ?: code)
+                            }
+                        }
+                    }
+                },
+                confirmButton = { TextButton(onClick = { pickLanguage = false }) { Text(tr("Close")) } },
+            )
+
             Section("Downloads")
             Text("Connections per download: ${connections.toInt()}", style = MaterialTheme.typography.bodyLarge)
             Slider(connections, { connections = it }, valueRange = 1f..32f, steps = 30, onValueChangeFinished = { s.connections = connections.toInt() })

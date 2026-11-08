@@ -207,3 +207,7 @@
 "When the queue is done" = "Quando a fila terminar";
 "Where your files go" = "Onde seus arquivos ficam";
 "Wi-Fi only" = "Somente Wi-Fi";
+"Language" = "Idioma";
+"Same as the system" = "Igual ao sistema";
+"The new language is used after the app restarts. Translations other than English are machine translations that still need review." = "O novo idioma é usado depois que o app reinicia. As traduções que não são em inglês são automáticas e ainda precisam de revisão.";
+"Restart Now" = "Reiniciar agora";

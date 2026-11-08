@@ -34,6 +34,19 @@ class TranslationsTest {
         assertEquals("Later", tr("Later"))
     }
 
+    @Test fun mapsSystemTagsToFiles() {
+        assertEquals("zh-tw", Translations.normalize("zh-Hant-TW"))
+        assertEquals("zh-tw", Translations.normalize("zh-HK"))
+        assertEquals("zh-cn", Translations.normalize("zh-Hans-CN"))
+        assertEquals("zh-cn", Translations.normalize("zh"))
+        assertEquals("id", Translations.normalize("in-ID"))
+        assertEquals("pt", Translations.normalize("pt_BR"))
+        Translations.use("ja-JP", ::read)
+        assertEquals("ja", Translations.code)
+        assertEquals("後で", tr("Later"))
+        for (code in Translations.languages) assertTrue(code, Translations.names.containsKey(code))
+    }
+
     @Test fun readsEscapes() {
         val (_, s) = Translations.parse("""{"status":"x","n":1,"a":[true,null],"strings":{"Say \"hi\"":"Sag \"hallo\" é\n"}}""")
         assertEquals("Sag \"hallo\" é\n", s["Say \"hi\""])

@@ -186,6 +186,10 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
 
 ## What's new
 
+- **0.20.0: 15 languages, chosen in every app.** Chinese (Simplified and Traditional), Japanese, Korean, Russian,
+  Indonesian and Turkish join Arabic, French, German, Hindi, Portuguese, Spanish and Urdu, on every platform and in
+  the browser extension. Pick one in Settings; English stays the default
+  ([docs/TRANSLATIONS.md](docs/TRANSLATIONS.md)).
 - **0.17.0: playlists, subtitles and the Media Library on phones.** Android lists a playlist's or channel's videos
   so you can pick which to save, keeps subtitles inside videos (optional) and has a Media Library with preview
   pictures. iPhone and iPad get the Media Library too.

@@ -28,6 +28,18 @@ public class LocalizationTests
         }
     }
 
+    [Theory]
+    [InlineData("zh_TW.UTF-8", "zh-tw")]
+    [InlineData("zh-Hant", "zh-tw")]
+    [InlineData("zh-HK", "zh-tw")]
+    [InlineData("zh_CN.UTF-8", "zh-cn")]
+    [InlineData("zh-Hans", "zh-cn")]
+    [InlineData("ZH-TW", "zh-tw")]
+    [InlineData("ja_JP.UTF-8", "ja")]
+    [InlineData("in", "id")]
+    [InlineData("pt-BR", "pt")]
+    public void MapsSystemLanguages(string tag, string code) => Assert.Equal(code, L.Resolve(tag));
+
     [Fact]
     public void FallsBackToEnglish()
     {

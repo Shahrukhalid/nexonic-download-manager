@@ -207,3 +207,7 @@
 "When the queue is done" = "عند انتهاء قائمة الانتظار";
 "Where your files go" = "أين تُحفظ ملفاتك";
 "Wi-Fi only" = "Wi-Fi فقط";
+"Language" = "اللغة";
+"Same as the system" = "مثل النظام";
+"The new language is used after the app restarts. Translations other than English are machine translations that still need review." = "تُستخدم اللغة الجديدة بعد إعادة تشغيل التطبيق. الترجمات غير الإنجليزية آلية وما زالت بحاجة إلى مراجعة.";
+"Restart Now" = "إعادة التشغيل الآن";

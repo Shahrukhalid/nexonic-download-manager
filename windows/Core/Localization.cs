@@ -20,8 +20,15 @@ public static class L
         new("es", "Español", false, false),
         new("fr", "Français", false, false),
         new("hi", "हिन्दी", false, false),
+        new("id", "Bahasa Indonesia", false, false),
+        new("ja", "日本語", false, false),
+        new("ko", "한국어", false, false),
         new("pt", "Português", false, false),
+        new("ru", "Русский", false, false),
+        new("tr", "Türkçe", false, false),
         new("ur", "اردو", true, false),
+        new("zh-cn", "简体中文", false, false),
+        new("zh-tw", "繁體中文", false, false),
     };
 
     static Dictionary<string, string> map = new();
@@ -43,8 +50,19 @@ public static class L
 
     public static string Resolve(string? setting)
     {
-        var code = string.IsNullOrWhiteSpace(setting) ? SystemLanguage() : setting.Trim().ToLowerInvariant();
+        var code = Normalize(string.IsNullOrWhiteSpace(setting) ? SystemLanguage() : setting);
         return Languages.Any(l => l.Code == code) ? code : "en";
+    }
+
+    /// <summary>"zh_TW.UTF-8" → "zh-tw", "zh-Hans" → "zh-cn", "in" → "id", "pt-BR" → "pt".</summary>
+    public static string Normalize(string tag)
+    {
+        var t = tag.Trim().Split('.', '@')[0].Replace('_', '-').ToLowerInvariant();
+        var lang = t.Split('-')[0];
+        if (lang == "zh")
+            return t.Contains("hant") || t.Contains("-tw") || t.Contains("-hk") || t.Contains("-mo") ? "zh-tw" : "zh-cn";
+        if (lang == "in") return "id";
+        return Languages.Any(l => l.Code == t) ? t : lang;
     }
 
     /// <summary>The desktop's language: LANGUAGE/LC_ALL/LC_MESSAGES/LANG on Linux, the UI culture elsewhere.</summary>
@@ -52,8 +70,8 @@ public static class L
     {
         foreach (var name in new[] { "LANGUAGE", "LC_ALL", "LC_MESSAGES", "LANG" })
             if (Environment.GetEnvironmentVariable(name) is { Length: >= 2 } v && v != "C" && !v.StartsWith("C.") && v != "POSIX")
-                return v[..2].ToLowerInvariant();
-        return CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+                return v.Split(':')[0];
+        return CultureInfo.CurrentUICulture.Name;
     }
 
     public sealed class File
