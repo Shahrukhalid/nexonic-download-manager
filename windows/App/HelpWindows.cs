@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Nexonic.Core;
 
 namespace Nexonic.App;
 
@@ -18,6 +19,7 @@ public static class HelpWindows
     public const string OnlineHelp = Project + "/blob/main/docs/HELP.md";
     public const string Releases = Project + "/releases/latest";
     public const string ReportProblem = Project + "/issues/new";
+    public const string Support = "https://www.patreon.com/Shahrukhalid";
     public const string License = Project + "/blob/main/LICENSE";
     public const string Terms = Project + "/blob/main/TERMS.md";
 
@@ -131,6 +133,8 @@ public static class HelpWindows
             links.Inlines.Add(Link("Report a Problem", ReportProblem));
             links.Inlines.Add(new Run("     "));
             links.Inlines.Add(Link("Check for Updates", Releases));
+            links.Inlines.Add(new Run("     "));
+            links.Inlines.Add(Link(L.T("Support the Project"), Support));
             detail.Children.Add(links);
         }
 
@@ -174,6 +178,7 @@ public static class HelpWindows
         made.Inlines.Add(Link(Author, Website));
         p.Children.Add(made);
         p.Children.Add(LinkRow(("Website", Website), ("GitHub", GitHub), ("Source Code", Project), ("Report a Problem", ReportProblem)));
+        p.Children.Add(LinkRow((L.T("Support the Project"), Support)));
         p.Children.Add(new Separator { Margin = new Thickness(0, 14, 0, 10) });
         var legal = new TextBlock { HorizontalAlignment = HorizontalAlignment.Center, Foreground = Brushes.Gray, FontSize = 11 };
         legal.Inlines.Add(new Run($"© 2026 {Author}.  "));

@@ -80,6 +80,10 @@ code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-s
 .brand img{width:30px;height:30px}
 .nav .links{display:flex;align-items:center;gap:22px}
 .nav .links a{color:#c3cde0;text-decoration:none;font-size:15px}.nav .links a:hover{color:#fff}
+.nav .links a.navsup{color:#ff8a7a;border:1px solid rgba(249,104,84,.55);padding:7px 12px;border-radius:9px;font-weight:600}.nav .links a.navsup:hover{color:#fff;background:rgba(249,104,84,.18)}
+.support{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px}
+.support h2{margin:0 0 6px;font-size:26px;text-align:left}.support p{margin:0;color:var(--muted);max-width:620px}
+.btn.patreon{background:#f96854;color:#fff;box-shadow:0 8px 24px rgba(249,104,84,.3)}.btn.patreon:hover{background:#e8553f}
 .nav .links a.navdl{background:var(--brand);color:#fff;padding:8px 14px;border-radius:9px;font-weight:600}
 .nav .links a.navdl:hover{background:var(--brand2)}
 
@@ -248,7 +252,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
   .gal.android,.gal.ios{grid-template-columns:repeat(3,1fr)}.gal.thumbs{grid-template-columns:repeat(3,1fr)}.fl.two-col{grid-template-columns:1fr 1fr}
   .hero h1{font-size:42px}.dl-grid,.f-grid,.gal,.steps,.fl{grid-template-columns:1fr 1fr}
   .split{grid-template-columns:1fr;gap:28px}.split.rev .media{order:0}
-  .foot{grid-template-columns:1fr 1fr}.nav .links a:not(.navdl){display:none}
+  .foot{grid-template-columns:1fr 1fr}.nav .links a:not(.navdl):not(.navsup){display:none}
 }
 @media (max-width:640px){
   .gal.android,.gal.ios{grid-template-columns:1fr 1fr}.fl.two-col{grid-template-columns:1fr}.phones{gap:10px}.phones img{border-width:4px;border-radius:16px}
@@ -291,6 +295,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
     <div class="links">
       <a href="#features">Features</a><a href="#videos">Videos</a><a href="#android">Android</a><a href="#ios">iPhone</a><a href="#screenshots">Screenshots</a><a href="#install">Install</a><a href="#faq">FAQ</a>
       <a href="https://github.com/Shahrukhalid/nexonic-download-manager">GitHub</a>
+      <a class="navsup" href="https://www.patreon.com/Shahrukhalid">&#9829; Support</a>
       <a class="navdl" href="#download">Download</a>
     </div>
   </div>
@@ -699,7 +704,8 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
     <h2>Recent releases</h2>
     <p class="sub">The full history is in the <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/CHANGELOG.md">changelog</a> and on the <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases">releases page</a>.</p>
     <div class="rel">
-      <article><h3>0.20.0 <small>Latest</small></h3><ul><li>15 languages on every platform and in the browser extension, now including Chinese (Simplified and Traditional), Japanese, Korean, Russian, Indonesian and Turkish.</li><li>Pick the language in each app's Settings; English stays the default.</li></ul></article>
+      <article><h3>0.20.1 <small>Latest</small></h3><ul><li>Support the Project in the Help menu and the About window on every app.</li></ul></article>
+      <article><h3>0.20.0</h3><ul><li>15 languages on every platform and in the browser extension, now including Chinese (Simplified and Traditional), Japanese, Korean, Russian, Indonesian and Turkish.</li><li>Pick the language in each app's Settings; English stays the default.</li></ul></article>
       <article><h3>0.19.0 – 0.19.2</h3><ul><li>Big downloads finish instantly: one file is written directly, with no joining step at the end.</li><li>Add Torrent opens a torrent's files by itself on Windows and Linux; drop a .torrent file on the main window.</li><li>iPhone and iPad app for sideloading in every release.</li></ul></article>
       <article><h3>0.17.0</h3><ul><li>Android: add a playlist or channel and choose its videos; share a playlist link to Nexonic to open it.</li><li>Android: optional subtitles inside saved videos.</li><li>Media Library on Android, iPhone and iPad: finished videos and music with preview pictures; tap to play.</li></ul></article>
       <article><h3>0.16.0</h3><ul><li>Playlists and channels on Mac, Windows and Linux: YouTube, Vimeo, SoundCloud, Bandcamp and more, up to 500 videos, tick the ones you want.</li><li>Optional subtitles in your language and English, kept inside the video.</li><li>Media Library: finished videos and music with preview pictures, search, Play and Show in Folder.</li></ul></article>
@@ -710,6 +716,18 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <article><h3>0.11.0 – 0.11.3</h3><ul><li>Torrents on Mac with uTorrent-style details: General, Trackers, Peers and Files.</li><li>Settings that apply while a torrent runs; torrents follow your proxy setting.</li></ul></article>
       <article><h3>0.10.0</h3><ul><li>Torrents on Windows and Linux with a built-in engine: preview files, choose priorities, pause and resume, optional seeding.</li></ul></article>
       <article><h3>0.8.0</h3><ul><li>Site settings: login, cookies, proxy and limits per website, plus backup and restore of your settings and downloads list.</li><li>Show QR Code on any download to finish it on your Android phone; Android adds bookmarks, a search engine choice and SD card folders.</li><li>Shortcuts and Siri can pause and resume on iPhone and iPad, and an optional local API lets scripts control the desktop apps.</li><li>Arabic, German, Spanish, French, Hindi, Portuguese and Urdu (machine translations under review).</li></ul></article>
+    </div>
+  </div>
+</section>
+
+<section id="support">
+  <div class="wrap">
+    <div class="support">
+      <div>
+        <h2>Support the project</h2>
+        <p>Nexonic Download Manager is free and open source, with no ads, no account and no tracking, and it stays free for everyone. If it saves you time, your support helps keep updates coming.</p>
+      </div>
+      <a class="btn patreon lg" href="https://www.patreon.com/Shahrukhalid">&#9829; Support on Patreon</a>
     </div>
   </div>
 </section>

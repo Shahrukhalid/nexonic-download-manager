@@ -317,6 +317,7 @@ public partial class MainWindow : Window
     void OnSettings(object s, RoutedEventArgs e) => Dialogs.Options(this, manager);
     void OnHelp(object s, RoutedEventArgs e) => HelpWindows.ShowHelp(this);
     void OnAbout(object s, RoutedEventArgs e) => HelpWindows.ShowAbout(this);
+    void OnSupport(object s, RoutedEventArgs e) => HelpWindows.Open(HelpWindows.Support);
 
     void OnRemoveFile(object s, RoutedEventArgs e) => ConfirmRemove(Selected, toRecycleBin: true);
 

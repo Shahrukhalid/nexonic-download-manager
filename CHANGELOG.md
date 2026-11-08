@@ -1,3 +1,8 @@
+## 0.20.1
+
+- **Support the project:** a "Support the Project" item in the Help menu (Mac, Windows, Linux), in the About window,
+  and in Settings → About on Android, iPhone and iPad. It opens the Patreon page; every app stays free.
+
 ## 0.20.0
 
 - **Seven more languages:** Chinese (Simplified and Traditional), Japanese, Korean, Russian, Indonesian and Turkish,

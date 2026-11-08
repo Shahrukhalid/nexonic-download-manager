@@ -12,6 +12,7 @@ enum AppLinks {
     static let reportProblem = URL(string: "https://github.com/Shahrukhalid/nexonic-download-manager/issues/new")!
     static let terms = URL(string: "https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/TERMS.md")!
     static let license = URL(string: "https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/LICENSE")!
+    static let support = URL(string: "https://www.patreon.com/Shahrukhalid")!
 
     static var version: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
@@ -144,6 +145,8 @@ struct AboutView: View {
                 Link("Source Code", destination: AppLinks.project)
                 Link("Report a Problem", destination: AppLinks.reportProblem)
             }
+            Link(destination: AppLinks.support) { Label("Support the Project", systemImage: "heart") }
+                .padding(.top, 2)
             .font(.callout)
             Divider().padding(.vertical, 4)
             HStack(spacing: 4) {
