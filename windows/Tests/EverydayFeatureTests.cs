@@ -80,7 +80,7 @@ public class EverydayFeatureTests
         r.Status = DownloadStatus.Finished;
         r.SavedPath = Path.Combine("/elsewhere", "a.zip");
         Assert.Equal("", ListColumns.Resume(r));
-        Assert.Equal("/elsewhere", ListColumns.Folder(r));
+        Assert.Equal(Path.GetDirectoryName(r.SavedPath), ListColumns.Folder(r));
         Assert.Equal("", ListColumns.When(null));
     }
 
