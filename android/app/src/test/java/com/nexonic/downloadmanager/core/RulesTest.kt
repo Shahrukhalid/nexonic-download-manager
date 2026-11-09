@@ -67,6 +67,15 @@ class RulesTest {
         assertEquals("https://img.com/p.jpg", Links.unwrap("https://www.google.com/imgres?imgurl=https%3A%2F%2Fimg.com%2Fp.jpg&tbnid=1"))
         assertEquals("https://x.org/", Links.unwrap("https://l.facebook.com/l.php?u=https%3A%2F%2Fx.org%2F&h=1"))
         assertEquals("https://www.google.com/imgres?imgurl=javascript:x", Links.unwrap("https://www.google.com/imgres?imgurl=javascript:x"))
+        assertEquals("https://drive.usercontent.google.com/download?id=1AbCdEfGhIjKlMn&export=download&confirm=t",
+            Links.unwrap("https://drive.google.com/file/d/1AbCdEfGhIjKlMn/view?usp=sharing"))
+        assertEquals("https://drive.usercontent.google.com/download?id=1AbCdEfGhIjKlMn&export=download&confirm=t&resourcekey=0-x",
+            Links.unwrap("https://drive.google.com/open?id=1AbCdEfGhIjKlMn&resourcekey=0-x"))
+        assertEquals("https://docs.google.com/spreadsheets/d/1AbCdEfGhIjKlMn/export?format=xlsx",
+            Links.unwrap("https://docs.google.com/spreadsheets/d/1AbCdEfGhIjKlMn/edit#gid=0"))
+        assertEquals("https://www.dropbox.com/scl/fi/abc/f.zip?rlkey=k&dl=1", Links.unwrap("https://www.dropbox.com/scl/fi/abc/f.zip?rlkey=k&dl=0"))
+        assertEquals("https://raw.githubusercontent.com/u/r/main/a/b.txt", Links.unwrap("https://github.com/u/r/blob/main/a/b.txt"))
+        assertEquals("https://drive.google.com/drive/folders/abc", Links.unwrap("https://drive.google.com/drive/folders/abc"))
     }
 
     @Test fun credentialsOnlyGoToTheSameSite() {

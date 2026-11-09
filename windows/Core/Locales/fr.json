@@ -110,6 +110,13 @@
     "Same as the system": "Comme le système",
     "The new language is used after the app restarts.": "La nouvelle langue est utilisée après le redémarrage de l’application.",
     "Canceled": "Annulé",
-    "Support the Project": "Soutenir le projet"
+    "Support the Project": "Soutenir le projet",
+    "Network adapter": "Carte réseau",
+    "Any adapter": "N'importe quelle carte",
+    "Downloads, videos and torrents use only this adapter (for example your VPN). If it disconnects, downloads stop instead of using another connection.": "Les téléchargements, les vidéos et les torrents n'utilisent que cette carte (par exemple votre VPN). Si elle se déconnecte, les téléchargements s'arrêtent au lieu d'utiliser une autre connexion.",
+    "Torrent blocklist: a file or an https:// address (empty = none)": "Liste de blocage des torrents : un fichier ou une adresse https:// (vide = aucune)",
+    "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.": "Les torrents ne se connectent jamais aux adresses de cette liste. Les listes P2P, DAT et CIDR fonctionnent, aussi en .gz. Une adresse est retéléchargée une fois par jour.",
+    "The blocklist address must start with https://": "L'adresse de la liste de blocage doit commencer par https://",
+    "The blocklist file was not found.": "Le fichier de la liste de blocage est introuvable."
   }
 }

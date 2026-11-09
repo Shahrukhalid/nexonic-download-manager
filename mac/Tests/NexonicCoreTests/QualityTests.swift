@@ -57,6 +57,16 @@ final class LinksTests: XCTestCase {
         XCTAssertEqual(Links.unwrap(URL(string: "https://www.google.com/url?q=https://example.com/a.zip&sa=D")!).absoluteString, "https://example.com/a.zip")
         XCTAssertEqual(Links.unwrap(URL(string: "https://example.com/plain.zip")!).absoluteString, "https://example.com/plain.zip")
         XCTAssertEqual(Links.unwrap(URL(string: "https://www.google.com/imgres?imgurl=javascript:alert(1)")!).host, "www.google.com")
+        for (share, direct) in [
+            ("https://drive.google.com/file/d/1AbCdEfGhIjKlMn/view?usp=sharing", "https://drive.usercontent.google.com/download?id=1AbCdEfGhIjKlMn&export=download&confirm=t"),
+            ("https://drive.google.com/open?id=1AbCdEfGhIjKlMn&resourcekey=0-x", "https://drive.usercontent.google.com/download?id=1AbCdEfGhIjKlMn&export=download&confirm=t&resourcekey=0-x"),
+            ("https://docs.google.com/presentation/d/1AbCdEfGhIjKlMn/view", "https://docs.google.com/presentation/d/1AbCdEfGhIjKlMn/export?format=pptx"),
+            ("https://www.dropbox.com/scl/fi/abc/f.zip?rlkey=k&dl=0", "https://www.dropbox.com/scl/fi/abc/f.zip?rlkey=k&dl=1"),
+            ("https://github.com/u/r/blob/main/a/b.txt", "https://raw.githubusercontent.com/u/r/main/a/b.txt"),
+            ("https://drive.google.com/drive/folders/abc", "https://drive.google.com/drive/folders/abc"),
+        ] {
+            XCTAssertEqual(Links.unwrap(URL(string: share)!).absoluteString, direct)
+        }
     }
 
     func testSeveralLinksPastedTogether() {

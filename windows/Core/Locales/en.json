@@ -110,6 +110,13 @@
     "Same as the system": "",
     "The new language is used after the app restarts.": "",
     "Canceled": "Canceled",
-    "Support the Project": ""
+    "Support the Project": "",
+    "Network adapter": "",
+    "Any adapter": "",
+    "Downloads, videos and torrents use only this adapter (for example your VPN). If it disconnects, downloads stop instead of using another connection.": "",
+    "Torrent blocklist: a file or an https:// address (empty = none)": "",
+    "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.": "",
+    "The blocklist address must start with https://": "",
+    "The blocklist file was not found.": ""
   }
 }

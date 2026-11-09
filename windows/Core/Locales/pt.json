@@ -110,6 +110,13 @@
     "Same as the system": "Igual ao sistema",
     "The new language is used after the app restarts.": "O novo idioma é usado depois que o app reinicia.",
     "Canceled": "Cancelado",
-    "Support the Project": "Apoiar o projeto"
+    "Support the Project": "Apoiar o projeto",
+    "Network adapter": "Adaptador de rede",
+    "Any adapter": "Qualquer adaptador",
+    "Downloads, videos and torrents use only this adapter (for example your VPN). If it disconnects, downloads stop instead of using another connection.": "Downloads, vídeos e torrents usam apenas este adaptador (por exemplo, sua VPN). Se ele se desconectar, os downloads param em vez de usar outra conexão.",
+    "Torrent blocklist: a file or an https:// address (empty = none)": "Lista de bloqueio de torrents: um arquivo ou um endereço https:// (vazio = nenhuma)",
+    "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.": "Os torrents nunca se conectam aos endereços desta lista. Listas P2P, DAT e CIDR funcionam, também em .gz. Um endereço é baixado de novo uma vez por dia.",
+    "The blocklist address must start with https://": "O endereço da lista de bloqueio deve começar com https://",
+    "The blocklist file was not found.": "O arquivo da lista de bloqueio não foi encontrado."
   }
 }

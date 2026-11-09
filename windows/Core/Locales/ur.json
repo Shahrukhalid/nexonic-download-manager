@@ -110,6 +110,13 @@
     "Same as the system": "سسٹم کے مطابق",
     "The new language is used after the app restarts.": "نئی زبان ایپ دوبارہ شروع ہونے کے بعد استعمال ہوگی۔",
     "Canceled": "منسوخ",
-    "Support the Project": "منصوبے کی حمایت کریں"
+    "Support the Project": "منصوبے کی حمایت کریں",
+    "Network adapter": "نیٹ ورک اڈاپٹر",
+    "Any adapter": "کوئی بھی اڈاپٹر",
+    "Downloads, videos and torrents use only this adapter (for example your VPN). If it disconnects, downloads stop instead of using another connection.": "ڈاؤن لوڈز، ویڈیوز اور ٹورنٹس صرف یہی اڈاپٹر استعمال کرتے ہیں (مثلاً آپ کا VPN)۔ اگر اس کا رابطہ ٹوٹ جائے تو ڈاؤن لوڈز کسی اور کنکشن کے بجائے رک جاتے ہیں۔",
+    "Torrent blocklist: a file or an https:// address (empty = none)": "ٹورنٹ بلاک لسٹ: ایک فائل یا https:// پتہ (خالی = کوئی نہیں)",
+    "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.": "ٹورنٹس اس فہرست کے پتوں سے کبھی نہیں جڑتے۔ P2P، DAT اور CIDR فہرستیں کام کرتی ہیں، .gz میں بھی۔ پتہ دن میں ایک بار دوبارہ ڈاؤن لوڈ ہوتا ہے۔",
+    "The blocklist address must start with https://": "بلاک لسٹ کا پتہ https:// سے شروع ہونا چاہیے",
+    "The blocklist file was not found.": "بلاک لسٹ کی فائل نہیں ملی۔"
   }
 }

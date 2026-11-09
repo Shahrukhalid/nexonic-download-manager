@@ -101,6 +101,25 @@ public static class TorrentRuntime
         catch (Exception e) when (e is InvalidOperationException or PlatformNotSupportedException or UriFormatException) { return null; }
     }
 
+    static (string Key, string[][] Ranges)? blockCache;
+
+    /// <summary>
+    /// The adapter address torrents are held to ("" = any; fails when the chosen adapter is down) and the blocklist
+    /// ranges from Options.
+    /// </summary>
+    public static async Task<(string Bind, string[][] Blocklist)> NetworkAsync(ProxySettings? proxy, CancellationToken ct)
+    {
+        var options = Network.Options;
+        var bind = options.BindAdapter.Length > 0 ? Adapters.SourceAddress(options.BindAdapter) : "";
+        if (options.TorrentBlocklist.Length == 0) return (bind, Array.Empty<string[]>());
+        var path = options.TorrentBlocklist;
+        var key = path + "|" + (File.Exists(path) ? File.GetLastWriteTimeUtc(path).Ticks : DateTime.UtcNow.Date.Ticks);
+        if (blockCache is { } hit && hit.Key == key) return (bind, hit.Ranges);
+        var ranges = TorrentBlocklist.ForEngine(await TorrentBlocklist.LoadAsync(path, proxy, ct));
+        blockCache = (key, ranges);
+        return (bind, ranges);
+    }
+
     /// <summary>A torrent's own download limit, capped by the limit for all downloads (KB/s, 0 = none).</summary>
     public static int DownloadLimit(int? own, int all)
     {
@@ -120,7 +139,8 @@ public static class TorrentRuntime
             if (source.StartsWith("magnet:?", StringComparison.OrdinalIgnoreCase)) source = "magnet:?" + source[8..];
             string metainfo = source.StartsWith("magnet:?", StringComparison.OrdinalIgnoreCase) ? ""
                 : Convert.ToBase64String(await TorrentSource.ReadMetadataAsync(source, token));
-            using var engine = new NativeTorrentSession(state, proxy: Proxy(proxy));
+            var net = await NetworkAsync(proxy, token);
+            using var engine = new NativeTorrentSession(state, proxy: Proxy(proxy), bind: net.Bind, blocklist: net.Blocklist);
             var status = engine.Invoke(new { action = "add", id = "preview", source, metainfo, preview = true });
             while (status.GetProperty("state").GetString() != "preview")
             {
@@ -257,8 +277,9 @@ public sealed class TorrentTransfer : IDownloader
                 catch (Exception e) when (e is IOException or FormatException or UnauthorizedAccessException) { }
             }
             cancellation.Token.ThrowIfCancellationRequested();
+            var net = await TorrentRuntime.NetworkAsync(context.Proxy, cancellation.Token);
             engine = new NativeTorrentSession(state, dht: torrent.Dht, proxy: TorrentRuntime.Proxy(context.Proxy),
-                portForwarding: context.TorrentPortForwarding, encryption: context.TorrentEncryption);
+                portForwarding: context.TorrentPortForwarding, encryption: context.TorrentEncryption, bind: net.Bind, blocklist: net.Blocklist);
             var add = torrent.EngineSettings();
             add["action"] = "add"; add["id"] = "payload"; add["source"] = Record.Url; add["metainfo"] = torrent.Metainfo; add["preview"] = false;
             add["destination"] = folder; add["priorities"] = priorities; add["trackers"] = torrent.Trackers;

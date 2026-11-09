@@ -161,8 +161,49 @@ object Links {
         return (s == "http" || s == "https") && !u.host.isNullOrEmpty()
     }
 
-    /** The real address behind Google Images/results, Facebook and Reddit redirect links. */
-    fun unwrap(url: String): String {
+    /** The real address behind Google Images/results, Facebook and Reddit redirect links, then the file behind a share link. */
+    fun unwrap(url: String): String = direct(redirect(url))
+
+    private val driveId = Regex("^[A-Za-z0-9_-]{10,}$")
+
+    /**
+     * The file itself behind a share page: Google Drive files (and Docs, Sheets and Slides as Office files), Dropbox
+     * share links and GitHub file pages. Other links are returned unchanged.
+     */
+    fun direct(url: String): String {
+        val u = runCatching { URI(url.trim()) }.getOrNull() ?: return url
+        val host = u.host?.lowercase(Locale.ROOT) ?: return url
+        if (u.scheme?.lowercase(Locale.ROOT) !in setOf("http", "https")) return url
+        val path = (u.rawPath ?: "").split('/').filter { it.isNotEmpty() }
+        val params = (u.rawQuery ?: "").split("&").filter { it.isNotEmpty() }.map {
+            it.substringBefore('=') to runCatching { URLDecoder.decode(it.substringAfter('=', ""), "UTF-8") }.getOrDefault("")
+        }
+        fun q(name: String) = params.firstOrNull { it.first == name }?.second
+        fun id(v: String?) = v?.takeIf { driveId.matches(it) }
+        if (host == "drive.google.com" || host == "docs.google.com" || host == "drive.usercontent.google.com") {
+            if (host == "docs.google.com" && path.size >= 3 && path[1] == "d" && id(path[2]) != null) {
+                val format = mapOf("document" to "docx", "spreadsheets" to "xlsx", "presentation" to "pptx")[path[0]]
+                if (format != null) return "https://docs.google.com/${path[0]}/d/${path[2]}/export?format=$format"
+            }
+            val file = when {
+                path.size >= 3 && path[0] == "file" && path[1] == "d" -> id(path[2])
+                path.isNotEmpty() && path[0] in setOf("open", "uc", "download") -> id(q("id"))
+                else -> null
+            } ?: return url
+            val key = q("resourcekey")
+            return "https://drive.usercontent.google.com/download?id=$file&export=download&confirm=t" +
+                (if (!key.isNullOrEmpty()) "&resourcekey=" + java.net.URLEncoder.encode(key, "UTF-8") else "")
+        }
+        if ((host == "dropbox.com" || host == "www.dropbox.com") && path.size >= 2 && path[0] in setOf("s", "scl", "sh")) {
+            val rest = (u.rawQuery ?: "").split("&").filter { it.isNotEmpty() && it.substringBefore('=') != "dl" } + "dl=1"
+            return "https://www.dropbox.com${u.rawPath}?" + rest.joinToString("&")
+        }
+        if (host == "github.com" && path.size >= 5 && path[2] == "blob")
+            return "https://raw.githubusercontent.com/" + (path.take(2) + path.drop(3)).joinToString("/")
+        return url
+    }
+
+    private fun redirect(url: String): String {
         val u = runCatching { URI(url) }.getOrNull() ?: return url
         val host = u.host?.lowercase(Locale.ROOT) ?: return url
         val query = u.rawQuery ?: return url

@@ -18,6 +18,13 @@ The manager displays progress, peers, seeds, download/upload rates, ETA and rati
 
 Peers and trackers can see your IP address (or your proxy's). Torrents follow the app's proxy setting: **No proxy** connects directly, an HTTP or SOCKS5 proxy from Settings carries peer, tracker and DHT traffic, and **Use the system settings** uses the computer's SOCKS or web proxy when one is turned on (otherwise it connects directly). Proxy changes apply to torrents started afterwards. The speed limit for all downloads also caps each torrent; per-torrent limits work as well. DNS over HTTPS is not used by the torrent engine, so torrents pause while it is configured. No website cookies, credentials or host authentication are copied into torrent sessions. Web seeds, local discovery and private/local/multicast peer/tracker addresses are disabled in production. Router port forwarding (UPnP and NAT-PMP) is off by default; on Mac it can be turned on in **Settings → Torrents**, elsewhere manage it outside the app.
 
+## Blocklist and network adapter (0.21.0)
+
+Windows and Linux: Options → Connection → **Torrent blocklist** takes a local file or an `https://` address in P2P
+(`name:1.2.3.0-1.2.3.255`), DAT (`001.002.003.000 - 001.002.003.255 , 000 , name`) or CIDR (`1.2.3.0/24`) format, plain
+or gzip. Peers and trackers in the list are never contacted. **Network adapter** holds torrents (peers, trackers and
+DHT) to one adapter's address; if that adapter disconnects, torrents stop instead of using another connection.
+
 ## Data, recovery and integrity
 
 Each task writes to `Save to/Nexonic torrents/<task-id>/`. Metadata and destination paths are validated before the engine receives them, including v1/v2/hybrid file trees, traversal, duplicate paths, symbolic links, existing hard links, metadata size and file counts. The engine checks pieces during transfer, forces another piece check before completion, then reports SHA-256 for every selected real file. Skipped files can still require shared boundary pieces.
