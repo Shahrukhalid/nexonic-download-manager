@@ -95,7 +95,7 @@ public static class DownloadWindows
         var category = new TextBlock { VerticalAlignment = VerticalAlignment.Center, Text = FileCategories.NameOf(name.Text) };
         AddRow("Category", category);
         name.TextChanged += (_, _) => { category.Text = FileCategories.NameOf(name.Text); icon.Source = FileIcon.For(name.Text); };
-        var folder = new TextBox { Text = m.Settings.Folder, Padding = new Thickness(4, 3, 4, 3) };
+        var folder = new TextBox { Text = m.Settings.StartFolder, Padding = new Thickness(4, 3, 4, 3) };
         var pick = new Button { Content = "Choose…", Padding = new Thickness(10, 2, 10, 2), Margin = new Thickness(6, 0, 0, 0) };
         pick.Click += (_, _) =>
         {
@@ -155,6 +155,7 @@ public static class DownloadWindows
             }
             if (start is bool go)
             {
+                m.RememberFolder(folder.Text);
                 var o = new AddOptions
                 {
                     Folder = folder.Text.Trim().Length > 0 ? folder.Text.Trim() : null,

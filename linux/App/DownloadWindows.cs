@@ -86,7 +86,7 @@ public static class DownloadWindows
             category.Text = FileCategories.NameOf(name.Text ?? "");
             badgeHost.Child = Ui.FileBadge(name.Text ?? "", 40);
         };
-        var (folderRow, folder) = Form.FolderRow(w, m.Settings.Folder);
+        var (folderRow, folder) = Form.FolderRow(w, m.Settings.StartFolder);
         folderRow.Margin = new Thickness(0, 3);
         AddRow("Save to", folderRow);
         var queue = Form.QueueBox(m, job.Queue is { Length: > 0 } qn ? m.Queues.FirstOrDefault(q => string.Equals(q.Name, qn, StringComparison.OrdinalIgnoreCase))?.Id ?? DownloadQueue.MainId : DownloadQueue.MainId);
@@ -141,6 +141,7 @@ public static class DownloadWindows
             }
             if (start is bool go)
             {
+                m.RememberFolder(folder.Text);
                 var o = new AddOptions
                 {
                     Folder = (folder.Text ?? "").Trim().Length > 0 ? folder.Text!.Trim() : null,

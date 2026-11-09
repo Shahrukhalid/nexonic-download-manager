@@ -325,7 +325,7 @@ public static class NetworkCheck
             using var http = new HttpClient(Network.Handler(proxy)) { Timeout = TimeSpan.FromSeconds(30) };
             using var req = new HttpRequestMessage(HttpMethod.Head, u);
             using var res = await http.SendAsync(req, ct);
-            lines.Add($"Connection{(proxy.Mode is ProxyMode.Http or ProxyMode.Socks ? " through the proxy" : "")}: HTTP {(int)res.StatusCode} in {sw.ElapsedMilliseconds} ms");
+            lines.Add($"Connection{(proxy.Mode is ProxyMode.Http or ProxyMode.Socks or ProxyMode.Pac ? " through the proxy" : "")}: HTTP {(int)res.StatusCode} in {sw.ElapsedMilliseconds} ms");
         }
         catch (Exception e) { lines.Add($"Connection failed: {(e.InnerException ?? e).Message}"); }
         return lines;

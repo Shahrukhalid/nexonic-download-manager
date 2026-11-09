@@ -146,6 +146,9 @@ public sealed class App : Application
             Item("Add URL…", async () => { if (MainWindow is { } w) await w.ShowAdd(await Ui.ClipboardLink(w)); });
             Item("Stop All", m.PauseAll);
             Item("Resume All", m.ResumeAll);
+            Item("Start All Queues", () => { foreach (var q in m.Queues.Where(q => !q.IsMain).ToList()) m.StartQueue(q.Id); });
+            Item("Stop All Queues", () => { foreach (var q in m.Queues.Where(q => !q.IsMain).ToList()) m.StopQueue(q.Id); });
+            Item("Open Downloads Folder", () => { if (Directory.Exists(m.Settings.Folder)) LinuxSystem.Open(m.Settings.Folder); });
             var limits = new NativeMenu();
             var limitItems = new List<(NativeMenuItem Item, int KB)>();
             foreach (var kb in SpeedLimits.Presets)

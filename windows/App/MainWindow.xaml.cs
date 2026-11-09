@@ -27,6 +27,7 @@ public partial class MainWindow : Window
         InputBindings.Add(new KeyBinding(new Cmd(() => OnAdd(this, new RoutedEventArgs())), Key.N, ModifierKeys.Control));
         InputBindings.Add(new KeyBinding(new Cmd(() => OnRemove(this, new RoutedEventArgs())), Key.Delete, ModifierKeys.None));
         InputBindings.Add(new KeyBinding(new Cmd(() => Search.Focus()), Key.F, ModifierKeys.Control));
+        InputBindings.Add(new KeyBinding(new Cmd(() => { Search.Focus(); Search.SelectAll(); }), Key.F3, ModifierKeys.None));
         InputBindings.Add(new KeyBinding(new Cmd(() => HelpWindows.ShowHelp(this)), Key.F1, ModifierKeys.None));
         void Shortcut(Key key, ModifierKeys mods, RoutedEventHandler handler) =>
             InputBindings.Add(new KeyBinding(new Cmd(() => { if (Keyboard.FocusedElement is not TextBox) handler(this, new RoutedEventArgs()); }), key, mods));
@@ -51,6 +52,7 @@ public partial class MainWindow : Window
         Shortcut(Key.L, ModifierKeys.Control, OnLibrary);
         VideoSubtitles.Enabled = manager.Settings.VideoSubtitles;
         ApplyToolbar();
+        BuildColumnsMenu();
         UpdateButtons();
         UpdateStatus();
         var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
@@ -226,6 +228,34 @@ public partial class MainWindow : Window
         var queue = CurrentQueue;
         Bring();
         Dialogs.Playlist(this, manager, link, links => Dispatcher.BeginInvoke(() => ShowAdd(links, queue)));
+    }
+
+    /// <summary>View → Columns: turn the list's extra columns on or off (saved with the settings).</summary>
+    void BuildColumnsMenu()
+    {
+        var columns = new Dictionary<string, DataGridColumn>
+        {
+            ["queue"] = QueueColumn, ["added"] = AddedColumn, ["finished"] = FinishedColumn, ["folder"] = FolderColumn, ["resume"] = ResumeColumn,
+        };
+        void Apply()
+        {
+            foreach (var (key, column) in columns)
+                column.Visibility = manager.Settings.HiddenListColumns.Contains(key) ? Visibility.Collapsed : Visibility.Visible;
+        }
+        ColumnsItem.Items.Clear();
+        foreach (var (key, title) in ListColumns.Optional)
+        {
+            var item = new MenuItem { Header = L.T(title), IsCheckable = true, IsChecked = !manager.Settings.HiddenListColumns.Contains(key) };
+            item.Click += (_, _) =>
+            {
+                var hidden = manager.Settings.HiddenListColumns;
+                if (item.IsChecked) hidden.Remove(key); else if (!hidden.Contains(key)) hidden.Add(key);
+                manager.ApplySettings(manager.Settings);
+                Apply();
+            };
+            ColumnsItem.Items.Add(item);
+        }
+        Apply();
     }
 
     void OnToggleNames(object s, RoutedEventArgs e) { manager.Settings.ToolbarText = ShowNamesItem.IsChecked; manager.ApplySettings(manager.Settings); ApplyToolbar(); }
