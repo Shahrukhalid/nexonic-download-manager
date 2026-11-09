@@ -11,7 +11,7 @@ namespace Nexonic.App;
 /// <summary>The app's small windows, built in code so each one reads top to bottom.</summary>
 public static partial class Dialogs
 {
-    static readonly Brush Muted = Brushes.DimGray;
+    static readonly Brush Muted = Brushes.Gray;
 
     public static string ClipboardLink()
     {
@@ -326,7 +326,9 @@ public static partial class Dialogs
             }
             var stop = new CheckBox { Content = "Stop at (HH:mm)", IsChecked = q.StopEnabled, Margin = new Thickness(0, 10, 0, 2) };
             var stopTime = new TextBox { Text = q.StopTime, Width = 80, HorizontalAlignment = HorizontalAlignment.Left };
-            foreach (var e in new UIElement[] { start, startTime, days, stop, stopTime }) editor.Children.Add(e);
+            var wake = new CheckBox { Content = "Wake the computer from sleep to start", IsChecked = q.WakeToStart, Margin = new Thickness(0, 6, 0, 0),
+                ToolTip = "Uses a Windows wake timer; Power Options must allow wake timers. The app has to be running (it can be in the tray)." };
+            foreach (var e in new UIElement[] { start, startTime, days, wake, stop, stopTime }) editor.Children.Add(e);
 
             Label("Downloads at the same time");
             var active = new TextBox { Text = (q.IsMain ? m.Settings.MaxActive : q.MaxActive).ToString(), Width = 80, HorizontalAlignment = HorizontalAlignment.Left };
@@ -356,6 +358,7 @@ public static partial class Dialogs
                 if (name.Text.Trim().Length > 0 && !q.IsMain) q.Name = name.Text.Trim();
                 q.StartEnabled = start.IsChecked == true;
                 q.StartTime = startTime.Text.Trim();
+                q.WakeToStart = wake.IsChecked == true;
                 q.StopEnabled = stop.IsChecked == true;
                 q.StopTime = stopTime.Text.Trim();
                 q.AfterDone = (AfterQueue)Math.Max(0, after.SelectedIndex);
@@ -549,6 +552,10 @@ public static partial class Dialogs
             SelectedIndex = Math.Max(0, languageChoices.IndexOf(s.Language)),
         };
         general.Children.Add(language);
+        general.Children.Add(new TextBlock { Text = "Appearance", Margin = new Thickness(0, 10, 0, 2) });
+        var theme = new ComboBox { ItemsSource = AppTheme.Choices.Select(c => L.T(AppTheme.Title(c))).ToList(), SelectedIndex = Math.Max(0, Array.IndexOf(AppTheme.Choices, s.Theme)) };
+        System.Windows.Automation.AutomationProperties.SetName(theme, "Appearance");
+        general.Children.Add(theme);
         general.Children.Add(new TextBlock { Text = "Interface size", Margin = new Thickness(0, 10, 0, 2) });
         var scales = new[] { 75, 90, 100, 110, 125, 150, 175, 200 };
         var scale = new ComboBox { ItemsSource = scales.Select(v => v + "%").ToList(), SelectedIndex = Array.IndexOf(scales, s.InterfaceScale) is var si && si >= 0 ? si : 2 };
@@ -756,6 +763,8 @@ public static partial class Dialogs
             s.Notifications = notify.IsChecked == true;
             s.CheckForUpdates = updates.IsChecked == true;
             s.Language = languageChoices[Math.Max(0, language.SelectedIndex)];
+            s.Theme = AppTheme.Choices[Math.Max(0, theme.SelectedIndex)];
+            AppTheme.Apply(s.Theme);
             if (L.Resolve(s.Language) != L.Code)
             {
                 L.Use(s.Language);

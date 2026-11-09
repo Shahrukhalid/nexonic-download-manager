@@ -124,7 +124,7 @@ public static class HelpWindows
             foreach (var (heading, text) in topic.Sections)
             {
                 detail.Children.Add(new TextBlock { Text = heading, FontSize = 14, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 8, 0, 3) });
-                detail.Children.Add(new TextBox { Text = text, IsReadOnly = true, BorderThickness = new Thickness(0), Background = Brushes.Transparent, TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DimGray, Padding = new Thickness(0) });
+                detail.Children.Add(new TextBox { Text = text, IsReadOnly = true, BorderThickness = new Thickness(0), Background = Brushes.Transparent, TextWrapping = TextWrapping.Wrap, Foreground = Brushes.Gray, Padding = new Thickness(0) });
             }
             detail.Children.Add(new Separator { Margin = new Thickness(0, 16, 0, 8) });
             var links = new TextBlock();
@@ -171,8 +171,8 @@ public static class HelpWindows
             p.Children.Add(image);
         }
         p.Children.Add(new TextBlock { Text = "Nexonic Download Manager", FontSize = 20, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center });
-        p.Children.Add(new TextBlock { Text = $"Version {Version}", Foreground = Brushes.DimGray, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 4, 0, 0) });
-        p.Children.Add(new TextBlock { Text = "Free, open-source download manager for Mac, Windows, Linux, Android, iPhone and iPad.", Foreground = Brushes.DimGray, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 6, 0, 0) });
+        p.Children.Add(new TextBlock { Text = $"Version {Version}", Foreground = Brushes.Gray, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 4, 0, 0) });
+        p.Children.Add(new TextBlock { Text = "Free, open-source download manager for Mac, Windows, Linux, Android, iPhone and iPad.", Foreground = Brushes.Gray, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 6, 0, 0) });
         var made = new TextBlock { HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 12, 0, 0) };
         made.Inlines.Add(new Run("Made by "));
         made.Inlines.Add(Link(Author, Website));

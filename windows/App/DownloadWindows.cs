@@ -19,7 +19,7 @@ public static class DownloadWindows
 {
     static readonly Dictionary<string, Window> infoWindows = new();   // by link: one link never gets two windows
     static readonly Dictionary<Guid, Window> progressWindows = new();
-    static readonly Brush Muted = Brushes.DimGray;
+    static readonly Brush Muted = Brushes.Gray;
 
     static Window? Owner => Application.Current.MainWindow is { IsVisible: true } w ? w : null;
 

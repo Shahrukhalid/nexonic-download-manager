@@ -69,6 +69,9 @@ public sealed class DownloadRecord
     public string? VideoStep { get; set; }
 
     public TorrentMetadata? Torrent { get; set; }
+    // Added in 0.26.0: Link Grabber packages (saved together, unpacked when every download in the package is done)
+    public string? Package { get; set; }
+    public bool? UnpackWhenDone { get; set; }
 
     /// <summary>The error text of a download the user canceled: it stays in the list, and Resume starts it again.</summary>
     public const string CanceledMessage = "Canceled";
@@ -99,6 +102,8 @@ public sealed class DownloadQueue
     public string StopTime { get; set; } = "08:00";
     public List<int> Days { get; set; } = new() { 1, 2, 3, 4, 5, 6, 7 }; // 1 = Monday … 7 = Sunday
     public AfterQueue AfterDone { get; set; }
+    /// <summary>Wake the computer from sleep a minute before the start time (Windows wake timer).</summary>
+    public bool WakeToStart { get; set; }
     public string? LastStartDay { get; set; }
 
     public static DownloadQueue Main() => new() { Id = MainId, Name = "Main queue", Running = true };
@@ -122,6 +127,18 @@ public static class QueueClock
 
     public static bool ShouldStart(DownloadQueue q, DateTime t) =>
         q.StartEnabled && !q.Running && q.Days.Contains(Weekday(t)) && q.LastStartDay != DayKey(t) && HhMm(t) == q.StartTime;
+
+    /// <summary>The next time the timetable starts the queue (from <paramref name="after"/> on), or null when it never does.</summary>
+    public static DateTime? NextStart(DownloadQueue q, DateTime after)
+    {
+        if (!q.StartEnabled || q.Days.Count == 0 || !TimeSpan.TryParseExact(q.StartTime, @"hh\:mm", System.Globalization.CultureInfo.InvariantCulture, out var at)) return null;
+        for (var d = 0; d <= 7; d++)
+        {
+            var t = after.Date.AddDays(d) + at;
+            if (t > after && q.Days.Contains(Weekday(t))) return t;
+        }
+        return null;
+    }
 
     public static bool ShouldStop(DownloadQueue q, DateTime t) => q.StopEnabled && q.Running && HhMm(t) == q.StopTime;
 }
@@ -228,6 +245,8 @@ public sealed class AppSettings
     /// <summary>Download limit: at most this many MB (0 = no limit) every <see cref="DataCapHours"/> hours.</summary>
     public long DataCapMB { get; set; }
     public int DataCapHours { get; set; } = 24;
+    /// <summary>Windows appearance: "light", "dark" or "system" (same as Windows). Linux keeps its own choice in the View menu.</summary>
+    public string Theme { get; set; } = "light";
     /// <summary>List columns the user turned off (View → Columns).</summary>
     public List<string> HiddenListColumns { get; set; } = new(ListColumns.HiddenByDefault);
 
@@ -246,7 +265,11 @@ public sealed class AppSettings
 
 public static class AppPaths
 {
-    public static string Support => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Nexonic Download Manager");
+    /// <summary>Portable mode: a file named "portable.txt" next to the program keeps settings and the list in a "Data"
+    /// folder beside it (for a USB stick), instead of the user's profile.</summary>
+    public static bool Portable => File.Exists(Path.Combine(AppContext.BaseDirectory, "portable.txt"));
+    public static string Support => Portable ? Path.Combine(AppContext.BaseDirectory, "Data")
+        : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Nexonic Download Manager");
     public static string Inbox => Path.Combine(Support, "Inbox");
     public static string Parts => Path.Combine(Support, "Parts");
     public static string Downloads => Path.Combine(Support, "downloads.json");
