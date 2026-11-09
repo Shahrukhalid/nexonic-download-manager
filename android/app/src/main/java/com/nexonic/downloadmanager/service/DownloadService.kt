@@ -183,6 +183,19 @@ object Notifier {
             .build()
         runCatching { NotificationManagerCompat.from(context).notify(7, n) }
     }
+
+    /** A short notice, such as "Download limit reached". */
+    fun message(context: Context, title: String, text: String) {
+        if (!canNotify(context)) return
+        val n = NotificationCompat.Builder(context, CH_DONE)
+            .setSmallIcon(R.drawable.ic_stat_download)
+            .setContentTitle(tr(title))
+            .setContentText(text)
+            .setContentIntent(openApp(context))
+            .setAutoCancel(true)
+            .build()
+        runCatching { NotificationManagerCompat.from(context).notify(8, n) }
+    }
 }
 
 /** Starts the downloads kept for later at the scheduled time every day. */

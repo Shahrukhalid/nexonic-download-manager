@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -119,6 +120,16 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
                 confirmButton = { TextButton(onClick = { pickLanguage = false }) { Text(tr("Close")) } },
             )
 
+            Section("Appearance")
+            var look by remember { mutableStateOf(s.appearance) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                listOf("system" to "Same as the phone", "light" to "Light", "dark" to "Dark").forEach { (code, title) ->
+                    val pick = { look = code; s.appearance = code; Appearance.choice = code }
+                    androidx.compose.material3.RadioButton(selected = look == code, onClick = pick)
+                    Text(tr(title), Modifier.clickable(onClick = pick).padding(end = 12.dp))
+                }
+            }
+
             Section("Downloads")
             Text("Connections per download: ${connections.toInt()}", style = MaterialTheme.typography.bodyLarge)
             Slider(connections, { connections = it }, valueRange = 1f..32f, steps = 30, onValueChangeFinished = { s.connections = connections.toInt() })
@@ -136,6 +147,25 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
             Toggle("Wi-Fi only", "Wait for Wi-Fi or another unmetered network before downloading.", wifiOnly) {
                 wifiOnly = it; s.wifiOnly = it; Downloads.pump()
             }
+            var capMB by remember { mutableStateOf(if (s.dataCapMB > 0) s.dataCapMB.toString() else "") }
+            var capHours by remember { mutableStateOf(s.dataCapHours.toString()) }
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = capMB,
+                    onValueChange = { v -> capMB = v.filter { it.isDigit() }.take(7); s.dataCapMB = capMB.toIntOrNull() ?: 0; Downloads.releaseCap() },
+                    label = { Text(tr("Download limit (MB, empty = none)")) },
+                    singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.weight(1f).padding(end = 8.dp),
+                )
+                OutlinedTextField(
+                    value = capHours,
+                    onValueChange = { v -> capHours = v.filter { it.isDigit() }.take(3); capHours.toIntOrNull()?.let { s.dataCapHours = it } },
+                    label = { Text(tr("every hours")) },
+                    singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.width(120.dp),
+                )
+            }
+            Hint("When the amount is reached, downloads stop and continue by themselves when the next period starts. Useful on mobile data plans.")
             var blocklist by remember { mutableStateOf(s.torrentBlocklist) }
             OutlinedTextField(
                 value = blocklist,
@@ -227,6 +257,17 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
                     }
                 }.start()
             }) { Text(tr(if (updating) "Checking…" else "Update video engine")) }
+
+            Section("Crash reports")
+            Hint("When the app stops because of an error, a report is saved on this phone. It is never sent anywhere; share it with a bug report if you like.")
+            TextButton(onClick = {
+                val report = com.nexonic.downloadmanager.core.CrashReports.latest(java.io.File(context.filesDir, "crash-reports"))
+                if (report == null) message("No crash reports.")
+                else runCatching {
+                    context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain")
+                        .putExtra(Intent.EXTRA_TEXT, report.readText()), tr("Share crash report")))
+                }
+            }) { Text(tr("Share the latest crash report")) }
 
             Section("About")
             Text("Nexonic Download Manager ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodyLarge)

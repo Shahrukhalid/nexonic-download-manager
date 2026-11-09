@@ -198,6 +198,7 @@ struct DetailView: View {
                     LabeledContent("Type", value: job.category.label)
                     if let path = job.savedPath { LabeledContent("Saved to", value: "Files › Nexonic › " + path) }
                     LabeledContent("Added", value: job.addedAt.formatted(date: .abbreviated, time: .shortened))
+                    if let f = job.finishedAt { LabeledContent("Finished", value: f.formatted(date: .abbreviated, time: .shortened)) }
                 }
                 Section {
                     switch job.status {
@@ -253,7 +254,9 @@ struct PasteView: View {
     @State private var batch = false
 
     private var links: [URL] {
-        let raw = Links.split(text)
+        // Any pasted text works: when it is not just links, the links in it are found (Link Grabber).
+        let split = Links.split(text)
+        let raw = split.allSatisfy({ Net.webURL($0) != nil }) ? split : LinkFinder.find(text).map(\.absoluteString)
         let expanded = batch ? raw.flatMap { (try? BatchPattern.expand($0)) ?? [$0] } : raw
         return expanded.compactMap(Net.webURL)
     }

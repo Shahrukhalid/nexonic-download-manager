@@ -374,6 +374,8 @@ fun DetailSheet(item: DownloadItem, onDismiss: () -> Unit, message: (String) -> 
             InfoRow("Type", item.category.label)
             item.savedPath?.let { InfoRow("Saved to", it) }
             InfoRow("Added", DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(item.addedAt)))
+            item.finishedAt?.let { InfoRow("Finished", DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(it))) }
+            if (!item.isFinished && !item.isTorrent) InfoRow("Can resume", tr(if (item.resumable || item.isVideo) "Yes" else "No"))
             item.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
 
             item.state?.takeIf { it.segments.size > 1 && it.size != null && item.status != Status.COMPLETE }?.let { st ->
