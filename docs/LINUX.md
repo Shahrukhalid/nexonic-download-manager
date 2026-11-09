@@ -17,8 +17,9 @@ Download from the [latest release](https://github.com/Shahrukhalid/nexonic-downl
 | Fedora, openSUSE, RHEL, AlmaLinux, Rocky Linux | `nexonic-download-manager-<version>-1.x86_64.rpm` (`.aarch64.rpm` on ARM) |
 | Arch Linux, Manjaro, EndeavourOS, SteamOS | the AppImage |
 
-Everything is included: the .NET runtime, the video engine and the torrent engine (no Python or other system packages
-needed). Torrents remain off by default. See [setup, supported features and restrictions](TORRENTS.md).
+The **AppImage** includes everything: the .NET runtime, the video engine and the torrent engine. The **.deb** and
+**.rpm** are smaller because they use the .NET 10 runtime from your system (`dotnet-runtime-10.0`); the package manager
+installs it with the app where your distribution has it (see Install). Torrents remain off by default. See [setup, supported features and restrictions](TORRENTS.md).
 
 ## Install
 
@@ -41,8 +42,13 @@ On **SteamOS** (Steam Deck), switch to Desktop Mode and use the AppImage; the sy
 sudo apt install ./nexonic-download-manager_*_amd64.deb
 ```
 
-**Fedora:** `sudo dnf install ./nexonic-download-manager-*.x86_64.rpm`
-**openSUSE:** `sudo zypper install ./nexonic-download-manager-*.x86_64.rpm`
+On **Ubuntu 22.04**, add the .NET packages first: `sudo add-apt-repository ppa:dotnet/backports`. On **Debian**, add
+[Microsoft's package repository](https://learn.microsoft.com/dotnet/core/install/linux-debian) first. Ubuntu 24.04 and
+newer have .NET 10 already.
+
+**Fedora, RHEL, AlmaLinux, Rocky Linux:** `sudo dnf install ./nexonic-download-manager-*.x86_64.rpm`
+**openSUSE:** add [Microsoft's package repository](https://learn.microsoft.com/dotnet/core/install/linux-opensuse),
+then `sudo zypper install ./nexonic-download-manager-*.x86_64.rpm`
 
 The packages install into `/opt/nexonic-download-manager` with `nexonic-download-manager` and `ndm` in `/usr/bin`.
 They run no install scripts.

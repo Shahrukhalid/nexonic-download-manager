@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # Builds the Linux app for this machine's processor and packs it as an AppImage, a .deb and a .rpm.
+# The AppImage carries everything, its own .NET included; the .deb and .rpm use the system's .NET 10 runtime (a package
+# dependency), which makes them much smaller.
 #   linux/packaging/build.sh x64|arm64 FFMPEG_DIR TOOLS_DIR
 # FFMPEG_DIR holds ffmpeg and ffprobe (scripts/build-ffmpeg.sh linux), TOOLS_DIR yt-dlp and qjs (scripts/fetch-video-tools.sh).
 # Needs: .NET 10 SDK, python3, dpkg-deb, rpmbuild. Output: build/linux-<arch>/
@@ -16,39 +18,49 @@ case "$ARCH" in
   *) echo "usage: $0 x64|arm64 FFMPEG_DIR TOOLS_DIR" >&2; exit 2 ;;
 esac
 OUT="$ROOT/build/linux-$ARCH"
-APP="$OUT/app"
+APP="$OUT/app"          # self-contained, for the AppImage
+SYS="$OUT/app-system"   # uses the system's .NET, for the .deb and .rpm
 rm -rf "$OUT"
-mkdir -p "$APP"
+mkdir -p "$APP" "$SYS"
 
 python3 "$ROOT/scripts/build-torrent-native.py" "$RID"
 echo "== App ($RID)"
 dotnet publish "$ROOT/linux/App/App.csproj" -c Release -r "$RID" --self-contained -p:Version="$VERSION" -p:DebugType=embedded -p:SatelliteResourceLanguages=en -o "$APP" -nologo
-# The browser helper and ndm command share the app's runtime: only its own files are added.
-dotnet publish "$ROOT/windows/Host/Host.csproj" -c Release -r "$RID" --self-contained -p:Version="$VERSION" \
-  -p:InvariantGlobalization=true -o "$OUT/host" -nologo
-cp "$OUT/host"/nexonic-host "$OUT/host"/nexonic-host.dll "$OUT/host"/nexonic-host.deps.json "$OUT/host"/nexonic-host.runtimeconfig.json "$APP/"
-rm -rf "$OUT/host"
-find "$APP" -name "*.pdb" -delete
+dotnet publish "$ROOT/linux/App/App.csproj" -c Release -r "$RID" --self-contained false -p:Version="$VERSION" -p:DebugType=embedded -p:SatelliteResourceLanguages=en -o "$SYS" -nologo
+# The browser helper and ndm command share the app's runtime: only their own files are added.
+host() { # SELF_CONTAINED DEST
+  dotnet publish "$ROOT/windows/Host/Host.csproj" -c Release -r "$RID" --self-contained "$1" -p:Version="$VERSION" \
+    -p:InvariantGlobalization=true -o "$OUT/host" -nologo
+  cp "$OUT/host"/nexonic-host "$OUT/host"/nexonic-host.dll "$OUT/host"/nexonic-host.deps.json "$OUT/host"/nexonic-host.runtimeconfig.json "$2/"
+  rm -rf "$OUT/host"
+}
+host true "$APP"
+host false "$SYS"
+find "$APP" "$SYS" -name "*.pdb" -delete
 
-# Strip the symbol table (exported symbols stay): about 3 MB smaller.
-strip --strip-unneeded -o "$APP/libnexonic_torrent.so" "$ROOT/.native-cache/sdk/$RID/lib/libnexonic_torrent.so"
-cp -R "$ROOT/.native-cache/sdk/$RID/notices" "$APP/torrent-licenses"
-cp "$ROOT/.native-cache/sdk/$RID/native-components.json" "$APP/torrent-components.json"
-echo "== Video engine and browser extension"
-cp "$FF/ffmpeg" "$FF/ffprobe" "$TOOLS/qjs" "$APP/"
-cp "$TOOLS/yt-dlp" "$APP/nexonic-video-engine"  # the video engine, under the app's own name
-chmod 755 "$APP/ffmpeg" "$APP/ffprobe" "$APP/nexonic-video-engine" "$APP/qjs" "$APP/NexonicDownloadManager" "$APP/nexonic-host"
 python3 "$ROOT/scripts/build-extensions.py" >/dev/null
-cp -R "$ROOT/build/extension-chrome" "$APP/Extension"
-cp "$ROOT/build/NexonicFirefoxAddon-$VERSION.xpi" "$APP/Firefox Add-on.xpi"
-cp "$PKG/nexonic-download-manager.png" "$APP/"
-mkdir -p "$APP/icons"
-cp "$ROOT"/branding/universal/generated/linux/*.png "$APP/icons/"
-cp "$ROOT/LICENSE" "$APP/LICENSE.txt"
-cp "$ROOT/LICENSE-APACHE" "$APP/LICENSE-APACHE.txt"
-cp "$ROOT/TERMS.md" "$APP/TERMS.md"
-cat "$ROOT/packaging/THIRD-PARTY-NOTICES.txt" "$PKG/LINUX-NOTICES.txt" > "$APP/THIRD-PARTY-NOTICES.txt"
-cp "$FF"/NOTICE-video-tools-1.txt "$TOOLS"/NOTICE-video-tools-2.txt "$APP/" 2>/dev/null || true
+extras() { # DEST: everything besides .NET and the app itself
+  # Strip the symbol table (exported symbols stay): about 3 MB smaller.
+  strip --strip-unneeded -o "$1/libnexonic_torrent.so" "$ROOT/.native-cache/sdk/$RID/lib/libnexonic_torrent.so"
+  cp -R "$ROOT/.native-cache/sdk/$RID/notices" "$1/torrent-licenses"
+  cp "$ROOT/.native-cache/sdk/$RID/native-components.json" "$1/torrent-components.json"
+  cp "$FF/ffmpeg" "$FF/ffprobe" "$TOOLS/qjs" "$1/"
+  cp "$TOOLS/yt-dlp" "$1/nexonic-video-engine"  # the video engine, under the app's own name
+  chmod 755 "$1/ffmpeg" "$1/ffprobe" "$1/nexonic-video-engine" "$1/qjs" "$1/NexonicDownloadManager" "$1/nexonic-host"
+  cp -R "$ROOT/build/extension-chrome" "$1/Extension"
+  cp "$ROOT/build/NexonicFirefoxAddon-$VERSION.xpi" "$1/Firefox Add-on.xpi"
+  cp "$PKG/nexonic-download-manager.png" "$1/"
+  mkdir -p "$1/icons"
+  cp "$ROOT"/branding/universal/generated/linux/*.png "$1/icons/"
+  cp "$ROOT/LICENSE" "$1/LICENSE.txt"
+  cp "$ROOT/LICENSE-APACHE" "$1/LICENSE-APACHE.txt"
+  cp "$ROOT/TERMS.md" "$1/TERMS.md"
+  cat "$ROOT/packaging/THIRD-PARTY-NOTICES.txt" "$PKG/LINUX-NOTICES.txt" > "$1/THIRD-PARTY-NOTICES.txt"
+}
+echo "== Video engine, torrent engine and browser extension"
+extras "$APP"
+extras "$SYS"
+for d in "$APP" "$SYS"; do cp "$FF"/NOTICE-video-tools-1.txt "$TOOLS"/NOTICE-video-tools-2.txt "$d/" 2>/dev/null || true; done
 
 echo "== AppImage"
 AD="$OUT/AppDir"
@@ -88,7 +100,7 @@ APPIMAGE_EXTRACT_AND_RUN=1 ARCH="$AI" "$TOOLDIR/appimagetool-$HOST_AI.AppImage" 
 echo "== .deb"
 D="$OUT/deb"
 mkdir -p "$D/DEBIAN" "$D/opt" "$D/usr/bin" "$D/usr/share/applications" "$D/usr/share/icons/hicolor/256x256/apps" "$D/usr/share/doc/nexonic-download-manager"
-cp -a "$APP" "$D/opt/nexonic-download-manager"
+cp -a "$SYS" "$D/opt/nexonic-download-manager"
 printf '#!/bin/sh\nexec /opt/nexonic-download-manager/NexonicDownloadManager "$@"\n' > "$D/usr/bin/nexonic-download-manager"
 printf '#!/bin/sh\nexec /opt/nexonic-download-manager/nexonic-host "$@"\n' > "$D/usr/bin/ndm"
 chmod 755 "$D/usr/bin/nexonic-download-manager" "$D/usr/bin/ndm"
@@ -98,7 +110,7 @@ for size in 16 24 32 48 64 128 256 512; do
   mkdir -p "$target"
   cp "$ROOT/branding/universal/generated/linux/$size.png" "$target/nexonic-download-manager.png"
 done
-cp "$APP/THIRD-PARTY-NOTICES.txt" "$D/usr/share/doc/nexonic-download-manager/copyright"
+cp "$SYS/THIRD-PARTY-NOTICES.txt" "$D/usr/share/doc/nexonic-download-manager/copyright"
 SIZE="$(du -sk "$D" --exclude=DEBIAN | cut -f1)"
 cat > "$D/DEBIAN/control" <<CONTROL
 Package: nexonic-download-manager
@@ -109,7 +121,7 @@ Architecture: $DEB
 Installed-Size: $SIZE
 Maintainer: Shahrukh Khalid <90670731+Shahrukhalid@users.noreply.github.com>
 Homepage: https://github.com/Shahrukhalid/nexonic-download-manager
-Depends: libc6 (>= 2.31), libstdc++6, zlib1g, libfontconfig1, libx11-6, libice6, libsm6, libssl3 | libssl3t64 | libssl1.1
+Depends: dotnet-runtime-10.0, libc6 (>= 2.31), libstdc++6, zlib1g, libfontconfig1, libx11-6, libice6, libsm6, libssl3 | libssl3t64 | libssl1.1
 Recommends: libsecret-tools, xdg-utils, libnotify-bin
 Suggests: clamav, gnome-keyring
 Description: Fast download manager with queues, a scheduler and video downloads
@@ -139,6 +151,7 @@ License: MIT OR Apache-2.0
 URL: https://github.com/Shahrukhalid/nexonic-download-manager
 AutoReqProv: no
 Requires: fontconfig
+Requires: dotnet-runtime-10.0
 Recommends: xdg-utils
 Recommends: libnotify
 
