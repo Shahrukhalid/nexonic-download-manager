@@ -588,31 +588,6 @@ public static partial class Dialogs
         AutomationProperties.SetName(categoryText, "Your categories, one per line");
         categories.Children.Add(categoryText);
 
-        var remoteTab = Tab("Remote");
-        var rs = s.Remote;
-        var remoteOn = Tick(remoteTab, "Let my phone and other devices on this network manage downloads", rs.Enabled);
-        var remotePort = Box(remoteTab, "Port", rs.Port.ToString());
-        Hint(remoteTab, (m.RemoteProblem.Length > 0 ? m.RemoteProblem + " " : "") +
-                        "Off by default. After saving, choose Pair a Phone and scan the code with the phone's camera: the phone opens a page that lists, " +
-                        "adds, stops and resumes downloads. Only paired devices are let in. Use it on your home or office network only, not on public Wi-Fi " +
-                        "(the connection inside the network is not encrypted). Your firewall may ask to allow the port.");
-        var remoteButtons = new WrapPanel { Margin = new Thickness(0, 8, 0, 0) };
-        var pair = new Button { Content = "Pair a Phone…", Margin = new Thickness(0, 0, 6, 6) };
-        pair.Click += async (_, _) =>
-        {
-            if (m.PairingUrl() is not { } url) { await Ui.Message(f.Window, "Pair a Phone", "Turn on remote access and choose Save first, then open Options again."); return; }
-            await PairQr(f.Window, url);
-        };
-        var unpair = new Button { Content = "Unpair All Devices", Margin = new Thickness(0, 0, 6, 6) };
-        unpair.Click += async (_, _) =>
-        {
-            if (!await Ui.Confirm(f.Window, "Unpair All Devices", "Paired phones lose access until they scan the new code.", "Unpair")) return;
-            m.ApplyRemote(newKey: true);
-        };
-        remoteButtons.Children.Add(pair);
-        remoteButtons.Children.Add(unpair);
-        remoteTab.Children.Add(remoteButtons);
-
         var backup = Tab("Backup");
         Hint(backup, "A backup holds your settings, site settings, queues and the downloads list. Passwords and cookies are never put in a backup.");
         var backupResult = Hint(backup, "");
@@ -770,14 +745,8 @@ public static partial class Dialogs
             if (Adapters.BlocklistProblem(blocklist.Text) is { } blockProblem) { error.Text = blockProblem; return; }
             var (customList, categoryProblem) = CustomCategory.ParseLines(categoryText.Text);
             if (categoryProblem != null) { error.Text = categoryProblem; tabs.SelectedIndex = 3; return; }
-            var remotePortNumber = Ui.Number(remotePort.Text, -1);
-            if (remoteOn.IsChecked == true && remotePortNumber is < 1024 or > 65535) { error.Text = "The remote port must be between 1024 and 65535."; return; }
             s.CustomCategories = customList;
             s.InterfaceScale = scales[Math.Max(0, scale.SelectedIndex)];
-            s.Remote = new RemoteSettings
-            {
-                Enabled = remoteOn.IsChecked == true, Port = remotePortNumber is >= 1024 and <= 65535 ? remotePortNumber : 47813, Key = s.Remote.Key,
-            };
             s.Network = new NetworkOptions
             {
                 MinSegmentKB = Ui.Number(minSeg.Text, 512), Retries = Ui.Number(retries.Text, 6),
@@ -797,7 +766,6 @@ public static partial class Dialogs
             m.ApplySettings(s);
             m.ApplyAutomation();
             var scaleChanged = s.InterfaceScale != oldScale;
-            m.ApplyRemote();
             prefs.Theme = theme.SelectedIndex switch { 1 => "light", 2 => "dark", _ => "system" };
             prefs.Save();
             App.ApplyTheme(prefs);
@@ -900,21 +868,6 @@ public static partial class Dialogs
         if (urls.Any(ShareLinks.LooksPrivate))
             f.Note("This link seems to include a private access key (for example a token or signature). Anyone who scans the code can use it until it expires, so share it only with your own phone.");
         f.Note("Only the links are shared: no cookies or passwords. Downloads that need you to be signed in may not work on the phone.");
-        f.AddButton("Close", f.Close, isDefault: true, isCancel: true);
-        await f.Show();
-    }
-
-    /// <summary>The pairing code for remote access: the phone's camera opens the remote page already paired.</summary>
-    public static async Task PairQr(Window owner, string url)
-    {
-        var f = new Form(owner, "Pair a Phone", 420);
-        var view = new QrView(QrCode.Encode(url)) { Width = 300, Height = 300, Margin = new Thickness(0, 4, 0, 8), HorizontalAlignment = HorizontalAlignment.Center };
-        AutomationProperties.SetName(view, "Pairing QR code");
-        f.Body.Children.Add(view);
-        f.Note("Scan with your phone's camera while the phone is on the same network as this computer. The page it opens stays paired; add it to your home screen to open it again.");
-        f.Note("Anyone with this code can manage your downloads until you choose Unpair All Devices, so show it only to your own devices.");
-        var addresses = RemoteAccess.LanAddresses();
-        if (addresses.Count > 1) f.Note("Other addresses of this computer: " + string.Join(", ", addresses.Skip(1)));
         f.AddButton("Close", f.Close, isDefault: true, isCancel: true);
         await f.Show();
     }

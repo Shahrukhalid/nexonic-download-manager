@@ -46,11 +46,6 @@ Invoke-RestMethod http://127.0.0.1:47812/v1/downloads -Method Post -Headers $h -
   -Body '{"urls":["https://example.com/a.zip","https://example.com/b.zip"]}'
 ```
 
-## Remote access (optional)
-
-Options → Remote (and the `nexonic-server` program) serves the same endpoints to other devices on the local network,
-at `http://<computer's address>:47813/v1/…`, with the pairing key instead of the API key. See [SERVER.md](SERVER.md).
-
 ## MCP server (optional)
 
 `ndm --mcp` runs an MCP server on standard input and output, so an assistant app can manage downloads. Tools:
