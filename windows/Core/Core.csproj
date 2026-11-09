@@ -9,7 +9,7 @@
   </ItemGroup>
   <ItemGroup>
     <!-- Unpacks .7z, .rar and .tar archives (MIT licence). -->
-    <PackageReference Include="SharpCompress" Version="0.48.0" />
+    <PackageReference Include="SharpCompress" Version="0.50.8" />
   </ItemGroup>
   <ItemGroup>
     <!-- Translations of the desktop apps (see docs/TRANSLATIONS.md). -->
