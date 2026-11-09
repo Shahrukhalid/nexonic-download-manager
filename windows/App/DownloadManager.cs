@@ -21,6 +21,8 @@ public sealed class AddOptions
     public bool AudioOnly { get; set; }
     public int? MaxHeight { get; set; }    // a single video link's highest picture quality (null = best)
     public string? InfoJson { get; set; }  // a single video link's details, already looked up in the Add window
+    public string? Package { get; set; }   // Link Grabber package name
+    public bool Unpack { get; set; }       // unpack the package's archives when all of it is done
 }
 
 /// <summary>Queues, scheduler, persistence and after-download actions (UI thread only).</summary>
@@ -74,6 +76,7 @@ public sealed partial class DownloadManager
         timer.Start();
         CollectInbox();
         Schedule();
+        UpdateWakeTimer();
         Task.Run(SiteVideoTools.Prepare); // keeps the video engine current
     }
 
@@ -169,6 +172,8 @@ public sealed partial class DownloadManager
             AudioOnly = site && (job.AudioOnly ?? o.AudioOnly) ? true : null,
             InfoJson = site ? job.InfoJson : null,
             MaxHeight = site && !(job.AudioOnly ?? o.AudioOnly) ? job.MaxHeight : null,
+            Package = o.Package is { Length: > 0 } pk ? pk : null,
+            UnpackWhenDone = o.Unpack ? true : null,
         };
         Rows.Insert(0, new Row(rec, QueueName));
         Schedule();
@@ -474,7 +479,19 @@ public sealed partial class DownloadManager
         if (before != Settings.LastFolder) Write(AppPaths.Settings, Settings);
     }
 
-    public void SaveQueues() => Write(AppPaths.Queues, Queues.ToList());
+    public void SaveQueues()
+    {
+        Write(AppPaths.Queues, Queues.ToList());
+        UpdateWakeTimer();
+    }
+
+    /// <summary>Sets the Windows wake timer for the next queue start that should wake the computer (a minute early).</summary>
+    public void UpdateWakeTimer()
+    {
+        var now = DateTime.Now;
+        var next = Queues.Where(q => q.WakeToStart).Select(q => QueueClock.NextStart(q, now.AddMinutes(1))).Where(t => t != null).Min();
+        WakeTimer.Set(next?.AddMinutes(-1));
+    }
 
     void RunTimetable()
     {

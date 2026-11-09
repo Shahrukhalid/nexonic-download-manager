@@ -19,6 +19,8 @@ public sealed class AddOptions
     public bool AudioOnly { get; set; }
     public int? MaxHeight { get; set; }    // a single video link's highest picture quality (null = best)
     public string? InfoJson { get; set; }  // a single video link's details, already looked up in the Add window
+    public string? Package { get; set; }   // Link Grabber package name
+    public bool Unpack { get; set; }       // unpack the package's archives when all of it is done
 }
 
 /// <summary>
@@ -172,6 +174,8 @@ public sealed partial class DownloadManager
             AudioOnly = site && (job.AudioOnly ?? o.AudioOnly) ? true : null,
             InfoJson = site ? job.InfoJson : null,
             MaxHeight = site && !(job.AudioOnly ?? o.AudioOnly) ? job.MaxHeight : null,
+            Package = o.Package is { Length: > 0 } pk ? pk : null,
+            UnpackWhenDone = o.Unpack ? true : null,
         };
         Rows.Insert(0, new Row(rec, QueueName));
         Schedule();

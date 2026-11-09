@@ -93,6 +93,7 @@ public sealed class MainWindow : Window
         Shortcut(Key.B, KeyModifiers.Control | KeyModifiers.Shift, OpenBatch);
         Shortcut(Key.G, KeyModifiers.Control | KeyModifiers.Shift, OpenGrabber);
         Shortcut(Key.I, KeyModifiers.Control | KeyModifiers.Shift, () => _ = Dialogs.Gallery(this, manager));
+        Shortcut(Key.K, KeyModifiers.Control | KeyModifiers.Shift, () => _ = Dialogs.LinkGrabber(this, manager));
         Shortcut(Key.Q, KeyModifiers.Control, manager.RequestQuit);
         Shortcut(Key.L, KeyModifiers.Control | KeyModifiers.Shift, () => _ = OpenPlaylist(""));
         Shortcut(Key.L, KeyModifiers.Control, OpenLibrary);
@@ -257,6 +258,7 @@ public sealed class MainWindow : Window
             Item("Add _Torrent…", OpenTorrents, "Ctrl+Shift+T"),
             Item("Add _Batch Download…", OpenBatch, "Ctrl+Shift+B"),
             Item("Site _Grabber…", OpenGrabber, "Ctrl+Shift+G"),
+            Item("_Link Grabber…", () => _ = Dialogs.LinkGrabber(this, manager), "Ctrl+Shift+K"),
             Item("Download _Images from Page…", () => _ = Dialogs.Gallery(this, manager), "Ctrl+Shift+I"),
             Item("Add _Playlist or Channel…", () => _ = OpenPlaylist(""), "Ctrl+Shift+L"),
             Item("_RSS Feeds…", () => _ = Dialogs.Feeds(this, manager, feeds, AddFeedItem)),
@@ -823,6 +825,7 @@ public sealed class MainWindow : Window
         var recheck = Item("Check Torrent Files Again", () => { if (One is { } r && r.Record.Torrent != null) manager.Recheck(r); });
         Item("Properties…", () => { if (One is { } r) _ = Dialogs.Properties(this, manager, r); });
         Item("Copy Link", () => { if (One is { } r) _ = Clipboard?.SetTextAsync(r.Record.Url); });
+        Item("Check Server…", () => _ = Dialogs.Diagnostics(this, manager, One?.Record.Url));
         Item("Show QR Code…", () => { if (Selected.Count > 0) _ = Dialogs.ShowQr(this, Selected.Select(r => r.Record.Url).ToList()); });
         menu.Items.Add(moveMenu);
         menu.Items.Add(new Separator());

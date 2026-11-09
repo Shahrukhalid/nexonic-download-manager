@@ -41,6 +41,7 @@ public partial class MainWindow : Window
         Shortcut(Key.B, ModifierKeys.Control | ModifierKeys.Shift, OnBatch);
         Shortcut(Key.G, ModifierKeys.Control | ModifierKeys.Shift, OnGrabber);
         Shortcut(Key.I, ModifierKeys.Control | ModifierKeys.Shift, OnGallery);
+        Shortcut(Key.K, ModifierKeys.Control | ModifierKeys.Shift, OnLinkGrabber);
         // Screen readers announce each toolbar button by its name and tooltip, also when the names under the icons are hidden.
         foreach (var b in Toolbar.Children.OfType<Button>())
             if (b.Content is StackPanel p && p.Children.OfType<TextBlock>().LastOrDefault() is { } caption)
@@ -410,6 +411,7 @@ public partial class MainWindow : Window
 
     void OnShowProgress(object s, RoutedEventArgs e) { if (One is { } r) DownloadWindows.ShowProgress(manager, r); }
     void OnGallery(object s, RoutedEventArgs e) => Dialogs.Gallery(this, manager);
+    void OnLinkGrabber(object s, RoutedEventArgs e) => Dialogs.LinkGrabber(this, manager);
     void OnDiagnostics(object s, RoutedEventArgs e) => Dialogs.Diagnostics(this, manager, One?.Record.Url);
     void OnRecheck(object s, RoutedEventArgs e) { if (One is { Record.Torrent: not null } r) manager.Recheck(r); }
     void OnShowQr(object s, RoutedEventArgs e) => Dialogs.ShowQr(this, Selected.Select(r => r.Record.Url).ToList());

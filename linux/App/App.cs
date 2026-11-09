@@ -73,7 +73,7 @@ public sealed class App : Application
             if (m.Settings.Notifications)
                 LinuxSystem.Notify("Download finished", r.FileName + (r.ChecksumResult is { } c ? " – " + c : ""), IconPath);
             if (m.Settings.ShowCompleteDialog) Dialogs.Complete(m, r);
-            if (m.Settings.ExtractZips && Archives.IsArchive(r.SavedPath)) Unzip(r.SavedPath!, text =>
+            foreach (var archive in LinkGrabber.ToUnpack(r, m.Rows.Select(x => x.Record), m.Settings.ExtractZips)) Unzip(archive, text =>
             {
                 if (m.Settings.Notifications) LinuxSystem.Notify("Unzipped", text, IconPath);
             });

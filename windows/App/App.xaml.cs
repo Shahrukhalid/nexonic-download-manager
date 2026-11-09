@@ -35,6 +35,7 @@ public partial class App : Application
         RegisterBrowserHost();
         var manager = new DownloadManager();
         L.Use(manager.Settings.Language);
+        AppTheme.Apply(manager.Settings.Theme);
         Translate.Install();
         window = new MainWindow(manager);
         // Started by the browser helper: stay in the tray unless the user wants the window for browser downloads.
@@ -79,7 +80,7 @@ public partial class App : Application
             if (manager.Settings.Notifications)
                 tray.ShowBalloonTip(3000, "Download finished", r.FileName + (r.ChecksumResult is { } c ? " – " + c : ""), System.Windows.Forms.ToolTipIcon.Info);
             if (manager.Settings.ShowCompleteDialog) Dialogs.Complete(manager, r);
-            if (manager.Settings.ExtractZips && Archives.IsArchive(r.SavedPath)) Unzip(r.SavedPath!, text =>
+            foreach (var archive in LinkGrabber.ToUnpack(r, manager.Rows.Select(x => x.Record), manager.Settings.ExtractZips)) Unzip(archive, text =>
             {
                 if (manager.Settings.Notifications) tray.ShowBalloonTip(3000, "Unzipped", text, System.Windows.Forms.ToolTipIcon.Info);
             });
