@@ -389,6 +389,58 @@ public static class SiteVideoTools
         }
     }
 
+    static readonly SemaphoreSlim installing = new(1, 1);
+
+    /// <summary>
+    /// True when the video engine is ready. The apps don't ship it: the first time a video is saved (or a video link is
+    /// looked up), the official release is downloaded from the engine's GitHub page, checked against the release's
+    /// SHA2-256SUMS and only then put in place; afterwards it keeps itself current. <paramref name="status"/> hears about
+    /// the one-time download. False when it could not be had (no internet, for example).
+    /// </summary>
+    public static bool EnsureInstalled(Action<string>? status = null)
+    {
+        if (File.Exists(YtDlp)) return true;
+        installing.Wait();
+        try
+        {
+            if (File.Exists(YtDlp)) return true;
+            status?.Invoke("Getting the video engine (only the first time)…");
+            Directory.CreateDirectory(Folder);
+            if (OperatingSystem.IsWindows()) UpdateAsync("0").GetAwaiter().GetResult();
+            else InstallOneFileAsync().GetAwaiter().GetResult();
+            return File.Exists(YtDlp);
+        }
+        catch (Exception e) when (e is HttpRequestException or IOException or TaskCanceledException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            return false;
+        }
+        finally { installing.Release(); }
+    }
+
+    /// <summary>Why <see cref="EnsureInstalled"/> failed, for the user.</summary>
+    public const string Missing = "The video engine could not be downloaded. Check the internet connection and try again.";
+
+    /// <summary>The engine's one-file program for Linux (x64 or ARM), checked against the release's SHA2-256SUMS.</summary>
+    static async Task InstallOneFileAsync()
+    {
+        const string releases = "https://github.com/yt-dlp/yt-dlp/releases";
+        var asset = System.Runtime.InteropServices.RuntimeInformation.OSArchitecture == System.Runtime.InteropServices.Architecture.Arm64
+            ? "yt-dlp_linux_aarch64" : "yt-dlp_linux";
+        using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
+        var sums = await http.GetStringAsync($"{releases}/latest/download/SHA2-256SUMS");
+        var want = ChecksumFor(asset, sums) ?? throw new InvalidOperationException("The engine's checksum list has no " + asset);
+        var bytes = await http.GetByteArrayAsync($"{releases}/latest/download/{asset}");
+        if (Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)).ToLowerInvariant() != want)
+            throw new InvalidOperationException("The downloaded video engine did not match its checksum.");
+        var tmp = YtDlp + ".tmp";
+        await File.WriteAllBytesAsync(tmp, bytes);
+        if (!OperatingSystem.IsWindows())
+            File.SetUnixFileMode(tmp, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
+                                      UnixFileMode.GroupRead | UnixFileMode.GroupExecute | UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
+        File.Move(tmp, YtDlp, true);
+        File.WriteAllText(Path.Combine(Folder, "last-update"), "");
+    }
+
     /// <summary>"2026.10.26" or "2026.10.26.1" compared number by number.</summary>
     public static bool Newer(string a, string b)
     {
@@ -437,17 +489,20 @@ public static class SiteVideoTools
 
     static void PrepareOneFile()
     {
-        var src = Path.Combine(AppContext.BaseDirectory, Exe(EngineName));
-        if (!File.Exists(src)) return;
         try { File.Delete(Path.Combine(Folder, Exe("yt-dlp"))); } catch { } // the copy under its earlier name
-        var stamp = Path.Combine(Folder, "bundled-date");
-        var key = File.GetLastWriteTimeUtc(src).Ticks.ToString();
-        if (!File.Exists(YtDlp) || (File.Exists(stamp) ? File.ReadAllText(stamp) : "") != key)
+        // Builds before 0.26 shipped the engine next to the app; newer ones get it the first time a video is saved.
+        var src = Path.Combine(AppContext.BaseDirectory, Exe(EngineName));
+        if (File.Exists(src))
         {
-            File.Copy(src, YtDlp, true);
-            File.WriteAllText(stamp, key);
+            var stamp = Path.Combine(Folder, "bundled-date");
+            var key = File.GetLastWriteTimeUtc(src).Ticks.ToString();
+            if (!File.Exists(YtDlp) || (File.Exists(stamp) ? File.ReadAllText(stamp) : "") != key)
+            {
+                File.Copy(src, YtDlp, true);
+                File.WriteAllText(stamp, key);
+            }
         }
-        if (!DueForUpdate()) return;
+        if (!File.Exists(YtDlp) || !DueForUpdate()) return;
         Process.Start(new ProcessStartInfo(YtDlp, "-U") { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true });
     }
 
@@ -650,7 +705,8 @@ public sealed class SiteVideoTransfer : IDownloader
         Record.SiteVideo = true;
         Record.VideoStep = null;
         Notify(true);
-        if (!File.Exists(SiteVideoTools.YtDlp)) { Fail("The video engine is missing. Reinstall the app"); return; }
+        if (!SiteVideoTools.EnsureInstalled(step => { Record.VideoStep = step; Notify(true); })) { Fail(SiteVideoTools.Missing); return; }
+        Record.VideoStep = null;
         var folder = FileCategories.TargetFolder(Record.Folder, Record.AudioOnly == true ? "audio.m4a" : "video.mp4", sortIntoCategories);
         Directory.CreateDirectory(folder);
         Directory.CreateDirectory(Temp);
@@ -793,7 +849,7 @@ public sealed class VideoPrefetch : IDisposable
     (SiteVideo.Info?, string) Run(string link, CancellationToken token)
     {
         SiteVideoTools.Prepare();
-        if (!File.Exists(SiteVideoTools.YtDlp)) return (null, "");
+        if (!SiteVideoTools.EnsureInstalled()) return (null, "");
         Directory.CreateDirectory(AppPaths.Parts);
         var psi = new ProcessStartInfo(SiteVideoTools.YtDlp)
         {

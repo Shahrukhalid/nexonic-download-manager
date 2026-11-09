@@ -56,8 +56,8 @@ func qualities(_ m: [String: Any]) -> [String: Any] {
         return ["ok": false, "error": "Not a video site link"]
     }
     let fm = FileManager.default
-    let tools = [SiteVideoTools.ytdlp.path, SiteVideoTools.bundled?.appendingPathComponent("nexonic-video-engine").path].compactMap { $0 }
-    guard let tool = tools.first(where: fm.isExecutableFile(atPath:)) else { return ["ok": false, "error": "The video engine is missing"] }
+    guard SiteVideoTools.ensureInstalled(), fm.isExecutableFile(atPath: SiteVideoTools.ytdlp.path) else { return ["ok": false, "error": SiteVideoTools.missing] }
+    let tool = SiteVideoTools.ytdlp.path
     let args = SiteVideo.infoArguments(url: url, quickJS: SiteVideoTools.quickJS, audioOnly: false, referrer: m["referrer"] as? String,
                                        cookies: m["cookies"] as? String, userAgent: m["userAgent"] as? String, username: nil, password: nil)
     guard let prepared = try? SiteVideo.prepare(args, proxy: savedProxy()) else { return ["ok": false, "error": "Could not prepare the lookup"] }

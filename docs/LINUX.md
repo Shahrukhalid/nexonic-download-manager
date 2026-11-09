@@ -17,7 +17,8 @@ Download from the [latest release](https://github.com/Shahrukhalid/nexonic-downl
 | Fedora, openSUSE, RHEL, AlmaLinux, Rocky Linux | `nexonic-download-manager-<version>-1.x86_64.rpm` (`.aarch64.rpm` on ARM) |
 | Arch Linux, Manjaro, EndeavourOS, SteamOS | the AppImage |
 
-The **AppImage** includes everything: the .NET runtime, the video engine and the torrent engine. The **.deb** and
+The **AppImage** includes everything: the .NET runtime and the torrent engine (the video engine is downloaded from its
+official release the first time you save a video). The **.deb** and
 **.rpm** are smaller because they use the .NET 10 runtime from your system (`dotnet-runtime-10.0`); the package manager
 installs it with the app where your distribution has it (see Install). Torrents remain off by default. See [setup, supported features and restrictions](TORRENTS.md).
 

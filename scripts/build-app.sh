@@ -41,26 +41,9 @@ strip "$APP/Contents/MacOS/NexonicDownloadManager" "$APP/Contents/MacOS/nexonic-
 if [ ! -x .ffmpeg-cache/mac/ffmpeg ]; then bash scripts/build-ffmpeg.sh mac .ffmpeg-cache/mac; fi
 cp .ffmpeg-cache/mac/ffmpeg .ffmpeg-cache/mac/ffprobe "$APP/Contents/MacOS/"
 # Video engine for YouTube and other sites (yt-dlp + QuickJS); fetched fresh unless .tools-cache/mac already has it.
-if [ ! -x .tools-cache/mac/yt-dlp-engine/yt-dlp_macos ]; then bash scripts/fetch-video-tools.sh mac .tools-cache/mac; fi
+if [ ! -x .tools-cache/mac/qjs ]; then bash scripts/fetch-video-tools.sh mac .tools-cache/mac; fi
 cp .tools-cache/mac/qjs "$APP/Contents/MacOS/"
-# The unpacked engine, its program renamed nexonic-video-engine, packed small with xz (about 26 MB instead of 52);
-# the app unpacks it once on first launch.
-ENGINE=build/video-engine
-rm -rf "$ENGINE" && cp -R .tools-cache/mac/yt-dlp-engine "$ENGINE" && mv "$ENGINE/yt-dlp_macos" "$ENGINE/nexonic-video-engine"
-tar --options xz:compression-level=9 -C "$ENGINE" -cJf "$APP/Contents/Resources/video-engine.tar.xz" --exclude VERSION .
-cp "$ENGINE/VERSION" "$APP/Contents/Resources/video-engine-version.txt"
-rm -rf "$ENGINE"
-# MacOS/nexonic-video-engine starts the engine from the command line and checks (unpacking it once into a temporary folder).
-cat > "$APP/Contents/MacOS/nexonic-video-engine" <<'SH'
-#!/bin/sh
-R="$(cd "$(dirname "$0")/../Resources" && pwd)"
-D="${TMPDIR:-/tmp}/nexonic-video-engine-$(cat "$R/video-engine-version.txt")"
-if [ ! -x "$D/nexonic-video-engine" ]; then
-  T="$D.$$" && mkdir -p "$T" && /usr/bin/tar -xJf "$R/video-engine.tar.xz" -C "$T" && rm -rf "$D" && mv "$T" "$D" || exit 1
-fi
-exec "$D/nexonic-video-engine" "$@"
-SH
-chmod +x "$APP/Contents/MacOS/nexonic-video-engine"
+# The video engine itself is not shipped: the app downloads the official release the first time a video is saved.
 cat packaging/THIRD-PARTY-NOTICES.txt .ffmpeg-cache/mac/NOTICE-video-tools-1.txt .tools-cache/mac/NOTICE-video-tools-2.txt \
   > "$APP/Contents/Resources/THIRD-PARTY-NOTICES.txt"
 cp packaging/TERMS.txt "$APP/Contents/Resources/TERMS.txt"
@@ -76,7 +59,7 @@ cp branding/universal/generated/macos/MenuBarIcon.png "$APP/Contents/Resources/M
 
 if [ -n "${SIGN_IDENTITY:-}" ]; then
   codesign --force --options runtime --timestamp -s "$SIGN_IDENTITY" "$APP/Contents/MacOS/nexonic-host"
-  for tool in ffmpeg ffprobe qjs nexonic-video-engine; do
+  for tool in ffmpeg ffprobe qjs; do
     codesign --force --options runtime --timestamp -s "$SIGN_IDENTITY" "$APP/Contents/MacOS/$tool"
   done
   codesign --force --options runtime --timestamp -s "$SIGN_IDENTITY" "$APP"

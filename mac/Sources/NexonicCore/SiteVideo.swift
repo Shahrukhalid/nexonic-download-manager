@@ -409,6 +409,26 @@ public enum SiteVideoTools {
         }
     }
 
+    private static let installing = NSLock()
+
+    /// Why `ensureInstalled` failed, for the user.
+    public static let missing = "The video engine could not be downloaded. Check the internet connection and try again."
+
+    /// True when the video engine is ready. The app doesn't ship it: the first time a video is saved (or a video link is
+    /// looked up), the official release is downloaded, checked against the release's SHA2-256SUMS and only then put in
+    /// place; afterwards it keeps itself current. `status` hears about the one-time download.
+    @discardableResult
+    public static func ensureInstalled(status: ((String) -> Void)? = nil) -> Bool {
+        if !engines().isEmpty { return true }
+        installing.lock()
+        defer { installing.unlock() }
+        if !engines().isEmpty { return true }
+        status?("Getting the video engine (only the first time)…")
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        update(from: "0")
+        return !engines().isEmpty
+    }
+
     /// Adds a new engine to Tools: `fill` puts its files into a new folder; the VERSION file is written last.
     @discardableResult
     static func install(version v: String, fill: (URL) -> Bool) -> Bool {
@@ -573,9 +593,11 @@ public final class SiteVideoTransfer: Downloader, @unchecked Sendable {
         change { $0.status = .probing; $0.error = nil; $0.siteVideo = true; $0.videoStep = nil }
         notify(force: true)
         let r = rec
-        guard FileManager.default.isExecutableFile(atPath: SiteVideoTools.ytdlp.path) else {
-            return fail("The video engine is missing. Reinstall the app")
-        }
+        guard SiteVideoTools.ensureInstalled(status: { [weak self] step in
+            self?.change { $0.videoStep = step }
+            self?.notify(force: true)
+        }) else { return fail(SiteVideoTools.missing) }
+        change { $0.videoStep = nil }
         var folder = r.folder
         if sortIntoCategories { folder.appendPathComponent(r.audioOnly == true ? FileCategory.music.rawValue : FileCategory.video.rawValue) }
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)

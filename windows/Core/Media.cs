@@ -91,7 +91,7 @@ public static class Playlists
     public static Result Read(string url, ProxySettings? proxy, CancellationToken cancel = default)
     {
         SiteVideoTools.Prepare();
-        if (!File.Exists(SiteVideoTools.YtDlp)) throw new InvalidOperationException("The video engine is missing. Reinstall the app");
+        if (!SiteVideoTools.EnsureInstalled()) throw new InvalidOperationException(SiteVideoTools.Missing);
         var (args, configFile) = SiteVideo.Prepare(Arguments(url, SiteVideoTools.QuickJs), proxy);
         using var cleanup = new ConfigCleanup(configFile);
         var psi = new ProcessStartInfo(SiteVideoTools.YtDlp)

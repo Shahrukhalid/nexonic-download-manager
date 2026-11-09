@@ -208,7 +208,7 @@ public static class DownloadWindows
             try
             {
                 SiteVideoTools.Prepare();
-                if (!File.Exists(SiteVideoTools.YtDlp)) return ((SiteVideo.Info?)null, "");
+                if (!SiteVideoTools.EnsureInstalled()) return ((SiteVideo.Info?)null, SiteVideoTools.Missing);
                 Directory.CreateDirectory(AppPaths.Parts);
                 var psi = new ProcessStartInfo(SiteVideoTools.YtDlp)
                 {
