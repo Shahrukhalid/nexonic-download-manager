@@ -181,6 +181,12 @@
     "Support the Project": "प्रोजेक्ट का समर्थन करें",
     "VPN only": "केवल VPN",
     "Download only through a VPN. If the VPN disconnects, downloads stop instead of using another connection.": "केवल VPN के ज़रिए डाउनलोड करें। VPN का कनेक्शन टूटने पर डाउनलोड किसी और कनेक्शन के बजाय रुक जाते हैं।",
-    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "VPN का इंतज़ार है। VPN के बिना डाउनलोड करने के लिए सेटिंग्स में \"केवल VPN\" बंद करें।"
+    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "VPN का इंतज़ार है। VPN के बिना डाउनलोड करने के लिए सेटिंग्स में \"केवल VPN\" बंद करें।",
+    "Scan QR code": "QR कोड स्कैन करें",
+    "Point the camera at a QR code from Nexonic on your computer, or any download link.": "कैमरा अपने कंप्यूटर पर Nexonic के QR कोड या किसी भी डाउनलोड लिंक की ओर करें।",
+    "This QR code has no download link.": "इस QR कोड में कोई डाउनलोड लिंक नहीं है।",
+    "Torrent blocklist: an https:// address (empty = none)": "टोरेंट ब्लॉकलिस्ट: एक https:// पता (खाली = कोई नहीं)",
+    "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.": "टोरेंट इस सूची के पतों से कभी नहीं जुड़ते। P2P, DAT और CIDR सूचियाँ काम करती हैं, .gz में भी। पता दिन में एक बार फिर से डाउनलोड होता है।",
+    "The blocklist address must start with https://": "ब्लॉकलिस्ट का पता https:// से शुरू होना चाहिए"
   }
 }

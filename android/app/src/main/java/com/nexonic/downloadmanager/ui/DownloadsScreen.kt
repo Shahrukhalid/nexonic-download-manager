@@ -41,6 +41,7 @@ import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -117,6 +118,16 @@ fun DownloadsScreen(items: List<DownloadItem>, ui: UiState, onOpenBrowser: () ->
     var query by rememberSaveable { mutableStateOf("") }
     val waitingForWifi by Downloads.waitingForWifi.collectAsState()
     val waitingForVpn by Downloads.waitingForVpn.collectAsState()
+    // Scan QR code: a nexonic:// code from the desktop apps, a web link or a magnet link opens the Add window.
+    val scanQr = androidx.activity.compose.rememberLauncherForActivityResult(com.journeyapps.barcodescanner.ScanContract()) { result ->
+        val text = result.contents?.trim() ?: return@rememberLauncherForActivityResult
+        val links = Links.fromNexonicLink(text).ifEmpty { Links.split(text) }
+        when {
+            text.startsWith("magnet:?", ignoreCase = true) -> ui.addTorrent = text
+            links.isNotEmpty() -> ui.addText = links.joinToString("\n")
+            else -> ui.message = "This QR code has no download link."
+        }
+    }
     // Long-press a download to select it; then tap others to add them. Actions apply to every selected download.
     var selected by remember { mutableStateOf(setOf<Long>()) }
     var confirmRemove by remember { mutableStateOf(false) }
@@ -162,6 +173,12 @@ fun DownloadsScreen(items: List<DownloadItem>, ui: UiState, onOpenBrowser: () ->
                     title = { Text(tr("Downloads"), fontWeight = FontWeight.SemiBold) },
                     actions = {
                         IconButton(onClick = { searching = true }) { Icon(Icons.Outlined.Search, tr("Search")) }
+                        IconButton(onClick = {
+                            scanQr.launch(com.journeyapps.barcodescanner.ScanOptions()
+                                .setDesiredBarcodeFormats(com.journeyapps.barcodescanner.ScanOptions.QR_CODE)
+                                .setPrompt(tr("Point the camera at a QR code from Nexonic on your computer, or any download link."))
+                                .setBeepEnabled(false).setOrientationLocked(false))
+                        }) { Icon(Icons.Outlined.QrCodeScanner, tr("Scan QR code")) }
                         IconButton(onClick = { ui.addPlaylist = "" }) { Icon(Icons.AutoMirrored.Outlined.PlaylistAdd, tr("Add playlist or channel")) }
                         IconButton(onClick = { ui.showLibrary = true }) { Icon(Icons.Outlined.VideoLibrary, tr("Media library")) }
                         if (running > 0) IconButton(onClick = { Downloads.pauseAll() }) { Icon(Icons.Outlined.Pause, tr("Pause all")) }

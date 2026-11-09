@@ -46,6 +46,8 @@ COMPONENTS INCLUDED IN THE APK
     SQLite (public domain), OpenCL ICD loader.
 - The video engine (downloaded and updated by the app): The Unlicense (public domain).
 - Apache Commons Compress (used by youtubedl-android): Apache-2.0.
+- ZXing and ZXing Android Embedded (QR scanner): Apache-2.0. Copyright ZXing authors
+  and JourneyApps.
 - AndroidX, Jetpack Compose, Material components: Apache-2.0. Copyright The
   Android Open Source Project.
 - Kotlin standard library and kotlinx.coroutines: Apache-2.0. Copyright JetBrains

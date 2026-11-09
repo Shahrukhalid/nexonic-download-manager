@@ -181,6 +181,12 @@
     "Support the Project": "プロジェクトを支援",
     "VPN only": "VPN のみ",
     "Download only through a VPN. If the VPN disconnects, downloads stop instead of using another connection.": "VPN 経由でのみダウンロードします。VPN が切断されると、別の接続を使わずにダウンロードを停止します。",
-    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "VPN を待っています。VPN なしでダウンロードするには、設定で「VPN のみ」をオフにしてください。"
+    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "VPN を待っています。VPN なしでダウンロードするには、設定で「VPN のみ」をオフにしてください。",
+    "Scan QR code": "QR コードをスキャン",
+    "Point the camera at a QR code from Nexonic on your computer, or any download link.": "パソコンの Nexonic に表示された QR コード、または任意のダウンロードリンクにカメラを向けてください。",
+    "This QR code has no download link.": "この QR コードにはダウンロードリンクがありません。",
+    "Torrent blocklist: an https:// address (empty = none)": "トレントのブロックリスト：https:// のアドレス（空欄 = なし）",
+    "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.": "トレントはこのリストのアドレスには接続しません。P2P、DAT、CIDR 形式（.gz も可）に対応しています。アドレスの場合は 1 日 1 回再ダウンロードします。",
+    "The blocklist address must start with https://": "ブロックリストのアドレスは https:// で始まる必要があります"
   }
 }

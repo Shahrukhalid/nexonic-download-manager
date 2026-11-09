@@ -280,6 +280,10 @@ object Downloads {
         if (_waitingForWifi.value || _waitingForVpn.value || !Vpn.ready()) pump()
     }
 
+    /** The torrent blocklist ranges from Settings (downloaded at most once a day); throws when it can't be read. */
+    fun torrentBlocklist(): List<Pair<String, String>> =
+        com.nexonic.downloadmanager.core.TorrentBlocklist.load(settings.torrentBlocklist, java.io.File(app.filesDir, "torrent-blocklist"))
+
     fun setVpnOnly(on: Boolean) {
         settings.vpnOnly = on
         Vpn.set(on)

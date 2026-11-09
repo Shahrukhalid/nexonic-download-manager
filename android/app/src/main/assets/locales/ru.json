@@ -181,6 +181,12 @@
     "Support the Project": "Поддержать проект",
     "VPN only": "Только VPN",
     "Download only through a VPN. If the VPN disconnects, downloads stop instead of using another connection.": "Загружать только через VPN. Если VPN отключится, загрузки остановятся, а не пойдут через другое подключение.",
-    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "Ожидание VPN. Выключите «Только VPN» в настройках, чтобы загружать без него."
+    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "Ожидание VPN. Выключите «Только VPN» в настройках, чтобы загружать без него.",
+    "Scan QR code": "Сканировать QR-код",
+    "Point the camera at a QR code from Nexonic on your computer, or any download link.": "Наведите камеру на QR-код Nexonic на компьютере или на любую ссылку для загрузки.",
+    "This QR code has no download link.": "В этом QR-коде нет ссылки для загрузки.",
+    "Torrent blocklist: an https:// address (empty = none)": "Чёрный список для торрентов: адрес https:// (пусто = нет)",
+    "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.": "Торренты никогда не подключаются к адресам из этого списка. Подходят списки P2P, DAT и CIDR, в том числе .gz. Список по адресу загружается заново раз в день.",
+    "The blocklist address must start with https://": "Адрес чёрного списка должен начинаться с https://"
   }
 }

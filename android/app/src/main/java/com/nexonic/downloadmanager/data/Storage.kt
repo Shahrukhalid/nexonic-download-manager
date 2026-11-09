@@ -123,6 +123,7 @@ class Settings(context: Context) {
     var maxActive: Int get() = p.getInt("maxActive", 3); set(v) = p.edit().putInt("maxActive", v.coerceIn(1, 6)).apply()
     var speedLimitKB: Long get() = p.getLong("speedLimitKB", 0); set(v) = p.edit().putLong("speedLimitKB", v.coerceAtLeast(0)).apply()
     var wifiOnly: Boolean get() = p.getBoolean("wifiOnly", false); set(v) = p.edit().putBoolean("wifiOnly", v).apply()
+    var torrentBlocklist: String get() = p.getString("torrentBlocklist", "") ?: ""; set(v) = p.edit().putString("torrentBlocklist", v.trim()).apply()
     var vpnOnly: Boolean get() = p.getBoolean("vpnOnly", false); set(v) = p.edit().putBoolean("vpnOnly", v).apply()
     var askBeforeDownload: Boolean get() = p.getBoolean("ask", true); set(v) = p.edit().putBoolean("ask", v).apply()
     var categoryFolders: Boolean get() = p.getBoolean("categoryFolders", true); set(v) = p.edit().putBoolean("categoryFolders", v).apply()

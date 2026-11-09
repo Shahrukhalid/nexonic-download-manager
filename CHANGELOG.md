@@ -1,3 +1,11 @@
+## 0.23.0
+
+- **Android: Scan QR code** on the Downloads screen. Scan the QR code the Mac, Windows or Linux app shows for a
+  download (or any QR code with a web link or magnet link) and it opens in the Add window. The camera is asked for
+  the first time you use it; phones without a camera can still install the app.
+- **Android: torrent blocklist** (Settings): an https:// address with a P2P, DAT or CIDR list (also `.gz`), downloaded
+  again once a day. Torrents never connect to those peers or trackers.
+
 ## 0.22.0
 
 - **Mac: network adapter and torrent blocklist** (Settings → Connection). Torrents and videos use only the chosen
