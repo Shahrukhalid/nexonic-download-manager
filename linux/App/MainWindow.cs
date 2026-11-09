@@ -112,7 +112,14 @@ public sealed class MainWindow : Window
         Refilter();
         UpdateStatus();
         var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
-        timer.Tick += (_, _) => { ShowDetails(); UpdateStatus(); };
+        var ticks = 0;
+        timer.Tick += (_, _) =>
+        {
+            ShowDetails(); UpdateStatus();
+            ticks++;
+            if (ticks % 10 == 1) manager.ApplyIdleLimit();                                   // every 5 seconds
+            if (ticks % 120 == 1) _ = feeds.CheckAsync(manager.Settings.Proxy, AddFeedItem);  // feeds that are due, every minute
+        };
         timer.Start();
     }
 
@@ -177,7 +184,7 @@ public sealed class MainWindow : Window
     Button? resumeButton, stopButton, deleteButton;
     readonly MenuItem showToolbarItem = new() { Header = "Show _Toolbar Buttons", ToggleType = MenuItemToggleType.CheckBox };
     readonly MenuItem showNamesItem = new() { Header = "Show Button _Names", ToggleType = MenuItemToggleType.CheckBox };
-    readonly MenuItem unzipItem = new() { Header = "_Unzip Finished .zip Files", ToggleType = MenuItemToggleType.CheckBox };
+    readonly MenuItem unzipItem = new() { Header = "_Unpack Finished Archives (.zip, .7z, .rar, .tar)", ToggleType = MenuItemToggleType.CheckBox };
     readonly MenuItem subtitlesItem = new() { Header = "Save Su_btitles With Videos", ToggleType = MenuItemToggleType.CheckBox };
 
     void OpenLibrary() => Dialogs.MediaLibraryWindow(this, manager);
@@ -192,6 +199,21 @@ public sealed class MainWindow : Window
 
     void OpenTorrents() => _ = Dialogs.TorrentManager(this, manager, CurrentQueue);
     void OpenGrabber() => _ = Dialogs.Grabber(this, manager, CurrentQueue);
+    readonly FeedRunner feeds = new();
+
+    /// <summary>A new feed item: files and videos are added and started; torrents too when torrents are on.</summary>
+    async Task AddFeedItem(FeedSubscription feed, FeedItem item)
+    {
+        var folder = feed.Folder.Length > 0 ? feed.Folder : manager.Settings.Folder;
+        if (SmartDownload.Detect(item.Link) == DownloadEngine.Torrent)
+        {
+            if (TorrentRuntime.Unavailable(manager.Settings) is { } reason) throw new InvalidOperationException(reason);
+            var metadata = await TorrentRuntime.PreviewAsync(item.Link, default, manager.Settings.Proxy);
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => manager.AddTorrent(item.Link, metadata, new AddOptions { Folder = folder, Start = true }));
+        }
+        else await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => manager.AddLinks(item.Link, new AddOptions { Folder = folder, Start = true }));
+    }
+
     void OpenBatch() => _ = Dialogs.Batch(this, manager, CurrentQueue);
     void ResumeSelected() { foreach (var r in Selected) manager.Resume(r); }
     void StopSelected() { foreach (var r in Selected) manager.Pause(r); }
@@ -233,6 +255,7 @@ public sealed class MainWindow : Window
             Item("Add _Batch Download…", OpenBatch, "Ctrl+Shift+B"),
             Item("Site _Grabber…", OpenGrabber, "Ctrl+Shift+G"),
             Item("Add _Playlist or Channel…", () => _ = OpenPlaylist(""), "Ctrl+Shift+L"),
+            Item("_RSS Feeds…", () => _ = Dialogs.Feeds(this, manager, feeds, AddFeedItem)),
             Line(),
             Item("_Options…", () => _ = Dialogs.Options(this, manager)),
             Line(),

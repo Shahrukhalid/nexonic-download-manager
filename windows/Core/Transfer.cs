@@ -21,7 +21,10 @@ public sealed class Transfer : IDownloader
     public SpeedLimiter OwnLimiter { get; } = new();
     readonly bool sortIntoCategories;
     readonly HttpClient http;
-    readonly Uri origin;
+    Uri origin;
+    readonly ProxySettings proxySettings;
+    /// <summary>The address came from the debrid service: the original site's cookies are not sent to it.</summary>
+    bool viaDebrid;
     CancellationTokenSource? cts;
     DateTime lastNotify = DateTime.MinValue;
 
@@ -59,6 +62,7 @@ public sealed class Transfer : IDownloader
         this.limiter = limiter;
         this.sortIntoCategories = sortIntoCategories;
         origin = new Uri(record.Url);
+        proxySettings = proxy ?? new ProxySettings();
         OwnLimiter.SetLimit((record.SpeedLimitKBps ?? 0) * 1024);
         var handler = Network.Handler(proxy ?? new ProxySettings());
         if (!string.IsNullOrEmpty(record.Username))
@@ -96,6 +100,12 @@ public sealed class Transfer : IDownloader
             Record.Status = DownloadStatus.Probing;
             Record.Error = null;
             Notify(true);
+            // Debrid (Options → Debrid): a fresh direct link each time, so resuming never uses an expired one.
+            if (Debrid.Applies(Record.Url))
+            {
+                origin = new Uri(await Debrid.ResolveAsync(Record.Url, proxySettings, ct));
+                viaDebrid = true;
+            }
             await ProbeAsync(ct);
             Record.Status = DownloadStatus.Downloading;
             Notify(true);
@@ -127,7 +137,7 @@ public sealed class Transfer : IDownloader
             if (range != null && ifRange != null) req.Headers.TryAddWithoutValidation("If-Range", ifRange);
             if (!string.IsNullOrEmpty(Record.Referrer)) req.Headers.TryAddWithoutValidation("Referer", Record.Referrer);
             if (!string.IsNullOrEmpty(Record.UserAgent)) req.Headers.TryAddWithoutValidation("User-Agent", Record.UserAgent);
-            Network.AddPrivateHeaders(req, url, origin, Record.Cookies, null, null);
+            if (!viaDebrid) Network.AddPrivateHeaders(req, url, origin, Record.Cookies, null, null);
             return req;
         }, HttpCompletionOption.ResponseHeadersRead, ct);
 

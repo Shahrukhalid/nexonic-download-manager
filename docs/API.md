@@ -45,3 +45,14 @@ $h = @{ Authorization = "Bearer $env:NDM_KEY" }
 Invoke-RestMethod http://127.0.0.1:47812/v1/downloads -Method Post -Headers $h -ContentType application/json `
   -Body '{"urls":["https://example.com/a.zip","https://example.com/b.zip"]}'
 ```
+
+## MCP server (optional)
+
+`ndm --mcp` runs an MCP server on standard input and output, so an assistant app can manage downloads. Tools:
+`add_download` (a web or magnet link; always available), and `list_downloads`, `pause_download`, `resume_download` and
+`remove_download`, which use this API: turn on Automation and set `NDM_API_KEY` (and `NDM_API_PORT` if you changed the
+port) in the MCP client's settings. Example client entry:
+
+```json
+{ "mcpServers": { "nexonic": { "command": "ndm", "args": ["--mcp"], "env": { "NDM_API_KEY": "your key" } } } }
+```

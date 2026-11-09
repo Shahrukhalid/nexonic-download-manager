@@ -64,6 +64,7 @@ public sealed partial class DownloadManager
         if (File.Exists(AppPaths.Downloads)) Save();
         limiter.SetLimit(Settings.SpeedLimitKBps * 1024);
         Network.Options = Settings.Network.Clamped();
+        Debrid.Settings = Settings.Debrid;
         timer.Tick += (_, _) => Tick();
         timer.Start();
         CollectInbox();
@@ -76,6 +77,7 @@ public sealed partial class DownloadManager
         Settings = s;
         limiter.SetLimit(s.SpeedLimitKBps * 1024);
         Network.Options = s.Network.Clamped();
+        Debrid.Settings = s.Debrid;
         if (TorrentRuntime.Unavailable(s) != null)
             foreach (var row in Rows.Where(r => r.Record.Torrent != null && r.Record.IsActive).ToList()) Pause(row);
         Write(AppPaths.Settings, s);
@@ -106,6 +108,10 @@ public sealed partial class DownloadManager
         }
         return n;
     }
+
+    /// <summary>Called every few seconds: the "while in use" limit when someone uses the computer, else the usual one.</summary>
+    public void ApplyIdleLimit() =>
+        limiter.SetLimit(Idle.Effective(Settings.SpeedLimitKBps, Settings.ActiveSpeedLimitKBps, Settings.ActiveSpeedLimitKBps > 0 ? Idle.Time() : null) * 1024);
 
     public Guid? Add(DownloadJob job, AddOptions? o = null)
     {

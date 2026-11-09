@@ -2,7 +2,22 @@ using System.Diagnostics;
 using Nexonic.Core;
 
 // Browser helper (native messaging) and the ndm command line: both hand downloads to the app through the inbox.
-const string Version = "0.23.0";
+const string Version = "0.24.0";
+
+// Optional MCP server for assistant apps: `ndm --mcp` (see docs/API.md). Adding goes through the inbox like `ndm`.
+if (args is ["--mcp"])
+{
+    var server = new McpServer(job =>
+    {
+        // Magnet links open in the app's Add Torrent window; other links are added like `ndm` adds them.
+        if (job.Url.StartsWith("magnet:?", StringComparison.OrdinalIgnoreCase)) { if (TorrentInbox.Drop(new[] { job.Url }) == 0) return false; }
+        else new Inbox().Drop(job);
+        StartApp();
+        return true;
+    });
+    await server.RunAsync(Console.In, Console.Out);
+    return 0;
+}
 
 if (CommandLineTool.IsCommand(args))
 {

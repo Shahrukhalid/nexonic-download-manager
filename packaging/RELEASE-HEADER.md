@@ -1,6 +1,6 @@
-# Nexonic Download Manager 0.23.0
+# Nexonic Download Manager 0.24.0
 
-**Android: scan a QR code and block torrent peers.** Tap the QR button on the Downloads screen to add a download from the QR code a desktop app shows (or any link or magnet). Settings has a torrent blocklist. Includes 0.22.0 (VPN only on Android, network adapter and blocklist on Mac, smaller Windows downloads).
+**RSS feeds, more archive types and an optional debrid account (Windows and Linux).** Tasks → RSS Feeds downloads new items that match your rules; finished .7z, .rar and .tar files unpack like .zip; Options → Connection has a debrid account (your own key, off by default) and a speed limit while you use the computer. `ndm --mcp` lets assistant apps manage downloads. Includes 0.23.0 (Android QR scanner and torrent blocklist).
 
 **Mac, first launch:** macOS says it *could not verify* the app because it's free and not sold through Apple. Click **Done**, open **System Settings → Privacy & Security**, click **Open Anyway**, then **Open Anyway** again and enter your Mac password. Only once; updates installed with **Update Now** open without a warning. [Pictures of each step](https://github.com/Shahrukhalid/nexonic-download-manager#first-launch-on-mac)
 

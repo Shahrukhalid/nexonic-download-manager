@@ -555,6 +555,16 @@ public static partial class Dialogs
 
         var connection = Tab("Connection");
         var limit = Box(connection, "Speed limit for all downloads in KB/s (0 = none)", s.SpeedLimitKBps.ToString());
+        var activeLimit = Box(connection, "While I use the computer, limit downloads to KB/s (0 = off)", s.ActiveSpeedLimitKBps.ToString());
+        Hint(connection, "Full speed again after a minute without keyboard or mouse input.");
+        connection.Children.Add(new TextBlock { Text = "Debrid service (optional)", FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 14, 0, 2) });
+        var debridService = new ComboBox { ItemsSource = Enum.GetValues<DebridService>().Select(d => L.T(DebridSettings.Title(d))).ToList(), SelectedIndex = (int)s.Debrid.Service };
+        connection.Children.Add(debridService);
+        connection.Children.Add(new TextBlock { Text = "Your API key for the service", Margin = new Thickness(0, 6, 0, 2) });
+        var debridKey = new PasswordBox { Password = s.Debrid.Key, Padding = new Thickness(4, 3, 4, 3) };
+        connection.Children.Add(debridKey);
+        var debridHosts = Box(connection, "Sites whose links go through it (comma separated, e.g. example-host.com)", s.Debrid.Hosts);
+        Hint(connection, "Off by default. Uses your own account; links from other sites are never sent to the service. The key is saved encrypted and never in backups.");
         connection.Children.Add(new TextBlock { Text = "Proxy", Margin = new Thickness(0, 10, 0, 2) });
         var mode = new ComboBox { ItemsSource = Enum.GetValues<ProxyMode>().Select(ProxySettings.Title).ToList(), SelectedIndex = (int)s.Proxy.Mode };
         connection.Children.Add(mode);
@@ -727,6 +737,8 @@ public static partial class Dialogs
             s.ShowProgressWindow = progressWin.IsChecked == true;
             s.BringToFrontOnBrowserDownload = toFront.IsChecked == true;
             s.SpeedLimitKBps = Number(limit.Text);
+            s.ActiveSpeedLimitKBps = Number(activeLimit.Text);
+            s.Debrid = new DebridSettings { Service = (DebridService)Math.Max(0, debridService.SelectedIndex), Key = debridKey.Password.Trim(), Hosts = debridHosts.Text.Trim() };
             s.Proxy = new ProxySettings
             {
                 Mode = (ProxyMode)Math.Max(0, mode.SelectedIndex), Host = host.Text.Trim(), Port = p,

@@ -46,7 +46,14 @@ public partial class MainWindow : Window
         UpdateButtons();
         UpdateStatus();
         var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
-        timer.Tick += (_, _) => { ShowDetails(); UpdateStatus(); };
+        var ticks = 0;
+        timer.Tick += (_, _) =>
+        {
+            ShowDetails(); UpdateStatus();
+            ticks++;
+            if (ticks % 10 == 1) manager.ApplyIdleLimit();                                   // every 5 seconds
+            if (ticks % 120 == 1) _ = feeds.CheckAsync(manager.Settings.Proxy, AddFeedItem);  // feeds that are due, every minute
+        };
         timer.Start();
     }
 
@@ -313,6 +320,23 @@ public partial class MainWindow : Window
     void OnStartQueue(object s, RoutedEventArgs e) { manager.StartQueue(CurrentQueue); BuildSidebar(); }
     void OnStopQueue(object s, RoutedEventArgs e) { manager.StopQueue(CurrentQueue); BuildSidebar(); }
     void OnGrabber(object s, RoutedEventArgs e) => Dialogs.Grabber(this, manager, CurrentQueue);
+    readonly FeedRunner feeds = new();
+
+    /// <summary>A new feed item: files and videos are added and started; torrents too when torrents are on.</summary>
+    async Task AddFeedItem(FeedSubscription feed, FeedItem item)
+    {
+        var folder = feed.Folder.Length > 0 ? feed.Folder : manager.Settings.Folder;
+        if (SmartDownload.Detect(item.Link) == DownloadEngine.Torrent)
+        {
+            if (TorrentRuntime.Unavailable(manager.Settings) is { } reason) throw new InvalidOperationException(reason);
+            var metadata = await TorrentRuntime.PreviewAsync(item.Link, default, manager.Settings.Proxy);
+            await Dispatcher.InvokeAsync(() => manager.AddTorrent(item.Link, metadata, new AddOptions { Folder = folder, Start = true }));
+        }
+        else await Dispatcher.InvokeAsync(() => manager.AddLinks(item.Link, new AddOptions { Folder = folder, Start = true }));
+    }
+
+    void OnFeeds(object s, RoutedEventArgs e) => Dialogs.Feeds(this, manager, feeds, AddFeedItem);
+
     void OnBatch(object s, RoutedEventArgs e) => Dialogs.Batch(this, manager, CurrentQueue);
     void OnSettings(object s, RoutedEventArgs e) => Dialogs.Options(this, manager);
     void OnHelp(object s, RoutedEventArgs e) => HelpWindows.ShowHelp(this);
@@ -337,6 +361,13 @@ public partial class MainWindow : Window
     void OnShowInFolder(object s, RoutedEventArgs e)
     {
         if (One?.Record.SavedPath is { } p) Process.Start("explorer.exe", $"/select,\"{p}\"");
+    }
+
+    /// <summary>Windows' "Open with" list for a finished file.</summary>
+    void OnOpenWith(object s, RoutedEventArgs e)
+    {
+        if (One?.Record.SavedPath is { } p && System.IO.File.Exists(p))
+            Process.Start(new ProcessStartInfo("rundll32.exe") { ArgumentList = { "shell32.dll,OpenAs_RunDLL", p }, UseShellExecute = false });
     }
 
     void OnShowProgress(object s, RoutedEventArgs e) { if (One is { } r) DownloadWindows.ShowProgress(manager, r); }
