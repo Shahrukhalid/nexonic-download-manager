@@ -22,7 +22,7 @@ mkdir -p "$APP"
 
 python3 "$ROOT/scripts/build-torrent-native.py" "$RID"
 echo "== App ($RID)"
-dotnet publish "$ROOT/linux/App/App.csproj" -c Release -r "$RID" --self-contained -p:Version="$VERSION" -p:DebugType=embedded -o "$APP" -nologo
+dotnet publish "$ROOT/linux/App/App.csproj" -c Release -r "$RID" --self-contained -p:Version="$VERSION" -p:DebugType=embedded -p:SatelliteResourceLanguages=en -o "$APP" -nologo
 # The browser helper and ndm command share the app's runtime: only its own files are added.
 dotnet publish "$ROOT/windows/Host/Host.csproj" -c Release -r "$RID" --self-contained -p:Version="$VERSION" \
   -p:InvariantGlobalization=true -o "$OUT/host" -nologo
@@ -127,6 +127,7 @@ cp -a "$D/opt" "$D/usr" "$R/stage/"
 rm -rf "$R/stage/usr/share/doc"
 cat > "$R/SPECS/nexonic-download-manager.spec" <<SPEC
 %global debug_package %{nil}
+%define _binary_payload w9.xzdio
 %global __strip /bin/true
 %global _build_id_links none
 %define __os_install_post %{nil}
