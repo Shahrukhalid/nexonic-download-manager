@@ -27,7 +27,7 @@ the image does not include yet; use the desktop app for torrents.
 
 ## Without Docker
 
-Install the .NET 8 runtime, then:
+Install the .NET 10 runtime, then:
 
 ```sh
 dotnet publish linux/Server/Server.csproj -c Release -o ~/nexonic-server
