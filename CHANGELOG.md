@@ -1,3 +1,21 @@
+## 0.24.0
+
+- **RSS feeds with download rules** (Windows and Linux, Tasks → RSS Feeds): add an RSS or Atom feed, the words its
+  titles must have (or a /regular expression/) and the words to skip. New matching items are downloaded by themselves:
+  files and videos, and torrents (magnet or .torrent) when torrents are on. Each feed has its own folder and check
+  interval; items already in the feed when you add it are skipped unless you choose otherwise.
+- **More archives unpack when finished:** .7z, .rar (also split .part1.rar sets) and .tar, .tar.gz, .tar.bz2 and .tar.xz,
+  besides .zip (Downloads → Unpack Finished Archives). Password-protected archives are left alone, files never land
+  outside the new folder and nothing is overwritten.
+- **Debrid account (optional, off by default):** Options → Connection. Choose Real-Debrid, AllDebrid or Premiumize, enter
+  your own API key and the sites whose links should go through it; only those links are sent to the service, and a fresh
+  link is asked for on every resume. The key is saved encrypted and never in backups.
+- **Limit downloads while you use the computer:** Options → Connection. Full speed after a minute without keyboard or
+  mouse input (Linux: X11 and XWayland desktops).
+- **Open With…** (Windows) in the download's menu.
+- **MCP server for assistant apps:** `ndm --mcp` (see docs/API.md). Adding downloads always works; listing, pausing,
+  resuming and removing use the local automation API and its key.
+
 ## 0.23.0
 
 - **Android: Scan QR code** on the Downloads screen. Scan the QR code the Mac, Windows or Linux app shows for a

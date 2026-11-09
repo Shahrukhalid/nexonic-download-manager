@@ -482,6 +482,14 @@ public static partial class Dialogs
 
         var connection = Tab("Connection");
         var limit = Box(connection, "Speed limit for all downloads in KB/s (0 = none)", s.SpeedLimitKBps.ToString());
+        var activeLimit = Box(connection, "While I use the computer, limit downloads to KB/s (0 = off)", s.ActiveSpeedLimitKBps.ToString());
+        Hint(connection, "Full speed again after a minute without keyboard or mouse input.");
+        Heading(connection, "Debrid service (optional)");
+        var debridService = new ComboBox { ItemsSource = Enum.GetValues<DebridService>().Select(d => L.T(DebridSettings.Title(d))).ToList(), SelectedIndex = (int)s.Debrid.Service, MinWidth = 220 };
+        connection.Children.Add(debridService);
+        var debridKey = Box(connection, "Your API key for the service", s.Debrid.Key, password: true);
+        var debridHosts = Box(connection, "Sites whose links go through it (comma separated, e.g. example-host.com)", s.Debrid.Hosts);
+        Hint(connection, "Off by default. Uses your own account; links from other sites are never sent to the service. The key is saved encrypted and never in backups.");
         connection.Children.Add(new TextBlock { Text = "Proxy", Margin = new Thickness(0, 12, 0, 3) });
         var mode = new ComboBox { ItemsSource = Enum.GetValues<ProxyMode>().Select(ProxySettings.Title).ToList(), SelectedIndex = (int)s.Proxy.Mode, MinWidth = 220 };
         connection.Children.Add(mode);
@@ -697,6 +705,8 @@ public static partial class Dialogs
             s.ShowProgressWindow = progressWin.IsChecked == true;
             s.BringToFrontOnBrowserDownload = toFront.IsChecked == true;
             s.SpeedLimitKBps = Ui.Number(limit.Text);
+            s.ActiveSpeedLimitKBps = Ui.Number(activeLimit.Text);
+            s.Debrid = new DebridSettings { Service = (DebridService)Math.Max(0, debridService.SelectedIndex), Key = (debridKey.Text ?? "").Trim(), Hosts = (debridHosts.Text ?? "").Trim() };
             s.Proxy = new ProxySettings
             {
                 Mode = (ProxyMode)Math.Max(0, mode.SelectedIndex), Host = (host.Text ?? "").Trim(), Port = p,

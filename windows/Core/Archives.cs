@@ -1,10 +1,70 @@
 using System.IO.Compression;
+using SharpCompress.Archives;
+using SharpCompress.Common;
+using SharpCompress.Readers;
 
 namespace Nexonic.Core;
 
-/// <summary>"Unzip when finished": extracts a downloaded .zip into a folder next to it.</summary>
+/// <summary>"Unpack when finished": extracts a downloaded .zip, .7z, .rar or .tar (.gz, .bz2, .xz) into a folder next to it.</summary>
 public static class Archives
 {
+    static readonly string[] Kinds = { ".zip", ".7z", ".rar", ".tar", ".tar.gz", ".tgz", ".tar.bz2", ".tbz2", ".tar.xz", ".txz" };
+
+    /// <summary>A finished file that can be unpacked: one of the kinds above, and for split RAR sets only the first part.</summary>
+    public static bool IsArchive(string? path)
+    {
+        if (string.IsNullOrEmpty(path) || !File.Exists(path)) return false;
+        var name = Path.GetFileName(path).ToLowerInvariant();
+        if (!Kinds.Any(name.EndsWith)) return false;
+        var part = System.Text.RegularExpressions.Regex.Match(name, @"\.part(\d+)\.rar$");
+        return !part.Success || int.Parse(part.Groups[1].Value) == 1;
+    }
+
+    static string BaseName(string path)
+    {
+        var name = Path.GetFileName(path);
+        foreach (var k in Kinds.OrderByDescending(k => k.Length))
+            if (name.EndsWith(k, StringComparison.OrdinalIgnoreCase)) { name = name[..^k.Length]; break; }
+        return System.Text.RegularExpressions.Regex.Replace(name, @"\.part0*1$", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    }
+
+    /// <summary>Unpacks any supported archive (see IsArchive) into a new folder; returns the folder.</summary>
+    public static string Extract(string path) =>
+        string.Equals(Path.GetExtension(path), ".zip", StringComparison.OrdinalIgnoreCase) ? ExtractZip(path) : ExtractOther(path);
+
+    static string ExtractOther(string path)
+    {
+        var folder = FolderFor(path);
+        var root = Path.GetFullPath(folder) + Path.DirectorySeparatorChar;
+        var name = Path.GetFileName(path).ToLowerInvariant();
+        var tar = name.EndsWith(".7z") || name.EndsWith(".rar") ? null : File.OpenRead(path);
+        // .tar (.gz, .bz2, .xz) is read in one pass; 7z and RAR (also split RAR sets) through their archive index.
+        using var archive = tar == null ? ArchiveFactory.Open(new FileInfo(path)) : null;
+        if (archive != null && archive.Entries.Any(e => e.IsEncrypted)) throw new InvalidDataException("The archive needs a password; unpack it yourself.");
+        if (archive != null && archive.Entries.Sum(e => Math.Max(0, e.Size)) > MaxUnpackedBytes) throw new InvalidDataException("The archive unpacks to more than 64 GB.");
+        using var reader = archive?.ExtractAllEntries() ?? ReaderFactory.Open(tar!);
+        Directory.CreateDirectory(folder);
+        long written = 0;
+        try
+        {
+            while (reader.MoveToNextEntry())
+            {
+                var e = reader.Entry;
+                if (e.Key is not { Length: > 0 } key) continue;
+                if (e.IsEncrypted) throw new InvalidDataException("The archive needs a password; unpack it yourself.");
+                var target = Path.GetFullPath(Path.Combine(folder, key.Replace('\\', '/')));
+                if (!target.StartsWith(root, StringComparison.Ordinal)) continue; // "../" tricks
+                if (e.IsDirectory) { Directory.CreateDirectory(target); continue; }
+                if (e.LinkTarget != null || File.Exists(target)) continue;   // no links, never overwrite
+                if ((written += Math.Max(0, e.Size)) > MaxUnpackedBytes) throw new InvalidDataException("The archive unpacks to more than 64 GB.");
+                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                reader.WriteEntryToFile(target, new ExtractionOptions { Overwrite = false, PreserveFileTime = true });
+            }
+        }
+        finally { tar?.Dispose(); }
+        return folder;
+    }
+
     /// <summary>Stops at this much unpacked data, so a "zip bomb" cannot fill the disk.</summary>
     public const long MaxUnpackedBytes = 64L * 1024 * 1024 * 1024;
 
@@ -15,7 +75,7 @@ public static class Archives
     public static string FolderFor(string zipPath)
     {
         var dir = Path.GetDirectoryName(Path.GetFullPath(zipPath)) ?? ".";
-        var name = Path.GetFileNameWithoutExtension(zipPath).Trim();
+        var name = BaseName(zipPath).Trim();
         if (name.Length == 0) name = "Archive";
         var folder = Path.Combine(dir, name);
         for (var i = 2; Directory.Exists(folder) || File.Exists(folder); i++) folder = Path.Combine(dir, $"{name} ({i})");

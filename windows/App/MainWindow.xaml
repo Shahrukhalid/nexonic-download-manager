@@ -75,6 +75,7 @@
         <MenuItem Header="Add _Batch Download…" InputGestureText="Ctrl+Shift+B" Click="OnBatch" />
         <MenuItem Header="Site _Grabber…" InputGestureText="Ctrl+Shift+G" Click="OnGrabber" />
         <MenuItem Header="Add _Playlist or Channel…" InputGestureText="Ctrl+Shift+L" Click="OnPlaylist" />
+        <MenuItem Header="_RSS Feeds…" Click="OnFeeds" />
         <Separator />
         <MenuItem Header="_Options…" Click="OnSettings" />
         <Separator />
@@ -89,12 +90,13 @@
         <Separator />
         <MenuItem Header="_Open" InputGestureText="Ctrl+O" Click="OnOpen" />
         <MenuItem Header="Show in _Folder" Click="OnShowInFolder" />
+        <MenuItem Header="Open _With…" Click="OnOpenWith" />
         <MenuItem Header="_Properties…" InputGestureText="Ctrl+I" Click="OnProperties" />
         <Separator />
         <MenuItem Header="_Delete…" InputGestureText="Del" Click="OnRemove" />
         <MenuItem Header="Delete _Completed…" Click="OnClear" />
         <Separator />
-        <MenuItem x:Name="UnzipItem" Header="_Unzip Finished .zip Files" IsCheckable="True" Click="OnToggleUnzip"
+        <MenuItem x:Name="UnzipItem" Header="_Unpack Finished Archives (.zip, .7z, .rar, .tar)" IsCheckable="True" Click="OnToggleUnzip"
                   ToolTip="Unpack each finished .zip download into a folder next to it" />
         <MenuItem x:Name="SubtitlesItem" Header="Save Su_btitles With Videos" IsCheckable="True" Click="OnToggleSubtitles"
                   ToolTip="Videos keep subtitles in your language and English when the site has them" />
@@ -200,6 +202,7 @@
             <ContextMenu>
               <MenuItem Header="Open" Click="OnOpen" />
               <MenuItem Header="Show in Folder" Click="OnShowInFolder" />
+              <MenuItem Header="Open With…" Click="OnOpenWith" />
               <MenuItem Header="Show Progress" Click="OnShowProgress" />
               <Separator />
               <MenuItem Header="Resume" Click="OnResume" />

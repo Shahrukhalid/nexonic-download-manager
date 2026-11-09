@@ -2,3 +2,6 @@ Nexonic Download Manager by Shahrukh Khalid (MIT OR Apache-2.0).
 
 The app ships with these open-source parts, used unmodified. Their licences require this notice.
 
+
+- SharpCompress (MIT License), Copyright (c) 2014 Adam Hathcock, used to unpack .7z, .rar and .tar archives:
+  https://github.com/adamhathcock/sharpcompress

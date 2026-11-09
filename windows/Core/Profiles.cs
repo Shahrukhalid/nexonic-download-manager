@@ -214,6 +214,7 @@ public static class Backup
         s.Proxy.Password = "";
         s.TorrentsEnabled = false;
         s.Automation.Key = "";
+        s.Debrid.Key = "";
         foreach (var p in s.HostProfiles) { p.Password = null; if (p.Proxy != null) p.Proxy.Password = ""; }
         foreach (var r in file.Downloads)
         {
@@ -262,6 +263,7 @@ public static class Backup
             s.Network ??= new();
             s.Proxy.Password = "";
             s.Automation = new AutomationSettings();
+            s.Debrid = new DebridSettings();
             s.TorrentsEnabled = false;
             s.HostProfiles = (s.HostProfiles ?? new()).Where(p => p != null).ToList();
             foreach (var p in s.HostProfiles) { p.Password = null; if (p.Proxy != null) p.Proxy.Password = ""; }

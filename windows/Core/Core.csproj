@@ -8,6 +8,10 @@
     <None Include="$(NativeTorrentLibrary)" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Unpacks .7z, .rar and .tar archives (MIT licence). -->
+    <PackageReference Include="SharpCompress" Version="0.38.0" />
+  </ItemGroup>
+  <ItemGroup>
     <!-- Translations of the desktop apps (see docs/TRANSLATIONS.md). -->
     <EmbeddedResource Include="Locales\*.json" LogicalName="locale.%(Filename).json" />
   </ItemGroup>

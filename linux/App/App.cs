@@ -73,7 +73,7 @@ public sealed class App : Application
             if (m.Settings.Notifications)
                 LinuxSystem.Notify("Download finished", r.FileName + (r.ChecksumResult is { } c ? " – " + c : ""), IconPath);
             if (m.Settings.ShowCompleteDialog) Dialogs.Complete(m, r);
-            if (m.Settings.ExtractZips && Archives.IsZip(r.SavedPath)) Unzip(r.SavedPath!, text =>
+            if (m.Settings.ExtractZips && Archives.IsArchive(r.SavedPath)) Unzip(r.SavedPath!, text =>
             {
                 if (m.Settings.Notifications) LinuxSystem.Notify("Unzipped", text, IconPath);
             });
@@ -114,7 +114,7 @@ public sealed class App : Application
         Task.Run(() =>
         {
             string text;
-            try { text = $"{name} → {Path.GetFileName(Archives.ExtractZip(path))}"; }
+            try { text = $"{name} → {Path.GetFileName(Archives.Extract(path))}"; }
             catch (Exception e) { text = $"{name}: {e.Message}"; }
             Dispatcher.UIThread.Post(() => done(text));
         });

@@ -67,6 +67,7 @@ public sealed partial class DownloadManager
         if (File.Exists(AppPaths.Downloads)) Save();
         limiter.SetLimit(Settings.SpeedLimitKBps * 1024);
         Network.Options = Settings.Network.Clamped();
+        Debrid.Settings = Settings.Debrid;
         // The app reads the inbox once its windows are ready (CollectInbox), so browser links get the download window.
         Schedule();
         Task.Run(SiteVideoTools.Prepare); // keeps the video engine current
@@ -86,6 +87,7 @@ public sealed partial class DownloadManager
             foreach (var row in Rows.Where(r => r.Record.Torrent != null && r.Record.IsActive).ToList()) Pause(row);
         limiter.SetLimit(s.SpeedLimitKBps * 1024);
         Network.Options = s.Network.Clamped();
+        Debrid.Settings = s.Debrid;
         Write(AppPaths.Settings, s);
         Schedule();
     }
@@ -105,6 +107,10 @@ public sealed partial class DownloadManager
         }
         return n;
     }
+
+    /// <summary>Called every few seconds: the "while in use" limit when someone uses the computer, else the usual one.</summary>
+    public void ApplyIdleLimit() =>
+        limiter.SetLimit(Idle.Effective(Settings.SpeedLimitKBps, Settings.ActiveSpeedLimitKBps, Settings.ActiveSpeedLimitKBps > 0 ? Idle.Time() : null) * 1024);
 
     public Guid? Add(DownloadJob job, AddOptions? o = null)
     {

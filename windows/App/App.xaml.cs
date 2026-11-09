@@ -68,7 +68,7 @@ public partial class App : Application
             if (manager.Settings.Notifications)
                 tray.ShowBalloonTip(3000, "Download finished", r.FileName + (r.ChecksumResult is { } c ? " – " + c : ""), System.Windows.Forms.ToolTipIcon.Info);
             if (manager.Settings.ShowCompleteDialog) Dialogs.Complete(manager, r);
-            if (manager.Settings.ExtractZips && Archives.IsZip(r.SavedPath)) Unzip(r.SavedPath!, text =>
+            if (manager.Settings.ExtractZips && Archives.IsArchive(r.SavedPath)) Unzip(r.SavedPath!, text =>
             {
                 if (manager.Settings.Notifications) tray.ShowBalloonTip(3000, "Unzipped", text, System.Windows.Forms.ToolTipIcon.Info);
             });
@@ -88,7 +88,7 @@ public partial class App : Application
         Task.Run(() =>
         {
             string text;
-            try { text = $"{name} → {Path.GetFileName(Archives.ExtractZip(path))}"; }
+            try { text = $"{name} → {Path.GetFileName(Archives.Extract(path))}"; }
             catch (Exception e) { text = $"{name}: {e.Message}"; }
             Dispatcher.BeginInvoke(() => done(text));
         });
