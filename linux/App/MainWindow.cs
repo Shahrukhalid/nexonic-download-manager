@@ -48,6 +48,7 @@ public sealed class MainWindow : Window
     public MainWindow(DownloadManager manager)
     {
         this.manager = manager;
+        HiddenColumns = new(manager.Settings.HiddenListColumns);
         Title = "Nexonic Download Manager";
         Icon = Ui.WindowIcon;
         Width = 1180;
@@ -282,7 +283,7 @@ public sealed class MainWindow : Window
             Item("S_cheduler…", () => _ = OnScheduler()),
             Item("Start _Queue", StartQueue),
             Item("Stop Q_ueue", StopQueue)));
-        menu.Items.Add(Group("_View", showToolbarItem, showNamesItem));
+        menu.Items.Add(Group("_View", showToolbarItem, showNamesItem, ColumnsMenu()));
         menu.Items.Add(Group("_Help",
             Item("_Help", () => HelpWindows.ShowHelp(this), "F1"),
             Item("Network _Diagnostics…", () => _ = Dialogs.Diagnostics(this, manager, One?.Record.Url)),
@@ -428,20 +429,31 @@ public sealed class MainWindow : Window
 
     // ---- table ----
 
-    const string Columns = "*,90,120,96,84,140,110,150";
-
-    static readonly (string Title, string Key)[] Headers =
+    static readonly (string Title, string Key, string Width)[] Headers =
     {
-        ("File Name", "name"), ("Size", "size"), ("Progress", "progress"), ("Speed", "speed"), ("Time Left", "left"),
-        ("Status", "status"), ("Queue", "queue"), ("Added", "added"),
+        ("File Name", "name", "*"), ("Size", "size", "90"), ("Progress", "progress", "120"), ("Speed", "speed", "96"), ("Time Left", "left", "84"),
+        ("Status", "status", "140"), ("Queue", "queue", "110"), ("Added", "added", "150"), ("Finished", "finished", "150"),
+        ("Folder", "folder", "180"), ("Can Resume", "resume", "96"),
     };
 
+    /// <summary>Columns turned off under View → Columns (they get no width).</summary>
+    internal static HashSet<string> HiddenColumns = new(ListColumns.HiddenByDefault);
+    static string Columns => string.Join(",", Headers.Select(h => HiddenColumns.Contains(h.Key) ? "0" : h.Width));
+
+    readonly Border headerBox = new() { BorderBrush = Ui.Line, BorderThickness = new Thickness(0, 0, 0, 1) };
+
     Control HeaderRow()
+    {
+        headerBox.Child = HeaderGrid();
+        return headerBox;
+    }
+
+    Grid HeaderGrid()
     {
         var g = new Grid { ColumnDefinitions = new ColumnDefinitions(Columns), Margin = new Thickness(10, 0) };
         for (var i = 0; i < Headers.Length; i++)
         {
-            var (title, key) = Headers[i];
+            var (title, key, _) = Headers[i];
             var b = new Button
             {
                 Background = Brushes.Transparent, BorderThickness = new Thickness(0), Padding = new Thickness(6, 6),
@@ -452,15 +464,37 @@ public sealed class MainWindow : Window
             b.Click += (_, _) =>
             {
                 if (sortKey == key) sortDescending = !sortDescending;
-                else { sortKey = key; sortDescending = key is "added" or "size" or "progress" or "speed"; }
+                else { sortKey = key; sortDescending = key is "added" or "finished" or "size" or "progress" or "speed"; }
                 foreach (var (child, idx) in g.Children.OfType<Button>().Select((c, n) => (c, n)))
                     if (child.Content is TextBlock tb) tb.Text = Headers[idx].Title + (sortKey == Headers[idx].Key ? (sortDescending ? "  ▾" : "  ▴") : "");
                 Refilter(force: true);
             };
             Grid.SetColumn(b, i);
+            b.IsVisible = !HiddenColumns.Contains(key);
             g.Children.Add(b);
         }
-        return new Border { Child = g, BorderBrush = Ui.Line, BorderThickness = new Thickness(0, 0, 0, 1) };
+        return g;
+    }
+
+    /// <summary>View → Columns: the list's extra columns, on or off (saved with the settings).</summary>
+    MenuItem ColumnsMenu()
+    {
+        var menu = new MenuItem { Header = "_Columns" };
+        foreach (var (key, title) in ListColumns.Optional)
+        {
+            var item = new MenuItem { Header = title, ToggleType = MenuItemToggleType.CheckBox, IsChecked = !HiddenColumns.Contains(key) };
+            item.Click += (_, _) =>
+            {
+                if (!HiddenColumns.Remove(key)) HiddenColumns.Add(key);
+                item.IsChecked = !HiddenColumns.Contains(key);
+                manager.Settings.HiddenListColumns = HiddenColumns.ToList();
+                manager.ApplySettings(manager.Settings);
+                headerBox.Child = HeaderGrid();
+                Refilter(force: true);
+            };
+            menu.Items.Add(item);
+        }
+        return menu;
     }
 
     /// <summary>One row of the table; it updates itself when the download changes.</summary>
@@ -501,6 +535,11 @@ public sealed class MainWindow : Window
         g.Children.Add(statusPanel);
         var queue = Cell(6);
         var added = Cell(7);
+        var finished = Cell(8);
+        var folder = Cell(9);
+        var resume = Cell(10);
+        foreach (var c in g.Children)
+            if (Grid.GetColumn(c) is var i && i > 0 && HiddenColumns.Contains(Headers[i].Key)) c.IsVisible = false;
         string lastName = "";
         void Update()
         {
@@ -524,6 +563,9 @@ public sealed class MainWindow : Window
             dot.Background = Ui.Brush(row.StatusColor);
             queue.Text = row.Queue;
             added.Text = row.Added;
+            finished.Text = row.Finished;
+            folder.Text = row.SaveFolder;
+            resume.Text = row.CanResume;
         }
         Update();
         void Changed(object? s, System.ComponentModel.PropertyChangedEventArgs e) => Update();
@@ -613,6 +655,9 @@ public sealed class MainWindow : Window
             "left" => r => r.TimeLeft,
             "status" => r => r.Status,
             "queue" => r => r.Queue,
+            "finished" => r => r.Record.Finished ?? DateTime.MinValue,
+            "folder" => r => r.SaveFolder,
+            "resume" => r => r.CanResume,
             _ => r => r.Record.Added,
         };
         var sorted = (sortDescending ? rows.OrderByDescending(by) : rows.OrderBy(by)).ToList();

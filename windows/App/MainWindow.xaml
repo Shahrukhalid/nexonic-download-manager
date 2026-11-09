@@ -110,6 +110,7 @@
       <MenuItem Header="_View">
         <MenuItem x:Name="ShowToolbarItem" Header="Show _Toolbar Buttons" IsCheckable="True" Click="OnToggleToolbar" />
         <MenuItem x:Name="ShowNamesItem" Header="Show Button _Names" IsCheckable="True" Click="OnToggleNames" />
+        <MenuItem x:Name="ColumnsItem" Header="_Columns" />
       </MenuItem>
       <MenuItem Header="_Help">
         <MenuItem Header="_Help" InputGestureText="F1" Click="OnHelp" />
@@ -249,8 +250,11 @@
                 </DataTemplate>
               </DataGridTemplateColumn.CellTemplate>
             </DataGridTemplateColumn>
-            <DataGridTextColumn Header="Queue" Binding="{Binding Queue}" Width="90" />
-            <DataGridTextColumn Header="Added" Binding="{Binding Added}" Width="120" />
+            <DataGridTextColumn x:Name="QueueColumn" Header="Queue" Binding="{Binding Queue}" Width="90" />
+            <DataGridTextColumn x:Name="AddedColumn" Header="Added" Binding="{Binding Added}" Width="120" SortMemberPath="Record.Added" />
+            <DataGridTextColumn x:Name="FinishedColumn" Header="Finished" Binding="{Binding Finished}" Width="120" SortMemberPath="Record.Finished" />
+            <DataGridTextColumn x:Name="FolderColumn" Header="Folder" Binding="{Binding SaveFolder}" Width="180" />
+            <DataGridTextColumn x:Name="ResumeColumn" Header="Can Resume" Binding="{Binding CanResume}" Width="85" />
           </DataGrid.Columns>
         </DataGrid>
         <StackPanel x:Name="Empty" Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed" MaxWidth="400">

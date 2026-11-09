@@ -124,7 +124,7 @@ public static class NetworkDiagnostics
 
     static string Describe(NetworkOptions o, ProxySettings p, string? doh) => string.Join(", ", new[]
     {
-        p.Mode switch { ProxyMode.None => "no proxy", ProxyMode.System => "system proxy", ProxyMode.Socks => $"SOCKS5 proxy {p.Host}:{p.Port}", _ => $"HTTP proxy {p.Host}:{p.Port}" },
+        p.Mode switch { ProxyMode.None => "no proxy", ProxyMode.System => "system proxy", ProxyMode.Socks => $"SOCKS5 proxy {p.Host}:{p.Port}", ProxyMode.Pac => $"proxy script {p.Host}", _ => $"HTTP proxy {p.Host}:{p.Port}" },
         doh != null ? $"DNS over HTTPS ({new Uri(doh).Host})" : "system DNS",
         o.IpVersion switch { "ipv4" => "IPv4 only", "ipv6" => "IPv6 only", _ => "IPv4 and IPv6" },
         o.BindAdapter.Length > 0 ? $"adapter {o.BindAdapter}" : "any adapter",

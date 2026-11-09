@@ -22,7 +22,7 @@ public static partial class Dialogs
         var text = f.Text("Links", links, multi: true);
         var engine = f.Field("Download engine", new ComboBox { ItemsSource = new[] { "Automatic", "File (HTTP/HTTPS)", "HLS stream", "Video site", "Torrent / magnet" }, SelectedIndex = 0 });
         var name = f.Text("File name (one link only; empty = from the link)");
-        var folder = f.Folder(m.Settings.Folder);
+        var folder = f.Folder(m.Settings.StartFolder);
         var queue = f.Queue(m, queueId);
         // One video link: looked up while the window is open, with its qualities and sizes. Several links: sound only or not.
         var qualityPanel = new StackPanel { IsVisible = false };
@@ -96,6 +96,7 @@ public static partial class Dialogs
                 return;
             }
             if ((sum.Text ?? "").Trim().Length > 0 && Checksum.Parse(sum.Text!) == null) { error.Text = "The checksum is not a valid value."; return; }
+            m.RememberFolder(folder.Text);
             var n = m.AddLinks(text.Text ?? "", new AddOptions
             {
                 Folder = (folder.Text ?? "").Trim().Length > 0 ? folder.Text!.Trim() : m.Settings.Folder,
@@ -462,6 +463,7 @@ public static partial class Dialogs
         general.Children.Add(folderRow);
         var sort = Tick(general, "Put each type in its own folder (Video, Music, Documents, Programs, Compressed, Images)", s.SortIntoCategoryFolders);
         var torrents = Tick(general, "Enable experimental torrents (built-in torrent engine)", s.TorrentsEnabled);
+        var rememberFolder = Tick(general, "Start the Add window in the folder I used last time", s.RememberLastFolder);
         var notify = Tick(general, "Notifications", s.Notifications);
         var updates = Tick(general, "Check for updates when the app opens", s.CheckForUpdates);
         general.Children.Add(new TextBlock { Text = "Language", Margin = new Thickness(0, 10, 0, 3) });
@@ -491,6 +493,10 @@ public static partial class Dialogs
         var limit = Box(connection, "Speed limit for all downloads in KB/s (0 = none)", s.SpeedLimitKBps.ToString());
         var activeLimit = Box(connection, "While I use the computer, limit downloads to KB/s (0 = off)", s.ActiveSpeedLimitKBps.ToString());
         Hint(connection, "Full speed again after a minute without keyboard or mouse input.");
+        var capMB = Box(connection, "Download limit: at most this many MB (0 = no limit)", s.DataCapMB.ToString());
+        var capHours = Box(connection, "… every this many hours", s.DataCapHours.ToString());
+        Hint(connection, "When the amount is reached, downloads stop and continue by themselves when the next period starts." +
+                         (m.DataCapStatus is { } used ? " Now: " + used + "." : ""));
         Heading(connection, "Debrid service (optional)");
         var debridService = new ComboBox { ItemsSource = Enum.GetValues<DebridService>().Select(d => L.T(DebridSettings.Title(d))).ToList(), SelectedIndex = (int)s.Debrid.Service, MinWidth = 220 };
         connection.Children.Add(debridService);
@@ -500,7 +506,7 @@ public static partial class Dialogs
         connection.Children.Add(new TextBlock { Text = "Proxy", Margin = new Thickness(0, 12, 0, 3) });
         var mode = new ComboBox { ItemsSource = Enum.GetValues<ProxyMode>().Select(ProxySettings.Title).ToList(), SelectedIndex = (int)s.Proxy.Mode, MinWidth = 220 };
         connection.Children.Add(mode);
-        var host = Box(connection, "Proxy address", s.Proxy.Host);
+        var host = Box(connection, "Proxy address (for a proxy script: its web address or file)", s.Proxy.Host);
         var port = Box(connection, "Port", s.Proxy.Port.ToString());
         var puser = Box(connection, "Proxy user name (optional)", s.Proxy.Username);
         var ppass = Box(connection, "Proxy password", s.Proxy.Password, password: true);
@@ -710,6 +716,8 @@ public static partial class Dialogs
         {
             var p = Ui.Number(port.Text, -1);
             if (p is < 1 or > 65535) { error.Text = "The proxy port must be between 1 and 65535."; return; }
+            if ((ProxyMode)Math.Max(0, mode.SelectedIndex) == ProxyMode.Pac && !Pac.AddressOk(host.Text))
+            { error.Text = "Enter the proxy script's web address (http:// or https://) or the full path of the file."; return; }
             s.Connections = Math.Clamp(Ui.Number(conn.Text, 8), 1, 32);
             s.MaxActive = Math.Clamp(Ui.Number(active.Text, 3), 1, 10);
             s.Folder = (folder.Text ?? "").Trim().Length > 0 ? folder.Text!.Trim() : s.Folder;
@@ -728,6 +736,10 @@ public static partial class Dialogs
             s.BringToFrontOnBrowserDownload = toFront.IsChecked == true;
             s.SpeedLimitKBps = Ui.Number(limit.Text);
             s.ActiveSpeedLimitKBps = Ui.Number(activeLimit.Text);
+            s.DataCapMB = Math.Max(0, Ui.Number(capMB.Text));
+            s.DataCapHours = Math.Clamp(Ui.Number(capHours.Text, 24), 1, 24 * 31);
+            s.RememberLastFolder = rememberFolder.IsChecked == true;
+            if (!s.RememberLastFolder) s.LastFolder = "";
             s.Debrid = new DebridSettings { Service = (DebridService)Math.Max(0, debridService.SelectedIndex), Key = (debridKey.Text ?? "").Trim(), Hosts = (debridHosts.Text ?? "").Trim() };
             s.Proxy = new ProxySettings
             {

@@ -57,6 +57,17 @@ public partial class App : Application
         menu.Items.Add(L.T("Stop All"), null, (_, _) => manager.PauseAll());
         menu.Items.Add(L.T("Resume All"), null, (_, _) => manager.ResumeAll());
         menu.Items.Add(SpeedLimitMenu(manager));
+        menu.Items.Add(L.T("Start All Queues"), null, (_, _) => { foreach (var q in manager.Queues.Where(q => !q.IsMain).ToList()) manager.StartQueue(q.Id); });
+        menu.Items.Add(L.T("Stop All Queues"), null, (_, _) => { foreach (var q in manager.Queues.Where(q => !q.IsMain).ToList()) manager.StopQueue(q.Id); });
+        menu.Items.Add(L.T("Open Downloads Folder"), null, (_, _) =>
+        {
+            var dir = manager.Settings.Folder;
+            if (System.IO.Directory.Exists(dir)) System.Diagnostics.Process.Start("explorer.exe", $"\"{dir}\"");
+        });
+        var watchClip = new System.Windows.Forms.ToolStripMenuItem(L.T("Watch Copied Links")) { Checked = manager.Settings.MonitorClipboard, CheckOnClick = true };
+        watchClip.Click += (_, _) => { manager.Settings.MonitorClipboard = watchClip.Checked; manager.ApplySettings(manager.Settings); };
+        menu.Opening += (_, _) => watchClip.Checked = manager.Settings.MonitorClipboard;
+        menu.Items.Add(watchClip);
         menu.Items.Add(L.T("Quit"), null, (_, _) => Quit(manager));
         tray.ContextMenuStrip = menu;
         manager.Notify += (title, body) =>

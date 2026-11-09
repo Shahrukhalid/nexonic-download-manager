@@ -48,6 +48,10 @@ public sealed partial class DownloadManager
     string? lastClipboard;
     string lastMinute = "";
     int ticks;
+    readonly DataCap dataCap = DataCap.Load();
+    readonly HashSet<Guid> heldByCap = new();
+    readonly Dictionary<Guid, long> lastReceived = new();
+    bool capHolding;
 
     public DownloadManager(Action<Action> post)
     {
@@ -84,6 +88,7 @@ public sealed partial class DownloadManager
     public void ApplySettings(AppSettings s)
     {
         Settings = s;
+        Pac.Reset();
         if (TorrentRuntime.Unavailable(s) != null)
             foreach (var row in Rows.Where(r => r.Record.Torrent != null && r.Record.IsActive).ToList()) Pause(row);
         limiter.SetLimit(s.SpeedLimitKBps * 1024);
@@ -146,7 +151,7 @@ public sealed partial class DownloadManager
         // Settings for this website (Options → Sites): its folder unless another one was chosen, its login, user agent and limit.
         var profile = HostProfiles.Match(Settings.HostProfiles, job.Url);
         var chosenFolder = job.Folder ?? o.Folder;
-        if (profile?.Folder is { Length: > 0 } siteFolder && (chosenFolder == null || chosenFolder == Settings.Folder)) chosenFolder = siteFolder;
+        if (profile?.Folder is { Length: > 0 } siteFolder && (chosenFolder == null || chosenFolder == Settings.Folder || chosenFolder == Settings.StartFolder)) chosenFolder = siteFolder;
         var limit = job.SpeedLimitKBps ?? (o.SpeedLimitKBps > 0 ? o.SpeedLimitKBps : profile?.SpeedLimitKBps ?? 0);
         var start = job.Start ?? (profile?.StartAtOnce == false ? false : o.Start);
         var rec = new DownloadRecord
@@ -474,6 +479,14 @@ public sealed partial class DownloadManager
         Save();
     }
 
+    /// <summary>Remembers the folder chosen in an Add window (Options → General → "folder I used last time").</summary>
+    public void RememberFolder(string? folder)
+    {
+        var before = Settings.LastFolder;
+        Settings.UsedFolder(folder);
+        if (before != Settings.LastFolder) Write(AppPaths.Settings, Settings);
+    }
+
     public void SaveQueues() => Write(AppPaths.Queues, Queues.ToList());
 
     void RunTimetable()
@@ -534,6 +547,7 @@ public sealed partial class DownloadManager
 
     void Schedule()
     {
+        if (capHolding) return; // the download limit is reached: nothing starts until the next period
         foreach (var q in Queues.Where(q => q.Running).ToList())
         {
             var limit = q.IsMain ? Settings.MaxActive : q.MaxActive;
@@ -633,14 +647,54 @@ public sealed partial class DownloadManager
     public void Tick()
     {
         foreach (var r in Rows) if (r.Record.IsActive) r.Tick();
+        CountData();
         if (++ticks % 2 == 0)
         {
             CollectInbox();
             RunTimetable();
             CheckQueuesDone();
         }
-        if (ticks % 4 == 0) Save();
+        if (ticks % 4 == 0)
+        {
+            Save();
+            if (Settings.DataCapMB > 0) dataCap.Save();
+        }
     }
+
+    /// <summary>Download limit: counts what arrived since the last tick; at the limit, downloads stop until the next period.</summary>
+    void CountData()
+    {
+        long got = 0;
+        foreach (var r in Rows)
+        {
+            var now = r.Record.Received;
+            if (r.Record.IsActive && lastReceived.TryGetValue(r.Record.Id, out var before) && now > before) got += now - before;
+            lastReceived[r.Record.Id] = now;
+        }
+        if (Settings.DataCapMB <= 0) { if (capHolding) ReleaseCap(); return; }
+        if (dataCap.Roll(DateTime.Now, Settings.DataCapHours) && capHolding) ReleaseCap();
+        if (capHolding && !dataCap.Reached(Settings.DataCapMB)) ReleaseCap();
+        if (!dataCap.Add(got, Settings.DataCapMB) || capHolding) return;
+        capHolding = true;
+        foreach (var r in Rows.Where(r => r.Record.IsActive && r.Record.Status != DownloadStatus.Seeding).ToList())
+        {
+            heldByCap.Add(r.Record.Id);
+            Pause(r);
+        }
+        dataCap.Save();
+        Notify?.Invoke("Download limit reached", $"Downloads continue {dataCap.NextPeriod(Settings.DataCapHours):ddd HH:mm} (Options → Connection → Download limit).");
+    }
+
+    void ReleaseCap()
+    {
+        capHolding = false;
+        foreach (var r in Rows.Where(r => heldByCap.Contains(r.Record.Id) && r.Record.Status == DownloadStatus.Paused).ToList()) Resume(r);
+        heldByCap.Clear();
+        Schedule();
+    }
+
+    /// <summary>"512 MB of 2 GB used, resets Tue 14:00" while a download limit is set.</summary>
+    public string? DataCapStatus => Settings.DataCapMB > 0 ? dataCap.Describe(Settings.DataCapMB, Settings.DataCapHours) : null;
 
     // ---- backup ----
 
@@ -734,6 +788,9 @@ public sealed class Row : System.ComponentModel.INotifyPropertyChanged
         _ => Record.IsCanceled ? StatusColors.Idle : StatusColors.Bad,
     };
     public string Added => Record.Added.ToString("d MMM yyyy, HH:mm");
+    public string Finished => ListColumns.When(Record.Finished);
+    public string SaveFolder => ListColumns.Folder(Record);
+    public string CanResume => L.T(ListColumns.Resume(Record));
     public string Category => Record.Category.ToString();
 
     public void Tick()

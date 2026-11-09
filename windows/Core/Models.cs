@@ -126,7 +126,7 @@ public static class QueueClock
     public static bool ShouldStop(DownloadQueue q, DateTime t) => q.StopEnabled && q.Running && HhMm(t) == q.StopTime;
 }
 
-public enum ProxyMode { System, None, Http, Socks }
+public enum ProxyMode { System, None, Http, Socks, Pac }
 
 public sealed class ProxySettings
 {
@@ -141,6 +141,7 @@ public sealed class ProxySettings
         ProxyMode.None => "No proxy",
         ProxyMode.Http => "HTTP proxy",
         ProxyMode.Socks => "SOCKS5 proxy",
+        ProxyMode.Pac => "Automatic configuration script (PAC)",
         _ => "Use the system settings",
     };
 }
@@ -220,6 +221,26 @@ public sealed class AppSettings
     public bool ExtractZips { get; set; }
     /// <summary>Save subtitles (the computer's language and English) inside downloaded videos (added in 0.16.0, off unless turned on).</summary>
     public bool VideoSubtitles { get; set; }
+    // Added in 0.26.0
+    /// <summary>The Add and download windows start in the folder used last time (only after another folder was chosen).</summary>
+    public bool RememberLastFolder { get; set; } = true;
+    public string LastFolder { get; set; } = "";
+    /// <summary>Download limit: at most this many MB (0 = no limit) every <see cref="DataCapHours"/> hours.</summary>
+    public long DataCapMB { get; set; }
+    public int DataCapHours { get; set; } = 24;
+    /// <summary>List columns the user turned off (View → Columns).</summary>
+    public List<string> HiddenListColumns { get; set; } = new(ListColumns.HiddenByDefault);
+
+    /// <summary>The folder the Add windows start in.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string StartFolder => RememberLastFolder && LastFolder.Length > 0 && Directory.Exists(LastFolder) ? LastFolder : Folder;
+
+    /// <summary>Remembers a folder chosen in an Add window (the default folder clears it).</summary>
+    public void UsedFolder(string? folder)
+    {
+        if (!RememberLastFolder || string.IsNullOrWhiteSpace(folder)) return;
+        LastFolder = string.Equals(folder.Trim(), Folder, StringComparison.OrdinalIgnoreCase) ? "" : folder.Trim();
+    }
     public string ScanCommand { get; set; } = "\"%ProgramFiles%\\Windows Defender\\MpCmdRun.exe\" -Scan -ScanType 3 -DisableRemediation -File";
 }
 

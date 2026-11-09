@@ -526,6 +526,10 @@ public static class Network
                 h.Proxy = proxy;
                 h.UseProxy = true;
                 break;
+            case ProxyMode.Pac when host.Length > 0:
+                h.Proxy = new PacProxy(host, p.Username.Length > 0 ? new NetworkCredential(p.Username, p.Password) : null);
+                h.UseProxy = true;
+                break;
         }
         return h;
     }

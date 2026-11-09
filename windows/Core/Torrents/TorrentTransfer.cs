@@ -88,6 +88,9 @@ public static class TorrentRuntime
     public static object? Proxy(ProxySettings? proxy)
     {
         if (proxy is null || proxy.Mode == ProxyMode.None) return null;
+        if (proxy.Mode == ProxyMode.Pac)
+            return Pac.ProxyFor(proxy.Host.Trim(), new Uri("http://tracker.example/")) is { } pac
+                ? new { type = pac.Scheme == "http" ? "http" : "socks5", host = pac.Host, port = pac.Port, username = proxy.Username, password = proxy.Password } : null;
         if (proxy.Mode is ProxyMode.Http or ProxyMode.Socks)
             return string.IsNullOrWhiteSpace(proxy.Host) || proxy.Port is < 1 or > 65535 ? null
                 : new { type = proxy.Mode == ProxyMode.Socks ? "socks5" : "http", host = proxy.Host.Trim(), port = proxy.Port, username = proxy.Username, password = proxy.Password };
