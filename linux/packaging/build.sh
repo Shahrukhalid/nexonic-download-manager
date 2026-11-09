@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 # Builds the Linux app for this machine's processor and packs it as an AppImage, a .deb and a .rpm.
-# The AppImage carries everything (its own .NET and video engine); the .deb and .rpm use the system's .NET 10 runtime and
-# Python 3.10+ (package dependencies), which makes them much smaller.
+# The AppImage carries everything, its own .NET included; the .deb and .rpm use the system's .NET 10 runtime (a package
+# dependency), which makes them much smaller.
 #   linux/packaging/build.sh x64|arm64 FFMPEG_DIR TOOLS_DIR
-# FFMPEG_DIR holds ffmpeg and ffprobe (scripts/build-ffmpeg.sh linux), TOOLS_DIR yt-dlp, yt-dlp.pyz and qjs
-# (scripts/fetch-video-tools.sh).
+# FFMPEG_DIR holds ffmpeg and ffprobe (scripts/build-ffmpeg.sh linux), TOOLS_DIR yt-dlp and qjs (scripts/fetch-video-tools.sh).
 # Needs: .NET 10 SDK, python3, dpkg-deb, rpmbuild. Output: build/linux-<arch>/
 set -euo pipefail
 ARCH="$1"
@@ -20,7 +19,7 @@ case "$ARCH" in
 esac
 OUT="$ROOT/build/linux-$ARCH"
 APP="$OUT/app"          # self-contained, for the AppImage
-SYS="$OUT/app-system"   # uses the system's .NET and Python, for the .deb and .rpm
+SYS="$OUT/app-system"   # uses the system's .NET, for the .deb and .rpm
 rm -rf "$OUT"
 mkdir -p "$APP" "$SYS"
 
@@ -40,13 +39,13 @@ host false "$SYS"
 find "$APP" "$SYS" -name "*.pdb" -delete
 
 python3 "$ROOT/scripts/build-extensions.py" >/dev/null
-extras() { # DEST ENGINE: everything besides .NET and the app itself
+extras() { # DEST: everything besides .NET and the app itself
   # Strip the symbol table (exported symbols stay): about 3 MB smaller.
   strip --strip-unneeded -o "$1/libnexonic_torrent.so" "$ROOT/.native-cache/sdk/$RID/lib/libnexonic_torrent.so"
   cp -R "$ROOT/.native-cache/sdk/$RID/notices" "$1/torrent-licenses"
   cp "$ROOT/.native-cache/sdk/$RID/native-components.json" "$1/torrent-components.json"
   cp "$FF/ffmpeg" "$FF/ffprobe" "$TOOLS/qjs" "$1/"
-  cp "$2" "$1/nexonic-video-engine"  # the video engine, under the app's own name
+  cp "$TOOLS/yt-dlp" "$1/nexonic-video-engine"  # the video engine, under the app's own name
   chmod 755 "$1/ffmpeg" "$1/ffprobe" "$1/nexonic-video-engine" "$1/qjs" "$1/NexonicDownloadManager" "$1/nexonic-host"
   cp -R "$ROOT/build/extension-chrome" "$1/Extension"
   cp "$ROOT/build/NexonicFirefoxAddon-$VERSION.xpi" "$1/Firefox Add-on.xpi"
@@ -59,10 +58,8 @@ extras() { # DEST ENGINE: everything besides .NET and the app itself
   cat "$ROOT/packaging/THIRD-PARTY-NOTICES.txt" "$PKG/LINUX-NOTICES.txt" > "$1/THIRD-PARTY-NOTICES.txt"
 }
 echo "== Video engine, torrent engine and browser extension"
-# The AppImage has yt-dlp with its own Python; the .deb and .rpm have the small yt-dlp that runs on the system's
-# Python (it updates itself the same way).
-extras "$APP" "$TOOLS/yt-dlp"
-extras "$SYS" "$TOOLS/yt-dlp.pyz"
+extras "$APP"
+extras "$SYS"
 for d in "$APP" "$SYS"; do cp "$FF"/NOTICE-video-tools-1.txt "$TOOLS"/NOTICE-video-tools-2.txt "$d/" 2>/dev/null || true; done
 
 echo "== AppImage"
@@ -124,7 +121,7 @@ Architecture: $DEB
 Installed-Size: $SIZE
 Maintainer: Shahrukh Khalid <90670731+Shahrukhalid@users.noreply.github.com>
 Homepage: https://github.com/Shahrukhalid/nexonic-download-manager
-Depends: dotnet-runtime-10.0, python3 (>= 3.10), libc6 (>= 2.31), libstdc++6, zlib1g, libfontconfig1, libx11-6, libice6, libsm6, libssl3 | libssl3t64 | libssl1.1
+Depends: dotnet-runtime-10.0, libc6 (>= 2.31), libstdc++6, zlib1g, libfontconfig1, libx11-6, libice6, libsm6, libssl3 | libssl3t64 | libssl1.1
 Recommends: libsecret-tools, xdg-utils, libnotify-bin
 Suggests: clamav, gnome-keyring
 Description: Fast download manager with queues, a scheduler and video downloads
@@ -155,7 +152,6 @@ URL: https://github.com/Shahrukhalid/nexonic-download-manager
 AutoReqProv: no
 Requires: fontconfig
 Requires: dotnet-runtime-10.0
-Requires: python3 >= 3.10
 Recommends: xdg-utils
 Recommends: libnotify
 

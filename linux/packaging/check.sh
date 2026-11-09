@@ -22,8 +22,7 @@ python3 "$ROOT/scripts/host-ping.py" "$APP/nexonic-host"
 "$APP/qjs" -e 'console.log("qjs ok")'
 SYS="$OUT/app-system"
 [ ! -e "$SYS/libcoreclr.so" ] || fail "the .deb/.rpm app folder carries its own .NET"
-head -c 2 "$SYS/nexonic-video-engine" | grep -q '#!' || fail "the .deb/.rpm video engine is not the Python edition"
-python3 "$SYS/nexonic-video-engine" --version
+"$SYS/nexonic-video-engine" --version
 
 if command -v ffmpeg >/dev/null && [ "$(command -v ffmpeg)" != "$APP/ffmpeg" ]; then
   echo "== The video engine joins picture and sound with the bundled ffmpeg (local test video)"

@@ -14,13 +14,12 @@ Download from the [latest release](https://github.com/Shahrukhalid/nexonic-downl
 | Any distribution, 64-bit Intel/AMD | `NexonicDownloadManager-Linux-x86_64.AppImage` |
 | Any distribution, 64-bit ARM | `NexonicDownloadManager-Linux-aarch64.AppImage` |
 | Ubuntu, Debian, Linux Mint, Pop!_OS, elementary OS, Zorin OS | `nexonic-download-manager_<version>_amd64.deb` (`_arm64.deb` on ARM) |
-| Fedora, openSUSE Tumbleweed | `nexonic-download-manager-<version>-1.x86_64.rpm` (`.aarch64.rpm` on ARM) |
+| Fedora, openSUSE, RHEL, AlmaLinux, Rocky Linux | `nexonic-download-manager-<version>-1.x86_64.rpm` (`.aarch64.rpm` on ARM) |
 | Arch Linux, Manjaro, EndeavourOS, SteamOS | the AppImage |
 
 The **AppImage** includes everything: the .NET runtime, the video engine and the torrent engine. The **.deb** and
-**.rpm** are about half the size because they use two packages from your system: the .NET 10 runtime
-(`dotnet-runtime-10.0`) and Python 3.10 or newer; the package manager installs them with the app where your distribution
-has them (see Install). Torrents remain off by default. See [setup, supported features and restrictions](TORRENTS.md).
+**.rpm** are smaller because they use the .NET 10 runtime from your system (`dotnet-runtime-10.0`); the package manager
+installs it with the app where your distribution has it (see Install). Torrents remain off by default. See [setup, supported features and restrictions](TORRENTS.md).
 
 ## Install
 
@@ -47,11 +46,9 @@ On **Ubuntu 22.04**, add the .NET packages first: `sudo add-apt-repository ppa:d
 [Microsoft's package repository](https://learn.microsoft.com/dotnet/core/install/linux-debian) first. Ubuntu 24.04 and
 newer have .NET 10 already.
 
-**Fedora:** `sudo dnf install ./nexonic-download-manager-*.x86_64.rpm`
-**openSUSE Tumbleweed:** add [Microsoft's package repository](https://learn.microsoft.com/dotnet/core/install/linux-opensuse),
+**Fedora, RHEL, AlmaLinux, Rocky Linux:** `sudo dnf install ./nexonic-download-manager-*.x86_64.rpm`
+**openSUSE:** add [Microsoft's package repository](https://learn.microsoft.com/dotnet/core/install/linux-opensuse),
 then `sudo zypper install ./nexonic-download-manager-*.x86_64.rpm`
-
-**RHEL, AlmaLinux, Rocky Linux 9 and openSUSE Leap** have Python older than 3.10 as `python3`: use the AppImage there.
 
 The packages install into `/opt/nexonic-download-manager` with `nexonic-download-manager` and `ndm` in `/usr/bin`.
 They run no install scripts.

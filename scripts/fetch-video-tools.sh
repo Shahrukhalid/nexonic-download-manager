@@ -63,9 +63,6 @@ case "$TARGET" in
   linux-x64)
     get "$YT/yt-dlp_linux" "$OUT/yt-dlp"
     check "$OUT/yt-dlp" "$(ytsum yt-dlp_linux)"
-    # The small edition for the .deb and .rpm: the same yt-dlp as a Python zip app (needs Python 3.10+ on the system).
-    get "$YT/yt-dlp" "$OUT/yt-dlp.pyz"
-    check "$OUT/yt-dlp.pyz" "$(ytsum yt-dlp)"
     get "$QJ/qjs-linux-x86_64" "$OUT/qjs"
     check "$OUT/qjs" aae0d428c88bdd30fb490f54e616ebd4009ec279cc2a16ecebf0c3e17f7e76e7
     chmod +x "$OUT/yt-dlp" "$OUT/qjs"
@@ -73,9 +70,6 @@ case "$TARGET" in
   linux-arm64)
     get "$YT/yt-dlp_linux_aarch64" "$OUT/yt-dlp"
     check "$OUT/yt-dlp" "$(ytsum yt-dlp_linux_aarch64)"
-    # The small edition for the .deb and .rpm: the same yt-dlp as a Python zip app (needs Python 3.10+ on the system).
-    get "$YT/yt-dlp" "$OUT/yt-dlp.pyz"
-    check "$OUT/yt-dlp.pyz" "$(ytsum yt-dlp)"
     get "$QJ/qjs-linux-aarch64" "$OUT/qjs"
     check "$OUT/qjs" c1635453aa60a78ebc7f05b2b559e0e9e9eb7d55b4dfc4a6e71a07d9d10b8a89
     chmod +x "$OUT/yt-dlp" "$OUT/qjs"
