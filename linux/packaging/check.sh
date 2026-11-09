@@ -20,6 +20,10 @@ python3 "$ROOT/scripts/host-ping.py" "$APP/nexonic-host"
 "$APP/ffmpeg" -hide_banner -muxers 2>&1 | grep -q " mp4 " || fail "ffmpeg has no mp4 muxer"
 "$APP/nexonic-video-engine" --version
 "$APP/qjs" -e 'console.log("qjs ok")'
+SYS="$OUT/app-system"
+[ ! -e "$SYS/libcoreclr.so" ] || fail "the .deb/.rpm app folder carries its own .NET"
+head -c 2 "$SYS/nexonic-video-engine" | grep -q '#!' || fail "the .deb/.rpm video engine is not the Python edition"
+python3 "$SYS/nexonic-video-engine" --version
 
 if command -v ffmpeg >/dev/null && [ "$(command -v ffmpeg)" != "$APP/ffmpeg" ]; then
   echo "== The video engine joins picture and sound with the bundled ffmpeg (local test video)"
@@ -45,7 +49,12 @@ APPIMAGE_EXTRACT_AND_RUN=1 "$AI" --host help | grep -q "ndm batch" || fail "the 
 echo "== .deb"
 DEB="$(ls "$OUT"/nexonic-download-manager_*.deb)"
 dpkg-deb --info "$DEB"
+# .NET 10 comes from the distribution (Ubuntu 24.04+) or, on older Ubuntu, from the .NET backports archive.
+if ! apt-cache show dotnet-runtime-10.0 >/dev/null 2>&1; then
+  sudo add-apt-repository -y ppa:dotnet/backports >/dev/null && sudo apt-get update -qq >/dev/null
+fi
 sudo apt-get install -y -qq "$DEB" >/dev/null
+/opt/nexonic-download-manager/nexonic-video-engine --version || fail "the .deb's video engine"
 ndm help | grep -q "ndm batch" || fail "ndm after installing the .deb"
 [ "$(nexonic-download-manager --version)" = "$V" ] || fail "the installed app"
 desktop-file-validate /usr/share/applications/nexonic-download-manager.desktop

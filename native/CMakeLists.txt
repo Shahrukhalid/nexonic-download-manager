@@ -25,6 +25,12 @@ if(NDM_TORRENT_STATIC)
   target_compile_definitions(nexonic_torrent PUBLIC NDM_TORRENT_STATIC)
 endif()
 set_target_properties(nexonic_torrent PROPERTIES POSITION_INDEPENDENT_CODE ON CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN ON)
+# Linux and Android: the libraries linked in (libtorrent, OpenSSL, Boost) stay private to the library, so only the
+# nexonic_torrent_* functions are exported and the linker drops every part nothing uses (several MB smaller).
+if(NOT APPLE AND NOT MSVC AND NOT NDM_TORRENT_STATIC)
+  target_compile_options(nexonic_torrent PRIVATE -ffunction-sections -fdata-sections)
+  target_link_options(nexonic_torrent PRIVATE -Wl,--exclude-libs,ALL -Wl,--gc-sections -Wl,-O1)
+endif()
 if(MSVC)
   target_compile_options(nexonic_torrent PRIVATE /W4 /EHsc /utf-8)
 else()
