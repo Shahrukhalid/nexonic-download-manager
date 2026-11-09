@@ -1,7 +1,7 @@
 # Nexonic Download Manager server: no window, managed from a phone or browser (see docs/SERVER.md).
 #   docker build -f docker/Dockerfile -t nexonic-server .
 #   docker run -d -p 47813:47813 -v nexonic-data:/data -v /path/to/downloads:/downloads nexonic-server
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0@sha256:341aa6e8bbaceb1194732328ca27c15bfa9c531687db83a66af3c0c1833f5534 AS build
 ARG TARGETARCH
 WORKDIR /src
 COPY VERSION ./
@@ -18,7 +18,7 @@ RUN case "$TARGETARCH" in arm64) RID=linux-arm64 ;; *) RID=linux-x64 ;; esac \
  && cp /tools/yt-dlp /app/nexonic-video-engine && cp /tools/qjs /app/ \
  && if [ -f /tools/NOTICE-video-tools-2.txt ]; then cp /tools/NOTICE-video-tools-2.txt /app/; fi
 
-FROM mcr.microsoft.com/dotnet/runtime:8.0
+FROM mcr.microsoft.com/dotnet/runtime:8.0@sha256:09f71a9459e260fe4bab0528f0bd9bfbfed7c8330bed3aa5b665281760205bec
 # ffmpeg joins the parts of streamed videos (Debian's package; its source is in Debian's archive).
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg ca-certificates && rm -rf /var/lib/apt/lists/* \
  && mkdir -p /data /downloads && chown app:app /data /downloads

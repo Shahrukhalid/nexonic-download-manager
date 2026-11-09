@@ -39,10 +39,10 @@ public static class Archives
         var name = Path.GetFileName(path).ToLowerInvariant();
         var tar = name.EndsWith(".7z") || name.EndsWith(".rar") ? null : File.OpenRead(path);
         // .tar (.gz, .bz2, .xz) is read in one pass; 7z and RAR (also split RAR sets) through their archive index.
-        using var archive = tar == null ? ArchiveFactory.Open(new FileInfo(path)) : null;
+        using var archive = tar == null ? ArchiveFactory.OpenArchive(new FileInfo(path)) : null;
         if (archive != null && archive.Entries.Any(e => e.IsEncrypted)) throw new InvalidDataException("The archive needs a password; unpack it yourself.");
         if (archive != null && archive.Entries.Sum(e => Math.Max(0, e.Size)) > MaxUnpackedBytes) throw new InvalidDataException("The archive unpacks to more than 64 GB.");
-        using var reader = archive?.ExtractAllEntries() ?? ReaderFactory.Open(tar!);
+        using var reader = archive?.ExtractAllEntries() ?? ReaderFactory.OpenReader(tar!);
         Directory.CreateDirectory(folder);
         long written = 0;
         try
