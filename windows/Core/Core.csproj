@@ -14,7 +14,5 @@
   <ItemGroup>
     <!-- Translations of the desktop apps (see docs/TRANSLATIONS.md). -->
     <EmbeddedResource Include="Locales\*.json" LogicalName="locale.%(Filename).json" />
-    <!-- The page phones open for remote management (Options → Remote). -->
-    <EmbeddedResource Include="Remote\remote.html" LogicalName="remote.html" />
   </ItemGroup>
 </Project>

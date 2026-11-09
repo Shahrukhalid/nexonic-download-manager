@@ -37,41 +37,6 @@ public sealed partial class DownloadManager : IDownloadControl
         }
     }
 
-    RemoteAccess? remote;
-
-    /// <summary>Why remote access is not running (empty when it runs or is off).</summary>
-    public string RemoteProblem { get; private set; } = "";
-
-    /// <summary>The address phones open to pair (with the key in its #fragment), or null when remote access is off.</summary>
-    public string? PairingUrl(string? host = null) =>
-        remote == null ? null : RemoteAccess.PairingUrl(host ?? RemoteAccess.LanAddresses().FirstOrDefault()?.ToString() ?? "127.0.0.1", remote.Port, Settings.Remote.Key);
-
-    /// <summary>Starts or stops remote access (Options → Remote) to match the settings; a new key unpairs every device.</summary>
-    public void ApplyRemote(Func<Func<(int, object)>, Task<(int, object)>>? runOnUi = null, bool newKey = false)
-    {
-        onUi = runOnUi ?? onUi;
-        remote?.Dispose();
-        remote = null;
-        RemoteProblem = "";
-        var r = Settings.Remote;
-        if (newKey || (r.Enabled && r.Key.Length < 16))
-        {
-            r.Key = AutomationSettings.NewKey();
-            ApplySettings(Settings);
-        }
-        if (!r.Enabled || onUi == null) return;
-        try
-        {
-            remote = new RemoteAccess(r.Port, r.Key, this, onUi);
-            remote.Start();
-        }
-        catch (Exception e)
-        {
-            remote = null;
-            RemoteProblem = $"Port {r.Port} could not be used: {e.Message}";
-        }
-    }
-
     public IReadOnlyList<DownloadRecord> AllDownloads() => Rows.Select(r => r.Record).ToList();
     public IReadOnlyList<DownloadQueue> AllQueues() => Queues.ToList();
 

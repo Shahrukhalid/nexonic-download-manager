@@ -73,7 +73,6 @@ public static class Secrets
                     proxy["Password"] = f(ps);
                 if (o["HostProfiles"] is JsonArray profiles) Walk(profiles, f);
                 if (o["Automation"] is JsonObject auto && auto["Key"] is JsonValue kv && kv.TryGetValue<string>(out var ks)) auto["Key"] = f(ks);
-                if (o["Remote"] is JsonObject remote && remote["Key"] is JsonValue rv && rv.TryGetValue<string>(out var rs)) remote["Key"] = f(rs);
                 if (o["Debrid"] is JsonObject debrid && debrid["Key"] is JsonValue dv && dv.TryGetValue<string>(out var ds)) debrid["Key"] = f(ds);  // each site's login and proxy password
                 break;
         }
