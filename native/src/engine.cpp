@@ -234,7 +234,14 @@ struct Engine {
     std::map<std::string, Job> jobs;
     static lt::session_params settings(json const& config) {
         lt::settings_pack settings;
-        settings.set_str(lt::settings_pack::listen_interfaces, config.value("listen", "0.0.0.0:0,[::]:0"));
+        // "bind" keeps every torrent connection on one network adapter (a VPN, for example): peers, trackers and DHT
+        // use only that adapter, so nothing leaks through another one when it goes down.
+        auto bind = config.value("bind", std::string());
+        if (bind.size() > 64 || bind.find_first_of(", \t[]") != std::string::npos) throw std::runtime_error("Invalid network adapter");
+        bool v6 = bind.find(':') != std::string::npos;
+        if (v6) { lt::error_code ec; auto a = lt::make_address(bind, ec); if (ec || !a.is_v6()) throw std::runtime_error("Invalid network adapter"); }
+        settings.set_str(lt::settings_pack::listen_interfaces, bind.empty() ? config.value("listen", "0.0.0.0:0,[::]:0") : v6 ? "[" + bind + "]:0" : bind + ":0");
+        if (!bind.empty()) settings.set_str(lt::settings_pack::outgoing_interfaces, bind);
         settings.set_bool(lt::settings_pack::enable_dht, config.value("dht", true));
         settings.set_bool(lt::settings_pack::enable_lsd, false);
         // Port forwarding on the router (UPnP and NAT-PMP) is off unless the user turns it on.
@@ -265,8 +272,21 @@ struct Engine {
     }
     explicit Engine(json const& config) : state(fs::u8path(config.at("state_dir").get<std::string>())), allow_local(config.value("allow_local_peers", false)), session(settings(config)) {
         private_directory(state);
+        lt::ip_filter filter;
+        bool filtered = false;
+        if (config.contains("blocklist")) {
+            if (!config["blocklist"].is_array()) throw std::runtime_error("Invalid blocklist");
+            // User blocklist: [first, last] address ranges that peers and trackers may not use.
+            for (auto const& range : config["blocklist"]) {
+                if (!range.is_array() || range.size() != 2) throw std::runtime_error("Invalid blocklist range");
+                lt::error_code e1, e2;
+                auto first = lt::make_address(range[0].get<std::string>(), e1), last = lt::make_address(range[1].get<std::string>(), e2);
+                if (e1 || e2 || first.is_v4() != last.is_v4()) throw std::runtime_error("Invalid blocklist range");
+                filter.add_rule(first, last, lt::ip_filter::blocked);
+            }
+            filtered = true;
+        }
         if (!allow_local) {
-            lt::ip_filter filter;
             for (auto const& range : std::vector<std::pair<std::string, std::string>>{
                 {"0.0.0.0","0.255.255.255"},{"10.0.0.0","10.255.255.255"},{"100.64.0.0","100.127.255.255"},
                 {"127.0.0.0","127.255.255.255"},{"169.254.0.0","169.254.255.255"},{"172.16.0.0","172.31.255.255"},
@@ -274,8 +294,9 @@ struct Engine {
                 {"fc00::","fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"},{"fe80::","febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff"},
                 {"ff00::","ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"}})
                 filter.add_rule(lt::make_address(range.first), lt::make_address(range.second), lt::ip_filter::blocked);
-            session.set_ip_filter(filter);
+            filtered = true;
         }
+        if (filtered) session.set_ip_filter(filter);
     }
     fs::path manifest(std::string const& id) const { return state / ("torrent-" + id + ".json"); }
     fs::path checkpoint(std::string const& id) const { return state / ("torrent-" + id + ".resume"); }

@@ -1,3 +1,14 @@
+## 0.21.0
+
+- **Keep downloads on your VPN (Windows and Linux):** Options → Connection → Network adapter. Downloads, videos and
+  torrents then use only that adapter, and if it disconnects they stop instead of using another connection (a kill
+  switch). DNS over HTTPS lookups go through the same adapter. Check the Connection shows whether it is connected.
+- **Torrent blocklist (Windows and Linux):** Options → Connection → Torrent blocklist takes a file or an https://
+  address with P2P, DAT or CIDR lines (also `.gz`). Torrents never connect to those peers or trackers; a list from an
+  address is downloaded again once a day, and the last copy is used when the server can't be reached.
+- **Share links download the file itself** on every app: Google Drive file links, Google Docs, Sheets and Slides (as Word, Excel and PowerPoint files), Dropbox share links and GitHub
+  file pages.
+
 ## 0.20.2
 
 - **The language changes at once:** picking a language in Settings (Options on Windows and Linux) switches every

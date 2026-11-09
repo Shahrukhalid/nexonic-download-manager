@@ -296,8 +296,11 @@ public static class SiteVideo
     /// <summary>The arguments to run: private options in a file (see Private), the rest on the command line.</summary>
     public static (List<string> Args, string? ConfigFile) Prepare(List<string> args, ProxySettings? proxy)
     {
+        // The video engine keeps to the chosen network adapter too; it stops if the adapter is down.
+        var source = Network.Options.BindAdapter.Length > 0 ? Adapters.SourceAddress(Network.Options.BindAdapter) : null;
         var (rest, config) = Private(args, proxy == null ? null : ProxyUrl(proxy));
         var file = WriteConfig(config);
+        if (source != null) rest.InsertRange(0, new[] { "--source-address", source });
         if (file != null) rest.InsertRange(0, new[] { "--config-locations", file });
         return (rest, file);
     }

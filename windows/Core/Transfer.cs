@@ -495,10 +495,14 @@ public static class Network
         };
         // DNS over HTTPS for direct connections (with a proxy, the proxy looks the name up).
         var doh = Options.DnsOverHttps.Trim();
-        if (NetworkOptions.DnsOverHttpsUrlOk(doh) && (p.Mode is ProxyMode.None or ProxyMode.System) && (p.Mode == ProxyMode.None || !HasSystemProxy()))
+        var useDoh = NetworkOptions.DnsOverHttpsUrlOk(doh) && (p.Mode is ProxyMode.None or ProxyMode.System) && (p.Mode == ProxyMode.None || !HasSystemProxy());
+        var bind = Options.BindAdapter.Trim();
+        if (useDoh || bind.Length > 0)
         {
             var timeout = h.ConnectTimeout;
-            h.ConnectCallback = (ctx, ct) => DnsOverHttps.ConnectAsync(doh, ctx.DnsEndPoint, timeout, ct);
+            // With a chosen adapter every connection (also the one to a proxy) starts from its address, checked each time.
+            h.ConnectCallback = (ctx, ct) => Adapters.ConnectAsync(bind.Length > 0 ? Adapters.AddressesOf(bind) : null, ctx.DnsEndPoint,
+                (host, t) => useDoh ? DnsOverHttps.ResolveAsync(doh, host, t) : Dns.GetHostAddressesAsync(host, t), timeout, ct);
         }
         var host = p.Host.Trim();
         switch (p.Mode)

@@ -499,13 +499,21 @@ public static partial class Dialogs
         var readTimeout = Box(connection, "Reconnect a part that receives nothing for (seconds)", net.ReadTimeoutSeconds.ToString());
         var doh = Box(connection, "DNS over HTTPS server (empty = the system's DNS)", net.DnsOverHttps);
         Hint(connection, "For example " + string.Join(" or ", NetworkOptions.DohServers) + ". Not used through a proxy.");
+        connection.Children.Add(new TextBlock { Text = "Network adapter", Margin = new Thickness(0, 10, 0, 2) });
+        var adapterNames = Adapters.Choices(net.BindAdapter);
+        var adapter = new ComboBox { ItemsSource = adapterNames.Select(n => n.Length == 0 ? L.T("Any adapter") : n).ToList(),
+            SelectedIndex = Math.Max(0, adapterNames.FindIndex(n => string.Equals(n, net.BindAdapter, StringComparison.OrdinalIgnoreCase))), MinWidth = 220 };
+        connection.Children.Add(adapter);
+        Hint(connection, "Downloads, videos and torrents use only this adapter (for example your VPN). If it disconnects, downloads stop instead of using another connection.");
+        var blocklist = Box(connection, "Torrent blocklist: a file or an https:// address (empty = none)", net.TorrentBlocklist);
+        Hint(connection, "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.");
         var checkResult = Hint(connection, "");
         var check = new Button { Content = "Check the Connection", Margin = new Thickness(0, 8, 0, 0) };
         check.Click += async (_, _) =>
         {
             checkResult.Text = "Checking…";
             var keep = Network.Options;
-            Network.Options = new NetworkOptions { ConnectTimeoutSeconds = Ui.Number(connectTimeout.Text, 30), DnsOverHttps = doh.Text ?? "" }.Clamped();
+            Network.Options = new NetworkOptions { ConnectTimeoutSeconds = Ui.Number(connectTimeout.Text, 30), DnsOverHttps = doh.Text ?? "", BindAdapter = adapterNames[Math.Max(0, adapter.SelectedIndex)] }.Clamped();
             try
             {
                 var proxy = new ProxySettings { Mode = (ProxyMode)Math.Max(0, mode.SelectedIndex), Host = (host.Text ?? "").Trim(), Port = Ui.Number(port.Text, 8080), Username = (puser.Text ?? "").Trim(), Password = ppass.Text ?? "" };
@@ -702,10 +710,12 @@ public static partial class Dialogs
             s.ScanEnabled = scan.IsChecked == true;
             s.ScanCommand = (scanCmd.Text ?? "").Trim();
             if (!string.IsNullOrWhiteSpace(doh.Text) && !NetworkOptions.DnsOverHttpsUrlOk(doh.Text)) { error.Text = "The DNS over HTTPS server must be an https:// address."; return; }
+            if (Adapters.BlocklistProblem(blocklist.Text) is { } blockProblem) { error.Text = blockProblem; return; }
             s.Network = new NetworkOptions
             {
                 MinSegmentKB = Ui.Number(minSeg.Text, 512), Retries = Ui.Number(retries.Text, 6),
                 ConnectTimeoutSeconds = Ui.Number(connectTimeout.Text, 30), ReadTimeoutSeconds = Ui.Number(readTimeout.Text, 60), DnsOverHttps = doh.Text ?? "",
+                BindAdapter = adapterNames[Math.Max(0, adapter.SelectedIndex)], TorrentBlocklist = (blocklist.Text ?? ""),
             }.Clamped();
             s.HostProfiles = profiles;
             var apiPortNumber = Ui.Number(apiPort.Text, -1);

@@ -22,7 +22,7 @@ public sealed class NativeTorrentSession : IDisposable
 
     // An explicit library path is for SDK consumers and integration tests, never read from download/history input.
     public NativeTorrentSession(string stateDirectory, bool allowLocalPeers = false, bool dht = true, string? libraryPath = null, object? proxy = null,
-        bool portForwarding = false, string encryption = "prefer")
+        bool portForwarding = false, string encryption = "prefer", string bind = "", string[][]? blocklist = null)
     {
         if (!Path.IsPathFullyQualified(stateDirectory)) throw new ArgumentException("Choose an absolute torrent state directory.");
         library = NativeLibrary.Load(libraryPath ?? BundledLibrary);
@@ -34,7 +34,8 @@ public sealed class NativeTorrentSession : IDisposable
             free = Export<Free>("ndm_torrent_free");
             destroy = Export<Destroy>("ndm_torrent_destroy");
             session = create(JsonSerializer.Serialize(new { state_dir = stateDirectory, allow_local_peers = allowLocalPeers, dht, proxy,
-                port_forwarding = portForwarding, encryption = encryption is "require" or "off" ? encryption : "prefer" }));
+                port_forwarding = portForwarding, encryption = encryption is "require" or "off" ? encryption : "prefer",
+                bind = bind ?? "", blocklist = blocklist ?? Array.Empty<string[]>() }));
             if (session == IntPtr.Zero)
             {
                 // The C API reports initialization errors through a null-session call.

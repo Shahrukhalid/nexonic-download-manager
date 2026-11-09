@@ -110,6 +110,13 @@
     "Same as the system": "跟隨系統",
     "The new language is used after the app restarts.": "新語言會在應用程式重新啟動後使用。",
     "Canceled": "已取消",
-    "Support the Project": "支持本專案"
+    "Support the Project": "支持本專案",
+    "Network adapter": "網路介面卡",
+    "Any adapter": "任何介面卡",
+    "Downloads, videos and torrents use only this adapter (for example your VPN). If it disconnects, downloads stop instead of using another connection.": "下載、影片和種子只使用此介面卡（例如你的 VPN）。如果它中斷，下載會停止，而不會改用其他連線。",
+    "Torrent blocklist: a file or an https:// address (empty = none)": "種子封鎖清單：檔案或 https:// 位址（留空 = 無）",
+    "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.": "種子絕不會連線到此清單中的位址。支援 P2P、DAT 和 CIDR 清單，也支援 .gz。位址每天重新下載一次。",
+    "The blocklist address must start with https://": "封鎖清單位址必須以 https:// 開頭",
+    "The blocklist file was not found.": "找不到封鎖清單檔案。"
   }
 }

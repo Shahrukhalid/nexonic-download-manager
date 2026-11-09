@@ -18,6 +18,11 @@ public sealed class NetworkOptions
     public int ReadTimeoutSeconds { get; set; } = 60;
     /// <summary>DNS-over-HTTPS server (JSON API, e.g. https://cloudflare-dns.com/dns-query); empty = the system's DNS.</summary>
     public string DnsOverHttps { get; set; } = "";
+    /// <summary>Network adapter every download must use (a VPN, for example); empty = any. When it is down, downloads
+    /// stop instead of using another adapter (kill switch).</summary>
+    public string BindAdapter { get; set; } = "";
+    /// <summary>Torrent blocklist: a local file or an https:// address (P2P, DAT or CIDR lines); empty = none.</summary>
+    public string TorrentBlocklist { get; set; } = "";
 
     public static readonly string[] DohServers = { "https://cloudflare-dns.com/dns-query", "https://dns.google/resolve" };
 
@@ -28,6 +33,8 @@ public sealed class NetworkOptions
         ConnectTimeoutSeconds = Math.Clamp(ConnectTimeoutSeconds, 3, 300),
         ReadTimeoutSeconds = Math.Clamp(ReadTimeoutSeconds, 5, 3600),
         DnsOverHttps = DnsOverHttpsUrlOk(DnsOverHttps) ? DnsOverHttps.Trim() : "",
+        BindAdapter = (BindAdapter ?? "").Trim(),
+        TorrentBlocklist = (TorrentBlocklist ?? "").Trim(),
     };
 
     public static bool DnsOverHttpsUrlOk(string? url) =>
@@ -101,7 +108,24 @@ public sealed record TransferOptions(long MinSegment = SegmentPlanner.MinSegment
 public static class DnsOverHttps
 {
     static readonly ConcurrentDictionary<string, (IPAddress[] Addresses, DateTime Until)> cache = new();
-    static readonly HttpClient client = new(new SocketsHttpHandler { ConnectTimeout = TimeSpan.FromSeconds(10) }) { Timeout = TimeSpan.FromSeconds(10) };
+    static readonly ConcurrentDictionary<string, HttpClient> clients = new();
+
+    /// <summary>The client that asks the DNS server; with a chosen adapter it connects only through that adapter.</summary>
+    static HttpClient Client()
+    {
+        var bind = Network.Options.BindAdapter.Trim();
+        return clients.GetOrAdd(bind, b =>
+        {
+            var h = new SocketsHttpHandler { ConnectTimeout = TimeSpan.FromSeconds(10) };
+            if (b.Length > 0)
+            {
+                h.UseProxy = false;
+                h.ConnectCallback = (ctx, ct) => Adapters.ConnectAsync(Adapters.AddressesOf(b), ctx.DnsEndPoint,
+                    (host, t) => Dns.GetHostAddressesAsync(host, t), TimeSpan.FromSeconds(10), ct);
+            }
+            return new HttpClient(h) { Timeout = TimeSpan.FromSeconds(10) };
+        });
+    }
 
     /// <summary>The A/AAAA addresses in a DNS JSON answer and the shortest TTL.</summary>
     public static (List<IPAddress> Addresses, int Ttl) ParseAnswer(string json)
@@ -133,7 +157,7 @@ public static class DnsOverHttps
             req.Headers.Accept.ParseAdd("application/dns-json");
             try
             {
-                using var res = await client.SendAsync(req, ct);
+                using var res = await Client().SendAsync(req, ct);
                 if (!res.IsSuccessStatusCode) continue;
                 var (found, t) = ParseAnswer(await res.Content.ReadAsStringAsync(ct));
                 all.AddRange(found);
@@ -148,24 +172,8 @@ public static class DnsOverHttps
     }
 
     /// <summary>Connects to the first address that answers (IPv4 first).</summary>
-    public static async ValueTask<Stream> ConnectAsync(string server, DnsEndPoint target, TimeSpan timeout, CancellationToken ct)
-    {
-        var addresses = (await ResolveAsync(server, target.Host, ct)).OrderBy(a => a.AddressFamily == AddressFamily.InterNetworkV6).ToList();
-        Exception? last = null;
-        foreach (var ip in addresses)
-        {
-            var socket = new Socket(ip.AddressFamily, SocketType.Stream, ProtocolType.Tcp) { NoDelay = true };
-            try
-            {
-                using var limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                limit.CancelAfter(timeout);
-                await socket.ConnectAsync(new IPEndPoint(ip, target.Port), limit.Token);
-                return new NetworkStream(socket, ownsSocket: true);
-            }
-            catch (Exception e) when (!ct.IsCancellationRequested) { socket.Dispose(); last = e; }
-        }
-        throw new HttpRequestException($"Could not connect to {target.Host}", last);
-    }
+    public static ValueTask<Stream> ConnectAsync(string server, DnsEndPoint target, TimeSpan timeout, CancellationToken ct) =>
+        Adapters.ConnectAsync(null, target, (host, t) => ResolveAsync(server, host, t), timeout, ct);
 }
 
 /// <summary>
@@ -283,6 +291,12 @@ public static class NetworkCheck
         var u = new Uri(url);
         var sw = System.Diagnostics.Stopwatch.StartNew();
         var doh = Network.Options.DnsOverHttps;
+        var bind = Network.Options.BindAdapter;
+        if (bind.Length > 0)
+        {
+            try { lines.Add($"Network adapter {bind}: connected, {string.Join(", ", Adapters.AddressesOf(bind))}"); }
+            catch (AdapterDownException e) { lines.Add(e.Message); }
+        }
         try
         {
             var ips = NetworkOptions.DnsOverHttpsUrlOk(doh)

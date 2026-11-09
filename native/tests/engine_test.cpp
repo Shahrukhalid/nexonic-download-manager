@@ -13,8 +13,9 @@ namespace fs = std::filesystem;
 using namespace std::chrono_literals;
 struct Context {
     void* p;
-    explicit Context(fs::path const& state) {
-        auto value = json{{"state_dir",state.u8string()},{"dht",false},{"allow_local_peers",true},{"listen","127.0.0.1:0"}}.dump();
+    explicit Context(fs::path const& state, json extra=json::object()) {
+        auto config = json{{"state_dir",state.u8string()},{"dht",false},{"allow_local_peers",true},{"listen","127.0.0.1:0"}};
+        config.update(extra); auto value=config.dump();
         p=ndm_torrent_create(value.c_str()); if (!p) throw std::runtime_error("Native context initialization failed");
     }
     ~Context() { ndm_torrent_destroy(p); }
@@ -108,8 +109,25 @@ int main() {
             auto bad=json{{"state_dir",(base/"proxy-bad").u8string()},{"proxy",{{"type","ftp"},{"host","x"},{"port",1}}}}.dump();
             void* refused=ndm_torrent_create(bad.c_str()); require(refused==nullptr,"Invalid proxy accepted"); if (refused) ndm_torrent_destroy(refused);
         }
+        {
+            // Adapter binding: a session held to the loopback adapter still reaches a peer on it.
+            Context bound(base/"bound-state",{{"bind","127.0.0.1"}});
+            bound.call({{"action","add"},{"id","bound"},{"preview",true},{"source",seeding.at("magnet")}});
+            bound.call({{"action","connect_peer"},{"id","bound"},{"port",port}});
+            until(bound,"bound",[](json const& x){return x["state"]=="preview";});
+            // Blocklist: a peer inside a blocked range is never used, so no metadata arrives.
+            Context blocked(base/"blocked-state",{{"blocklist",json::array({json::array({"127.0.0.0","127.255.255.255"})})}});
+            blocked.call({{"action","add"},{"id","blocked"},{"preview",true},{"source",seeding.at("magnet")}});
+            blocked.call({{"action","connect_peer"},{"id","blocked"},{"port",port}});
+            std::this_thread::sleep_for(4s);
+            require(blocked.call({{"action","status"},{"id","blocked"}})["state"]!="preview","A blocked peer was used");
+            for (auto bad : {json{{"bind","a,b"}}, json{{"blocklist",json::array({json::array({"1.2.3.4","::1"})})}}, json{{"blocklist",json::array({json::array({"x","y"})})}}, json{{"blocklist","1.2.3.4"}}}) {
+                auto config=json{{"state_dir",(base/"bad-net").u8string()},{"dht",false}}; config.update(bad); auto text=config.dump();
+                void* refused=ndm_torrent_create(text.c_str()); require(refused==nullptr,"Invalid network setting accepted: "+bad.dump()); if (refused) ndm_torrent_destroy(refused);
+            }
+        }
         context->call({{"action","add"},{"id","../escape"},{"preview",true},{"metainfo",meta}},false);
-        std::cout<<"PASS native libtorrent "<<ndm_torrent_version()<<": metadata, magnet, real peer transfer, pause/restart, file priorities, trackers, piece recheck and SHA-256 "<<expected<<"\n";
+        std::cout<<"PASS native libtorrent "<<ndm_torrent_version()<<": metadata, magnet, real peer transfer, pause/restart, file priorities, trackers, piece recheck, adapter binding, blocklist and SHA-256 "<<expected<<"\n";
         context.reset();
         } // All native contexts release files before cleanup.
         fs::remove_all(base);

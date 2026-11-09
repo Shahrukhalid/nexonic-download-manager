@@ -110,6 +110,13 @@
     "Same as the system": "跟随系统",
     "The new language is used after the app restarts.": "新语言会在应用重启后使用。",
     "Canceled": "已取消",
-    "Support the Project": "支持本项目"
+    "Support the Project": "支持本项目",
+    "Network adapter": "网络适配器",
+    "Any adapter": "任意适配器",
+    "Downloads, videos and torrents use only this adapter (for example your VPN). If it disconnects, downloads stop instead of using another connection.": "下载、视频和种子只使用此适配器（例如你的 VPN）。如果它断开，下载会停止，而不会改用其他连接。",
+    "Torrent blocklist: a file or an https:// address (empty = none)": "种子屏蔽列表：文件或 https:// 地址（留空 = 无）",
+    "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.": "种子永远不会连接此列表中的地址。支持 P2P、DAT 和 CIDR 列表，也支持 .gz。地址每天重新下载一次。",
+    "The blocklist address must start with https://": "屏蔽列表地址必须以 https:// 开头",
+    "The blocklist file was not found.": "找不到屏蔽列表文件。"
   }
 }

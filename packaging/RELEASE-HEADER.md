@@ -1,6 +1,6 @@
-# Nexonic Download Manager 0.20.2
+# Nexonic Download Manager 0.21.0
 
-**The language changes at once.** Pick a language in Settings (Mac: Settings → General → Language; Windows and Linux: Options → General → Language; phones: Settings → Language) and the app switches right away, no restart needed. Includes 0.20.1 (Support the Project in every app) and 0.20.0 (15 languages). Android APK licensing and corresponding-source requirements remain unchanged; the release must include `Android-GPL-Sources.tar.gz`; the torrent engine's sources are in `Android-Torrent-Sources.tar.gz`.
+**Keep downloads on your VPN.** Windows and Linux: Options → Connection → Network adapter keeps every download, video and torrent on one adapter and stops them if it disconnects. Torrents can also use a blocklist, and Google Drive, Dropbox and GitHub share links download the file itself. Includes 0.20.x (15 languages, live language switch).
 
 **Mac, first launch:** macOS says it *could not verify* the app because it's free and not sold through Apple. Click **Done**, open **System Settings → Privacy & Security**, click **Open Anyway**, then **Open Anyway** again and enter your Mac password. Only once; updates installed with **Update Now** open without a warning. [Pictures of each step](https://github.com/Shahrukhalid/nexonic-download-manager#first-launch-on-mac)
 
