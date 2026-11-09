@@ -45,8 +45,8 @@ extras() { # DEST: everything besides .NET and the app itself
   cp -R "$ROOT/.native-cache/sdk/$RID/notices" "$1/torrent-licenses"
   cp "$ROOT/.native-cache/sdk/$RID/native-components.json" "$1/torrent-components.json"
   cp "$FF/ffmpeg" "$FF/ffprobe" "$TOOLS/qjs" "$1/"
-  cp "$TOOLS/yt-dlp" "$1/nexonic-video-engine"  # the video engine, under the app's own name
-  chmod 755 "$1/ffmpeg" "$1/ffprobe" "$1/nexonic-video-engine" "$1/qjs" "$1/NexonicDownloadManager" "$1/nexonic-host"
+  # The video engine itself is not shipped: the app downloads the official release the first time a video is saved.
+  chmod 755 "$1/ffmpeg" "$1/ffprobe" "$1/qjs" "$1/NexonicDownloadManager" "$1/nexonic-host"
   cp -R "$ROOT/build/extension-chrome" "$1/Extension"
   cp "$ROOT/build/NexonicFirefoxAddon-$VERSION.xpi" "$1/Firefox Add-on.xpi"
   cp "$PKG/nexonic-download-manager.png" "$1/"
@@ -57,7 +57,7 @@ extras() { # DEST: everything besides .NET and the app itself
   cp "$ROOT/TERMS.md" "$1/TERMS.md"
   cat "$ROOT/packaging/THIRD-PARTY-NOTICES.txt" "$PKG/LINUX-NOTICES.txt" > "$1/THIRD-PARTY-NOTICES.txt"
 }
-echo "== Video engine, torrent engine and browser extension"
+echo "== Video tools, torrent engine and browser extension"
 extras "$APP"
 extras "$SYS"
 for d in "$APP" "$SYS"; do cp "$FF"/NOTICE-video-tools-1.txt "$TOOLS"/NOTICE-video-tools-2.txt "$d/" 2>/dev/null || true; done

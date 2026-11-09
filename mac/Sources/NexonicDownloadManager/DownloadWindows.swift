@@ -159,6 +159,7 @@ struct DownloadInfoView: View {
         let proxy = manager.settings.proxy
         DispatchQueue.global(qos: .userInitiated).async {
             SiteVideoTools.prepare()
+            SiteVideoTools.ensureInstalled()
             try? FileManager.default.createDirectory(at: AppPaths.parts, withIntermediateDirectories: true)
             let prepared = try? SiteVideo.prepare(args, proxy: proxy)  // nil: no lookup (the download itself reports it)
             defer { if let f = prepared?.configFile { try? FileManager.default.removeItem(at: f) } }

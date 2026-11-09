@@ -68,6 +68,7 @@ struct SaveOptions: View {
                                            cookies: nil, userAgent: nil, username: nil, password: nil)
         DispatchQueue.global(qos: .userInitiated).async {
             SiteVideoTools.prepare()
+            SiteVideoTools.ensureInstalled()
             try? FileManager.default.createDirectory(at: AppPaths.parts, withIntermediateDirectories: true)
             let prepared = try? SiteVideo.prepare(args, proxy: proxy)
             defer { if let f = prepared?.configFile { try? FileManager.default.removeItem(at: f) } }

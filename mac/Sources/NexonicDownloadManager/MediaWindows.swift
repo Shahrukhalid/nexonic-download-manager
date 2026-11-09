@@ -50,7 +50,7 @@ enum MediaWindows {
     /// Runs the video engine to list a playlist's videos (up to two minutes).
     static func read(_ link: String, proxy: ProxySettings) throws -> Playlists.Result {
         SiteVideoTools.prepare()
-        guard FileManager.default.isExecutableFile(atPath: SiteVideoTools.ytdlp.path) else { throw MediaError("The video engine is missing. Reinstall the app") }
+        guard SiteVideoTools.ensureInstalled() else { throw MediaError(SiteVideoTools.missing) }
         let prepared = try SiteVideo.prepare(Playlists.arguments(link, quickJS: SiteVideoTools.quickJS), proxy: proxy)
         try FileManager.default.createDirectory(at: AppPaths.parts, withIntermediateDirectories: true)
         let errorFile = AppPaths.parts.appendingPathComponent("playlist-\(UUID().uuidString).log")

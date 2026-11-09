@@ -10,7 +10,7 @@ APP="$OUT/app"
 V="$(tr -d '[:space:]' < "$ROOT/VERSION")"
 fail() { echo "FAILED: $*" >&2; exit 1; }
 
-for f in NexonicDownloadManager nexonic-host ffmpeg ffprobe nexonic-video-engine qjs Extension/manifest.json "Firefox Add-on.xpi" \
+for f in NexonicDownloadManager nexonic-host ffmpeg ffprobe qjs Extension/manifest.json "Firefox Add-on.xpi" \
          nexonic-download-manager.png THIRD-PARTY-NOTICES.txt LICENSE.txt; do
   [ -e "$APP/$f" ] || fail "missing from the app folder: $f"
 done
@@ -18,11 +18,12 @@ done
 "$APP/nexonic-host" help | grep -q "ndm batch" || fail "ndm help"
 python3 "$ROOT/scripts/host-ping.py" "$APP/nexonic-host"
 "$APP/ffmpeg" -hide_banner -muxers 2>&1 | grep -q " mp4 " || fail "ffmpeg has no mp4 muxer"
-"$APP/nexonic-video-engine" --version
+ENGINE="$ROOT/.tools-cache/linux-$ARCH/yt-dlp"  # the official engine the app downloads on first use
+[ ! -e "$APP/nexonic-video-engine" ] || fail "the video engine is shipped again (the app downloads it on first use)"
+"$ENGINE" --version
 "$APP/qjs" -e 'console.log("qjs ok")'
 SYS="$OUT/app-system"
 [ ! -e "$SYS/libcoreclr.so" ] || fail "the .deb/.rpm app folder carries its own .NET"
-"$SYS/nexonic-video-engine" --version
 
 if command -v ffmpeg >/dev/null && [ "$(command -v ffmpeg)" != "$APP/ffmpeg" ]; then
   echo "== The video engine joins picture and sound with the bundled ffmpeg (local test video)"
@@ -32,7 +33,7 @@ if command -v ffmpeg >/dev/null && [ "$(command -v ffmpeg)" != "$APP/ffmpeg" ]; 
   ( cd "$SITE" && exec python3 -m http.server 8777 >/dev/null 2>&1 ) &
   SERVER=$!
   sleep 1
-  "$APP/nexonic-video-engine" --ignore-config --ffmpeg-location "$APP" -f "bv*+ba/b" --merge-output-format "mp4/mkv" -P "$SITE/out" \
+  "$ENGINE" --ignore-config --ffmpeg-location "$APP" -f "bv*+ba/b" --merge-output-format "mp4/mkv" -P "$SITE/out" \
     -o "test.%(ext)s" http://127.0.0.1:8777/dash.mpd
   kill $SERVER
   "$APP/ffprobe" -v error -show_entries stream=codec_type -of csv "$SITE/out/test.mp4" | sort | tr '\n' ' ' | grep -q "stream,audio stream,video" \
@@ -53,7 +54,6 @@ if ! apt-cache show dotnet-runtime-10.0 >/dev/null 2>&1; then
   sudo add-apt-repository -y ppa:dotnet/backports >/dev/null && sudo apt-get update -qq >/dev/null
 fi
 sudo apt-get install -y -qq "$DEB" >/dev/null
-/opt/nexonic-download-manager/nexonic-video-engine --version || fail "the .deb's video engine"
 ndm help | grep -q "ndm batch" || fail "ndm after installing the .deb"
 [ "$(nexonic-download-manager --version)" = "$V" ] || fail "the installed app"
 desktop-file-validate /usr/share/applications/nexonic-download-manager.desktop

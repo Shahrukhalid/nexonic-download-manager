@@ -27,6 +27,8 @@ ChangesEnvironment=yes
 ; The one-file video engine of versions before 0.18.0 (now the yt-dlp folder).
 Type: files; Name: "{app}\yt-dlp.exe"
 Type: filesandordirs; Name: "{app}\yt-dlp"
+; The engine folder shipped up to 0.25 (the app now downloads the engine the first time a video is saved).
+Type: filesandordirs; Name: "{app}\video-engine"
 
 [Files]
 Source: "..\build\win\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
