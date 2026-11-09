@@ -136,6 +136,16 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
             Toggle("Wi-Fi only", "Wait for Wi-Fi or another unmetered network before downloading.", wifiOnly) {
                 wifiOnly = it; s.wifiOnly = it; Downloads.pump()
             }
+            var blocklist by remember { mutableStateOf(s.torrentBlocklist) }
+            OutlinedTextField(
+                value = blocklist,
+                onValueChange = { blocklist = it.take(2000); if (com.nexonic.downloadmanager.core.TorrentBlocklist.problem(blocklist) == null) s.torrentBlocklist = blocklist },
+                label = { Text(tr("Torrent blocklist: an https:// address (empty = none)")) },
+                isError = com.nexonic.downloadmanager.core.TorrentBlocklist.problem(blocklist) != null,
+                supportingText = { Text(tr(com.nexonic.downloadmanager.core.TorrentBlocklist.problem(blocklist) ?: "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.")) },
+                singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            )
             var vpnOnly by remember { mutableStateOf(s.vpnOnly) }
             Toggle("VPN only", "Download only through a VPN. If the VPN disconnects, downloads stop instead of using another connection.", vpnOnly) {
                 vpnOnly = it; Downloads.setVpnOnly(it)

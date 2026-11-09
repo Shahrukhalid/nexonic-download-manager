@@ -181,6 +181,12 @@
     "Support the Project": "Projekt unterstützen",
     "VPN only": "Nur VPN",
     "Download only through a VPN. If the VPN disconnects, downloads stop instead of using another connection.": "Nur über ein VPN herunterladen. Trennt das VPN die Verbindung, stoppen die Downloads, statt eine andere Verbindung zu nutzen.",
-    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "Warte auf ein VPN. Schalten Sie „Nur VPN“ in den Einstellungen aus, um ohne VPN herunterzuladen."
+    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "Warte auf ein VPN. Schalten Sie „Nur VPN“ in den Einstellungen aus, um ohne VPN herunterzuladen.",
+    "Scan QR code": "QR-Code scannen",
+    "Point the camera at a QR code from Nexonic on your computer, or any download link.": "Richten Sie die Kamera auf einen QR-Code von Nexonic auf Ihrem Computer oder auf einen beliebigen Download-Link.",
+    "This QR code has no download link.": "Dieser QR-Code enthält keinen Download-Link.",
+    "Torrent blocklist: an https:// address (empty = none)": "Torrent-Sperrliste: eine https://-Adresse (leer = keine)",
+    "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.": "Torrents verbinden sich nie mit den Adressen in dieser Liste. P2P-, DAT- und CIDR-Listen funktionieren, auch als .gz. Eine Adresse wird einmal am Tag neu heruntergeladen.",
+    "The blocklist address must start with https://": "Die Adresse der Sperrliste muss mit https:// beginnen"
   }
 }

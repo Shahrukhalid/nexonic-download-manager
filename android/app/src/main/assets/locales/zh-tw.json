@@ -181,6 +181,12 @@
     "Support the Project": "支持本專案",
     "VPN only": "僅限 VPN",
     "Download only through a VPN. If the VPN disconnects, downloads stop instead of using another connection.": "僅透過 VPN 下載。如果 VPN 中斷，下載會停止，而不會改用其他連線。",
-    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "正在等待 VPN。若要不使用 VPN 下載，請在設定中關閉「僅限 VPN」。"
+    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "正在等待 VPN。若要不使用 VPN 下載，請在設定中關閉「僅限 VPN」。",
+    "Scan QR code": "掃描 QR 碼",
+    "Point the camera at a QR code from Nexonic on your computer, or any download link.": "將相機對準電腦上 Nexonic 顯示的 QR 碼或任何下載連結。",
+    "This QR code has no download link.": "此 QR 碼中沒有下載連結。",
+    "Torrent blocklist: an https:// address (empty = none)": "種子封鎖清單：https:// 位址（留空 = 無）",
+    "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.": "種子絕不會連線到此清單中的位址。支援 P2P、DAT 和 CIDR 清單，也支援 .gz。位址每天重新下載一次。",
+    "The blocklist address must start with https://": "封鎖清單位址必須以 https:// 開頭"
   }
 }

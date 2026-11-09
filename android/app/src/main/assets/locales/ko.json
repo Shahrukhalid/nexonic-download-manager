@@ -181,6 +181,12 @@
     "Support the Project": "프로젝트 후원",
     "VPN only": "VPN 전용",
     "Download only through a VPN. If the VPN disconnects, downloads stop instead of using another connection.": "VPN을 통해서만 다운로드합니다. VPN 연결이 끊기면 다른 연결을 사용하지 않고 다운로드를 멈춥니다.",
-    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "VPN을 기다리는 중입니다. VPN 없이 다운로드하려면 설정에서 \"VPN 전용\"을 끄세요."
+    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "VPN을 기다리는 중입니다. VPN 없이 다운로드하려면 설정에서 \"VPN 전용\"을 끄세요.",
+    "Scan QR code": "QR 코드 스캔",
+    "Point the camera at a QR code from Nexonic on your computer, or any download link.": "컴퓨터의 Nexonic QR 코드나 다운로드 링크에 카메라를 맞추세요.",
+    "This QR code has no download link.": "이 QR 코드에는 다운로드 링크가 없습니다.",
+    "Torrent blocklist: an https:// address (empty = none)": "토렌트 차단 목록: https:// 주소(비어 있음 = 없음)",
+    "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.": "토렌트는 이 목록의 주소에 절대 연결하지 않습니다. P2P, DAT, CIDR 목록(.gz 포함)을 사용할 수 있습니다. 주소는 하루에 한 번 다시 받습니다.",
+    "The blocklist address must start with https://": "차단 목록 주소는 https://로 시작해야 합니다"
   }
 }

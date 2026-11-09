@@ -24,6 +24,9 @@ class TorrentSession(stateDir: File, dht: Boolean = true) : AutoCloseable {
         val config = JSONObject().put("state_dir", stateDir.absolutePath).put("dht", dht)
         // VPN only: every peer, tracker and DHT connection uses the VPN's address.
         com.nexonic.downloadmanager.data.Vpn.sourceAddress()?.let { config.put("bind", it) }
+        // Torrent blocklist from Settings: peers and trackers in these ranges are never contacted.
+        val blocked = com.nexonic.downloadmanager.data.Downloads.torrentBlocklist()
+        if (blocked.isNotEmpty()) config.put("blocklist", org.json.JSONArray().apply { blocked.forEach { put(org.json.JSONArray().put(it.first).put(it.second)) } })
         handle = NativeTorrent.create(config.toString().toByteArray())
         if (handle == 0L) {
             val why = NativeTorrent.call(0, "{}".toByteArray())?.let { runCatching { JSONObject(String(it)).optString("error") }.getOrNull() }

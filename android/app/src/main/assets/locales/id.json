@@ -181,6 +181,12 @@
     "Support the Project": "Dukung Proyek",
     "VPN only": "Hanya VPN",
     "Download only through a VPN. If the VPN disconnects, downloads stop instead of using another connection.": "Unduh hanya melalui VPN. Jika VPN terputus, unduhan berhenti alih-alih memakai koneksi lain.",
-    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "Menunggu VPN. Matikan \"Hanya VPN\" di Setelan untuk mengunduh tanpa VPN."
+    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "Menunggu VPN. Matikan \"Hanya VPN\" di Setelan untuk mengunduh tanpa VPN.",
+    "Scan QR code": "Pindai kode QR",
+    "Point the camera at a QR code from Nexonic on your computer, or any download link.": "Arahkan kamera ke kode QR dari Nexonic di komputer Anda, atau ke tautan unduhan apa pun.",
+    "This QR code has no download link.": "Kode QR ini tidak berisi tautan unduhan.",
+    "Torrent blocklist: an https:// address (empty = none)": "Daftar blokir torrent: alamat https:// (kosong = tidak ada)",
+    "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.": "Torrent tidak pernah terhubung ke alamat dalam daftar ini. Daftar P2P, DAT, dan CIDR bisa dipakai, juga dalam .gz. Alamat diunduh ulang sekali sehari.",
+    "The blocklist address must start with https://": "Alamat daftar blokir harus diawali https://"
   }
 }

@@ -181,6 +181,12 @@
     "Support the Project": "منصوبے کی حمایت کریں",
     "VPN only": "صرف VPN",
     "Download only through a VPN. If the VPN disconnects, downloads stop instead of using another connection.": "صرف VPN کے ذریعے ڈاؤن لوڈ کریں۔ اگر VPN کا رابطہ ٹوٹ جائے تو ڈاؤن لوڈز کسی اور کنکشن کے بجائے رک جاتے ہیں۔",
-    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "VPN کا انتظار ہے۔ VPN کے بغیر ڈاؤن لوڈ کرنے کے لیے ترتیبات میں \"صرف VPN\" بند کریں۔"
+    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "VPN کا انتظار ہے۔ VPN کے بغیر ڈاؤن لوڈ کرنے کے لیے ترتیبات میں \"صرف VPN\" بند کریں۔",
+    "Scan QR code": "QR کوڈ اسکین کریں",
+    "Point the camera at a QR code from Nexonic on your computer, or any download link.": "کیمرا اپنے کمپیوٹر پر Nexonic کے QR کوڈ یا کسی بھی ڈاؤن لوڈ لنک کی طرف کریں۔",
+    "This QR code has no download link.": "اس QR کوڈ میں کوئی ڈاؤن لوڈ لنک نہیں ہے۔",
+    "Torrent blocklist: an https:// address (empty = none)": "ٹورنٹ بلاک لسٹ: ایک https:// پتہ (خالی = کوئی نہیں)",
+    "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.": "ٹورنٹس اس فہرست کے پتوں سے کبھی نہیں جڑتے۔ P2P، DAT اور CIDR فہرستیں کام کرتی ہیں، .gz میں بھی۔ پتہ دن میں ایک بار دوبارہ ڈاؤن لوڈ ہوتا ہے۔",
+    "The blocklist address must start with https://": "بلاک لسٹ کا پتہ https:// سے شروع ہونا چاہیے"
   }
 }

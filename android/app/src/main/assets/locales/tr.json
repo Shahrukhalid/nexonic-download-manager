@@ -181,6 +181,12 @@
     "Support the Project": "Projeyi Destekle",
     "VPN only": "Yalnızca VPN",
     "Download only through a VPN. If the VPN disconnects, downloads stop instead of using another connection.": "Yalnızca VPN üzerinden indir. VPN bağlantısı kesilirse indirmeler başka bir bağlantı kullanmak yerine durur.",
-    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "VPN bekleniyor. VPN olmadan indirmek için Ayarlar'da \"Yalnızca VPN\"i kapatın."
+    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "VPN bekleniyor. VPN olmadan indirmek için Ayarlar'da \"Yalnızca VPN\"i kapatın.",
+    "Scan QR code": "QR kodu tara",
+    "Point the camera at a QR code from Nexonic on your computer, or any download link.": "Kamerayı bilgisayarınızdaki Nexonic QR koduna veya herhangi bir indirme bağlantısına doğrultun.",
+    "This QR code has no download link.": "Bu QR kodunda indirme bağlantısı yok.",
+    "Torrent blocklist: an https:// address (empty = none)": "Torrent engel listesi: bir https:// adresi (boş = yok)",
+    "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.": "Torrentler bu listedeki adreslere asla bağlanmaz. P2P, DAT ve CIDR listeleri, .gz olarak da, çalışır. Bir adres günde bir kez yeniden indirilir.",
+    "The blocklist address must start with https://": "Engel listesinin adresi https:// ile başlamalıdır"
   }
 }

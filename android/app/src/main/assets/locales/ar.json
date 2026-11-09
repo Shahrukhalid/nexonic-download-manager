@@ -181,6 +181,12 @@
     "Support the Project": "ادعم المشروع",
     "VPN only": "عبر VPN فقط",
     "Download only through a VPN. If the VPN disconnects, downloads stop instead of using another connection.": "التنزيل عبر VPN فقط. إذا انقطع اتصال VPN، تتوقف التنزيلات بدلًا من استخدام اتصال آخر.",
-    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "في انتظار VPN. أوقف «عبر VPN فقط» في الإعدادات للتنزيل بدونه."
+    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "في انتظار VPN. أوقف «عبر VPN فقط» في الإعدادات للتنزيل بدونه.",
+    "Scan QR code": "مسح رمز QR",
+    "Point the camera at a QR code from Nexonic on your computer, or any download link.": "وجّه الكاميرا إلى رمز QR من Nexonic على حاسوبك، أو إلى أي رابط تنزيل.",
+    "This QR code has no download link.": "لا يحتوي رمز QR هذا على رابط تنزيل.",
+    "Torrent blocklist: an https:// address (empty = none)": "قائمة حظر التورنت: عنوان https:// (فارغ = لا شيء)",
+    "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.": "لا يتصل التورنت أبدًا بالعناوين الموجودة في هذه القائمة. تعمل قوائم P2P وDAT وCIDR، وأيضًا بصيغة .gz. يُعاد تنزيل العنوان مرة كل يوم.",
+    "The blocklist address must start with https://": "يجب أن يبدأ عنوان قائمة الحظر بـ https://"
   }
 }
