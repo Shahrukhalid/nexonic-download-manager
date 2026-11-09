@@ -91,13 +91,6 @@ public final class Downloader: NSObject, URLSessionDownloadDelegate {
         Store.shared.dropResumeData(id)
     }
 
-    /// Downloads still running in this session (after a restart the tasks are still there).
-    public func runningIDs(_ completion: @escaping (Set<UUID>) -> Void) {
-        session.getAllTasks { tasks in
-            completion(Set(tasks.filter { $0.state == .running }.compactMap { $0.taskDescription.flatMap(UUID.init(uuidString:)) }))
-        }
-    }
-
     // MARK: Delegate
 
     private func jobID(_ task: URLSessionTask) -> UUID? { task.taskDescription.flatMap(UUID.init(uuidString:)) }
