@@ -8,5 +8,8 @@
     <Product>Nexonic Download Manager</Product>
     <Copyright>© 2026 Shahrukh Khalid. MIT OR Apache-2.0.</Copyright>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <!-- The app has its own translations; only English copies of the framework's own messages are shipped, which
+         leaves out about a dozen folders of framework resource files from every package. -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
 </Project>
