@@ -40,7 +40,8 @@ Download faster, pause and resume anytime, and save videos from YouTube, Instagr
 | Firefox add-on | [NexonicAddon-Firefox.xpi](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicAddon-Firefox.xpi) |
 
 The file and torrent engines are included. On Mac, Windows and Linux the video engine (for YouTube and 1,000+ sites)
-is downloaded from its official release the first time you save a video, which keeps the download small. Torrents work on Mac, Windows, Linux, Android, iPhone and
+is downloaded from its official release the first time you save a video, which keeps the download small. On Windows and Linux (x64) the
+gallery engine (gallery-dl, for whole galleries on sites like Reddit, Pixiv and DeviantArt) is fetched the same way the first time it is used. Torrents work on Mac, Windows, Linux, Android, iPhone and
 iPad with the same built-in engine and are off until you turn them on; see [the torrent guide](docs/TORRENTS.md).
 
 Windows with [Scoop](https://scoop.sh): `scoop bucket add nexonic https://github.com/Shahrukhalid/nexonic-download-manager` then

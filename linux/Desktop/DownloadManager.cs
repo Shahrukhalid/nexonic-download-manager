@@ -21,6 +21,7 @@ public sealed class AddOptions
     public string? InfoJson { get; set; }  // a single video link's details, already looked up in the Add window
     public string? Package { get; set; }   // Link Grabber package name
     public bool Unpack { get; set; }       // unpack the package's archives when all of it is done
+    public bool Gallery { get; set; }      // the whole gallery with the gallery engine
 }
 
 /// <summary>
@@ -126,7 +127,7 @@ public sealed partial class DownloadManager
         if (!job.IsValid) return null;
         job = job with { Url = Links.Unwrap(job.Url) };  // e.g. a Google Images result: the picture itself, not Google's page
         o ??= new AddOptions();
-        var engine = o.Engine == DownloadEngine.Auto
+        var engine = o.Gallery ? DownloadEngine.Gallery : o.Engine == DownloadEngine.Auto
             ? job.Site == true ? DownloadEngine.Video : job.Stream == true ? DownloadEngine.Hls : SmartDownload.Detect(job.Url)
             : o.Engine;
         // Remote .torrent URLs remain ordinary files until explicitly opened in the torrent preview.
@@ -135,6 +136,7 @@ public sealed partial class DownloadManager
         var name = job.FileName is { Length: > 0 } n ? FileNames.Sanitize(n) : FileNames.FromUrl(job.Url);
         if (stream) name = Path.GetFileNameWithoutExtension(name) + ".mp4";
         if (site && string.IsNullOrEmpty(job.FileName)) name = $"Video from {new Uri(job.Url).Host}";
+        if (o.Gallery && string.IsNullOrEmpty(job.FileName)) name = $"Gallery from {new Uri(job.Url).Host}";
         // A link the user asked to refresh: keep what is downloaded and continue from the new address.
         if (Rows.FirstOrDefault(r => r.Record.AwaitingRefresh == true && r.Record.FileName == name) is { } waiting)
         {
@@ -158,7 +160,7 @@ public sealed partial class DownloadManager
         var start = job.Start ?? (profile?.StartAtOnce == false ? false : o.Start);
         var rec = new DownloadRecord
         {
-            Torrent = SmartDownload.Detect(job.Url) == DownloadEngine.Torrent ? new TorrentMetadata { MetadataPending = true } : null,
+            Torrent = !o.Gallery && SmartDownload.Detect(job.Url) == DownloadEngine.Torrent ? new TorrentMetadata { MetadataPending = true } : null,
             Url = job.Url, Referrer = job.Referrer, Cookies = job.Cookies, UserAgent = profile?.UserAgent is { Length: > 0 } ua ? ua : job.UserAgent,
             Folder = chosenFolder ?? Settings.Folder,
             FileName = name,
@@ -176,6 +178,7 @@ public sealed partial class DownloadManager
             MaxHeight = site && !(job.AudioOnly ?? o.AudioOnly) ? job.MaxHeight : null,
             Package = o.Package is { Length: > 0 } pk ? pk : null,
             UnpackWhenDone = o.Unpack ? true : null,
+            Gallery = o.Gallery ? true : null,
         };
         Rows.Insert(0, new Row(rec, QueueName));
         Schedule();
@@ -775,7 +778,7 @@ public sealed class Row : System.ComponentModel.INotifyPropertyChanged
     {
         DownloadStatus.Queued => L.T("Queued"),
         DownloadStatus.Probing => L.T("Connecting…"),
-        DownloadStatus.Downloading => $"{Percent:0}%",
+        DownloadStatus.Downloading => Record.Gallery == true ? $"{Record.StreamDone ?? 0} {L.T("files")}" : $"{Percent:0}%",
         DownloadStatus.Seeding => "Seeding",
         DownloadStatus.Paused => L.T(Record.AwaitingRefresh == true ? "Waiting for link" : "Stopped"),
         DownloadStatus.Finished => L.T(Record.ChecksumResult?.Contains("not") == true ? "Checksum failed" : "Complete"),
