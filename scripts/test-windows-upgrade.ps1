@@ -1,4 +1,4 @@
-# CI only: install the pinned public v0.8.1, then this candidate, using a fresh hosted runner profile.
+# CI only: install the pinned public v0.21.0 (the oldest release kept on GitHub), then this candidate, using a fresh hosted runner profile.
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 if ($env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_ENVIRONMENT -ne 'github-hosted' -or -not $env:RUNNER_TEMP) { throw 'Run this upgrade check only on a GitHub Actions Windows runner.' }
@@ -12,11 +12,11 @@ if (Test-Path $support) {
 try {
 $version = (Get-Content VERSION).Trim()
 $candidate = (Resolve-Path "build/NexonicDownloadManager-Setup-$version.exe").Path
-$old = Join-Path $env:RUNNER_TEMP 'Nexonic-0.8.1-Setup.exe'
-Write-Host 'Downloading checksum-pinned v0.8.1 installer (bounded retries)'
-& curl.exe --fail --location --retry 3 --retry-delay 3 --connect-timeout 15 --max-time 180 --output $old 'https://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v0.8.1/NexonicDownloadManager-Windows-Setup.exe'
-if ($LASTEXITCODE -ne 0) { throw 'Cannot download the pinned v0.8.1 installer within the retry limit.' }
-if ((Get-FileHash $old -Algorithm SHA256).Hash.ToLower() -ne '3cf58fecc3d2674ff2eb0c2f2202c86fa090af586987cdc073dbe2ed4ea38f19') { throw 'v0.8.1 installer checksum mismatch.' }
+$old = Join-Path $env:RUNNER_TEMP 'Nexonic-0.21.0-Setup.exe'
+Write-Host 'Downloading checksum-pinned v0.21.0 installer (bounded retries)'
+& curl.exe --fail --location --retry 3 --retry-delay 3 --connect-timeout 15 --max-time 180 --output $old 'https://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v0.21.0/NexonicDownloadManager-Windows-Setup.exe'
+if ($LASTEXITCODE -ne 0) { throw 'Cannot download the pinned v0.21.0 installer within the retry limit.' }
+if ((Get-FileHash $old -Algorithm SHA256).Hash.ToLower() -ne '7f3862109bf753cb6b06f5ed47b4adfe9803aae035e5ed2da48ff06e8a27341a') { throw 'v0.21.0 installer checksum mismatch.' }
 New-Item -ItemType Directory -Force $support | Out-Null
 $folder = Join-Path $env:RUNNER_TEMP 'upgrade-downloads'
 New-Item -ItemType Directory -Force $folder | Out-Null
@@ -84,7 +84,7 @@ function Install-And-Check([string]$Setup, [string]$Expected) {
     $watchdog | Stop-Process -Force -ErrorAction SilentlyContinue
     Write-Host "PASS $Expected installed and starts; paused history, queue, settings, part-file hash and installer identity preserved."
 }
-Install-And-Check $old '0.8.1'
+Install-And-Check $old '0.21.0'
 Install-And-Check $candidate $version
 
 } finally {

@@ -138,7 +138,7 @@ jobs:
           if ($m -notmatch " mp4 ") { throw "ffmpeg has no mp4 muxer: $m" }
           & build\win\video-engine\nexonic-video-engine.exe --version
           if ($LASTEXITCODE -ne 0) { throw "the video engine does not run" }
-      - name: Upgrade from v0.8.1 preserves data
+      - name: Upgrade from v0.21.0 preserves data
         if: startsWith(github.head_ref, 'release/')
         shell: pwsh
         run: ./scripts/test-windows-upgrade.ps1
