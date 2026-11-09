@@ -99,7 +99,7 @@ Your downloads list and settings are in `~/.local/share/Nexonic Download Manager
 
 ## Build
 
-Needs the .NET 8 SDK, python3, `dpkg-deb`, `rpmbuild` and `desktop-file-validate`:
+Needs the .NET 10 SDK, python3, `dpkg-deb`, `rpmbuild` and `desktop-file-validate`:
 
 ```bash
 bash scripts/build-ffmpeg.sh linux .ffmpeg-cache/linux-x64

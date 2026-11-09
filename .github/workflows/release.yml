@@ -174,7 +174,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: "10.0.x"
       - name: Build and test tools
         # A stuck package mirror must not hold a release for an hour: each try is limited and retried.
         timeout-minutes: 25
@@ -239,7 +239,7 @@ jobs:
           path: .tools-cache/windows
       - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: "10.0.x"
       - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: |

@@ -2,7 +2,7 @@
 # Builds the Linux app for this machine's processor and packs it as an AppImage, a .deb and a .rpm.
 #   linux/packaging/build.sh x64|arm64 FFMPEG_DIR TOOLS_DIR
 # FFMPEG_DIR holds ffmpeg and ffprobe (scripts/build-ffmpeg.sh linux), TOOLS_DIR yt-dlp and qjs (scripts/fetch-video-tools.sh).
-# Needs: .NET 8 SDK, python3, dpkg-deb, rpmbuild. Output: build/linux-<arch>/
+# Needs: .NET 10 SDK, python3, dpkg-deb, rpmbuild. Output: build/linux-<arch>/
 set -euo pipefail
 ARCH="$1"
 FF="$(cd "$2" && pwd)"
