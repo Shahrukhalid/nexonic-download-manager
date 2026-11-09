@@ -221,7 +221,7 @@ struct AddSheet: View {
         .frame(width: 560)
         .onAppear {
             text = request.links
-            folder = manager.settings.folder
+            folder = manager.settings.startFolder
             queueID = request.queueID
             prefetch.want(oneVideo, proxy: manager.settings.proxy)
         }
@@ -316,7 +316,7 @@ struct BatchSheet: View {
         .padding(20)
         .frame(width: 600)
         .onAppear {
-            folder = manager.settings.folder
+            folder = manager.settings.startFolder
             queue = queueID
         }
     }
@@ -487,7 +487,7 @@ struct GrabberSheet: View {
         .padding(20)
         .frame(width: 640)
         .onAppear {
-            folder = manager.settings.folder
+            folder = manager.settings.startFolder
             queue = queueID
             start = clipboardLink()
         }

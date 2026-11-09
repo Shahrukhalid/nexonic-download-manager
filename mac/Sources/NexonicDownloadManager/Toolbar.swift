@@ -5,7 +5,7 @@ import SwiftUI
 /// Everything the toolbar and the menu bar can do in the main window. Menus post an action; the window performs it,
 /// so a menu command and its toolbar button always behave the same.
 enum MainAction: Equatable {
-    case addURL, addTorrent, batch, grabber, scheduler
+    case addURL, addTorrent, batch, grabber, linkGrabber, diagnostics, scheduler
     case resume, stop, stopAll, resumeAll, delete, deleteCompleted, selectAll
     case startQueue, stopQueue, properties, showInFinder, open
 }
@@ -134,6 +134,7 @@ struct MainMenus: Commands {
             Button("Add Torrent…") { MainActions.shared.send(.addTorrent) }.keyboardShortcut("t", modifiers: [.command, .shift])
             Button("Add Batch Download…") { MainActions.shared.send(.batch) }.keyboardShortcut("b", modifiers: [.command, .shift])
             Button("Site Grabber…") { MainActions.shared.send(.grabber) }.keyboardShortcut("g", modifiers: [.command, .shift])
+            Button("Link Grabber…") { MainActions.shared.send(.linkGrabber) }.keyboardShortcut("k", modifiers: [.command, .shift])
             Button("Add Playlist or Channel…") { MediaWindows.showPlaylist() }.keyboardShortcut("l", modifiers: [.command, .shift])
         }
         CommandMenu("Downloads") {
@@ -146,11 +147,12 @@ struct MainMenus: Commands {
             Button("Open") { MainActions.shared.send(.open) }.keyboardShortcut("o")
             Button("Show in Finder") { MainActions.shared.send(.showInFinder) }.keyboardShortcut("r", modifiers: [.command, .option])
             Button("Properties…") { MainActions.shared.send(.properties) }.keyboardShortcut("i")
+            Button("Check Server…") { MainActions.shared.send(.diagnostics) }
             Divider()
             Button("Delete…") { MainActions.shared.send(.delete) }
             Button("Delete Completed…") { MainActions.shared.send(.deleteCompleted) }
             Divider()
-            Toggle("Unzip Finished .zip Files", isOn: $extractZips)
+            Toggle("Unpack Finished Archives (.zip, .7z, .rar, .tar)", isOn: $extractZips)
             Toggle("Save Subtitles With Videos", isOn: $videoSubtitles)
             Button("Media Library…") { MediaWindows.showLibrary() }.keyboardShortcut("l")
             Divider()

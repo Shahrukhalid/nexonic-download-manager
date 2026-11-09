@@ -68,10 +68,10 @@ public struct Inbox {
 }
 
 public enum AppPaths {
-    public static var support: URL {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+    /// The app's own folder; in portable mode (see `Portable`) a "Nexonic Data" folder next to the app.
+    public static let support: URL = Portable.root()
+        ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("Nexonic Download Manager", isDirectory: true)
-    }
     public static var inbox: URL { support.appendingPathComponent("Inbox", isDirectory: true) }
     public static var parts: URL { support.appendingPathComponent("Parts", isDirectory: true) }
     public static var downloads: URL { support.appendingPathComponent("downloads.json") }

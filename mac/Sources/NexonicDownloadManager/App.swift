@@ -118,6 +118,10 @@ struct MenuBarView: View {
         }
         Button("Stop All") { manager.pauseAll() }
         Button("Resume All") { manager.resumeAll() }
+        Button("Start All Queues") { for q in manager.queues where !q.isMain { manager.startQueue(q.id) } }
+        Button("Stop All Queues") { for q in manager.queues where !q.isMain { manager.stopQueue(q.id) } }
+        Button("Open Downloads Folder") { NSWorkspace.shared.open(manager.settings.folder) }
+        Toggle("Watch Copied Links", isOn: $manager.settings.monitorClipboard)
         Divider()
         Button("Quit") { NSApp.terminate(nil) }
     }

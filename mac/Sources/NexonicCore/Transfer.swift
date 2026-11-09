@@ -552,6 +552,13 @@ public enum Network {
                 d[kCFStreamPropertySOCKSPassword as String] = proxy.password
             }
             config.connectionProxyDictionary = d
+        case .pac where !host.isEmpty:
+            // A script from a web address or a file decides the proxy for each address (macOS evaluates it).
+            let script = host.hasPrefix("/") ? URL(fileURLWithPath: host).absoluteString : host
+            config.connectionProxyDictionary = [
+                kCFNetworkProxiesProxyAutoConfigEnable as String: 1,
+                kCFNetworkProxiesProxyAutoConfigURLString as String: script,
+            ]
         default:
             break
         }

@@ -21,6 +21,11 @@ struct SettingsView: View {
                     ForEach(AppLanguage.all, id: \.code) { Text(verbatim: $0.name).tag($0.code) }
                 }
                 .onChange(of: language) { v in AppLanguage.use(v) }
+                Picker("Appearance", selection: $manager.settings.appearance) {
+                    Text("Same as macOS").tag("system")
+                    Text("Light").tag("light")
+                    Text("Dark").tag("dark")
+                }
                 Stepper("Connections per download: \(manager.settings.connections)", value: $manager.settings.connections, in: 1...32)
                 Stepper("Downloads at the same time: \(manager.settings.maxActive)", value: $manager.settings.maxActive, in: 1...10)
                 LabeledContent("Save to") {
@@ -30,6 +35,7 @@ struct SettingsView: View {
                     }
                 }
                 Toggle("Put each type in its own folder (Video, Music, Documents, Programs, Compressed, Images)", isOn: $manager.settings.sortIntoCategoryFolders)
+                Toggle("Start the Add window in the folder I used last time", isOn: $manager.settings.rememberLastFolder)
                 Toggle("Notifications", isOn: $manager.settings.notifications)
                 HStack {
                     Toggle("Check for updates when the app opens", isOn: $manager.settings.checkForUpdates)
@@ -49,6 +55,13 @@ struct SettingsView: View {
 
             Form {
                 TextField("Speed limit for all downloads in KB/s (0 = none)", value: $manager.settings.speedLimitKBps, format: .number)
+                Section("Download limit") {
+                    TextField("At most this many MB (0 = no limit)", value: $manager.settings.dataCapMB, format: .number.grouping(.never))
+                    Stepper("… every \(manager.settings.dataCapHours) hours", value: $manager.settings.dataCapHours, in: 1...744)
+                    Text("When the amount is reached, downloads stop and continue by themselves when the next period starts."
+                         + (manager.dataCapStatus.map { " Now: \($0)." } ?? ""))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
                 Picker("Proxy", selection: $manager.settings.proxy.mode) {
                     ForEach(ProxyMode.allCases, id: \.self) { Text($0.title).tag($0) }
                 }
@@ -57,6 +70,9 @@ struct SettingsView: View {
                     TextField("Port", value: $manager.settings.proxy.port, format: .number.grouping(.never))
                     TextField("User name (optional)", text: $manager.settings.proxy.username)
                     SecureField("Password", text: $manager.settings.proxy.password)
+                }
+                if manager.settings.proxy.mode == .pac {
+                    TextField("Script address or file", text: $manager.settings.proxy.host, prompt: Text("http://wpad/proxy.pac"))
                 }
                 Text("Proxy changes apply to downloads started afterwards. Password-protected downloads: add the user name and password in the Add window or under Properties.")
                     .font(.caption).foregroundStyle(.secondary)

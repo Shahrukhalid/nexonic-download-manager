@@ -41,7 +41,7 @@ extension FileCategory {
 }
 
 enum Sheet: Identifiable {
-    case add(AddRequest), batch, scheduler(String), grabber, properties(UUID), refresh(UUID), torrent(String), torrentSettings(UUID)
+    case add(AddRequest), batch, scheduler(String), grabber, linkGrabber, diagnostics(String), properties(UUID), refresh(UUID), torrent(String), torrentSettings(UUID)
 
     var id: String {
         switch self {
@@ -49,6 +49,8 @@ enum Sheet: Identifiable {
         case .batch: return "batch"
         case .scheduler: return "scheduler"
         case .grabber: return "grabber"
+        case .linkGrabber: return "link-grabber"
+        case .diagnostics: return "diagnostics"
         case .properties(let id): return "properties-\(id)"
         case .refresh(let id): return "refresh-\(id)"
         case .torrent: return "torrent"
@@ -194,7 +196,22 @@ struct ContentView: View {
         }
     }
 
-    private var table: some View {
+    @ViewBuilder private var table: some View {
+        if #available(macOS 14.0, *) {
+            DownloadTable(rows: shown, selection: $selection, menu: { rowMenu($0) }, primary: primaryAction)
+        } else {
+            legacyTable
+        }
+    }
+
+    /// Like IDM: a finished download opens its file; any other shows its progress window.
+    private func primaryAction(_ ids: Set<UUID>) {
+        guard let id = ids.first else { return }
+        if manager.items.first(where: { $0.id == id })?.status == .finished { manager.open(id) }
+        else { ProgressWindow.show(id, manager: manager) }
+    }
+
+    private var legacyTable: some View {
         Table(shown, selection: $selection) {
             TableColumn("Name") { r in
                 HStack(spacing: 6) {
@@ -252,6 +269,8 @@ struct ContentView: View {
         case .addTorrent: sheet = .torrent(TorrentSource.isTorrent(clipboardLink()) ? clipboardLink() : "")
         case .batch: sheet = .batch
         case .grabber: sheet = .grabber
+        case .linkGrabber: sheet = .linkGrabber
+        case .diagnostics: sheet = .diagnostics(selection.count == 1 ? manager.items.first { $0.id == selection.first }?.url.absoluteString ?? "" : "")
         case .scheduler: sheet = .scheduler(currentQueue)
         case .resume: selection.forEach(manager.resume)
         case .stop: selection.forEach(manager.pause)
@@ -275,6 +294,8 @@ struct ContentView: View {
         case .batch: BatchSheet(queueID: currentQueue)
         case .scheduler(let q): SchedulerSheet(selected: q)
         case .grabber: GrabberSheet(queueID: currentQueue)
+        case .linkGrabber: LinkGrabberSheet(queueID: currentQueue)
+        case .diagnostics(let link): DiagnosticsSheet(link: link)
         case .properties(let id): PropertiesSheet(id: id)
         case .refresh(let id): RefreshSheet(id: id)
         case .torrent(let source): TorrentSheet(queueID: currentQueue, initialSource: source)
@@ -292,6 +313,7 @@ struct ContentView: View {
             Button("Open") { manager.open(id) }
             Button("Show in Finder") { manager.reveal(id) }
             Button("Show Progress") { ProgressWindow.show(id, manager: manager) }
+            Button("Check Server…") { sheet = .diagnostics(manager.items.first { $0.id == id }?.url.absoluteString ?? "") }
             Divider()
         }
         Button("Resume") { ids.forEach(manager.resume) }
@@ -520,5 +542,59 @@ struct SegmentBar: View {
                          with: .color(s.isComplete ? .green : brand))
             }
         }
+    }
+}
+
+/// The download list on macOS 14 and later: right-click a column title to show or hide columns (Finished, Folder and
+/// Can Resume start hidden); the choice is remembered.
+@available(macOS 14.0, *)
+struct DownloadTable<MenuContent: View>: View {
+    @EnvironmentObject var manager: DownloadManager
+    let rows: [DownloadRecord]
+    @Binding var selection: Set<UUID>
+    let menu: (Set<UUID>) -> MenuContent
+    let primary: (Set<UUID>) -> Void
+    @SceneStorage("downloadColumns") private var columns = TableColumnCustomization<DownloadRecord>()
+
+    var body: some View {
+        Table(rows, selection: $selection, columnCustomization: $columns) {
+            Group {
+                TableColumn("Name") { r in
+                    HStack(spacing: 6) {
+                        Image(nsImage: FileIcon.image(for: r.fileName)).resizable().frame(width: 16, height: 16)
+                        Text(r.fileName).lineLimit(1).truncationMode(.middle)
+                    }
+                }.customizationID("name")
+                TableColumn("Size") { r in Text(r.size.map(bytes) ?? "–") }.width(80).customizationID("size")
+                TableColumn("Progress") { r in
+                    ProgressView(value: r.status == .finished ? 1 : r.progress).progressViewStyle(.linear).tint(r.status == .finished ? .green : brand)
+                }.width(110).customizationID("progress")
+                TableColumn("Speed") { r in Text(r.status.isActive ? speed(manager.speeds[r.id] ?? 0) : "") }.width(90).customizationID("speed")
+                TableColumn("Time Left") { r in Text(r.status.isActive ? manager.eta(r) : "") }.width(70).customizationID("left")
+                TableColumn("Seeds / Peers") { r in
+                    Text(r.torrent?.metadata.map { r.status.isActive ? "\($0.seedsText) / \($0.peersText)" : "" } ?? "")
+                        .foregroundStyle(.secondary).monospacedDigit()
+                }.width(110).customizationID("peers")
+            }
+            Group {
+                TableColumn("Status") { r in
+                    HStack(spacing: 5) {
+                        Circle().fill(statusColor(r)).frame(width: 7, height: 7)
+                        Text(statusText(r)).foregroundStyle(r.status == .failed && !r.isCanceled ? .red : .primary)
+                    }
+                }.width(120).customizationID("status")
+                TableColumn("Queue") { r in Text(manager.queueName(r.queue)).foregroundStyle(.secondary) }.width(90).customizationID("queue")
+                TableColumn("Added") { r in Text(r.added, style: .date).foregroundStyle(.secondary) }.width(90).customizationID("added")
+                TableColumn("Finished") { r in
+                    if let f = r.finished { Text(f, style: .date).foregroundStyle(.secondary) } else { Text("") }
+                }.width(90).customizationID("finished").defaultVisibility(.hidden)
+                TableColumn("Folder") { r in
+                    Text(ListColumns.folder(r)).lineLimit(1).truncationMode(.middle).foregroundStyle(.secondary)
+                }.width(160).customizationID("folder").defaultVisibility(.hidden)
+                TableColumn("Can Resume") { r in Text(ListColumns.resume(r)).foregroundStyle(.secondary) }
+                    .width(80).customizationID("resume").defaultVisibility(.hidden)
+            }
+        }
+        .contextMenu(forSelectionType: UUID.self) { ids in menu(ids) } primaryAction: { ids in primary(ids) }
     }
 }
