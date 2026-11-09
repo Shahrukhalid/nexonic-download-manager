@@ -74,6 +74,7 @@
         <MenuItem Header="Add _Torrent…" InputGestureText="Ctrl+Shift+T" Click="OnTorrents" />
         <MenuItem Header="Add _Batch Download…" InputGestureText="Ctrl+Shift+B" Click="OnBatch" />
         <MenuItem Header="Site _Grabber…" InputGestureText="Ctrl+Shift+G" Click="OnGrabber" />
+        <MenuItem Header="Download _Images from Page…" InputGestureText="Ctrl+Shift+I" Click="OnGallery" />
         <MenuItem Header="Add _Playlist or Channel…" InputGestureText="Ctrl+Shift+L" Click="OnPlaylist" />
         <MenuItem Header="_RSS Feeds…" Click="OnFeeds" />
         <Separator />
@@ -112,6 +113,7 @@
       </MenuItem>
       <MenuItem Header="_Help">
         <MenuItem Header="_Help" InputGestureText="F1" Click="OnHelp" />
+        <MenuItem Header="Network _Diagnostics…" Click="OnDiagnostics" />
         <MenuItem Header="Support the Project" Click="OnSupport" />
         <MenuItem Header="_About Nexonic Download Manager" Click="OnAbout" />
       </MenuItem>
@@ -169,7 +171,7 @@
         <Border Margin="12,6,4,6" Width="220" Height="30" CornerRadius="6" BorderBrush="#D0D7DE" BorderThickness="1" Background="White" VerticalAlignment="Center">
           <Grid>
             <TextBlock Text="&#xE721;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="#8B949E" Margin="8,0,0,0" VerticalAlignment="Center" />
-            <TextBox x:Name="Search" BorderThickness="0" Background="Transparent" Margin="28,0,6,0" VerticalContentAlignment="Center" TextChanged="OnSearch" ToolTip="Search downloads (Ctrl+F)" />
+            <TextBox x:Name="Search" AutomationProperties.Name="Search downloads" BorderThickness="0" Background="Transparent" Margin="28,0,6,0" VerticalContentAlignment="Center" TextChanged="OnSearch" ToolTip="Search downloads (Ctrl+F)" />
             <TextBlock x:Name="SearchHint" Text="Search downloads" Foreground="#8B949E" Margin="31,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" />
           </Grid>
         </Border>
@@ -187,14 +189,14 @@
         <ColumnDefinition Width="5" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
-      <ListBox x:Name="Sidebar" Grid.Column="0" BorderThickness="0" Background="#EEF2F7" SelectionChanged="OnFilter" Padding="0,6" />
+      <ListBox x:Name="Sidebar" AutomationProperties.Name="Categories and queues" Grid.Column="0" BorderThickness="0" Background="#EEF2F7" SelectionChanged="OnFilter" Padding="0,6" />
       <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="#E3E8EF" />
       <Grid Grid.Column="2">
         <Grid.RowDefinitions>
           <RowDefinition Height="*" />
           <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <DataGrid x:Name="Grid" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Extended" HeadersVisibility="Column"
+        <DataGrid x:Name="Grid" AutomationProperties.Name="Downloads" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Extended" HeadersVisibility="Column"
                   MouseDoubleClick="OnRowDoubleClick" SelectionChanged="OnSelection" Background="White"
                   BorderThickness="0" RowHeight="30" CanUserReorderColumns="True" CanUserSortColumns="True"
                   HorizontalGridLinesBrush="#EEF1F4" GridLinesVisibility="Horizontal">
@@ -208,6 +210,7 @@
               <MenuItem Header="Resume" Click="OnResume" />
               <MenuItem Header="Stop" Click="OnPause" />
               <MenuItem Header="Refresh Link…" Click="OnRefreshLink" />
+              <MenuItem x:Name="RecheckItem" Header="Check Torrent Files Again" Click="OnRecheck" />
               <MenuItem Header="Properties…" Click="OnProperties" />
               <MenuItem Header="Copy Link" Click="OnCopyLink" />
               <MenuItem Header="Show QR Code…" Click="OnShowQr" />

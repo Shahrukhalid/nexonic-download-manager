@@ -39,6 +39,14 @@ public partial class MainWindow : Window
         Shortcut(Key.T, ModifierKeys.Control | ModifierKeys.Shift, OnTorrents);
         Shortcut(Key.B, ModifierKeys.Control | ModifierKeys.Shift, OnBatch);
         Shortcut(Key.G, ModifierKeys.Control | ModifierKeys.Shift, OnGrabber);
+        Shortcut(Key.I, ModifierKeys.Control | ModifierKeys.Shift, OnGallery);
+        // Screen readers announce each toolbar button by its name and tooltip, also when the names under the icons are hidden.
+        foreach (var b in Toolbar.Children.OfType<Button>())
+            if (b.Content is StackPanel p && p.Children.OfType<TextBlock>().LastOrDefault() is { } caption)
+            {
+                System.Windows.Automation.AutomationProperties.SetName(b, caption.Text);
+                if (b.ToolTip is string tip) System.Windows.Automation.AutomationProperties.SetHelpText(b, tip);
+            }
         Shortcut(Key.L, ModifierKeys.Control | ModifierKeys.Shift, OnPlaylist);
         Shortcut(Key.L, ModifierKeys.Control, OnLibrary);
         VideoSubtitles.Enabled = manager.Settings.VideoSubtitles;
@@ -371,6 +379,9 @@ public partial class MainWindow : Window
     }
 
     void OnShowProgress(object s, RoutedEventArgs e) { if (One is { } r) DownloadWindows.ShowProgress(manager, r); }
+    void OnGallery(object s, RoutedEventArgs e) => Dialogs.Gallery(this, manager);
+    void OnDiagnostics(object s, RoutedEventArgs e) => Dialogs.Diagnostics(this, manager, One?.Record.Url);
+    void OnRecheck(object s, RoutedEventArgs e) { if (One is { Record.Torrent: not null } r) manager.Recheck(r); }
     void OnShowQr(object s, RoutedEventArgs e) => Dialogs.ShowQr(this, Selected.Select(r => r.Record.Url).ToList());
     void OnCopyLink(object s, RoutedEventArgs e) { if (One is { } r) Clipboard.SetText(r.Record.Url); }
     void OnRefreshLink(object s, RoutedEventArgs e) { if (One is { } r) Dialogs.RefreshLink(this, manager, r); }
@@ -379,6 +390,7 @@ public partial class MainWindow : Window
     protected override void OnContextMenuOpening(ContextMenuEventArgs e)
     {
         MoveMenu.Items.Clear();
+        RecheckItem.IsEnabled = One?.Record.Torrent is { MetadataPending: false };
         foreach (var q in manager.Queues)
         {
             var item = new MenuItem { Header = q.Name };

@@ -204,8 +204,7 @@ public sealed class StreamTransfer : IDownloader
 
     void Finish(List<(string Name, HLS.Media Media, string File)> joined)
     {
-        var folder = Record.Folder;
-        if (sortIntoCategories) folder = Path.Combine(folder, FileCategory.Video.ToString());
+        var folder = FileCategories.TargetFolder(Record.Folder, "video.mp4", sortIntoCategories);
         Directory.CreateDirectory(folder);
         var baseName = Path.GetFileNameWithoutExtension(Record.FileName);
         var mp4 = FileNames.Unique(baseName + ".mp4", folder);

@@ -651,8 +651,7 @@ public sealed class SiteVideoTransfer : IDownloader
         Record.VideoStep = null;
         Notify(true);
         if (!File.Exists(SiteVideoTools.YtDlp)) { Fail("The video engine is missing. Reinstall the app"); return; }
-        var folder = Record.Folder;
-        if (sortIntoCategories) folder = Path.Combine(folder, (Record.AudioOnly == true ? FileCategory.Music : FileCategory.Video).ToString());
+        var folder = FileCategories.TargetFolder(Record.Folder, Record.AudioOnly == true ? "audio.m4a" : "video.mp4", sortIntoCategories);
         Directory.CreateDirectory(folder);
         Directory.CreateDirectory(Temp);
         var psi = new ProcessStartInfo(SiteVideoTools.YtDlp)

@@ -68,6 +68,7 @@ public sealed partial class DownloadManager
         limiter.SetLimit(Settings.SpeedLimitKBps * 1024);
         Network.Options = Settings.Network.Clamped();
         Debrid.Settings = Settings.Debrid;
+        FileCategories.Custom = CustomCategory.Clean(Settings.CustomCategories);
         // The app reads the inbox once its windows are ready (CollectInbox), so browser links get the download window.
         Schedule();
         Task.Run(SiteVideoTools.Prepare); // keeps the video engine current
@@ -88,6 +89,7 @@ public sealed partial class DownloadManager
         limiter.SetLimit(s.SpeedLimitKBps * 1024);
         Network.Options = s.Network.Clamped();
         Debrid.Settings = s.Debrid;
+        FileCategories.Custom = CustomCategory.Clean(s.CustomCategories);
         Write(AppPaths.Settings, s);
         Schedule();
     }
@@ -240,6 +242,18 @@ public sealed partial class DownloadManager
     /// <summary>Asks the trackers and DHT for more peers now.</summary>
     public void Reannounce(Row row) { if (transfers.TryGetValue(row.Record.Id, out var t) && t is TorrentTransfer running) running.Reannounce(); }
     public bool IsRunning(Row row) => transfers.ContainsKey(row.Record.Id);
+
+    /// <summary>Checks a torrent's downloaded pieces again (damaged or missing ones are downloaded again).</summary>
+    public void Recheck(Row row)
+    {
+        if (row.Record.Torrent == null) return;
+        if (transfers.TryGetValue(row.Record.Id, out var t) && t is TorrentTransfer running && running.Recheck()) return;
+        if (transfers.Remove(row.Record.Id, out var other)) other.Pause();
+        TorrentTransfer.ForgetProgress(row.Record);
+        row.Record.Status = DownloadStatus.Paused;
+        Resume(row);
+        Save();
+    }
 
     static string? NullIfEmpty(string s) => string.IsNullOrEmpty(s) ? null : s;
 
