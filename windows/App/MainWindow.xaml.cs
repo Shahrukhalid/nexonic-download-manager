@@ -24,6 +24,7 @@ public partial class MainWindow : Window
         Grid.ItemsSource = manager.Rows;
         BuildSidebar();
         manager.Queues.CollectionChanged += (_, _) => BuildSidebar();
+        EnableDragToQueues();
         InputBindings.Add(new KeyBinding(new Cmd(() => OnAdd(this, new RoutedEventArgs())), Key.N, ModifierKeys.Control));
         InputBindings.Add(new KeyBinding(new Cmd(() => OnRemove(this, new RoutedEventArgs())), Key.Delete, ModifierKeys.None));
         InputBindings.Add(new KeyBinding(new Cmd(() => Search.Focus()), Key.F, ModifierKeys.Control));
@@ -231,6 +232,46 @@ public partial class MainWindow : Window
         Dialogs.Playlist(this, manager, link, links => Dispatcher.BeginInvoke(() => ShowAdd(links, queue)));
     }
 
+    /// <summary>Drag downloads from the list onto a queue in the sidebar to move them there.</summary>
+    void EnableDragToQueues()
+    {
+        const string format = "NexonicDownloads";
+        Point? start = null;
+        static T? Parent<T>(DependencyObject? d) where T : DependencyObject
+        {
+            while (d != null && d is not T) d = d is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d);
+            return d as T;
+        }
+        Grid.PreviewMouseLeftButtonDown += (_, e) => start = Parent<DataGridRow>(e.OriginalSource as DependencyObject) != null ? e.GetPosition(null) : null;
+        Grid.PreviewMouseMove += (_, e) =>
+        {
+            if (e.LeftButton != MouseButtonState.Pressed || start is not { } p) return;
+            var d = e.GetPosition(null) - p;
+            if (Math.Abs(d.X) < SystemParameters.MinimumHorizontalDragDistance && Math.Abs(d.Y) < SystemParameters.MinimumVerticalDragDistance) return;
+            start = null;
+            var ids = Grid.SelectedItems.OfType<Row>().Select(r => r.Record.Id.ToString()).ToArray();
+            if (ids.Length > 0) DragDrop.DoDragDrop(Grid, new DataObject(format, string.Join(",", ids)), DragDropEffects.Move);
+        };
+        string? QueueAt(DragEventArgs e) =>
+            Parent<ListBoxItem>(e.OriginalSource as DependencyObject) is { Tag: string key } && key.StartsWith("queue:", StringComparison.Ordinal) ? key[6..] : null;
+        Sidebar.AllowDrop = true;
+        Sidebar.DragOver += (_, e) =>
+        {
+            e.Effects = e.Data.GetDataPresent(format) && QueueAt(e) != null ? DragDropEffects.Move : DragDropEffects.None;
+            e.Handled = true;
+        };
+        Sidebar.Drop += (_, e) =>
+        {
+            if (e.Data.GetData(format) is string list && QueueAt(e) is { } queue)
+            {
+                var ids = list.Split(',').ToHashSet();
+                manager.MoveToQueue(manager.Rows.Where(r => ids.Contains(r.Record.Id.ToString())), queue);
+                BuildSidebar();
+            }
+            e.Handled = true;
+        };
+    }
+
     /// <summary>View → Columns: turn the list's extra columns on or off (saved with the settings).</summary>
     void BuildColumnsMenu()
     {
@@ -412,6 +453,11 @@ public partial class MainWindow : Window
     void OnShowProgress(object s, RoutedEventArgs e) { if (One is { } r) DownloadWindows.ShowProgress(manager, r); }
     void OnGallery(object s, RoutedEventArgs e) => Dialogs.Gallery(this, manager);
     void OnLinkGrabber(object s, RoutedEventArgs e) => Dialogs.LinkGrabber(this, manager);
+    void OnCrashReports(object s, RoutedEventArgs e)
+    {
+        System.IO.Directory.CreateDirectory(CrashReports.Folder);
+        Process.Start("explorer.exe", $"\"{CrashReports.Folder}\"");
+    }
     void OnDiagnostics(object s, RoutedEventArgs e) => Dialogs.Diagnostics(this, manager, One?.Record.Url);
     void OnRecheck(object s, RoutedEventArgs e) { if (One is { Record.Torrent: not null } r) manager.Recheck(r); }
     void OnShowQr(object s, RoutedEventArgs e) => Dialogs.ShowQr(this, Selected.Select(r => r.Record.Url).ToList());

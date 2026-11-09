@@ -387,6 +387,15 @@ public sealed partial class DownloadManager
         Schedule();
     }
 
+    /// <summary>Moves downloads to another queue (drag onto a queue in the sidebar, or Move to Queue).</summary>
+    public void MoveToQueue(IEnumerable<Row> rows, string queueId)
+    {
+        if (Queues.All(q => q.Id != queueId)) return;
+        foreach (var r in rows.ToList())
+            if (r.Record.Queue != queueId)
+                SetDetails(r, r.Record.Username ?? "", r.Record.Password ?? "", r.Record.Checksum ?? "", r.Record.SpeedLimitKBps ?? 0, queueId);
+    }
+
     public void SetDetails(Row row, string username, string password, string checksum, int limitKBps, string queueId)
     {
         var r = row.Record;
@@ -794,7 +803,7 @@ public sealed class Row : System.ComponentModel.INotifyPropertyChanged
         DownloadStatus.Finished => Record.ChecksumResult?.Contains("not") == true ? StatusColors.Bad : StatusColors.Good,
         _ => Record.IsCanceled ? StatusColors.Idle : StatusColors.Bad,
     };
-    public string Added => Record.Added.ToString("d MMM yyyy, HH:mm");
+    public string Added => ListColumns.When(Record.Added);
     public string Finished => ListColumns.When(Record.Finished);
     public string SaveFolder => ListColumns.Folder(Record);
     public string CanResume => L.T(ListColumns.Resume(Record));

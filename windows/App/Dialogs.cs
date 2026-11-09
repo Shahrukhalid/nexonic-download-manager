@@ -891,27 +891,47 @@ public static partial class Dialogs
     /// <summary>The downloads as a QR code: the phone's camera opens them in Nexonic on Android or iPhone.</summary>
     public static void ShowQr(Window owner, List<string> urls)
     {
-        var (link, count) = ShareLinks.Link(urls);
-        if (count == 0) return;
-        var qr = QrCode.Encode(link);
-        var geometry = new GeometryGroup();
-        for (var y = 0; y < qr.Size; y++)
-            for (var x = 0; x < qr.Size; x++)
-                if (qr[x, y]) geometry.Children.Add(new RectangleGeometry(new Rect(x, y, 1, 1)));
-        var drawing = new DrawingGroup();
-        drawing.Children.Add(new GeometryDrawing(Brushes.White, null, new RectangleGeometry(new Rect(-4, -4, qr.Size + 8, qr.Size + 8))));
-        drawing.Children.Add(new GeometryDrawing(Brushes.Black, null, geometry));
-        var image = new Image { Source = new DrawingImage(drawing), Width = 300, Height = 300, Margin = new Thickness(0, 4, 0, 8) };
+        // As many codes as the links need: Previous and Next go through them.
+        var codes = ShareLinks.Codes(urls);
+        if (codes.Count == 0) return;
+        static DrawingImage Picture(string link)
+        {
+            var qr = QrCode.Encode(link);
+            var geometry = new GeometryGroup();
+            for (var y = 0; y < qr.Size; y++)
+                for (var x = 0; x < qr.Size; x++)
+                    if (qr[x, y]) geometry.Children.Add(new RectangleGeometry(new Rect(x, y, 1, 1)));
+            var drawing = new DrawingGroup();
+            drawing.Children.Add(new GeometryDrawing(Brushes.White, null, new RectangleGeometry(new Rect(-4, -4, qr.Size + 8, qr.Size + 8))));
+            drawing.Children.Add(new GeometryDrawing(Brushes.Black, null, geometry));
+            return new DrawingImage(drawing);
+        }
+        var image = new Image { Width = 300, Height = 300, Margin = new Thickness(0, 4, 0, 8) };
         RenderOptions.SetEdgeMode(image, EdgeMode.Aliased);
         var f = new Form(owner, "Download on Your Phone", 400);
         f.Body.Children.Add(image);
-        f.Note(count == 1 ? "Scan with your phone's camera to download this file with the Nexonic app on your phone."
-                          : $"Scan with your phone's camera to download these {count} files with the Nexonic app on your phone.");
-        if (count < urls.Count) f.Note($"Only the first {count} of {urls.Count} links fit in one code.");
+        var caption = f.Note("");
+        var index = 0;
+        void Show()
+        {
+            var (link, count) = codes[index];
+            image.Source = Picture(link);
+            caption.Text = (codes.Count > 1 ? $"Code {index + 1} of {codes.Count}: " : "") +
+                (count == 1 ? "scan with your phone's camera to download this file with the Nexonic app on your phone."
+                            : $"scan with your phone's camera to download these {count} files with the Nexonic app on your phone.");
+        }
+        var total = codes.Sum(c => c.Count);
+        if (total < urls.Count) f.Note($"{urls.Count - total} links are too long for a code and were left out.");
         if (urls.Any(ShareLinks.LooksPrivate))
-            f.Note("This link seems to include a private access key (for example a token or signature). Anyone who scans the code can use it until it expires, so share it only with your own phone.");
+            f.Note("A link seems to include a private access key (for example a token or signature). Anyone who scans the code can use it until it expires, so share it only with your own phone.");
         f.Note("Only the links are shared: no cookies or passwords. Downloads that need you to be signed in may not work on the phone.");
+        if (codes.Count > 1)
+        {
+            f.AddButton("Previous", () => { index = (index + codes.Count - 1) % codes.Count; Show(); });
+            f.AddButton("Next", () => { index = (index + 1) % codes.Count; Show(); });
+        }
         f.AddButton("Close", f.Close, isDefault: true, isCancel: true);
+        Show();
         f.Show();
     }
 

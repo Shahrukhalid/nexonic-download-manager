@@ -62,11 +62,12 @@ public static class ListColumns
 
     public static readonly List<string> HiddenByDefault = new() { "finished", "folder", "resume" };
 
-    public static string When(DateTime? t) => t is { } d ? d.ToString("d MMM yyyy, HH:mm") : "";
+    /// <summary>Date and time in the computer's regional format (short date and time).</summary>
+    public static string When(DateTime? t) => t is { } d ? d.ToString("g", System.Globalization.CultureInfo.CurrentCulture) : "";
 
     /// <summary>Where the file is (or will be) saved.</summary>
     public static string Folder(DownloadRecord r) =>
-        r.SavedPath is { Length: > 0 } p && Path.GetDirectoryName(p) is { Length: > 0 } d ? d : r.Folder;
+        r.SavedPath is { Length: > 0 } p ? (r.Gallery == true ? p : Path.GetDirectoryName(p) is { Length: > 0 } d ? d : r.Folder) : r.Folder;
 
     /// <summary>"Yes" when a stopped download continues where it left off, "No" when it starts again, "" before that is known.</summary>
     public static string Resume(DownloadRecord r)

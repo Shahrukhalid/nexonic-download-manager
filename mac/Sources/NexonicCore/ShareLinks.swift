@@ -6,6 +6,19 @@ public enum ShareLinks {
     public static let maxLength = 1200
 
     /// The link for as many of the downloads as fit, and how many that is.
+    /// Every link, split over as many codes as needed (a link too long for any code is left out).
+    public static func codes(_ urls: [URL]) -> [(link: String, count: Int)] {
+        var rest = urls
+        var out: [(link: String, count: Int)] = []
+        while !rest.isEmpty && out.count < 50 {
+            let (link, count) = self.link(rest)
+            if count == 0 { rest.removeFirst(); continue }
+            out.append((link, count))
+            rest.removeFirst(min(count, rest.count))
+        }
+        return out
+    }
+
     public static func link(_ urls: [URL]) -> (link: String, count: Int) {
         var allowed = CharacterSet.alphanumerics
         allowed.insert(charactersIn: "-._~")

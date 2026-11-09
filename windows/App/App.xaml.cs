@@ -15,6 +15,13 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // Errors that stop the app are written to a crash report on this computer (Help → Crash Reports).
+        AppDomain.CurrentDomain.UnhandledException += (_, x) =>
+        {
+            if (x.ExceptionObject is Exception ex) CrashReports.Write(ex, "app", HelpWindows.Version);
+        };
+        DispatcherUnhandledException += (_, x) => CrashReports.Write(x.Exception, "window", HelpWindows.Version);
+        TaskScheduler.UnobservedTaskException += (_, x) => { CrashReports.Write(x.Exception, "background task", HelpWindows.Version); x.SetObserved(); };
         // A .torrent file or magnet link the app was opened with goes to the running copy (or this one) to show.
         var torrents = TorrentInbox.Drop(e.Args);
         single = new Mutex(true, "Nexonic.DownloadManager.Single", out var first);

@@ -334,6 +334,21 @@ public static class ShareLinks
     /// <summary>Longest link that still scans easily from a screen.</summary>
     public const int MaxLength = 1200;
 
+    /// <summary>Every link, split over as many codes as needed (a link too long for any code is left out).</summary>
+    public static List<(string Link, int Count)> Codes(IEnumerable<string> urls)
+    {
+        var rest = urls.ToList();
+        var codes = new List<(string, int)>();
+        while (rest.Count > 0 && codes.Count < 50)
+        {
+            var (link, count) = Link(rest);
+            if (count == 0) { rest.RemoveAt(0); continue; }
+            codes.Add((link, count));
+            rest.RemoveRange(0, Math.Min(count, rest.Count));
+        }
+        return codes;
+    }
+
     /// <summary>The link for as many of the downloads as fit, and how many that is.</summary>
     public static (string Link, int Count) Link(IEnumerable<string> urls)
     {

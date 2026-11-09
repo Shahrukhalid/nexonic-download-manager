@@ -870,17 +870,34 @@ public static partial class Dialogs
     /// <summary>The downloads as a QR code: the phone's camera opens them in Nexonic on Android or iPhone.</summary>
     public static async Task ShowQr(Window owner, List<string> urls)
     {
-        var (link, count) = ShareLinks.Link(urls);
-        if (count == 0) return;
+        // As many codes as the links need: Previous and Next go through them.
+        var codes = ShareLinks.Codes(urls);
+        if (codes.Count == 0) return;
         var f = new Form(owner, "Download on Your Phone", 400);
-        f.Body.Children.Add(new QrView(QrCode.Encode(link)) { Width = 300, Height = 300, Margin = new Thickness(0, 4, 0, 8), HorizontalAlignment = HorizontalAlignment.Center });
-        f.Note(count == 1 ? "Scan with your phone's camera to download this file with the Nexonic app on your phone."
-                          : $"Scan with your phone's camera to download these {count} files with the Nexonic app on your phone.");
-        if (count < urls.Count) f.Note($"Only the first {count} of {urls.Count} links fit in one code.");
+        var holder = new ContentControl { Width = 300, Height = 300, Margin = new Thickness(0, 4, 0, 8), HorizontalAlignment = HorizontalAlignment.Center };
+        f.Body.Children.Add(holder);
+        var caption = f.Note("");
+        var index = 0;
+        void Show()
+        {
+            var (link, count) = codes[index];
+            holder.Content = new QrView(QrCode.Encode(link)) { Width = 300, Height = 300 };
+            caption.Text = (codes.Count > 1 ? $"Code {index + 1} of {codes.Count}: " : "") +
+                (count == 1 ? "scan with your phone's camera to download this file with the Nexonic app on your phone."
+                            : $"scan with your phone's camera to download these {count} files with the Nexonic app on your phone.");
+        }
+        var total = codes.Sum(c => c.Count);
+        if (total < urls.Count) f.Note($"{urls.Count - total} links are too long for a code and were left out.");
         if (urls.Any(ShareLinks.LooksPrivate))
-            f.Note("This link seems to include a private access key (for example a token or signature). Anyone who scans the code can use it until it expires, so share it only with your own phone.");
+            f.Note("A link seems to include a private access key (for example a token or signature). Anyone who scans the code can use it until it expires, so share it only with your own phone.");
         f.Note("Only the links are shared: no cookies or passwords. Downloads that need you to be signed in may not work on the phone.");
+        if (codes.Count > 1)
+        {
+            f.AddButton("Previous", () => { index = (index + codes.Count - 1) % codes.Count; Show(); });
+            f.AddButton("Next", () => { index = (index + 1) % codes.Count; Show(); });
+        }
         f.AddButton("Close", f.Close, isDefault: true, isCancel: true);
+        Show();
         await f.Show();
     }
 
