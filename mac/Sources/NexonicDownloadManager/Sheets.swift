@@ -475,6 +475,9 @@ struct GrabberSheet: View {
             .frame(height: 180)
             Form { SaveOptions(folder: $folder, queueID: $queue) }.formStyle(.grouped)
             HStack {
+                Button("Save Whole Gallery") { addGallery() }
+                    .disabled(DownloadJob(url: start).validURL == nil)
+                    .help("Saves every picture of the gallery or profile with the gallery engine (sites like Reddit, Pixiv, DeviantArt, Imgur). The engine is downloaded the first time.")
                 Spacer()
                 Button("Close") { stop(); dismiss() }.keyboardShortcut(.cancelAction)
                 Button("Download Later") { add(false) }.disabled(checked.isEmpty)
@@ -511,6 +514,16 @@ struct GrabberSheet: View {
     private func stop() {
         task?.cancel()
         task = nil
+    }
+
+    private func addGallery() {
+        var o = DownloadManager.AddOptions()
+        o.folder = folder
+        o.queueID = queue
+        o.gallery = true
+        manager.add(DownloadJob(url: start.trimmingCharacters(in: .whitespacesAndNewlines)), options: o)
+        stop()
+        dismiss()
     }
 
     private func add(_ start: Bool) {

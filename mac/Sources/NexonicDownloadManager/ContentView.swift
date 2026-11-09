@@ -455,7 +455,7 @@ func statusText(_ r: DownloadRecord) -> String {
     case .seeding: return "Seeding"
     case .queued: return "Queued"
     case .probing: return "Connecting…"
-    case .downloading: return "\(Int(r.progress * 100))%"
+    case .downloading: return r.gallery == true ? "\(r.streamDone ?? 0) files" : "\(Int(r.progress * 100))%"
     case .paused: return r.awaitingRefresh == true ? "Waiting for link" : "Stopped"
     case .finished: return r.checksumResult.map { $0.contains("not") ? "Checksum failed" : "Complete" } ?? "Complete"
     case .failed: return r.isCanceled ? "Canceled" : "Error"
