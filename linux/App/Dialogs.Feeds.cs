@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Media;
 using Nexonic.Core;
+using Nexonic.Linux;
 
 namespace Nexonic.App;
 
