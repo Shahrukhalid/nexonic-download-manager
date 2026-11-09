@@ -6,7 +6,8 @@ public enum TorrentPolicy {
     /// Why torrents can't run now, or nil. Proxies and the speed limit for all downloads apply to torrents too.
     public static func unavailable(_ settings: AppSettings) -> String? {
         if !settings.torrentsEnabled { return "Turn on torrents first." }
-        return nil
+        if let down = Adapters.problem() { return down.errorDescription }
+        return TorrentBlocklist.problem(settings.network.torrentBlocklist)
     }
     /// A torrent's download limit: its own limit, capped by the limit for all downloads.
     public static func downloadLimit(_ own: Int?, settings: AppSettings) -> Int {
@@ -32,6 +33,16 @@ extension AppSettings {
         return network
     }
 
+    /// The session network for the engine: torrentSessionNetwork held to the chosen adapter's address, with the
+    /// blocklist. Throws when the adapter is down or the blocklist can't be read, so nothing starts without them.
+    public func torrentEngineNetwork() throws -> TorrentNetwork {
+        var network = torrentSessionNetwork
+        let adapter = network.bind.isEmpty ? self.network.bindAdapter.trimmingCharacters(in: .whitespaces) : ""
+        if !adapter.isEmpty { network.bind = try Adapters.sourceAddress(adapter) }
+        network.blocklist = try TorrentBlocklist.load(self.network.torrentBlocklist)
+        return network
+    }
+
     static func systemProxy() -> TorrentProxy? {
         guard let settings = CFNetworkCopySystemProxySettings()?.takeRetainedValue() as? [String: Any] else { return nil }
         for (kind, prefix) in [(TorrentProxy.Kind.socks5, "SOCKS"), (.http, "HTTPS"), (.http, "HTTP")] {
@@ -54,10 +65,12 @@ public final class TorrentTransfer: Downloader, @unchecked Sendable {
     public func start() {
         guard let task = record.torrent else { fail(TorrentFailure("Torrent metadata is missing.")); return }
         if let reason = TorrentPolicy.unavailable(settings) { fail(TorrentFailure(reason)); return }
+        let network: TorrentNetwork
+        do { network = try settings.torrentEngineNetwork() } catch { fail(TorrentFailure(error.localizedDescription)); return }
         let folder = record.folder.appendingPathComponent("Nexonic torrents/\(record.id.uuidString)")
         let state = AppPaths.parts.appendingPathComponent(record.id.uuidString).appendingPathComponent("native")
         worker.start(id: "payload", task: task, destination: folder, stateDirectory: state, downloadLimitKBps: TorrentPolicy.downloadLimit(record.speedLimitKBps, settings: settings),
-                     network: settings.torrentSessionNetwork) { [self] result in
+                     network: network) { [self] result in
             switch result {
             case .failure(let error): fail(error)
             case .success(let snapshot):

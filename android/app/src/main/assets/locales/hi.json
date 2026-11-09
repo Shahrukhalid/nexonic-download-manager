@@ -178,6 +178,9 @@
     "Open-source licenses": "ओपन-सोर्स लाइसेंस",
     "Language": "भाषा",
     "Same as the system": "सिस्टम के अनुसार",
-    "Support the Project": "प्रोजेक्ट का समर्थन करें"
+    "Support the Project": "प्रोजेक्ट का समर्थन करें",
+    "VPN only": "केवल VPN",
+    "Download only through a VPN. If the VPN disconnects, downloads stop instead of using another connection.": "केवल VPN के ज़रिए डाउनलोड करें। VPN का कनेक्शन टूटने पर डाउनलोड किसी और कनेक्शन के बजाय रुक जाते हैं।",
+    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "VPN का इंतज़ार है। VPN के बिना डाउनलोड करने के लिए सेटिंग्स में \"केवल VPN\" बंद करें।"
   }
 }

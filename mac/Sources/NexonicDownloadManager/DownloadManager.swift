@@ -27,6 +27,11 @@ final class DownloadManager: ObservableObject {
     @Published var settings: AppSettings {
         didSet {
             limiter.setLimit(bytesPerSecond: settings.speedLimitKBps * 1024)
+            Adapters.required = settings.network.bindAdapter
+            if settings.network.torrentBlocklist != oldValue.network.torrentBlocklist {
+                let list = settings.network.torrentBlocklist
+                Task.detached { await TorrentBlocklist.refresh(list) }
+            }
             if TorrentPolicy.unavailable(settings) != nil {
                 for item in items where item.torrent != nil && item.status.isActive { pause(item.id) }
             }
@@ -68,6 +73,9 @@ final class DownloadManager: ObservableObject {
             Secrets.fill(&loadedItems, &loadedSettings, from: saved)
         }
         settings = loadedSettings
+        Adapters.required = loadedSettings.network.bindAdapter
+        let blocklist = loadedSettings.network.torrentBlocklist
+        Task.detached { await TorrentBlocklist.refresh(blocklist) }
         items = loadedItems
         var qs = Self.load([DownloadQueue].self, from: AppPaths.queues) ?? []
         if !qs.contains(where: \.isMain) { qs.insert(.main, at: 0) }

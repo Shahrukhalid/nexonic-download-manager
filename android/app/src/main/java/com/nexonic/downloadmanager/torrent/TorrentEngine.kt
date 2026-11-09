@@ -52,7 +52,7 @@ object TorrentPreview {
             source.startsWith("content://") || source.startsWith("file://") ->
                 context.contentResolver.openInputStream(Uri.parse(source)) ?: throw IOException("Can't open the .torrent file.")
             source.startsWith("https://", true) || source.startsWith("http://", true) -> {
-                val c = URL(source).openConnection() as HttpURLConnection
+                val c = URL(source).let { com.nexonic.downloadmanager.core.Net.opener?.invoke(it) ?: it.openConnection() } as HttpURLConnection
                 c.connectTimeout = 20_000; c.readTimeout = 30_000; c.instanceFollowRedirects = true
                 if (c.responseCode !in 200..299) throw IOException("The torrent link answered ${c.responseCode}.")
                 c.inputStream

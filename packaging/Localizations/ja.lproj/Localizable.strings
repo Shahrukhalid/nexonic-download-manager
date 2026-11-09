@@ -305,3 +305,10 @@
 "Seeding" = "シード";
 "Trackers (one per line)" = "トラッカー（1 行に 1 つ）";
 "Files" = "ファイル";
+"Network adapter" = "ネットワークアダプター";
+"Any adapter" = "すべてのアダプター";
+"Downloads, videos and torrents use only this adapter (for example your VPN). If it disconnects, downloads stop instead of using another connection." = "ダウンロード、動画、トレントはこのアダプター（VPN など）だけを使います。切断されると、別の接続を使わずにダウンロードを停止します。";
+"Torrent blocklist: a file or an https:// address (empty = none)" = "トレントのブロックリスト：ファイルまたは https:// のアドレス（空欄 = なし）";
+"Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day." = "トレントはこのリストのアドレスには接続しません。P2P、DAT、CIDR 形式（.gz も可）に対応しています。アドレスの場合は 1 日 1 回再ダウンロードします。";
+"The blocklist address must start with https://" = "ブロックリストのアドレスは https:// で始まる必要があります";
+"The blocklist file was not found." = "ブロックリストのファイルが見つかりません。";

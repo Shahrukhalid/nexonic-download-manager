@@ -22,6 +22,8 @@ class TorrentSession(stateDir: File, dht: Boolean = true) : AutoCloseable {
         if (!NativeTorrent.available) throw IOException("This build doesn't include the torrent engine.")
         stateDir.mkdirs()
         val config = JSONObject().put("state_dir", stateDir.absolutePath).put("dht", dht)
+        // VPN only: every peer, tracker and DHT connection uses the VPN's address.
+        com.nexonic.downloadmanager.data.Vpn.sourceAddress()?.let { config.put("bind", it) }
         handle = NativeTorrent.create(config.toString().toByteArray())
         if (handle == 0L) {
             val why = NativeTorrent.call(0, "{}".toByteArray())?.let { runCatching { JSONObject(String(it)).optString("error") }.getOrNull() }

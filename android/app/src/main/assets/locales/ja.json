@@ -178,6 +178,9 @@
     "Open-source licenses": "オープンソースライセンス",
     "Language": "言語",
     "Same as the system": "システムと同じ",
-    "Support the Project": "プロジェクトを支援"
+    "Support the Project": "プロジェクトを支援",
+    "VPN only": "VPN のみ",
+    "Download only through a VPN. If the VPN disconnects, downloads stop instead of using another connection.": "VPN 経由でのみダウンロードします。VPN が切断されると、別の接続を使わずにダウンロードを停止します。",
+    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "VPN を待っています。VPN なしでダウンロードするには、設定で「VPN のみ」をオフにしてください。"
   }
 }

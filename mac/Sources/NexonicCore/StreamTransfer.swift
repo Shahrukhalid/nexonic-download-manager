@@ -95,6 +95,7 @@ public final class StreamTransfer: Downloader, @unchecked Sendable {
         var attempt = 0
         while true {
             try Task.checkCancellation()
+            if let down = Adapters.problem() { throw down }
             do {
                 let (data, response) = try await session.data(for: request(url))
                 let code = (response as? HTTPURLResponse)?.statusCode ?? 0

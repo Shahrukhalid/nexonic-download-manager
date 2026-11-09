@@ -136,6 +136,10 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
             Toggle("Wi-Fi only", "Wait for Wi-Fi or another unmetered network before downloading.", wifiOnly) {
                 wifiOnly = it; s.wifiOnly = it; Downloads.pump()
             }
+            var vpnOnly by remember { mutableStateOf(s.vpnOnly) }
+            Toggle("VPN only", "Download only through a VPN. If the VPN disconnects, downloads stop instead of using another connection.", vpnOnly) {
+                vpnOnly = it; Downloads.setVpnOnly(it)
+            }
             Toggle("Ask before downloading", "Show the download window when the browser starts a download.", ask) { ask = it; s.askBeforeDownload = it }
             Toggle("Folders by type", "Save into Nexonic/Video, /Music, /Documents…", folders) { folders = it; s.categoryFolders = it }
             Toggle("Save subtitles with videos", "Subtitles in your phone's language and English, inside the video file.", subtitles) { subtitles = it; s.videoSubtitles = it }

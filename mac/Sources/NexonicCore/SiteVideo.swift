@@ -268,7 +268,10 @@ public enum SiteVideo {
     /// The arguments to run, with the private options in a file readable only by this user (delete it when done).
     /// Throws when that file can't be written: never falls back to secrets on the command line.
     public static func prepare(_ args: [String], proxy: ProxySettings?) throws -> (args: [String], configFile: URL?) {
-        let (rest, config) = privateOptions(args, proxy: proxy.flatMap(proxyURL))
+        // The video engine keeps to the chosen network adapter too; it stops if the adapter is down.
+        let adapter = Adapters.required
+        let source = adapter.isEmpty ? [] : ["--source-address", try Adapters.sourceAddress(adapter)]
+        let (rest, config) = privateOptions(source + args, proxy: proxy.flatMap(proxyURL))
         guard !config.isEmpty else { return (rest, nil) }
         try FileManager.default.createDirectory(at: AppPaths.parts, withIntermediateDirectories: true)
         let file = AppPaths.parts.appendingPathComponent("engine-\(UUID().uuidString).conf")

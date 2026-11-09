@@ -1,6 +1,7 @@
 package com.nexonic.downloadmanager.core
 
 import java.net.URI
+import java.net.URL
 import java.net.URLDecoder
 import java.util.Locale
 
@@ -227,6 +228,9 @@ object Links {
 }
 
 object Net {
+    /** Opens connections on a chosen network (VPN only); null = the default network. Set by the app. */
+    @Volatile var opener: ((URL) -> java.net.URLConnection)? = null
+
     private fun port(u: URI): Int = if (u.port != -1) u.port else if (u.scheme.equals("https", true)) 443 else 80
 
     /** Same server and no step down from https: cookies and logins may be sent there. */

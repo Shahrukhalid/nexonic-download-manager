@@ -305,3 +305,10 @@
 "Seeding" = "Paylaşım";
 "Trackers (one per line)" = "İzleyiciler (her satıra bir)";
 "Files" = "Dosyalar";
+"Network adapter" = "Ağ bağdaştırıcısı";
+"Any adapter" = "Herhangi bir bağdaştırıcı";
+"Downloads, videos and torrents use only this adapter (for example your VPN). If it disconnects, downloads stop instead of using another connection." = "İndirmeler, videolar ve torrentler yalnızca bu bağdaştırıcıyı kullanır (örneğin VPN'iniz). Bağlantısı kesilirse indirmeler başka bir bağlantı kullanmak yerine durur.";
+"Torrent blocklist: a file or an https:// address (empty = none)" = "Torrent engel listesi: bir dosya veya https:// adresi (boş = yok)";
+"Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day." = "Torrentler bu listedeki adreslere asla bağlanmaz. P2P, DAT ve CIDR listeleri, .gz olarak da, çalışır. Bir adres günde bir kez yeniden indirilir.";
+"The blocklist address must start with https://" = "Engel listesinin adresi https:// ile başlamalıdır";
+"The blocklist file was not found." = "Engel listesi dosyası bulunamadı.";

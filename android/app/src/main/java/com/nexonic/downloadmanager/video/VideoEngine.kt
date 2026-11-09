@@ -86,6 +86,7 @@ object VideoEngine {
 
     private fun base(url: String, userAgent: String?, referer: String?) = YoutubeDLRequest(url).apply {
         addOption("--no-playlist")
+        com.nexonic.downloadmanager.data.Vpn.sourceAddress()?.let { addOption("--source-address", it) }
         cookiesFile(url)?.let { addOption("--cookies", it.absolutePath) }
         addOption("--no-mtime")
         addOption("--socket-timeout", "30")
@@ -163,6 +164,7 @@ object VideoEngine {
         ensure()
         val target = Playlists.normalize(url)
         val req = YoutubeDLRequest(target).apply {
+            com.nexonic.downloadmanager.data.Vpn.sourceAddress()?.let { addOption("--source-address", it) }
             addOption("--flat-playlist")
             addOption("-J")
             addOption("--playlist-end", Playlists.MAX_ENTRIES.toString())
@@ -194,7 +196,7 @@ object VideoEngine {
         if (!VideoPages.isShareLink(url)) return url
         var current = url
         repeat(5) {
-            val conn = (java.net.URL(current).openConnection() as java.net.HttpURLConnection).apply {
+            val conn = (java.net.URL(current).let { com.nexonic.downloadmanager.core.Net.opener?.invoke(it) ?: it.openConnection() } as java.net.HttpURLConnection).apply {
                 instanceFollowRedirects = false
                 connectTimeout = 15000; readTimeout = 15000
                 setRequestProperty("User-Agent", DESKTOP_UA)

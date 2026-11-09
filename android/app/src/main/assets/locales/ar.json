@@ -178,6 +178,9 @@
     "Open-source licenses": "تراخيص المصادر المفتوحة",
     "Language": "اللغة",
     "Same as the system": "مثل النظام",
-    "Support the Project": "ادعم المشروع"
+    "Support the Project": "ادعم المشروع",
+    "VPN only": "عبر VPN فقط",
+    "Download only through a VPN. If the VPN disconnects, downloads stop instead of using another connection.": "التنزيل عبر VPN فقط. إذا انقطع اتصال VPN، تتوقف التنزيلات بدلًا من استخدام اتصال آخر.",
+    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "في انتظار VPN. أوقف «عبر VPN فقط» في الإعدادات للتنزيل بدونه."
   }
 }

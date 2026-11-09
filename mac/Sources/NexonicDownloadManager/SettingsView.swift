@@ -65,6 +65,21 @@ struct SettingsView: View {
                     Stepper("Tries per part before a download stops: \(manager.settings.network.retries)", value: $manager.settings.network.retries, in: 1...50)
                     Stepper("Reconnect a part that receives nothing for \(manager.settings.network.readTimeoutSeconds) s", value: $manager.settings.network.readTimeoutSeconds, in: 5...600, step: 5)
                 }
+                Section("Network adapter") {
+                    Picker("Network adapter", selection: $manager.settings.network.bindAdapter) {
+                        ForEach(Adapters.choices(current: manager.settings.network.bindAdapter), id: \.self) { name in
+                            Text(name.isEmpty ? String(localized: "Any adapter") : name).tag(name)
+                        }
+                    }
+                    Text("Downloads, videos and torrents use only this adapter (for example your VPN). If it disconnects, downloads stop instead of using another connection.")
+                        .font(.caption).foregroundStyle(.secondary)
+                    TextField("Torrent blocklist: a file or an https:// address (empty = none)", text: $manager.settings.network.torrentBlocklist)
+                    if let problem = TorrentBlocklist.problem(manager.settings.network.torrentBlocklist) {
+                        Text(LocalizedStringKey(problem)).font(.caption).foregroundStyle(.red)
+                    }
+                    Text("Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             }
             .formStyle(.grouped)
             .tabItem { Label("Connection", systemImage: "network") }

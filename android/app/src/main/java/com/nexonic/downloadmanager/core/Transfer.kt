@@ -58,7 +58,8 @@ object Http {
         var current = url
         repeat(MAX_REDIRECTS + 1) {
             if (!Links.isWebLink(current)) throw IOException("Only web links can be downloaded")
-            val conn = URL(current).openConnection() as HttpURLConnection
+            val target = URL(current)
+            val conn = (Net.opener?.invoke(target) ?: target.openConnection()) as HttpURLConnection
             conn.instanceFollowRedirects = false
             conn.connectTimeout = TIMEOUT_MS
             conn.readTimeout = TIMEOUT_MS

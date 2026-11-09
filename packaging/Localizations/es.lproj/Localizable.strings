@@ -305,3 +305,10 @@
 "Seeding" = "Siembra";
 "Trackers (one per line)" = "Trackers (uno por línea)";
 "Files" = "Archivos";
+"Network adapter" = "Adaptador de red";
+"Any adapter" = "Cualquier adaptador";
+"Downloads, videos and torrents use only this adapter (for example your VPN). If it disconnects, downloads stop instead of using another connection." = "Las descargas, los vídeos y los torrents usan solo este adaptador (por ejemplo, tu VPN). Si se desconecta, las descargas se detienen en lugar de usar otra conexión.";
+"Torrent blocklist: a file or an https:// address (empty = none)" = "Lista de bloqueo de torrents: un archivo o una dirección https:// (vacío = ninguna)";
+"Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day." = "Los torrents nunca se conectan a las direcciones de esta lista. Funcionan listas P2P, DAT y CIDR, también en .gz. Una dirección se vuelve a descargar una vez al día.";
+"The blocklist address must start with https://" = "La dirección de la lista de bloqueo debe empezar por https://";
+"The blocklist file was not found." = "No se encontró el archivo de la lista de bloqueo.";

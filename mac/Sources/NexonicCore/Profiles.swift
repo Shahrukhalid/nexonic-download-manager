@@ -8,16 +8,23 @@ public struct NetworkOptions: Codable, Equatable, Sendable {
     public var retries: Int = 6
     /// A part that receives nothing for this long is reconnected.
     public var readTimeoutSeconds: Int = 30
+    /// Network adapter every download must use (a VPN, for example); empty = any. When it is down, downloads stop
+    /// instead of using another adapter (kill switch).
+    public var bindAdapter: String = ""
+    /// Torrent blocklist: a local file or an https:// address (P2P, DAT or CIDR lines); empty = none.
+    public var torrentBlocklist: String = ""
 
     public init() {}
 
-    enum CodingKeys: String, CodingKey { case minSegmentKB, retries, readTimeoutSeconds }
+    enum CodingKeys: String, CodingKey { case minSegmentKB, retries, readTimeoutSeconds, bindAdapter, torrentBlocklist }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         minSegmentKB = try c.decodeIfPresent(Int.self, forKey: .minSegmentKB) ?? 512
         retries = try c.decodeIfPresent(Int.self, forKey: .retries) ?? 6
         readTimeoutSeconds = try c.decodeIfPresent(Int.self, forKey: .readTimeoutSeconds) ?? 30
+        bindAdapter = try c.decodeIfPresent(String.self, forKey: .bindAdapter) ?? ""
+        torrentBlocklist = try c.decodeIfPresent(String.self, forKey: .torrentBlocklist) ?? ""
     }
 
     public var clamped: NetworkOptions {
@@ -25,6 +32,8 @@ public struct NetworkOptions: Codable, Equatable, Sendable {
         o.minSegmentKB = min(max(minSegmentKB, 64), 1024 * 1024)
         o.retries = min(max(retries, 1), 50)
         o.readTimeoutSeconds = min(max(readTimeoutSeconds, 5), 3600)
+        o.bindAdapter = bindAdapter.trimmingCharacters(in: .whitespaces)
+        o.torrentBlocklist = torrentBlocklist.trimmingCharacters(in: .whitespaces)
         return o
     }
 }

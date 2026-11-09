@@ -178,6 +178,9 @@
     "Open-source licenses": "Лицензии открытого ПО",
     "Language": "Язык",
     "Same as the system": "Как в системе",
-    "Support the Project": "Поддержать проект"
+    "Support the Project": "Поддержать проект",
+    "VPN only": "Только VPN",
+    "Download only through a VPN. If the VPN disconnects, downloads stop instead of using another connection.": "Загружать только через VPN. Если VPN отключится, загрузки остановятся, а не пойдут через другое подключение.",
+    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "Ожидание VPN. Выключите «Только VPN» в настройках, чтобы загружать без него."
   }
 }

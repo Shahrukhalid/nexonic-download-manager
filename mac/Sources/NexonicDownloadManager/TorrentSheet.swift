@@ -159,9 +159,10 @@ struct TorrentSheet: View {
         loading?.cancel()
         snapshot = nil
         let state = AppPaths.parts.appendingPathComponent("torrent-preview")
-        let network = manager.settings.torrentSessionNetwork
+        let settings = manager.settings
         loading = Task {
             do {
+                let network = try settings.torrentEngineNetwork()
                 let found = try await TorrentSource.preview(text, stateDirectory: state, network: network)
                 snapshot = found
                 priorities = found.files?.map { $0.pad ? 0 : 4 } ?? []

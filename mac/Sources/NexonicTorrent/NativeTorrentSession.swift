@@ -17,6 +17,8 @@ public final class NativeTorrentSession: @unchecked Sendable {
         var config: [String: Any] = ["state_dir": path, "allow_local_peers": allowLocalPeers, "dht": dht,
                                      "port_forwarding": network.portForwarding, "encryption": network.encryption.rawValue]
         if let proxy = network.proxy { config["proxy"] = proxy.engineSettings }
+        if !network.bind.isEmpty { config["bind"] = network.bind }
+        if !network.blocklist.isEmpty { config["blocklist"] = network.blocklist }
         let data = try JSONSerialization.data(withJSONObject: config)
         context = String(decoding: data, as: UTF8.self).withCString { ndm_torrent_create($0) }
         if context == nil {
