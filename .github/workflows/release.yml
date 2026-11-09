@@ -15,13 +15,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Validate release version and tag
         run: python3 scripts/check-release.py
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .ffmpeg-cache/mac
           key: ffmpeg-mac-${{ hashFiles('scripts/build-ffmpeg.sh') }}
       - name: Native torrent build tools
         run: brew list ninja pkgconf >/dev/null 2>&1 || brew install ninja pkgconf
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             .native-cache/installed
@@ -100,7 +100,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: cache
         with:
           path: .ffmpeg-cache/windows
@@ -129,7 +129,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Native torrent build tools
         run: brew list ninja pkgconf >/dev/null 2>&1 || brew install ninja pkgconf
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             .native-cache/installed
@@ -184,7 +184,7 @@ jobs:
             echo "Package install failed or stalled (try $try); retrying"; sleep 20
           done
           exit 1
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: ffmpeg
         with:
           path: .ffmpeg-cache/linux-${{ matrix.arch }}
@@ -193,7 +193,7 @@ jobs:
         run: bash scripts/build-ffmpeg.sh linux .ffmpeg-cache/linux-${{ matrix.arch }}
       - name: Video engine
         run: bash scripts/fetch-video-tools.sh linux-${{ matrix.arch }} .tools-cache/linux-${{ matrix.arch }}
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             .native-cache/installed
@@ -240,7 +240,7 @@ jobs:
       - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
           dotnet-version: "10.0.x"
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             .native-cache/installed
