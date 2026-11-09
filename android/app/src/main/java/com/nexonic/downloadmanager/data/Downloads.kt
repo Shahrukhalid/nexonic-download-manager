@@ -70,15 +70,15 @@ object Downloads {
         secrets = SecretStore(app)
         settings = Settings(app)
         limiter.bytesPerSecond = settings.speedLimitKB * 1024
+        Vpn.init(app, settings.vpnOnly)
         // Downloads that were running when the app stopped continue.
         _items.value = store.load().map { if (it.status == Status.DOWNLOADING) it.copy(status = Status.QUEUED, speed = 0) else it.copy(speed = 0) }
         if (_items.value.any { it.status == Status.QUEUED }) main.post { pump() }
         // Waiting for Wi-Fi: start as soon as an unmetered network is back.
         runCatching {
             app.getSystemService(ConnectivityManager::class.java)?.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
-                override fun onCapabilitiesChanged(network: android.net.Network, caps: NetworkCapabilities) {
-                    if (_waitingForWifi.value) main.post { pump() }
-                }
+                override fun onCapabilitiesChanged(network: android.net.Network, caps: NetworkCapabilities) { main.post { networkChanged() } }
+                override fun onLost(network: android.net.Network) { main.post { networkChanged() } }
             })
         }
     }
@@ -271,6 +271,22 @@ object Downloads {
         limiter.bytesPerSecond = kb * 1024
     }
 
+    private val _waitingForVpn = MutableStateFlow(false)
+    val waitingForVpn: StateFlow<Boolean> = _waitingForVpn.asStateFlow()
+
+    /** VPN only: when the VPN disconnects, running downloads stop at once and wait for it (kill switch). */
+    private fun networkChanged() {
+        if (!Vpn.ready()) pauseForSystem()
+        if (_waitingForWifi.value || _waitingForVpn.value || !Vpn.ready()) pump()
+    }
+
+    fun setVpnOnly(on: Boolean) {
+        settings.vpnOnly = on
+        Vpn.set(on)
+        networkChanged()
+        pump()
+    }
+
     private fun onWifiOrNotNeeded(): Boolean {
         if (!settings.wifiOnly) return true
         val cm = app.getSystemService(ConnectivityManager::class.java) ?: return true
@@ -283,6 +299,12 @@ object Downloads {
         if (!::app.isInitialized) return
         val queued = _items.value.filter { it.status == Status.QUEUED && it.id !in transfers }
         if (queued.isEmpty()) { if (transfers.isEmpty()) DownloadService.stop(app); return }
+        if (!Vpn.ready()) {
+            _waitingForVpn.value = true
+            if (transfers.isEmpty()) DownloadService.stop(app)
+            return
+        }
+        _waitingForVpn.value = false
         if (!onWifiOrNotNeeded()) {
             _waitingForWifi.value = true
             if (transfers.isEmpty()) DownloadService.stop(app)

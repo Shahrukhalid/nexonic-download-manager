@@ -178,6 +178,9 @@
     "Open-source licenses": "Lisensi sumber terbuka",
     "Language": "Bahasa",
     "Same as the system": "Sama seperti sistem",
-    "Support the Project": "Dukung Proyek"
+    "Support the Project": "Dukung Proyek",
+    "VPN only": "Hanya VPN",
+    "Download only through a VPN. If the VPN disconnects, downloads stop instead of using another connection.": "Unduh hanya melalui VPN. Jika VPN terputus, unduhan berhenti alih-alih memakai koneksi lain.",
+    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "Menunggu VPN. Matikan \"Hanya VPN\" di Setelan untuk mengunduh tanpa VPN."
   }
 }

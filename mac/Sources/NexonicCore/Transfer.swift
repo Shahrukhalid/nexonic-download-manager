@@ -120,6 +120,7 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
     }
 
     private func begin() {
+        if let down = Adapters.problem() { return fail(down.errorDescription ?? "") }
         stopping = false
         record.status = .probing
         record.error = nil
@@ -214,6 +215,7 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
 
     private func launch(_ segmentID: Int) {
         guard !stopping, let i = record.segments.firstIndex(where: { $0.id == segmentID }) else { return }
+        if let down = Adapters.problem() { return fail(down.errorDescription ?? "") }
         let seg = record.segments[i]
         if !record.acceptsRanges { record.segments[i].written = 0 }
         let handle: FileHandle
@@ -315,6 +317,8 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
         guard let run = running[dataTask.taskIdentifier], let i = record.segments.firstIndex(where: { $0.id == run.segmentID }) else {
             return
         }
+        // Kill switch: the chosen adapter disconnected, so stop at once instead of continuing on another one.
+        if let down = Adapters.problem() { return fail(down.errorDescription ?? "") }
         var chunk = data
         let left = record.segments[i].remaining
         if Int64(chunk.count) > left { chunk = chunk.prefix(Int(left)) }

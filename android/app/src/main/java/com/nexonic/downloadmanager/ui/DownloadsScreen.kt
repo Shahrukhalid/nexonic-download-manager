@@ -116,6 +116,7 @@ fun DownloadsScreen(items: List<DownloadItem>, ui: UiState, onOpenBrowser: () ->
     var searching by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
     val waitingForWifi by Downloads.waitingForWifi.collectAsState()
+    val waitingForVpn by Downloads.waitingForVpn.collectAsState()
     // Long-press a download to select it; then tap others to add them. Actions apply to every selected download.
     var selected by remember { mutableStateOf(setOf<Long>()) }
     var confirmRemove by remember { mutableStateOf(false) }
@@ -184,6 +185,9 @@ fun DownloadsScreen(items: List<DownloadItem>, ui: UiState, onOpenBrowser: () ->
                         leadingIcon = { Icon(categoryIcon(c), null, Modifier.size(18.dp)) },
                     )
                 }
+            }
+            if (waitingForVpn) Surface(color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.fillMaxWidth()) {
+                Text(tr("Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one."), Modifier.padding(12.dp), style = MaterialTheme.typography.bodySmall)
             }
             if (waitingForWifi) Surface(color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.fillMaxWidth()) {
                 Text("Waiting for Wi-Fi. Turn off \"Wi-Fi only\" in Settings to use mobile data.", Modifier.padding(12.dp), style = MaterialTheme.typography.bodySmall)

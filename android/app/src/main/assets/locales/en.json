@@ -178,6 +178,9 @@
     "Open-source licenses": "",
     "Language": "",
     "Same as the system": "",
-    "Support the Project": ""
+    "Support the Project": "",
+    "VPN only": "",
+    "Download only through a VPN. If the VPN disconnects, downloads stop instead of using another connection.": "",
+    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": ""
   }
 }

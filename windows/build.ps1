@@ -48,7 +48,13 @@ Copy-Item build\extension-chrome "$out\Extension" -Recurse
 Copy-Item "build\NexonicFirefoxAddon-$version.xpi" "$out\Firefox Add-on.xpi"
 # The ndm command runs the helper in command-line mode; the installer puts this folder on the user's PATH.
 Set-Content -Path "$out\ndm.cmd" -Value "@echo off`r`n`"%~dp0nexonic-host.exe`" %*" -Encoding ascii -NoNewline
-Compress-Archive -Path "$out\*" -DestinationPath "build\NexonicDownloadManager-$version-windows-portable.zip"
+# Strongest standard zip compression (any unzip tool opens it); Compress-Archive only when 7-Zip is missing.
+$zip = "build\NexonicDownloadManager-$version-windows-portable.zip"
+$sevenZip = "${env:ProgramFiles}\7-Zip\7z.exe"
+if (Test-Path $sevenZip) {
+  & $sevenZip a -tzip -mx=9 -mfb=258 -mpass=15 -mmt=on $zip ".\$out\*" | Out-Null
+  if ($LASTEXITCODE -ne 0) { throw "Portable zip failed" }
+} else { Compress-Archive -Path "$out\*" -DestinationPath $zip -CompressionLevel Optimal }
 $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
 if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
 $env:NDM_VERSION = $version

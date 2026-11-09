@@ -159,6 +159,10 @@ public struct TorrentNetwork: Codable, Equatable, Sendable {
     public var encryption = Encryption.prefer
     /// The proxy torrents connect through, from the app's proxy setting (not saved with these settings).
     public var proxy: TorrentProxy?
+    /// The adapter address every torrent connection uses ("" = any), from the app's network setting (not saved here).
+    public var bind = ""
+    /// Blocked [first, last] address ranges, from the app's blocklist setting (not saved here).
+    public var blocklist: [[String]] = []
     public init() {}
     enum CodingKeys: String, CodingKey { case portForwarding, encryption }
     public init(from decoder: Decoder) throws {

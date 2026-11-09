@@ -305,3 +305,10 @@
 "Seeding" = "Seeding";
 "Trackers (one per line)" = "Trackers (one per line)";
 "Files" = "Files";
+"Network adapter" = "Network adapter";
+"Any adapter" = "Any adapter";
+"Downloads, videos and torrents use only this adapter (for example your VPN). If it disconnects, downloads stop instead of using another connection." = "Downloads, videos and torrents use only this adapter (for example your VPN). If it disconnects, downloads stop instead of using another connection.";
+"Torrent blocklist: a file or an https:// address (empty = none)" = "Torrent blocklist: a file or an https:// address (empty = none)";
+"Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day." = "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.";
+"The blocklist address must start with https://" = "The blocklist address must start with https://";
+"The blocklist file was not found." = "The blocklist file was not found.";

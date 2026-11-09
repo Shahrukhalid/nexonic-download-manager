@@ -178,6 +178,9 @@
     "Open-source licenses": "오픈 소스 라이선스",
     "Language": "언어",
     "Same as the system": "시스템과 동일",
-    "Support the Project": "프로젝트 후원"
+    "Support the Project": "프로젝트 후원",
+    "VPN only": "VPN 전용",
+    "Download only through a VPN. If the VPN disconnects, downloads stop instead of using another connection.": "VPN을 통해서만 다운로드합니다. VPN 연결이 끊기면 다른 연결을 사용하지 않고 다운로드를 멈춥니다.",
+    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "VPN을 기다리는 중입니다. VPN 없이 다운로드하려면 설정에서 \"VPN 전용\"을 끄세요."
   }
 }

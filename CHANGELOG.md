@@ -1,3 +1,11 @@
+## 0.22.0
+
+- **Mac: network adapter and torrent blocklist** (Settings → Connection). Torrents and videos use only the chosen
+  adapter's address; regular downloads stop within a second when it disconnects instead of continuing on another
+  connection. The blocklist takes a file or an https:// address (P2P, DAT or CIDR, also `.gz`).
+- **Android: VPN only** (Settings). Downloads, videos and torrents go only through the VPN, bound to it, and stop when
+  it disconnects; they continue by themselves when it is back. A note on the Downloads screen says when they wait.
+
 ## 0.21.0
 
 - **Keep downloads on your VPN (Windows and Linux):** Options → Connection → Network adapter. Downloads, videos and

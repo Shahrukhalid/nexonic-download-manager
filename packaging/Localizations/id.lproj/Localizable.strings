@@ -305,3 +305,10 @@
 "Seeding" = "Seeding";
 "Trackers (one per line)" = "Tracker (satu per baris)";
 "Files" = "File";
+"Network adapter" = "Adaptor jaringan";
+"Any adapter" = "Adaptor mana saja";
+"Downloads, videos and torrents use only this adapter (for example your VPN). If it disconnects, downloads stop instead of using another connection." = "Unduhan, video, dan torrent hanya memakai adaptor ini (misalnya VPN Anda). Jika terputus, unduhan berhenti alih-alih memakai koneksi lain.";
+"Torrent blocklist: a file or an https:// address (empty = none)" = "Daftar blokir torrent: file atau alamat https:// (kosong = tidak ada)";
+"Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day." = "Torrent tidak pernah terhubung ke alamat dalam daftar ini. Daftar P2P, DAT, dan CIDR bisa dipakai, juga dalam .gz. Alamat diunduh ulang sekali sehari.";
+"The blocklist address must start with https://" = "Alamat daftar blokir harus diawali https://";
+"The blocklist file was not found." = "File daftar blokir tidak ditemukan.";

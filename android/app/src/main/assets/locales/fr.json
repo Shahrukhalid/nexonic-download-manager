@@ -178,6 +178,9 @@
     "Open-source licenses": "Licences open source",
     "Language": "Langue",
     "Same as the system": "Comme le système",
-    "Support the Project": "Soutenir le projet"
+    "Support the Project": "Soutenir le projet",
+    "VPN only": "VPN uniquement",
+    "Download only through a VPN. If the VPN disconnects, downloads stop instead of using another connection.": "Télécharger uniquement via un VPN. Si le VPN se déconnecte, les téléchargements s'arrêtent au lieu d'utiliser une autre connexion.",
+    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "En attente d'un VPN. Désactivez « VPN uniquement » dans les réglages pour télécharger sans VPN."
   }
 }

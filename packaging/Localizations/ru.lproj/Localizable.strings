@@ -305,3 +305,10 @@
 "Seeding" = "Раздача";
 "Trackers (one per line)" = "Трекеры (по одному в строке)";
 "Files" = "Файлы";
+"Network adapter" = "Сетевой адаптер";
+"Any adapter" = "Любой адаптер";
+"Downloads, videos and torrents use only this adapter (for example your VPN). If it disconnects, downloads stop instead of using another connection." = "Загрузки, видео и торренты используют только этот адаптер (например, ваш VPN). Если он отключится, загрузки остановятся, а не пойдут через другое подключение.";
+"Torrent blocklist: a file or an https:// address (empty = none)" = "Чёрный список для торрентов: файл или адрес https:// (пусто = нет)";
+"Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day." = "Торренты никогда не подключаются к адресам из этого списка. Подходят списки P2P, DAT и CIDR, в том числе .gz. Список по адресу загружается заново раз в день.";
+"The blocklist address must start with https://" = "Адрес чёрного списка должен начинаться с https://";
+"The blocklist file was not found." = "Файл чёрного списка не найден.";

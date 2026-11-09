@@ -178,6 +178,9 @@
     "Open-source licenses": "开源许可证",
     "Language": "语言",
     "Same as the system": "跟随系统",
-    "Support the Project": "支持本项目"
+    "Support the Project": "支持本项目",
+    "VPN only": "仅限 VPN",
+    "Download only through a VPN. If the VPN disconnects, downloads stop instead of using another connection.": "仅通过 VPN 下载。如果 VPN 断开，下载会停止，而不会改用其他连接。",
+    "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "正在等待 VPN。若要不使用 VPN 下载，请在设置中关闭“仅限 VPN”。"
   }
 }
