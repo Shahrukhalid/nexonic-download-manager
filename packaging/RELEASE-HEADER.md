@@ -1,6 +1,6 @@
-# Nexonic Download Manager 0.24.0
+# Nexonic Download Manager 0.25.0
 
-**RSS feeds, more archive types and an optional debrid account (Windows and Linux).** Tasks → RSS Feeds downloads new items that match your rules; finished .7z, .rar and .tar files unpack like .zip; Options → Connection has a debrid account (your own key, off by default) and a speed limit while you use the computer. `ndm --mcp` lets assistant apps manage downloads. Includes 0.23.0 (Android QR scanner and torrent blocklist).
+**Manage downloads from your phone, a server for NAS and Docker, image galleries and your own categories (Windows and Linux).** Options → Remote pairs a phone with a QR code (off by default); `nexonic-server` and the Docker image run without a window (docs/SERVER.md); Tasks → Download Images from Page; Options → Categories; Check Torrent Files Again; Help → Network Diagnostics; interface size; smaller Mac, Linux and Android downloads. Includes 0.24.0 (RSS feeds, more archive types, optional debrid).
 
 **Mac, first launch:** macOS says it *could not verify* the app because it's free and not sold through Apple. Click **Done**, open **System Settings → Privacy & Security**, click **Open Anyway**, then **Open Anyway** again and enter your Mac password. Only once; updates installed with **Update Now** open without a warning. [Pictures of each step](https://github.com/Shahrukhalid/nexonic-download-manager#first-launch-on-mac)
 

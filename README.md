@@ -198,6 +198,8 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
 
 ## What's new
 
+- **0.25.0: manage downloads from your phone, a server for NAS and Docker, image galleries and your own categories**
+  (Windows and Linux), Network Diagnostics, interface size, and smaller Mac, Linux and Android downloads.
 - **0.20.1: Support the Project** in the Help menu and the About window on every app (Settings → About on phones).
 - **0.20.0: 15 languages, chosen in every app.** Chinese (Simplified and Traditional), Japanese, Korean, Russian,
   Indonesian and Turkish join Arabic, French, German, Hindi, Portuguese, Spanish and Urdu, on every platform and in
