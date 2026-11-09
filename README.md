@@ -141,6 +141,14 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
   Pause/Resume/Cancel. Several downloads run side by side, each in its own window.
 - **Scheduler and queues:** start at night, stop in the morning, sleep or shut down when done.
 - **Batch downloads** (`img[001-100].jpg`), a **site grabber**, and **clipboard** detection.
+- **Image galleries:** Download Images from Page lists a page's pictures (full-size versions where the page links to
+  them) and saves the ones you tick in a folder named after the page (Windows and Linux).
+- **Your own categories:** file types and the folder they go to, for example `Comics: cbz cbr > Comics` (Options →
+  Categories on Windows and Linux).
+- **Manage downloads from your phone:** turn on Options → Remote, scan the code, and the phone lists, adds, stops and
+  resumes downloads on the same network (Windows and Linux). **Server and Docker** for NAS boxes and home servers,
+  without a window: [docs/SERVER.md](docs/SERVER.md).
+- **Network Diagnostics** (Help menu) checks a link step by step, and downloads can use **IPv4 only or IPv6 only**.
 - **Speed limits**, proxy, password-protected downloads and checksum checks.
 - **Torrents on every platform**, like a BitTorrent client: open a magnet link or a `.torrent` file, choose the files,
   and see seeds, peers, speeds, trackers and pieces. Change limits, connections and upload slots while it runs. Every

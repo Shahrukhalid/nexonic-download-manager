@@ -182,6 +182,12 @@ public sealed class AppSettings
     /// new name, so earlier installs get it too).</summary>
     [System.Text.Json.Serialization.JsonPropertyName("CategoryFolders")]
     public bool SortIntoCategoryFolders { get; set; } = true;
+    /// <summary>The user's own categories (file types and their folder), checked before the built-in types.</summary>
+    public List<CustomCategory> CustomCategories { get; set; } = new();
+    /// <summary>Size of the interface in percent (100 = normal, 75 to 200).</summary>
+    public int InterfaceScale { get; set; } = 100;
+    /// <summary>Optional access from phones and other devices on this network (off by default).</summary>
+    public RemoteSettings Remote { get; set; } = new();
     public bool Notifications { get; set; } = true;
     public bool MonitorClipboard { get; set; } = true;
     public string ClipboardTypes { get; set; } = FileTypes.DefaultList;

@@ -1,3 +1,24 @@
+## Unreleased
+
+- **Remote management (Windows and Linux, off by default):** Options → Remote, then Pair a Phone. The phone's camera opens
+  a page that lists, adds, stops, resumes and removes downloads. Only paired devices get in (the key travels in the
+  code, never in a request line), wrong keys are slowed down, and Unpair All Devices makes a new key.
+- **Server for NAS and Docker:** `nexonic-server` runs without a window and prints the pairing code; `docker/` has the
+  image and a compose file (docs/SERVER.md).
+- **Download Images from Page** (Tasks menu, Ctrl+Shift+I): the pictures of one page, full-size where it links to them,
+  saved in a folder named after the page; the page is sent as the referrer.
+- **Your own categories** (Options → Categories): one per line, `Name: types > folder`; they come before the built-in
+  types.
+- **Check Torrent Files Again** in a torrent's menu: every piece on disk is checked and damaged ones are downloaded again.
+- **Network Diagnostics** (Help menu): name lookup, connection, secure connection and the server's answer for one link,
+  with your settings. **Internet addresses** (Options → Connection): IPv4 and IPv6, IPv4 only or IPv6 only.
+- **Interface size** (Options → General, 75 % to 200 %), and names for screen readers on the toolbar, search box, lists
+  and new windows.
+- **Smaller downloads:** the Android app keeps only its own 15 languages of the libraries' texts, and the Mac app is
+  compiled for size.
+- **Browser stores:** `scripts/build-extensions.py` also makes the Chrome Web Store, Edge Add-ons and addons.mozilla.org
+  uploads (build/store/), and `npm test` checks the stores' rules (docs/STORES.md).
+
 ## 0.24.0
 
 - **RSS feeds with download rules** (Windows and Linux, Tasks → RSS Feeds): add an RSS or Atom feed, the words its

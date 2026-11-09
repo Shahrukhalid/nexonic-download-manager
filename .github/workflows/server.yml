@@ -1,0 +1,41 @@
+name: Server
+on:
+  push:
+    branches: [main]
+    paths: ["linux/Server/**", "linux/Desktop/**", "windows/Core/**", "docker/**", ".github/workflows/server.yml"]
+  pull_request:
+    paths: ["linux/Server/**", "linux/Desktop/**", "windows/Core/**", "docker/**", ".github/workflows/server.yml"]
+permissions:
+  contents: read
+env:
+  DOTNET_NOLOGO: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+jobs:
+  server:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: "8.0.x"
+      - name: Build
+        run: dotnet build linux/Server/Server.csproj -c Release
+      - name: Start, pair and use the remote API
+        run: |
+          export XDG_DATA_HOME="$RUNNER_TEMP/data" NDM_DOWNLOADS="$RUNNER_TEMP/downloads" NDM_HOST=127.0.0.1
+          dotnet run --no-build -c Release --project linux/Server/Server.csproj > server.log 2>&1 &
+          for i in $(seq 1 30); do grep -q 'http://127.0.0.1:47813/#k=' server.log && break; sleep 1; done
+          URL="$(grep -o 'http://127.0.0.1:47813/#k=[^ ]*' server.log | head -1)"
+          KEY="$(python3 -c 'import sys,urllib.parse;print(urllib.parse.unquote(sys.argv[1].split("#k=")[1]))' "$URL")"
+          curl -fsS http://127.0.0.1:47813/ | grep -q '<title>Nexonic Download Manager</title>'
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:47813/v1/status)" = 401
+          test "$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $KEY" -H 'Origin: http://evil.example' http://127.0.0.1:47813/v1/status)" = 403
+          curl -fsS -H "Authorization: Bearer $KEY" http://127.0.0.1:47813/v1/status | grep -q '"total"'
+          curl -fsS -H "Authorization: Bearer $KEY" -H 'Content-Type: application/json' -d '{"url":"https://github.com/Shahrukhalid/nexonic-download-manager/raw/main/VERSION"}' http://127.0.0.1:47813/v1/downloads | grep -q '"ids"'
+          for i in $(seq 1 30); do ls "$NDM_DOWNLOADS" 2>/dev/null | grep -q VERSION && break; sleep 1; done
+          find "$NDM_DOWNLOADS" -name 'VERSION*' | grep -q .
+          kill %1; wait || true
+          cat server.log
+      - name: Docker image
+        run: docker build -f docker/Dockerfile -t nexonic-server:test . && docker run --rm nexonic-server:test --version

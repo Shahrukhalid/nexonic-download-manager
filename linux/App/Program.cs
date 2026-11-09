@@ -28,8 +28,24 @@ static class Program
             return 0;
         }
         App.Single = single;
+        ApplyInterfaceScale();
         App.StartedForInbox = args.Contains("--inbox");
         return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args, Avalonia.Controls.ShutdownMode.OnExplicitShutdown);
+    }
+
+    /// <summary>Options → General → Interface size: the whole interface is drawn larger or smaller (read when the app starts).
+    /// A scale the user set for Avalonia apps themselves is kept.</summary>
+    static void ApplyInterfaceScale()
+    {
+        if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AVALONIA_GLOBAL_SCALE_FACTOR"))) return;
+        try
+        {
+            if (!File.Exists(AppPaths.Settings)) return;
+            using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(AppPaths.Settings));
+            if (doc.RootElement.TryGetProperty("InterfaceScale", out var v) && v.TryGetInt32(out var percent) && percent is >= 75 and <= 200 and not 100)
+                Environment.SetEnvironmentVariable("AVALONIA_GLOBAL_SCALE_FACTOR", (percent / 100.0).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
+        catch (Exception e) when (e is IOException or System.Text.Json.JsonException or UnauthorizedAccessException) { }
     }
 
     public static AppBuilder BuildAvaloniaApp() => AppBuilder.Configure<App>().UsePlatformDetect().WithInterFont().LogToTrace();

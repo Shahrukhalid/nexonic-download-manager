@@ -225,6 +225,18 @@ public sealed class TorrentTransfer : IDownloader
         try { Running?.Invoke(new { action = "reannounce", id = "payload" }); }
         catch (Exception e) when (e is ObjectDisposedException or InvalidOperationException) { }
     }
+    /// <summary>Checks every downloaded piece again; damaged or missing pieces are downloaded again. False when not running.</summary>
+    public bool Recheck()
+    {
+        try { if (Running is not { } engine) return false; engine.Invoke(new { action = "recheck", id = "payload" }); return true; }
+        catch (Exception e) when (e is ObjectDisposedException or InvalidOperationException) { return false; }
+    }
+    /// <summary>For a stopped torrent: forgets the saved progress, so every piece on disk is checked when it starts again.</summary>
+    public static void ForgetProgress(DownloadRecord r)
+    {
+        try { File.Delete(Path.Combine(AppPaths.Parts, r.Id.ToString("N"), "torrent.resume")); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+        if (r.Torrent is { } t) { t.PayloadComplete = false; t.CompletionNotified = false; t.Sha256.Clear(); }
+    }
     string ResumePath => Path.Combine(AppPaths.Parts, Record.Id.ToString("N"), "torrent.resume");
     readonly CancellationTokenSource cancellation = new();
     public TorrentTransfer(DownloadRecord record, DownloadContext context) { Record = record; this.context = context; }

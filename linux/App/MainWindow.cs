@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
@@ -90,6 +91,7 @@ public sealed class MainWindow : Window
         Shortcut(Key.T, KeyModifiers.Control | KeyModifiers.Shift, OpenTorrents);
         Shortcut(Key.B, KeyModifiers.Control | KeyModifiers.Shift, OpenBatch);
         Shortcut(Key.G, KeyModifiers.Control | KeyModifiers.Shift, OpenGrabber);
+        Shortcut(Key.I, KeyModifiers.Control | KeyModifiers.Shift, () => _ = Dialogs.Gallery(this, manager));
         Shortcut(Key.Q, KeyModifiers.Control, manager.RequestQuit);
         Shortcut(Key.L, KeyModifiers.Control | KeyModifiers.Shift, () => _ = OpenPlaylist(""));
         Shortcut(Key.L, KeyModifiers.Control, OpenLibrary);
@@ -254,6 +256,7 @@ public sealed class MainWindow : Window
             Item("Add _Torrent…", OpenTorrents, "Ctrl+Shift+T"),
             Item("Add _Batch Download…", OpenBatch, "Ctrl+Shift+B"),
             Item("Site _Grabber…", OpenGrabber, "Ctrl+Shift+G"),
+            Item("Download _Images from Page…", () => _ = Dialogs.Gallery(this, manager), "Ctrl+Shift+I"),
             Item("Add _Playlist or Channel…", () => _ = OpenPlaylist(""), "Ctrl+Shift+L"),
             Item("_RSS Feeds…", () => _ = Dialogs.Feeds(this, manager, feeds, AddFeedItem)),
             Line(),
@@ -282,6 +285,7 @@ public sealed class MainWindow : Window
         menu.Items.Add(Group("_View", showToolbarItem, showNamesItem));
         menu.Items.Add(Group("_Help",
             Item("_Help", () => HelpWindows.ShowHelp(this), "F1"),
+            Item("Network _Diagnostics…", () => _ = Dialogs.Diagnostics(this, manager, One?.Record.Url)),
             Item("Support the Project", () => LinuxSystem.Open(HelpWindows.Support)),
             Item("_About Nexonic Download Manager", () => _ = HelpWindows.ShowAbout(this))));
         return menu;
@@ -333,6 +337,9 @@ public sealed class MainWindow : Window
                 },
             };
             ToolTip.SetTip(b, tip);
+            // Screen readers announce the button's name and what it does, also when the names under the icons are hidden.
+            AutomationProperties.SetName(b, caption);
+            AutomationProperties.SetHelpText(b, tip);
             b.Click += (_, _) => click();
             toolbar.Children.Add(b);
             return b;
@@ -366,6 +373,7 @@ public sealed class MainWindow : Window
         searchBox.Children.Add(searchIcon);
         searchBox.Children.Add(search);
         ToolTip.SetTip(search, "Search by file name or link (Ctrl+F)");
+        AutomationProperties.SetName(search, "Search downloads");
         DockPanel.SetDock(searchBox, Dock.Right);
         top.Children.Add(searchBox);
         top.Children.Add(toolbar);
@@ -767,6 +775,7 @@ public sealed class MainWindow : Window
         Item("Stop", () => { foreach (var r in Selected) manager.Pause(r); });
         Item("Refresh Link…", () => { if (One is { } r) _ = Dialogs.RefreshLink(this, manager, r); });
         var torrentFiles = Item("Torrent Files…", () => { if (One is { } r && r.Record.Torrent != null) _ = Dialogs.TorrentFiles(this, manager, r); });
+        var recheck = Item("Check Torrent Files Again", () => { if (One is { } r && r.Record.Torrent != null) manager.Recheck(r); });
         Item("Properties…", () => { if (One is { } r) _ = Dialogs.Properties(this, manager, r); });
         Item("Copy Link", () => { if (One is { } r) _ = Clipboard?.SetTextAsync(r.Record.Url); });
         Item("Show QR Code…", () => { if (Selected.Count > 0) _ = Dialogs.ShowQr(this, Selected.Select(r => r.Record.Url).ToList()); });
@@ -777,6 +786,7 @@ public sealed class MainWindow : Window
         menu.Opening += (_, _) =>
         {
             torrentFiles.IsEnabled = One?.Record.Torrent != null;
+            recheck.IsEnabled = One?.Record.Torrent is { MetadataPending: false };
             moveMenu.Items.Clear();
             foreach (var q in manager.Queues)
             {
