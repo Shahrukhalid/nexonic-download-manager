@@ -2,7 +2,7 @@ import XCTest
 @testable import NexonicCore
 
 final class GalleryEngineTests: XCTestCase {
-    let release = Data("""
+    private let releaseJSON = Data("""
         {"assets":[
           {"name":"gallery-dl_macos","digest":"sha256:A75F","browser_download_url":"https://github.com/gdl-org/builds/releases/download/x/gallery-dl_macos"},
           {"name":"gallery-dl_linux","digest":null,"browser_download_url":"https://github.com/gdl-org/builds/releases/download/x/gallery-dl_linux"},
@@ -10,11 +10,11 @@ final class GalleryEngineTests: XCTestCase {
         """.utf8)
 
     func testPicksOnlyChecksummedBuildsFromGitHub() {
-        let p = GalleryDl.pick(release, asset: "gallery-dl_macos")
+        let p = GalleryDl.pick(releaseJSON, asset: "gallery-dl_macos")
         XCTAssertEqual(p?.url.absoluteString, "https://github.com/gdl-org/builds/releases/download/x/gallery-dl_macos")
         XCTAssertEqual(p?.sha256, "a75f")
-        XCTAssertNil(GalleryDl.pick(release, asset: "gallery-dl_linux"))
-        XCTAssertNil(GalleryDl.pick(release, asset: "other"))
+        XCTAssertNil(GalleryDl.pick(releaseJSON, asset: "gallery-dl_linux"))
+        XCTAssertNil(GalleryDl.pick(releaseJSON, asset: "other"))
     }
 
     func testArgumentsAndOutput() {
