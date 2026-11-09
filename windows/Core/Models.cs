@@ -72,12 +72,14 @@ public sealed class DownloadRecord
     // Added in 0.26.0: Link Grabber packages (saved together, unpacked when every download in the package is done)
     public string? Package { get; set; }
     public bool? UnpackWhenDone { get; set; }
+    // Added in 0.26.0: a whole gallery saved by the gallery engine (SavedPath is its folder, StreamDone counts files)
+    public bool? Gallery { get; set; }
 
     /// <summary>The error text of a download the user canceled: it stays in the list, and Resume starts it again.</summary>
     public const string CanceledMessage = "Canceled";
     [System.Text.Json.Serialization.JsonIgnore]
     public bool IsCanceled => Status == DownloadStatus.Failed && Error == CanceledMessage;
-    public long Received { get { if (Torrent != null) return Torrent.Received; if (IsStream == true || SiteVideo == true) return StreamBytes ?? 0; lock (Segments) return Segments.Sum(s => s.Written); } }
+    public long Received { get { if (Torrent != null) return Torrent.Received; if (IsStream == true || SiteVideo == true || Gallery == true) return StreamBytes ?? 0; lock (Segments) return Segments.Sum(s => s.Written); } }
     public double Progress => IsStream == true
         ? (StreamTotal is > 0 ? Math.Min(1, (double)(StreamDone ?? 0) / StreamTotal.Value) : 0)
         : Size is > 0 ? Math.Min(1, (double)Received / Size.Value) : 0;

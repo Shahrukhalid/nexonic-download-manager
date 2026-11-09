@@ -519,7 +519,7 @@ public enum SiteVideoTools {
 
     private static func hex(_ data: Data) -> String { SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined() }
 
-    private static func fetch(_ request: URLRequest) -> (data: Data, response: URLResponse)? {
+    static func fetch(_ request: URLRequest) -> (data: Data, response: URLResponse)? {
         final class Box: @unchecked Sendable { var value: (data: Data, response: URLResponse)? }
         let done = DispatchSemaphore(value: 0)
         let box = Box()

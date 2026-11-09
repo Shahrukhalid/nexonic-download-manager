@@ -86,6 +86,8 @@ public struct DownloadRecord: Codable, Identifiable, Sendable {
     // Added in 0.6.3: the highest picture quality chosen for a video (nil = the best on offer)
     public var torrent: TorrentTask?
     public var maxHeight: Int?
+    // Added in 0.26.0: a whole gallery saved by the gallery engine (savedPath is its folder, streamDone counts files)
+    public var gallery: Bool?
 
     public init(url: URL, folder: URL, fileName: String? = nil, referrer: String? = nil, cookies: String? = nil,
                 userAgent: String? = nil) {
@@ -103,7 +105,7 @@ public struct DownloadRecord: Codable, Identifiable, Sendable {
         added = Date()
     }
 
-    public var received: Int64 { if let torrent { return torrent.metadata?.received ?? 0 }; return isStream == true || siteVideo == true ? (streamBytes ?? 0) : segments.reduce(0) { $0 + $1.written } }
+    public var received: Int64 { if let torrent { return torrent.metadata?.received ?? 0 }; return isStream == true || siteVideo == true || gallery == true ? (streamBytes ?? 0) : segments.reduce(0) { $0 + $1.written } }
     public var progress: Double {
         if isStream == true {
             guard let total = streamTotal, total > 0 else { return 0 }

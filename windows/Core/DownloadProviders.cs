@@ -1,6 +1,6 @@
 namespace Nexonic.Core;
 
-public enum DownloadEngine { Auto, File, Hls, Video, Torrent, Unsupported }
+public enum DownloadEngine { Auto, File, Hls, Video, Torrent, Unsupported, Gallery }
 
 /// <summary>Network-free routing. Unsupported protocols remain explicit rather than falling back to HTTP.</summary>
 public static class SmartDownload
@@ -35,13 +35,13 @@ public sealed class DownloadProviders
     readonly Dictionary<DownloadEngine, IDownloadProvider> providers;
     public DownloadProviders(IEnumerable<IDownloadProvider>? additional = null)
     {
-        providers = new IDownloadProvider[] { new FileProvider(), new HlsProvider(), new VideoProvider(), new TorrentProvider() }
+        providers = new IDownloadProvider[] { new FileProvider(), new HlsProvider(), new VideoProvider(), new TorrentProvider(), new GalleryProvider() }
             .Concat(additional ?? []).ToDictionary(p => p.Engine);
     }
     public IDownloadProvider For(DownloadEngine engine) => providers.TryGetValue(engine, out var p)
         ? p : throw new NotSupportedException($"No provider is installed for {engine}.");
     public IDownloader Create(DownloadRecord record, DownloadContext context) => For(EngineOf(record)).Create(record, context);
-    public static DownloadEngine EngineOf(DownloadRecord r) => r.Torrent != null ? DownloadEngine.Torrent
+    public static DownloadEngine EngineOf(DownloadRecord r) => r.Gallery == true ? DownloadEngine.Gallery : r.Torrent != null ? DownloadEngine.Torrent
         : r.SiteVideo == true ? DownloadEngine.Video : r.IsStream == true ? DownloadEngine.Hls : DownloadEngine.File;
 
     sealed class FileProvider : IDownloadProvider
@@ -61,6 +61,12 @@ public sealed class DownloadProviders
         public DownloadEngine Engine => DownloadEngine.Video;
         public ProviderCapabilities Capabilities => new(true, false, false, false);
         public IDownloader Create(DownloadRecord r, DownloadContext c) => new SiteVideoTransfer(r, c.CategoryFolders, c.GlobalSpeedLimitKBps, c.Proxy);
+    }
+    sealed class GalleryProvider : IDownloadProvider
+    {
+        public DownloadEngine Engine => DownloadEngine.Gallery;
+        public ProviderCapabilities Capabilities => new(true, false, false, false);
+        public IDownloader Create(DownloadRecord r, DownloadContext c) => new GalleryTransfer(r, c.CategoryFolders, c.GlobalSpeedLimitKBps, c.Proxy);
     }
     sealed class TorrentProvider : IDownloadProvider
     {

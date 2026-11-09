@@ -36,6 +36,7 @@ public static partial class Dialogs
         var folder = f.Folder(m.Settings.Folder);
         var ownFolder = f.Check("Save them in a folder named after the page", true);
         var queue = f.Queue(m, DownloadQueue.MainId);
+        var whole = f.Check("Save the whole gallery with the gallery engine (sites like Reddit, Pixiv, DeviantArt, Imgur; the engine is downloaded the first time)", false);
         CancellationTokenSource? cts = null;
         Uri? found = null;
         var pageName = "";
@@ -72,6 +73,19 @@ public static partial class Dialogs
         };
         void Go(bool startNow)
         {
+            if (whole.IsChecked == true)
+            {
+                var link = page.Text.Trim();
+                if (!new DownloadJob(link).IsValid) { status.Text = "Enter an http or https address."; return; }
+                var dir = folder.Text.Trim().Length > 0 ? folder.Text.Trim() : m.Settings.Folder;
+                m.Add(new DownloadJob(link) { FileName = pageName.Length > 0 ? pageName : null }, new AddOptions
+                {
+                    Folder = dir, Gallery = true, Start = startNow, QueueId = (queue.SelectedItem as DownloadQueue)?.Id ?? DownloadQueue.MainId,
+                });
+                cts?.Cancel();
+                f.Close();
+                return;
+            }
             var links = Boxes().Where(b => b.IsChecked == true).Select(b => (string)b.Content).ToList();
             if (links.Count == 0 || found == null) return;
             var target = folder.Text.Trim().Length > 0 ? folder.Text.Trim() : m.Settings.Folder;

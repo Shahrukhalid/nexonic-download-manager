@@ -117,6 +117,7 @@ final class DownloadManager: ObservableObject {
         var audioOnly = false
         var maxHeight: Int?  // a single video link's highest picture quality (nil = best)
         var infoJSON: String?  // a single video link's details, already looked up in the Add window
+        var gallery = false    // the whole gallery with the gallery engine
     }
 
     func add(links text: String, options: AddOptions = AddOptions()) {
@@ -132,11 +133,12 @@ final class DownloadManager: ObservableObject {
     @discardableResult
     func add(_ job: DownloadJob, options o: AddOptions = AddOptions()) -> UUID? {
         guard let url = job.validURL else { return nil }
-        let site = job.site == true || (SiteVideo.isSupported(url) && job.stream != true)
-        let stream = !site && (job.stream == true || HLS.isPlaylistURL(url))
+        let site = !o.gallery && (job.site == true || (SiteVideo.isSupported(url) && job.stream != true))
+        let stream = !o.gallery && !site && (job.stream == true || HLS.isPlaylistURL(url))
         var name = job.fileName.map(FileNames.sanitize) ?? FileNames.fromURL(url)
         if stream { name = (name as NSString).deletingPathExtension + ".mp4" }
         if site && job.fileName == nil { name = "Video from \(url.host ?? "site")" }
+        if o.gallery && job.fileName == nil { name = "Gallery from \(url.host ?? "site")" }
         // A link the user asked to refresh: keep what is downloaded and continue from the new address.
         if let i = items.firstIndex(where: { $0.awaitingRefresh == true && $0.fileName == name }) {
             items[i].url = url
@@ -158,7 +160,8 @@ final class DownloadManager: ObservableObject {
         let agent = (profile?.userAgent).flatMap { $0.isEmpty ? nil : $0 } ?? job.userAgent
         var record = DownloadRecord(url: url, folder: folder, fileName: name, referrer: job.referrer,
                                     cookies: job.cookies, userAgent: agent)
-        if TorrentSource.isTorrent(url.absoluteString) { record.torrent = TorrentTask(source: url.absoluteString) }
+        if !o.gallery, TorrentSource.isTorrent(url.absoluteString) { record.torrent = TorrentTask(source: url.absoluteString) }
+        if o.gallery { record.gallery = true }
         if stream { record.isStream = true }
         if site {
             record.siteVideo = true
@@ -418,7 +421,10 @@ final class DownloadManager: ObservableObject {
                 let profile = HostProfiles.match(settings.hostProfiles, item.url)
                 let proxy = profile?.proxy ?? settings.proxy
                 let connections = max(1, min(32, profile?.maxConnections ?? settings.connections))
-                if item.torrent != nil {
+                if item.gallery == true {
+                    t = GalleryTransfer(record: item, sortIntoCategories: settings.sortIntoCategoryFolders,
+                                        speedLimitKBps: settings.speedLimitKBps, proxy: proxy)
+                } else if item.torrent != nil {
                     t = TorrentTransfer(record: item, settings: settings)
                 } else if item.siteVideo == true {
                     t = SiteVideoTransfer(record: item, sortIntoCategories: settings.sortIntoCategoryFolders,
