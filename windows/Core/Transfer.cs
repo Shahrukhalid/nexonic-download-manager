@@ -46,9 +46,7 @@ public sealed class Transfer : IDownloader
 
     string TargetFolder()
     {
-        var folder = Record.Folder;
-        if (sortIntoCategories && FileCategories.Folder(Record.Category) is { } sub) folder = Path.Combine(folder, sub);
-        return folder;
+        return FileCategories.TargetFolder(Record.Folder, Record.FileName, sortIntoCategories);
     }
 
     readonly TransferOptions options;
@@ -507,12 +505,13 @@ public static class Network
         var doh = Options.DnsOverHttps.Trim();
         var useDoh = NetworkOptions.DnsOverHttpsUrlOk(doh) && (p.Mode is ProxyMode.None or ProxyMode.System) && (p.Mode == ProxyMode.None || !HasSystemProxy());
         var bind = Options.BindAdapter.Trim();
-        if (useDoh || bind.Length > 0)
+        var ipVersion = Options.IpVersion is "ipv4" or "ipv6" ? Options.IpVersion : "any";
+        if (useDoh || bind.Length > 0 || ipVersion != "any")
         {
             var timeout = h.ConnectTimeout;
             // With a chosen adapter every connection (also the one to a proxy) starts from its address, checked each time.
             h.ConnectCallback = (ctx, ct) => Adapters.ConnectAsync(bind.Length > 0 ? Adapters.AddressesOf(bind) : null, ctx.DnsEndPoint,
-                (host, t) => useDoh ? DnsOverHttps.ResolveAsync(doh, host, t) : Dns.GetHostAddressesAsync(host, t), timeout, ct);
+                (host, t) => Resolve(host, useDoh ? doh : null, ipVersion, t), timeout, ct);
         }
         var host = p.Host.Trim();
         switch (p.Mode)
@@ -529,6 +528,16 @@ public static class Network
                 break;
         }
         return h;
+    }
+
+    /// <summary>The server's addresses (from the system's DNS or a DNS-over-HTTPS server) in the chosen IP version.</summary>
+    public static async Task<IPAddress[]> Resolve(string host, string? doh, string ipVersion, CancellationToken ct)
+    {
+        var all = doh != null ? await DnsOverHttps.ResolveAsync(doh, host, ct) : await Dns.GetHostAddressesAsync(host, ct);
+        var usable = NetworkOptions.OfVersion(all, ipVersion);
+        if (usable.Length == 0 && all.Length > 0)
+            throw new HttpRequestException($"{host} has no {(ipVersion == "ipv6" ? "IPv6" : "IPv4")} address (Options → Connection → Internet addresses).");
+        return usable;
     }
 
     static bool HasSystemProxy()

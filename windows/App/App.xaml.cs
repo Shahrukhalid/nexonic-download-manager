@@ -76,9 +76,38 @@ public partial class App : Application
         manager.ClipboardLink += link => window.ShowAdd(link);
         manager.QuitRequested += () => Quit(manager);
         manager.ApplyAutomation(f => Dispatcher.InvokeAsync(f).Task);
+        manager.ApplyRemote();
+        ApplyScale(manager.Settings.InterfaceScale);
         Demo.Start(manager, window);
         Updater.Start(manager);
         _ = ListenAsync(manager);
+    }
+
+    static double scale = 1;
+    static bool scaleHooked;
+
+    /// <summary>Options → General → Interface size: every window's content is drawn larger or smaller (75 % to 200 %).
+    /// Open windows change at once; small windows that size themselves get wider with their content.</summary>
+    public static void ApplyScale(int percent)
+    {
+        scale = Math.Clamp(percent, 75, 200) / 100.0;
+        if (!scaleHooked)
+        {
+            scaleHooked = true;
+            EventManager.RegisterClassHandler(typeof(Window), FrameworkElement.LoadedEvent, new RoutedEventHandler((sender, _) =>
+            {
+                if (sender is not Window w) return;
+                Scale(w);
+                if (scale != 1 && w.SizeToContent != SizeToContent.Manual && !double.IsNaN(w.Width)) w.Width *= scale;
+            }));
+        }
+        foreach (Window w in Current.Windows) Scale(w);
+    }
+
+    static void Scale(Window w)
+    {
+        if (w.Content is FrameworkElement content)
+            content.LayoutTransform = scale == 1 ? System.Windows.Media.Transform.Identity : new System.Windows.Media.ScaleTransform(scale, scale);
     }
 
     /// <summary>Unzip when finished (Downloads menu): unpacks in the background, then reports on the UI thread.</summary>

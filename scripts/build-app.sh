@@ -7,6 +7,8 @@ cd "$(dirname "$0")/.."
 VERSION="$(cat VERSION)"
 APP="build/Nexonic Download Manager.app"
 ARCHS=()
+# Optimized for size instead of speed (the app spends its time waiting for the network, not computing): a smaller app.
+SIZE_FLAGS=(-Xswiftc -Osize)
 if [ "${UNIVERSAL:-1}" != "0" ] && xcodebuild -version >/dev/null 2>&1; then ARCHS=(--arch arm64 --arch x86_64); fi
 
 if [ "${#ARCHS[@]}" -gt 0 ]; then python3 scripts/build-torrent-apple.py --universal-mac; else python3 scripts/build-torrent-apple.py; fi
@@ -18,14 +20,14 @@ if [ "${#ARCHS[@]}" -gt 0 ]; then
     rm -rf "$BIN" && mkdir -p "$BIN"
     PARTS=()
     for TRIPLE in arm64-apple-macosx13.0 x86_64-apple-macosx13.0; do
-        swift build --package-path mac -c release --triple "$TRIPLE"
+        swift build --package-path mac -c release --triple "$TRIPLE" "${SIZE_FLAGS[@]}"
         PARTS+=("$(swift build --package-path mac -c release --triple "$TRIPLE" --show-bin-path)")
     done
     for P in NexonicDownloadManager nexonic-host; do
         lipo -create "${PARTS[0]}/$P" "${PARTS[1]}/$P" -output "$BIN/$P"
     done
 else
-    swift build --package-path mac -c release
+    swift build --package-path mac -c release "${SIZE_FLAGS[@]}"
     BIN="$(swift build --package-path mac -c release --show-bin-path)"
 fi
 

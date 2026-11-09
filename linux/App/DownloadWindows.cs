@@ -79,11 +79,11 @@ public static class DownloadWindows
         }
         var size = new TextBlock { VerticalAlignment = VerticalAlignment.Center, Text = job.Size is long s ? Row.Bytes(s) : site ? "Finding the qualities on offer…" : "Checking…" };
         AddRow("Size", size);
-        var category = new TextBlock { VerticalAlignment = VerticalAlignment.Center, Text = FileCategories.Of(name.Text ?? "").ToString() };
+        var category = new TextBlock { VerticalAlignment = VerticalAlignment.Center, Text = FileCategories.NameOf(name.Text ?? "") };
         AddRow("Category", category);
         name.TextChanged += (_, _) =>
         {
-            category.Text = FileCategories.Of(name.Text ?? "").ToString();
+            category.Text = FileCategories.NameOf(name.Text ?? "");
             badgeHost.Child = Ui.FileBadge(name.Text ?? "", 40);
         };
         var (folderRow, folder) = Form.FolderRow(w, m.Settings.Folder);

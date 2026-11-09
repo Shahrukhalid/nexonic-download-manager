@@ -23,6 +23,8 @@ android {
         // The video engine (Python, yt-dlp, ffmpeg) is native code. Debug builds: phones (ARM) plus x86_64 for emulators.
         // Release builds pick their processor types with the splits below (Gradle refuses both at once).
         if (!releaseBuild) ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64") }
+        // Only the app's own languages: the libraries' texts in about 80 other languages are left out of the APK.
+        resourceConfigurations += listOf("en", "ar", "de", "es", "fr", "hi", "in", "ja", "ko", "pt", "ru", "tr", "ur", "zh-rCN", "zh-rTW")
     }
 
     // The engine is about 50 MB per processor type, so the release is one APK per type: arm64 (almost every phone)

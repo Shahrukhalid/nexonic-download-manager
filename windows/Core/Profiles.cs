@@ -23,6 +23,8 @@ public sealed class NetworkOptions
     public string BindAdapter { get; set; } = "";
     /// <summary>Torrent blocklist: a local file or an https:// address (P2P, DAT or CIDR lines); empty = none.</summary>
     public string TorrentBlocklist { get; set; } = "";
+    /// <summary>Which internet addresses downloads use: "any" (IPv4 first), "ipv4" or "ipv6" only.</summary>
+    public string IpVersion { get; set; } = "any";
 
     public static readonly string[] DohServers = { "https://cloudflare-dns.com/dns-query", "https://dns.google/resolve" };
 
@@ -35,6 +37,15 @@ public sealed class NetworkOptions
         DnsOverHttps = DnsOverHttpsUrlOk(DnsOverHttps) ? DnsOverHttps.Trim() : "",
         BindAdapter = (BindAdapter ?? "").Trim(),
         TorrentBlocklist = (TorrentBlocklist ?? "").Trim(),
+        IpVersion = IpVersion is "ipv4" or "ipv6" ? IpVersion : "any",
+    };
+
+    /// <summary>The addresses a download may use with the chosen IP version (all of them for "any").</summary>
+    public static IPAddress[] OfVersion(IEnumerable<IPAddress> addresses, string version) => version switch
+    {
+        "ipv4" => addresses.Where(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).ToArray(),
+        "ipv6" => addresses.Where(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6).ToArray(),
+        _ => addresses.ToArray(),
     };
 
     public static bool DnsOverHttpsUrlOk(string? url) =>
@@ -214,6 +225,7 @@ public static class Backup
         s.Proxy.Password = "";
         s.TorrentsEnabled = false;
         s.Automation.Key = "";
+        s.Remote = new RemoteSettings();
         s.Debrid.Key = "";
         foreach (var p in s.HostProfiles) { p.Password = null; if (p.Proxy != null) p.Proxy.Password = ""; }
         foreach (var r in file.Downloads)
@@ -263,7 +275,9 @@ public static class Backup
             s.Network ??= new();
             s.Proxy.Password = "";
             s.Automation = new AutomationSettings();
+            s.Remote = new RemoteSettings();
             s.Debrid = new DebridSettings();
+            s.CustomCategories = CustomCategory.Clean(s.CustomCategories);
             s.TorrentsEnabled = false;
             s.HostProfiles = (s.HostProfiles ?? new()).Where(p => p != null).ToList();
             foreach (var p in s.HostProfiles) { p.Password = null; if (p.Proxy != null) p.Proxy.Password = ""; }

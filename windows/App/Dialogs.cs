@@ -547,6 +547,11 @@ public static partial class Dialogs
             SelectedIndex = Math.Max(0, languageChoices.IndexOf(s.Language)),
         };
         general.Children.Add(language);
+        general.Children.Add(new TextBlock { Text = "Interface size", Margin = new Thickness(0, 10, 0, 2) });
+        var scales = new[] { 75, 90, 100, 110, 125, 150, 175, 200 };
+        var scale = new ComboBox { ItemsSource = scales.Select(v => v + "%").ToList(), SelectedIndex = Array.IndexOf(scales, s.InterfaceScale) is var si && si >= 0 ? si : 2 };
+        System.Windows.Automation.AutomationProperties.SetName(scale, "Interface size");
+        general.Children.Add(scale);
         general.Children.Add(new TextBlock { Text = "Browser downloads", FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 14, 0, 0) });
         var askDialog = Tick(general, "Show the download window when a link is clicked in the browser", s.ShowDownloadDialog);
         var progressWin = Tick(general, "Show a progress window for each download I start", s.ShowProgressWindow);
@@ -583,6 +588,12 @@ public static partial class Dialogs
         var readTimeout = Box(connection, "Reconnect a part that receives nothing for (seconds)", net.ReadTimeoutSeconds.ToString());
         var doh = Box(connection, "DNS over HTTPS server (empty = the system's DNS)", net.DnsOverHttps);
         Hint(connection, "For example " + string.Join(" or ", NetworkOptions.DohServers) + ". Not used through a proxy.");
+        connection.Children.Add(new TextBlock { Text = "Internet addresses", Margin = new Thickness(0, 10, 0, 2) });
+        var ipVersions = new[] { "any", "ipv4", "ipv6" };
+        var ipVersion = new ComboBox { ItemsSource = new[] { "IPv4 and IPv6 (IPv4 first)", "IPv4 only", "IPv6 only" }, SelectedIndex = Math.Max(0, Array.IndexOf(ipVersions, net.IpVersion)), MinWidth = 220 };
+        System.Windows.Automation.AutomationProperties.SetName(ipVersion, "Internet addresses");
+        connection.Children.Add(ipVersion);
+        Hint(connection, "Use IPv4 only when a site or network has a broken IPv6 route. Help → Network Diagnostics checks a link step by step.");
         connection.Children.Add(new TextBlock { Text = "Network adapter", Margin = new Thickness(0, 10, 0, 2) });
         var adapterNames = Adapters.Choices(net.BindAdapter);
         var adapter = new ComboBox { ItemsSource = adapterNames.Select(n => n.Length == 0 ? L.T("Any adapter") : n).ToList(),
@@ -639,6 +650,40 @@ public static partial class Dialogs
         });
         sites.Children.Add(siteButtons);
         siteList.MouseDoubleClick += (_, _) => EditSelected();
+
+        var categories = Tab("Categories");
+        Hint(categories, "Your own file types and their folder, one per line: Name: types > folder. The folder can be a full path or a folder " +
+                         "inside the download folder (left out: the category's name). They come before the built-in types and apply even when " +
+                         "\"Put each type in its own folder\" is off. Example: Comics: cbz cbr cb7 > Comics");
+        var categoryText = new TextBox { Text = CustomCategory.ToLines(s.CustomCategories), AcceptsReturn = true, TextWrapping = TextWrapping.NoWrap,
+            Height = 200, Margin = new Thickness(0, 8, 0, 0), VerticalScrollBarVisibility = ScrollBarVisibility.Auto, FontFamily = new FontFamily("Consolas") };
+        System.Windows.Automation.AutomationProperties.SetName(categoryText, "Your categories, one per line");
+        categories.Children.Add(categoryText);
+
+        var remoteTab = Tab("Remote");
+        var rs = s.Remote;
+        var remoteOn = Tick(remoteTab, "Let my phone and other devices on this network manage downloads", rs.Enabled);
+        var remotePort = Box(remoteTab, "Port", rs.Port.ToString());
+        Hint(remoteTab, (m.RemoteProblem.Length > 0 ? m.RemoteProblem + " " : "") +
+                        "Off by default. After saving, choose Pair a Phone and scan the code with the phone's camera: the phone opens a page that lists, " +
+                        "adds, stops and resumes downloads. Only paired devices are let in. Use it on your home or office network only, not on public Wi-Fi " +
+                        "(the connection inside the network is not encrypted). Windows may ask to allow the app through the firewall.");
+        var remoteButtons = new WrapPanel { Margin = new Thickness(0, 8, 0, 0) };
+        var pair = new Button { Content = "Pair a Phone…", Padding = new Thickness(12, 3, 12, 3), Margin = new Thickness(0, 0, 6, 6) };
+        pair.Click += (_, _) =>
+        {
+            if (m.PairingUrl() is not { } url) { MessageBox.Show(f.Window, "Turn on remote access and choose Save first, then open Options again.", "Pair a Phone"); return; }
+            PairQr(f.Window, url);
+        };
+        var unpair = new Button { Content = "Unpair All Devices", Padding = new Thickness(12, 3, 12, 3), Margin = new Thickness(0, 0, 6, 6) };
+        unpair.Click += (_, _) =>
+        {
+            if (MessageBox.Show(f.Window, "Paired phones lose access until they scan the new code.", "Unpair All Devices", MessageBoxButton.OKCancel) != MessageBoxResult.OK) return;
+            m.ApplyRemote(newKey: true);
+        };
+        remoteButtons.Children.Add(pair);
+        remoteButtons.Children.Add(unpair);
+        remoteTab.Children.Add(remoteButtons);
 
         var backup = Tab("Backup");
         Hint(backup, "A backup holds your settings, site settings, queues and the downloads list. Passwords and cookies are never put in a backup.");
@@ -753,11 +798,22 @@ public static partial class Dialogs
             s.ScanCommand = scanCmd.Text.Trim();
             if (!string.IsNullOrWhiteSpace(doh.Text) && !NetworkOptions.DnsOverHttpsUrlOk(doh.Text)) { error.Text = "The DNS over HTTPS server must be an https:// address."; return; }
             if (Adapters.BlocklistProblem(blocklist.Text) is { } blockProblem) { error.Text = blockProblem; return; }
+            var (customList, categoryProblem) = CustomCategory.ParseLines(categoryText.Text);
+            if (categoryProblem != null) { error.Text = categoryProblem; tabs.SelectedItem = categories.Parent is ScrollViewer sv ? sv.Parent : null; return; }
+            var remotePortNumber = Number(remotePort.Text, -1);
+            if (remoteOn.IsChecked == true && remotePortNumber is < 1024 or > 65535) { error.Text = "The remote port must be between 1024 and 65535."; return; }
+            s.CustomCategories = customList;
+            s.InterfaceScale = scales[Math.Max(0, scale.SelectedIndex)];
+            s.Remote = new RemoteSettings
+            {
+                Enabled = remoteOn.IsChecked == true, Port = remotePortNumber is >= 1024 and <= 65535 ? remotePortNumber : 47813, Key = s.Remote.Key,
+            };
             s.Network = new NetworkOptions
             {
                 MinSegmentKB = Number(minSeg.Text, 512), Retries = Number(retries.Text, 6),
                 ConnectTimeoutSeconds = Number(connectTimeout.Text, 30), ReadTimeoutSeconds = Number(readTimeout.Text, 60), DnsOverHttps = doh.Text,
                 BindAdapter = adapterNames[Math.Max(0, adapter.SelectedIndex)], TorrentBlocklist = blocklist.Text,
+                IpVersion = ipVersions[Math.Max(0, ipVersion.SelectedIndex)],
             }.Clamped();
             s.HostProfiles = profiles;
             var apiPortNumber = Number(apiPort.Text, -1);
@@ -769,6 +825,8 @@ public static partial class Dialogs
             };
             m.ApplySettings(s);
             m.ApplyAutomation();
+            m.ApplyRemote();
+            App.ApplyScale(s.InterfaceScale);
             f.Close();
         }, isDefault: true);
         f.Show();
@@ -864,6 +922,30 @@ public static partial class Dialogs
         if (urls.Any(ShareLinks.LooksPrivate))
             f.Note("This link seems to include a private access key (for example a token or signature). Anyone who scans the code can use it until it expires, so share it only with your own phone.");
         f.Note("Only the links are shared: no cookies or passwords. Downloads that need you to be signed in may not work on the phone.");
+        f.AddButton("Close", f.Close, isDefault: true, isCancel: true);
+        f.Show();
+    }
+
+    /// <summary>The pairing code for remote access: the phone's camera opens the remote page already paired.</summary>
+    public static void PairQr(Window owner, string url)
+    {
+        var qr = QrCode.Encode(url);
+        var geometry = new GeometryGroup();
+        for (var y = 0; y < qr.Size; y++)
+            for (var x = 0; x < qr.Size; x++)
+                if (qr[x, y]) geometry.Children.Add(new RectangleGeometry(new Rect(x, y, 1, 1)));
+        var drawing = new DrawingGroup();
+        drawing.Children.Add(new GeometryDrawing(Brushes.White, null, new RectangleGeometry(new Rect(-4, -4, qr.Size + 8, qr.Size + 8))));
+        drawing.Children.Add(new GeometryDrawing(Brushes.Black, null, geometry));
+        var image = new Image { Source = new DrawingImage(drawing), Width = 300, Height = 300, Margin = new Thickness(0, 4, 0, 8) };
+        RenderOptions.SetEdgeMode(image, EdgeMode.Aliased);
+        System.Windows.Automation.AutomationProperties.SetName(image, "Pairing QR code");
+        var f = new Form(owner, "Pair a Phone", 420);
+        f.Body.Children.Add(image);
+        f.Note("Scan with your phone's camera while the phone is on the same network as this computer. The page it opens stays paired; add it to your home screen to open it again.");
+        f.Note("Anyone with this code can manage your downloads until you choose Unpair All Devices, so show it only to your own devices.");
+        var addresses = RemoteAccess.LanAddresses();
+        if (addresses.Count > 1) f.Note("Other addresses of this computer: " + string.Join(", ", addresses.Skip(1)));
         f.AddButton("Close", f.Close, isDefault: true, isCancel: true);
         f.Show();
     }
