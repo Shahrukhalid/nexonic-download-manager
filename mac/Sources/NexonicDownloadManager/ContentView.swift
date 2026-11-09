@@ -546,7 +546,7 @@ struct SegmentBar: View {
 }
 
 /// The download list on macOS 14 and later: right-click a column title to show or hide columns (Finished, Folder and
-/// Can Resume start hidden); the choice is remembered.
+/// Can Resume start hidden); the choice is remembered. Columns are built in small pieces so the compiler checks them quickly.
 @available(macOS 14.0, *)
 struct DownloadTable<MenuContent: View>: View {
     @EnvironmentObject var manager: DownloadManager
@@ -558,43 +558,95 @@ struct DownloadTable<MenuContent: View>: View {
 
     var body: some View {
         Table(rows, selection: $selection, columnCustomization: $columns) {
-            Group {
-                TableColumn("Name") { r in
-                    HStack(spacing: 6) {
-                        Image(nsImage: FileIcon.image(for: r.fileName)).resizable().frame(width: 16, height: 16)
-                        Text(r.fileName).lineLimit(1).truncationMode(.middle)
-                    }
-                }.customizationID("name")
-                TableColumn("Size") { r in Text(r.size.map(bytes) ?? "–") }.width(80).customizationID("size")
-                TableColumn("Progress") { r in
-                    ProgressView(value: r.status == .finished ? 1 : r.progress).progressViewStyle(.linear).tint(r.status == .finished ? .green : brand)
-                }.width(110).customizationID("progress")
-                TableColumn("Speed") { r in Text(r.status.isActive ? speed(manager.speeds[r.id] ?? 0) : "") }.width(90).customizationID("speed")
-                TableColumn("Time Left") { r in Text(r.status.isActive ? manager.eta(r) : "") }.width(70).customizationID("left")
-                TableColumn("Seeds / Peers") { r in
-                    Text(r.torrent?.metadata.map { r.status.isActive ? "\($0.seedsText) / \($0.peersText)" : "" } ?? "")
-                        .foregroundStyle(.secondary).monospacedDigit()
-                }.width(110).customizationID("peers")
-            }
-            Group {
-                TableColumn("Status") { r in
-                    HStack(spacing: 5) {
-                        Circle().fill(statusColor(r)).frame(width: 7, height: 7)
-                        Text(statusText(r)).foregroundStyle(r.status == .failed && !r.isCanceled ? .red : .primary)
-                    }
-                }.width(120).customizationID("status")
-                TableColumn("Queue") { r in Text(manager.queueName(r.queue)).foregroundStyle(.secondary) }.width(90).customizationID("queue")
-                TableColumn("Added") { r in Text(r.added, style: .date).foregroundStyle(.secondary) }.width(90).customizationID("added")
-                TableColumn("Finished") { r in
-                    if let f = r.finished { Text(f, style: .date).foregroundStyle(.secondary) } else { Text("") }
-                }.width(90).customizationID("finished").defaultVisibility(.hidden)
-                TableColumn("Folder") { r in
-                    Text(ListColumns.folder(r)).lineLimit(1).truncationMode(.middle).foregroundStyle(.secondary)
-                }.width(160).customizationID("folder").defaultVisibility(.hidden)
-                TableColumn("Can Resume") { r in Text(ListColumns.resume(r)).foregroundStyle(.secondary) }
-                    .width(80).customizationID("resume").defaultVisibility(.hidden)
-            }
+            mainColumns
+            moreColumns
         }
         .contextMenu(forSelectionType: UUID.self) { ids in menu(ids) } primaryAction: { ids in primary(ids) }
     }
+
+    @TableColumnBuilder<DownloadRecord, Never>
+    private var mainColumns: some TableColumnContent<DownloadRecord, Never> {
+        TableColumn("Name") { (r: DownloadRecord) in NameCell(record: r) }.customizationID("name")
+        TableColumn("Size") { (r: DownloadRecord) in Text(r.size.map(bytes) ?? "–") }.width(80).customizationID("size")
+        TableColumn("Progress") { (r: DownloadRecord) in ProgressCell(record: r) }.width(110).customizationID("progress")
+        TableColumn("Speed") { (r: DownloadRecord) in SpeedCell(record: r) }.width(90).customizationID("speed")
+        TableColumn("Time Left") { (r: DownloadRecord) in TimeLeftCell(record: r) }.width(70).customizationID("left")
+        TableColumn("Seeds / Peers") { (r: DownloadRecord) in PeersCell(record: r) }.width(110).customizationID("peers")
+    }
+
+    @TableColumnBuilder<DownloadRecord, Never>
+    private var moreColumns: some TableColumnContent<DownloadRecord, Never> {
+        TableColumn("Status") { (r: DownloadRecord) in StatusCell(record: r) }.width(120).customizationID("status")
+        TableColumn("Queue") { (r: DownloadRecord) in QueueCell(record: r) }.width(90).customizationID("queue")
+        TableColumn("Added") { (r: DownloadRecord) in DateCell(date: r.added) }.width(90).customizationID("added")
+        TableColumn("Finished") { (r: DownloadRecord) in DateCell(date: r.finished) }.width(90).customizationID("finished").defaultVisibility(.hidden)
+        TableColumn("Folder") { (r: DownloadRecord) in FolderCell(record: r) }.width(160).customizationID("folder").defaultVisibility(.hidden)
+        TableColumn("Can Resume") { (r: DownloadRecord) in Text(ListColumns.resume(r)).foregroundStyle(.secondary) }.width(80).customizationID("resume").defaultVisibility(.hidden)
+    }
+}
+
+private struct NameCell: View {
+    let record: DownloadRecord
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(nsImage: FileIcon.image(for: record.fileName)).resizable().frame(width: 16, height: 16)
+            Text(record.fileName).lineLimit(1).truncationMode(.middle)
+        }
+    }
+}
+
+private struct ProgressCell: View {
+    let record: DownloadRecord
+    var body: some View {
+        let done = record.status == .finished
+        ProgressView(value: done ? 1 : record.progress).progressViewStyle(.linear).tint(done ? Color.green : brand)
+    }
+}
+
+private struct SpeedCell: View {
+    @EnvironmentObject var manager: DownloadManager
+    let record: DownloadRecord
+    var body: some View { Text(record.status.isActive ? speed(manager.speeds[record.id] ?? 0) : "") }
+}
+
+private struct TimeLeftCell: View {
+    @EnvironmentObject var manager: DownloadManager
+    let record: DownloadRecord
+    var body: some View { Text(record.status.isActive ? manager.eta(record) : "") }
+}
+
+private struct PeersCell: View {
+    let record: DownloadRecord
+    var body: some View {
+        let text: String = record.torrent?.metadata.map { record.status.isActive ? "\($0.seedsText) / \($0.peersText)" : "" } ?? ""
+        Text(text).foregroundStyle(.secondary).monospacedDigit()
+    }
+}
+
+private struct StatusCell: View {
+    let record: DownloadRecord
+    var body: some View {
+        HStack(spacing: 5) {
+            Circle().fill(statusColor(record)).frame(width: 7, height: 7)
+            Text(statusText(record)).foregroundStyle(record.status == .failed && !record.isCanceled ? Color.red : Color.primary)
+        }
+    }
+}
+
+private struct QueueCell: View {
+    @EnvironmentObject var manager: DownloadManager
+    let record: DownloadRecord
+    var body: some View { Text(manager.queueName(record.queue)).foregroundStyle(.secondary) }
+}
+
+private struct DateCell: View {
+    let date: Date?
+    var body: some View {
+        if let date { Text(date, style: .date).foregroundStyle(.secondary) } else { Text("") }
+    }
+}
+
+private struct FolderCell: View {
+    let record: DownloadRecord
+    var body: some View { Text(ListColumns.folder(record)).lineLimit(1).truncationMode(.middle).foregroundStyle(.secondary) }
 }
