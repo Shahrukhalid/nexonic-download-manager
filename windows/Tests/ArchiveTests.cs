@@ -20,8 +20,6 @@ public sealed class ArchiveTests
                 using (var w = new StreamWriter(a.CreateEntry("../outside.txt").Open())) w.Write("x");
                 a.CreateEntry("empty/");
             }
-            Assert.True(Archives.IsZip(zip));
-            Assert.False(Archives.IsZip(Path.Combine(dir, "missing.zip")));
             var first = Archives.ExtractZip(zip);
             var second = Archives.ExtractZip(zip);
             Assert.Equal("Photos", Path.GetFileName(first));

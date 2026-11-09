@@ -68,9 +68,6 @@ public static class Archives
     /// <summary>Stops at this much unpacked data, so a "zip bomb" cannot fill the disk.</summary>
     public const long MaxUnpackedBytes = 64L * 1024 * 1024 * 1024;
 
-    public static bool IsZip(string? path) =>
-        !string.IsNullOrEmpty(path) && File.Exists(path) && string.Equals(Path.GetExtension(path), ".zip", StringComparison.OrdinalIgnoreCase);
-
     /// <summary>A folder named after the archive that does not exist yet: "Photos", then "Photos (2)"…</summary>
     public static string FolderFor(string zipPath)
     {
