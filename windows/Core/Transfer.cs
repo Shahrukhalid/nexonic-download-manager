@@ -649,10 +649,13 @@ public static class Network
 
     /// <summary>The server's addresses (from the system's DNS, or DNS over TLS / HTTPS when set) in the chosen IP version.
     /// With encrypted DNS there is never a fallback to the system's DNS: a failed lookup fails the connection.</summary>
-    public static async Task<IPAddress[]> Resolve(string host, string? doh, string ipVersion, CancellationToken ct)
+    public static Task<IPAddress[]> Resolve(string host, string? doh, string ipVersion, CancellationToken ct) => Resolve(host, doh, ipVersion, Options, ct);
+
+    /// <summary>The same with the given network settings instead of the app's.</summary>
+    public static async Task<IPAddress[]> Resolve(string host, string? doh, string ipVersion, NetworkOptions options, CancellationToken ct)
     {
         IPAddress[] all;
-        if (doh != null && Nexonic.Core.DnsOverTls.ParseServer(Options.DnsOverTls) is { } dot) all = await Nexonic.Core.DnsOverTls.ResolveAsync(dot, host, ct);
+        if (doh != null && Nexonic.Core.DnsOverTls.ParseServer(options.DnsOverTls) is { } dot) all = await Nexonic.Core.DnsOverTls.ResolveAsync(dot, host, ct);
         else if (doh != null && NetworkOptions.DnsOverHttpsUrlOk(doh)) all = await DnsOverHttps.ResolveAsync(doh, host, ct);
         else if (doh != null) throw new HttpRequestException("Encrypted DNS is set up but no server can be used (Options → Connection).");
         else all = await Dns.GetHostAddressesAsync(host, ct);
@@ -674,8 +677,8 @@ public static class Network
 
     /// <summary>Null when this kind of download may run with the DNS settings; else why not. With strict encrypted DNS,
     /// programs that look names up themselves (video and gallery engines, torrents) need a proxy that does the lookup.</summary>
-    public static string? StrictDnsBlocks(string what, ProxySettings proxy) =>
-        Options.StrictDns && Options.EncryptedDns && !(proxy.Mode is ProxyMode.Http or ProxyMode.Socks && proxy.Host.Trim().Length > 0)
+    public static string? StrictDnsBlocks(string what, ProxySettings proxy, NetworkOptions? options = null) =>
+        (options ?? Options) is var o && o.StrictDns && o.EncryptedDns && !(proxy.Mode is ProxyMode.Http or ProxyMode.Socks && proxy.Host.Trim().Length > 0)
             ? $"Strict encrypted DNS is on: {what} would look names up with the system's DNS. Set a proxy in Options → Connection, or turn strict mode off."
             : null;
 

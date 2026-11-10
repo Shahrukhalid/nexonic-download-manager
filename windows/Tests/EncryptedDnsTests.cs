@@ -133,21 +133,16 @@ public class EncryptedDnsTests
         Assert.Null(NetworkOptions.DnsProblem("https://1.1.1.1/dns-query", "", true));
         Assert.Null(NetworkOptions.DnsProblem("https://cloudflare-dns.com/dns-query", "1.1.1.1#cloudflare-dns.com", true));
         Assert.Contains("address#certificate", NetworkOptions.DnsProblem("", "dns.google", false));
-        var keep = Network.Options;
-        try
-        {
-            // A resolver that is not there: the lookup fails instead of quietly using the system's DNS.
-            Network.Options = new NetworkOptions { DnsOverTls = "127.0.0.1:1#dns.test", StrictDns = true }.Clamped();
-            Assert.True(Network.Options.StrictDns && Network.Options.EncryptedDns);
-            var failed = false;
-            try { await Network.Resolve("localhost", "", "any", CancellationToken.None); }
-            catch (Exception e) when (e is SocketException or HttpRequestException or IOException or OperationCanceledException) { failed = true; }
-            Assert.True(failed);
-            Assert.Contains("Strict encrypted DNS", Network.StrictDnsBlocks("the video engine", new ProxySettings()));
-            Assert.Null(Network.StrictDnsBlocks("the video engine", new ProxySettings { Mode = ProxyMode.Socks, Host = "127.0.0.1", Port = 9050 }));
-            Network.Options = new NetworkOptions { StrictDns = true }.Clamped();
-            Assert.False(Network.Options.StrictDns);  // strict without a resolver is not kept
-        }
-        finally { Network.Options = keep; }
+        // The app's shared settings are never changed here: other tests download at the same time.
+        // A resolver that is not there: the lookup fails instead of quietly using the system's DNS.
+        var strict = new NetworkOptions { DnsOverTls = "127.0.0.1:1#dns.test", StrictDns = true }.Clamped();
+        Assert.True(strict.StrictDns && strict.EncryptedDns);
+        var failed = false;
+        try { await Network.Resolve("localhost", "", "any", strict, CancellationToken.None); }
+        catch (Exception e) when (e is SocketException or HttpRequestException or IOException or OperationCanceledException) { failed = true; }
+        Assert.True(failed);
+        Assert.Contains("Strict encrypted DNS", Network.StrictDnsBlocks("the video engine", new ProxySettings(), strict));
+        Assert.Null(Network.StrictDnsBlocks("the video engine", new ProxySettings { Mode = ProxyMode.Socks, Host = "127.0.0.1", Port = 9050 }, strict));
+        Assert.False(new NetworkOptions { StrictDns = true }.Clamped().StrictDns);  // strict without a resolver is not kept
     }
 }
