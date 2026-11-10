@@ -4,9 +4,9 @@ using Xunit;
 
 namespace Nexonic.Tests;
 
-/// <summary>Custom categories, image galleries and the IP version setting.</summary>
+/// <summary>Custom categories, image galleries, IP version, remote access checks and pairing.</summary>
 [Collection("Settings")]
-public class GalleryAndCategoryTests
+public class ServerAndGalleryTests
 {
     [Fact]
     public void CustomCategoriesComeFirstAndKeepTheirFolder()
@@ -83,5 +83,41 @@ public class GalleryAndCategoryTests
         Assert.Equal(2, NetworkOptions.OfVersion(both, "any").Length);
         Assert.Equal("any", new NetworkOptions { IpVersion = "bogus" }.Clamped().IpVersion);
         Assert.Equal("ipv6", new NetworkOptions { IpVersion = "ipv6" }.Clamped().IpVersion);
+    }
+
+    [Fact]
+    public void RemoteAccessNeedsThePairingKeyAndRefusesOtherPages()
+    {
+        var key = AutomationSettings.NewKey();
+        Dictionary<string, string> H(params (string, string)[] h) => h.ToDictionary(x => x.Item1, x => x.Item2, StringComparer.OrdinalIgnoreCase);
+        Assert.Null(RemoteAccess.Check(H(("Host", "192.168.1.5:47813"), ("Authorization", "Bearer " + key)), key));
+        Assert.Null(RemoteAccess.Check(H(("Host", "192.168.1.5:47813"), ("Origin", "http://192.168.1.5:47813"), ("Authorization", "Bearer " + key)), key));
+        Assert.Equal(401, RemoteAccess.Check(H(("Host", "192.168.1.5:47813")), key)!.Value.Status);
+        Assert.Equal(401, RemoteAccess.Check(H(("Host", "192.168.1.5:47813"), ("Authorization", "Bearer wrong")), key)!.Value.Status);
+        Assert.Equal(403, RemoteAccess.Check(H(("Host", "192.168.1.5:47813"), ("Origin", "http://evil.example"), ("Authorization", "Bearer " + key)), key)!.Value.Status);
+        Assert.Equal(401, RemoteAccess.Check(H(("Host", "x"), ("Authorization", "Bearer short")), "short")!.Value.Status);
+    }
+
+    [Fact]
+    public void PairingAddressKeepsTheKeyInTheFragment()
+    {
+        var url = RemoteAccess.PairingUrl("192.168.1.5", 47813, "a+b/c");
+        Assert.Equal("http://192.168.1.5:47813/#k=a%2Bb%2Fc", url);
+        var art = RemoteAccess.TerminalQr(url);
+        Assert.True(art.Split('\n').Length > 10);
+        Assert.True(RemoteAccess.IsPrivate(IPAddress.Parse("192.168.1.5")));
+        Assert.True(RemoteAccess.IsPrivate(IPAddress.Parse("10.0.0.2")));
+        Assert.False(RemoteAccess.IsPrivate(IPAddress.Parse("8.8.8.8")));
+    }
+
+    [Fact]
+    public void BackupsNeverCarryThePairingKey()
+    {
+        var s = new AppSettings { Remote = new RemoteSettings { Enabled = true, Key = AutomationSettings.NewKey() } };
+        var json = Backup.Export(s, new[] { DownloadQueue.Main() }, Array.Empty<DownloadRecord>(), "test");
+        Assert.DoesNotContain(s.Remote.Key, json);
+        var back = Backup.Parse(json).Settings!;
+        Assert.False(back.Remote.Enabled);
+        Assert.Equal("", back.Remote.Key);
     }
 }

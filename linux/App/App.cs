@@ -84,6 +84,7 @@ public sealed class App : Application
         m.CollectInbox();
         CreateTray(m);
         m.ApplyAutomation(f => Dispatcher.UIThread.InvokeAsync(f).GetTask());
+        m.ApplyRemote();
         Single?.Listen(why => Dispatcher.UIThread.Post(() =>
         {
             m.CollectInbox();

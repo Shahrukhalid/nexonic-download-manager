@@ -225,6 +225,7 @@ public static class Backup
         s.Proxy.Password = "";
         s.TorrentsEnabled = false;
         s.Automation.Key = "";
+        s.Remote = new RemoteSettings();
         s.Debrid.Key = "";
         foreach (var p in s.HostProfiles) { p.Password = null; if (p.Proxy != null) p.Proxy.Password = ""; }
         foreach (var r in file.Downloads)
@@ -274,6 +275,7 @@ public static class Backup
             s.Network ??= new();
             s.Proxy.Password = "";
             s.Automation = new AutomationSettings();
+            s.Remote = new RemoteSettings();
             s.Debrid = new DebridSettings();
             s.CustomCategories = CustomCategory.Clean(s.CustomCategories);
             s.TorrentsEnabled = false;
