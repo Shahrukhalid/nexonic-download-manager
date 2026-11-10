@@ -1,12 +1,16 @@
 {
-    "version": "0.27.0",
-    "description": "Free, open-source download manager: up to 32 connections per file, pause and resume, queues and a scheduler, batch download, site grabber, browser extension and videos from YouTube and 1,000+ other sites.",
+    "version": "0.28.0",
+    "description": "Free, open-source download manager: up to 256 automatic connections per file, every file checked, pause and resume, queues and a scheduler, batch download, site grabber, browser extension and videos from YouTube and 1,000+ other sites.",
     "homepage": "https://github.com/Shahrukhalid/nexonic-download-manager",
     "license": "MIT OR Apache-2.0",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v0.27.0/NexonicDownloadManager-Windows-Portable.zip",
-            "hash": "50fbc0dbf5504ec3df126859dbc990ace20d9fd0641d7cbb36b7f528b230f2aa"
+            "url": "https://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v0.28.0/NexonicDownloadManager-Windows-Portable.zip",
+            "hash": "9ad3c09d521442506c79c882f31e4d0a243c4e765c6a3ac95528b7bdb991f926"
+        },
+        "arm64": {
+            "url": "https://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v0.28.0/NexonicDownloadManager-Windows-ARM64-Portable.zip",
+            "hash": "79590e4c6ab620694757208bfbe3be651a4cf26d5c836aab5e46d353ef3b8b1b"
         }
     },
     "bin": [
@@ -28,6 +32,9 @@
         "architecture": {
             "64bit": {
                 "url": "https://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v$version/NexonicDownloadManager-Windows-Portable.zip"
+            },
+            "arm64": {
+                "url": "https://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v$version/NexonicDownloadManager-Windows-ARM64-Portable.zip"
             }
         }
     }

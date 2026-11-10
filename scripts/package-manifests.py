@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parent.parent
 REPO = "Shahrukhalid/nexonic-download-manager"
 VERSION = sys.argv[1] if len(sys.argv) > 1 else (ROOT / "VERSION").read_text().strip()
 BASE = f"https://github.com/{REPO}/releases/download/v{VERSION}"
-DESCRIPTION = ("Free, open-source download manager: up to 32 connections per file, pause and resume, queues and a scheduler, "
+DESCRIPTION = ("Free, open-source download manager: up to 256 automatic connections per file, every file checked, pause and resume, queues and a scheduler, "
                "batch download, site grabber, browser extension and videos from YouTube and 1,000+ other sites.")
 
 with urllib.request.urlopen(f"{BASE}/latest.json", timeout=60) as r:
@@ -24,6 +24,10 @@ for need in ("NexonicDownloadManager-Windows-Setup.exe", "NexonicDownloadManager
         sys.exit(f"{need} has no checksum in v{VERSION}'s latest.json")
 
 ident = "Shahrukhalid.NexonicDownloadManager"
+# Windows on Arm files (from 0.28.0): listed when the release has them.
+ARM_SETUP, ARM_ZIP = "NexonicDownloadManager-Windows-ARM64-Setup.exe", "NexonicDownloadManager-Windows-ARM64-Portable.zip"
+ARM_INSTALLER = (f"  - Architecture: arm64\n    InstallerUrl: {BASE}/{ARM_SETUP}\n    InstallerSha256: {sha[ARM_SETUP].upper()}\n"
+                 if ARM_SETUP in sha else "")
 w = ROOT / "packaging" / "winget"
 w.mkdir(parents=True, exist_ok=True)
 head = "# Created with scripts/package-manifests.py\n"
@@ -48,7 +52,7 @@ Installers:
   - Architecture: x64
     InstallerUrl: {BASE}/NexonicDownloadManager-Windows-Setup.exe
     InstallerSha256: {sha['NexonicDownloadManager-Windows-Setup.exe'].upper()}
-ManifestType: installer
+{ARM_INSTALLER}ManifestType: installer
 ManifestVersion: 1.6.0
 """)
 (w / f"{ident}.locale.en-US.yaml").write_text(head + f"""PackageIdentifier: {ident}
@@ -84,13 +88,13 @@ scoop = {
     "architecture": {"64bit": {
         "url": f"{BASE}/NexonicDownloadManager-Windows-Portable.zip",
         "hash": sha["NexonicDownloadManager-Windows-Portable.zip"],
-    }},
+    }, **({"arm64": {"url": f"{BASE}/{ARM_ZIP}", "hash": sha[ARM_ZIP]}} if ARM_ZIP in sha else {})},
     "bin": [["nexonic-host.exe", "ndm"]],
     "shortcuts": [["NexonicDownloadManager.exe", "Nexonic Download Manager"]],
     "checkver": {"github": f"https://github.com/{REPO}"},
     "autoupdate": {"architecture": {"64bit": {
         "url": f"https://github.com/{REPO}/releases/download/v$version/NexonicDownloadManager-Windows-Portable.zip",
-    }}},
+    }, **({"arm64": {"url": f"https://github.com/{REPO}/releases/download/v$version/{ARM_ZIP}"}} if ARM_ZIP in sha else {})}},
 }
 (bucket / "nexonic-download-manager.json").write_text(json.dumps(scoop, indent=4) + "\n")
 

@@ -50,5 +50,5 @@ jobs:
           identifier: Shahrukhalid.NexonicDownloadManager
           version: ${{ steps.check.outputs.version }}
           release-tag: ${{ steps.check.outputs.tag }}
-          installers-regex: 'NexonicDownloadManager-Windows-Setup\.exe$'
+          installers-regex: 'NexonicDownloadManager-Windows-(ARM64-)?Setup\.exe$'
           token: ${{ secrets.WINGET_TOKEN }}
