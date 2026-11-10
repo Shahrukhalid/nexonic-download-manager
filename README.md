@@ -147,6 +147,9 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
   them) and saves the ones you tick in a folder named after the page (Windows and Linux).
 - **Your own categories:** file types and the folder they go to, for example `Comics: cbz cbr > Comics` (Options →
   Categories on Windows and Linux).
+- **Manage downloads from your phone:** turn on Options → Remote, scan the code, and the phone lists, adds, stops and
+  resumes downloads on the same network (Windows and Linux). **Server and Docker** for NAS boxes and home servers,
+  without a window: [docs/SERVER.md](docs/SERVER.md).
 - **Network Diagnostics** (Help menu) checks a link step by step, and downloads can use **IPv4 only or IPv6 only**.
 - **Speed limits**, proxy, password-protected downloads and checksum checks.
 - **Torrents on every platform**, like a BitTorrent client: open a magnet link or a `.torrent` file, choose the files,
