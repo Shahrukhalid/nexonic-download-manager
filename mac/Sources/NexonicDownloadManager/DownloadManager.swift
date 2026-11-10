@@ -35,9 +35,15 @@ final class DownloadManager: ObservableObject {
             if TorrentPolicy.unavailable(settings) != nil {
                 for item in items where item.torrent != nil && item.status.isActive { pause(item.id) }
             }
+            if settings.appearance != oldValue.appearance { Self.applyAppearance(settings.appearance) }
             saveSettings()
             schedule()
         }
+    }
+
+    /// Settings → General → Appearance: the same as macOS, light or dark.
+    static func applyAppearance(_ choice: String) {
+        NSApplication.shared.appearance = choice == "light" ? NSAppearance(named: .aqua) : choice == "dark" ? NSAppearance(named: .darkAqua) : nil
     }
 
     /// Cookies and passwords are kept in a private file (see FileStore); `stored` is what it holds now.
@@ -59,6 +65,10 @@ final class DownloadManager: ObservableObject {
     private let limiter = SpeedLimiter()
     private var timer: Timer?
     private var ticks = 0
+    private var dataCap = DataCap.load()
+    private var heldByCap: Set<UUID> = []
+    private var lastReceived: [UUID: Int64] = [:]
+    private var capHolding = false
 
     init() {
         try? FileManager.default.createDirectory(at: AppPaths.support, withIntermediateDirectories: true)
@@ -82,6 +92,7 @@ final class DownloadManager: ObservableObject {
         queues = qs
         for i in items.indices where items[i].status.isActive { items[i].status = .queued }  // interrupted by quit
         limiter.setLimit(bytesPerSecond: settings.speedLimitKBps * 1024)
+        Self.applyAppearance(settings.appearance)
         timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.tick() }
         }
@@ -118,6 +129,8 @@ final class DownloadManager: ObservableObject {
         var maxHeight: Int?  // a single video link's highest picture quality (nil = best)
         var infoJSON: String?  // a single video link's details, already looked up in the Add window
         var gallery = false    // the whole gallery with the gallery engine
+        var package: String?   // Link Grabber package name
+        var unpack = false     // unpack the package's archives when all of it is done
     }
 
     func add(links text: String, options: AddOptions = AddOptions()) {
@@ -162,6 +175,9 @@ final class DownloadManager: ObservableObject {
                                     cookies: job.cookies, userAgent: agent)
         if !o.gallery, TorrentSource.isTorrent(url.absoluteString) { record.torrent = TorrentTask(source: url.absoluteString) }
         if o.gallery { record.gallery = true }
+        if let p = o.package, !p.isEmpty { record.package = p; record.unpackWhenDone = o.unpack ? true : nil }
+        if let f = o.folder, o.package == nil, settings.rememberLastFolder,
+           f.standardizedFileURL.path != settings.startFolder.standardizedFileURL.path { settings.usedFolder(f) }
         if stream { record.isStream = true }
         if site {
             record.siteVideo = true
@@ -412,6 +428,7 @@ final class DownloadManager: ObservableObject {
     }
 
     private func schedule() {
+        if capHolding { return }  // the download limit is reached: nothing starts until the next period
         for q in queues where q.running {
             let limit = q.isMain ? settings.maxActive : q.maxActive
             var slots = max(1, limit) - items.filter { $0.queue == q.id && $0.status.isActive && $0.status != .seeding }.count
@@ -524,8 +541,10 @@ final class DownloadManager: ObservableObject {
         if let c = rec.checksumResult { body += " – \(c)" }
         post("Download finished", body)
         if settings.scanEnabled { scan(file) }
-        // Downloads › Unzip Finished .zip Files (off by default)
-        if UserDefaults.standard.bool(forKey: "extractZips"), file.pathExtension.lowercased() == "zip" { unzip(file) }
+        // Downloads › Unpack Finished Archives (off by default), and Link Grabber packages once all of them is done
+        for archive in LinkGrabber.toUnpack(rec, all: items, unpackAll: UserDefaults.standard.bool(forKey: "extractZips")) {
+            unzip(URL(fileURLWithPath: archive))
+        }
         if settings.showCompleteDialog { CompleteWindow.show(rec, manager: self) }
     }
 
@@ -541,10 +560,16 @@ final class DownloadManager: ObservableObject {
         try? f.setResourceValues(values)
     }
 
-    /// Unzips into a new folder named after the archive ("Photos", then "Photos (2)"…) with the system's ditto tool.
+    /// Unpacks into a new folder named after the archive ("Photos", then "Photos (2)"…): .zip with the system's ditto
+    /// tool, .7z, .rar and .tar (.gz, .bz2, .xz) with its tar tool.
     private func unzip(_ file: URL) {
         let dir = file.deletingLastPathComponent()
-        let base = file.deletingPathExtension().lastPathComponent.isEmpty ? "Archive" : file.deletingPathExtension().lastPathComponent
+        let zip = file.pathExtension.lowercased() == "zip"
+        var stem = file.lastPathComponent
+        for ext in [".tar.gz", ".tar.bz2", ".tar.xz", ".tgz", ".tbz2", ".txz", ".zip", ".7z", ".rar", ".tar", ".gz", ".bz2", ".xz"]
+        where stem.lowercased().hasSuffix(ext) { stem = String(stem.dropLast(ext.count)); break }
+        stem = stem.replacingOccurrences(of: #"\.part0*1$"#, with: "", options: [.regularExpression, .caseInsensitive])
+        let base = stem.isEmpty ? "Archive" : stem
         var folder = dir.appendingPathComponent(base, isDirectory: true)
         var n = 2
         while FileManager.default.fileExists(atPath: folder.path) {
@@ -554,8 +579,14 @@ final class DownloadManager: ObservableObject {
         let target = folder
         DispatchQueue.global().async {
             let p = Process()
-            p.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
-            p.arguments = ["-x", "-k", file.path, target.path]
+            if zip {
+                p.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
+                p.arguments = ["-x", "-k", file.path, target.path]
+            } else {
+                try? FileManager.default.createDirectory(at: target, withIntermediateDirectories: true)
+                p.executableURL = URL(fileURLWithPath: "/usr/bin/tar")
+                p.arguments = ["-x", "-f", file.path, "-C", target.path]
+            }
             let ok: Bool
             do {
                 try p.run()
@@ -649,8 +680,45 @@ final class DownloadManager: ObservableObject {
             runTimetable()
             checkQueuesDone()
         }
-        if ticks % 4 == 0 { persist() }
+        countData()
+        if ticks % 4 == 0 {
+            persist()
+            if settings.dataCapMB > 0 { dataCap.save() }
+        }
     }
+
+    /// Download limit: counts what arrived since the last tick; at the limit, downloads stop until the next period.
+    private func countData() {
+        var got: Int64 = 0
+        for item in items {
+            let now = item.received
+            if item.status.isActive, let before = lastReceived[item.id], now > before { got += now - before }
+            lastReceived[item.id] = now
+        }
+        guard settings.dataCapMB > 0 else { if capHolding { releaseCap() }; return }
+        if dataCap.roll(Date(), hours: settings.dataCapHours), capHolding { releaseCap() }
+        if capHolding, !dataCap.reached(limitMB: settings.dataCapMB) { releaseCap() }
+        guard dataCap.add(got, limitMB: settings.dataCapMB), !capHolding else { return }
+        capHolding = true
+        for item in items where item.status.isActive && item.status != .seeding {
+            heldByCap.insert(item.id)
+            pause(item.id)
+        }
+        dataCap.save()
+        let f = DateFormatter()
+        f.setLocalizedDateFormatFromTemplate("EEE HH:mm")
+        post("Download limit reached", "Downloads continue \(f.string(from: dataCap.nextPeriod(hours: settings.dataCapHours))) (Settings → Connection → Download limit).")
+    }
+
+    private func releaseCap() {
+        capHolding = false
+        for item in items where heldByCap.contains(item.id) && item.status == .paused { resume(item.id) }
+        heldByCap = []
+        schedule()
+    }
+
+    /// "512 MB of 2 GB used, resets Tue 14:00" while a download limit is set.
+    var dataCapStatus: String? { settings.dataCapMB > 0 ? dataCap.describe(limitMB: settings.dataCapMB, hours: settings.dataCapHours) : nil }
 
     func eta(_ item: DownloadRecord) -> String {
         guard let size = item.size, let speed = speeds[item.id], speed > 0 else { return "" }

@@ -139,7 +139,7 @@ struct DownloadInfoView: View {
     }
 
     private func setUp() {
-        folder = manager.settings.folder
+        folder = manager.settings.startFolder
         quality = job.audioOnly == true ? -1 : (job.maxHeight ?? 0)
         if let n = job.fileName, !n.isEmpty { name = FileNames.sanitize(n) }
         else if let url { name = isSiteVideo ? "Video from \(url.host ?? "site")" : FileNames.fromURL(url) }

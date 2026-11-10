@@ -88,6 +88,9 @@ public struct DownloadRecord: Codable, Identifiable, Sendable {
     public var maxHeight: Int?
     // Added in 0.26.0: a whole gallery saved by the gallery engine (savedPath is its folder, streamDone counts files)
     public var gallery: Bool?
+    // Added in 0.26.0: Link Grabber packages (saved together, unpacked when every download in the package is done)
+    public var package: String?
+    public var unpackWhenDone: Bool?
 
     public init(url: URL, folder: URL, fileName: String? = nil, referrer: String? = nil, cookies: String? = nil,
                 userAgent: String? = nil) {
@@ -194,7 +197,7 @@ public enum QueueClock {
 }
 
 public enum ProxyMode: String, Codable, CaseIterable, Sendable {
-    case system, none, http, socks
+    case system, none, http, socks, pac
 
     public var title: String {
         switch self {
@@ -202,6 +205,7 @@ public enum ProxyMode: String, Codable, CaseIterable, Sendable {
         case .none: return "No proxy"
         case .http: return "HTTP proxy"
         case .socks: return "SOCKS5 proxy"
+        case .pac: return "Automatic configuration script (PAC)"
         }
     }
 }
@@ -246,13 +250,37 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var hostProfiles: [HostProfile] = []
     // Added in 0.11.2: torrent connection settings
     public var torrentNetwork = TorrentNetwork()
+    // Added in 0.26.0
+    /// Download limit: at most this many MB (0 = no limit) every `dataCapHours` hours.
+    public var dataCapMB: Int = 0
+    public var dataCapHours: Int = 24
+    /// The Add windows start in the folder used last time (only after another folder was chosen).
+    public var rememberLastFolder: Bool = true
+    public var lastFolder: String = ""
+    /// "system", "light" or "dark".
+    public var appearance: String = "system"
+
+    /// The folder the Add windows start in.
+    public var startFolder: URL {
+        if rememberLastFolder, !lastFolder.isEmpty, FileManager.default.fileExists(atPath: lastFolder) {
+            return URL(fileURLWithPath: lastFolder, isDirectory: true)
+        }
+        return folder
+    }
+
+    /// Remembers a folder chosen in an Add window (the default folder clears it).
+    public mutating func usedFolder(_ chosen: URL?) {
+        guard rememberLastFolder, let chosen else { return }
+        lastFolder = chosen.standardizedFileURL.path == folder.standardizedFileURL.path ? "" : chosen.path
+    }
 
     public init() {}
 
     enum CodingKeys: String, CodingKey {
         case torrentsEnabled, connections, maxActive, speedLimitKBps, folder, sortIntoCategoryFolders = "categoryFolders", notifications, monitorClipboard,
              clipboardTypes, proxy, showCompleteDialog, playSound, markDownloads, scanEnabled, scanCommand,
-             showDownloadDialog, showProgressWindow, bringToFrontOnBrowserDownload, checkForUpdates, skippedVersion, network, hostProfiles, torrentNetwork
+             showDownloadDialog, showProgressWindow, bringToFrontOnBrowserDownload, checkForUpdates, skippedVersion, network, hostProfiles, torrentNetwork,
+             dataCapMB, dataCapHours, rememberLastFolder, lastFolder, appearance
     }
 
     /// Missing keys keep their defaults, so settings from older versions still load.
@@ -283,6 +311,11 @@ public struct AppSettings: Codable, Equatable, Sendable {
         network = try c.decodeIfPresent(NetworkOptions.self, forKey: .network) ?? d.network
         hostProfiles = try c.decodeIfPresent([HostProfile].self, forKey: .hostProfiles) ?? d.hostProfiles
         torrentNetwork = (try? c.decodeIfPresent(TorrentNetwork.self, forKey: .torrentNetwork)) ?? d.torrentNetwork
+        dataCapMB = try c.decodeIfPresent(Int.self, forKey: .dataCapMB) ?? d.dataCapMB
+        dataCapHours = try c.decodeIfPresent(Int.self, forKey: .dataCapHours) ?? d.dataCapHours
+        rememberLastFolder = try c.decodeIfPresent(Bool.self, forKey: .rememberLastFolder) ?? d.rememberLastFolder
+        lastFolder = try c.decodeIfPresent(String.self, forKey: .lastFolder) ?? d.lastFolder
+        appearance = try c.decodeIfPresent(String.self, forKey: .appearance) ?? d.appearance
     }
 }
 

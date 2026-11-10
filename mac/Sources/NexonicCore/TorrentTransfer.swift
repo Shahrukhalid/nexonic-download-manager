@@ -29,6 +29,7 @@ extension AppSettings {
             network.proxy = host.isEmpty || !(1...65535).contains(proxy.port) ? nil
                 : TorrentProxy(kind: proxy.mode == .socks ? .socks5 : .http, host: host, port: proxy.port, username: proxy.username, password: proxy.password)
         case .system: network.proxy = Self.systemProxy()
+        case .pac: network.proxy = nil  // proxy scripts decide per web address; torrents connect directly
         }
         return network
     }

@@ -41,7 +41,7 @@ extension FileCategory {
 }
 
 enum Sheet: Identifiable {
-    case add(AddRequest), batch, scheduler(String), grabber, properties(UUID), refresh(UUID), torrent(String), torrentSettings(UUID)
+    case add(AddRequest), batch, scheduler(String), grabber, linkGrabber, diagnostics(String), properties(UUID), refresh(UUID), torrent(String), torrentSettings(UUID)
 
     var id: String {
         switch self {
@@ -49,6 +49,8 @@ enum Sheet: Identifiable {
         case .batch: return "batch"
         case .scheduler: return "scheduler"
         case .grabber: return "grabber"
+        case .linkGrabber: return "link-grabber"
+        case .diagnostics: return "diagnostics"
         case .properties(let id): return "properties-\(id)"
         case .refresh(let id): return "refresh-\(id)"
         case .torrent: return "torrent"
@@ -194,7 +196,22 @@ struct ContentView: View {
         }
     }
 
-    private var table: some View {
+    @ViewBuilder private var table: some View {
+        if #available(macOS 14.0, *) {
+            DownloadTable(rows: shown, selection: $selection, menu: { rowMenu($0) }, primary: primaryAction)
+        } else {
+            legacyTable
+        }
+    }
+
+    /// Like IDM: a finished download opens its file; any other shows its progress window.
+    private func primaryAction(_ ids: Set<UUID>) {
+        guard let id = ids.first else { return }
+        if manager.items.first(where: { $0.id == id })?.status == .finished { manager.open(id) }
+        else { ProgressWindow.show(id, manager: manager) }
+    }
+
+    private var legacyTable: some View {
         Table(shown, selection: $selection) {
             TableColumn("Name") { r in
                 HStack(spacing: 6) {
@@ -252,6 +269,8 @@ struct ContentView: View {
         case .addTorrent: sheet = .torrent(TorrentSource.isTorrent(clipboardLink()) ? clipboardLink() : "")
         case .batch: sheet = .batch
         case .grabber: sheet = .grabber
+        case .linkGrabber: sheet = .linkGrabber
+        case .diagnostics: sheet = .diagnostics(selection.count == 1 ? manager.items.first { $0.id == selection.first }?.url.absoluteString ?? "" : "")
         case .scheduler: sheet = .scheduler(currentQueue)
         case .resume: selection.forEach(manager.resume)
         case .stop: selection.forEach(manager.pause)
@@ -275,6 +294,8 @@ struct ContentView: View {
         case .batch: BatchSheet(queueID: currentQueue)
         case .scheduler(let q): SchedulerSheet(selected: q)
         case .grabber: GrabberSheet(queueID: currentQueue)
+        case .linkGrabber: LinkGrabberSheet(queueID: currentQueue)
+        case .diagnostics(let link): DiagnosticsSheet(link: link)
         case .properties(let id): PropertiesSheet(id: id)
         case .refresh(let id): RefreshSheet(id: id)
         case .torrent(let source): TorrentSheet(queueID: currentQueue, initialSource: source)
@@ -292,6 +313,7 @@ struct ContentView: View {
             Button("Open") { manager.open(id) }
             Button("Show in Finder") { manager.reveal(id) }
             Button("Show Progress") { ProgressWindow.show(id, manager: manager) }
+            Button("Check Server…") { sheet = .diagnostics(manager.items.first { $0.id == id }?.url.absoluteString ?? "") }
             Divider()
         }
         Button("Resume") { ids.forEach(manager.resume) }
@@ -521,4 +543,110 @@ struct SegmentBar: View {
             }
         }
     }
+}
+
+/// The download list on macOS 14 and later: right-click a column title to show or hide columns (Finished, Folder and
+/// Can Resume start hidden); the choice is remembered. Columns are built in small pieces so the compiler checks them quickly.
+@available(macOS 14.0, *)
+struct DownloadTable<MenuContent: View>: View {
+    @EnvironmentObject var manager: DownloadManager
+    let rows: [DownloadRecord]
+    @Binding var selection: Set<UUID>
+    let menu: (Set<UUID>) -> MenuContent
+    let primary: (Set<UUID>) -> Void
+    @SceneStorage("downloadColumns") private var columns = TableColumnCustomization<DownloadRecord>()
+
+    var body: some View {
+        Table(rows, selection: $selection, columnCustomization: $columns) {
+            mainColumns
+            moreColumns
+        }
+        .contextMenu(forSelectionType: UUID.self) { ids in menu(ids) } primaryAction: { ids in primary(ids) }
+    }
+
+    @TableColumnBuilder<DownloadRecord, Never>
+    private var mainColumns: some TableColumnContent<DownloadRecord, Never> {
+        TableColumn("Name") { (r: DownloadRecord) in NameCell(record: r) }.customizationID("name")
+        TableColumn("Size") { (r: DownloadRecord) in Text(r.size.map(bytes) ?? "–") }.width(80).customizationID("size")
+        TableColumn("Progress") { (r: DownloadRecord) in ProgressCell(record: r) }.width(110).customizationID("progress")
+        TableColumn("Speed") { (r: DownloadRecord) in SpeedCell(record: r) }.width(90).customizationID("speed")
+        TableColumn("Time Left") { (r: DownloadRecord) in TimeLeftCell(record: r) }.width(70).customizationID("left")
+        TableColumn("Seeds / Peers") { (r: DownloadRecord) in PeersCell(record: r) }.width(110).customizationID("peers")
+    }
+
+    @TableColumnBuilder<DownloadRecord, Never>
+    private var moreColumns: some TableColumnContent<DownloadRecord, Never> {
+        TableColumn("Status") { (r: DownloadRecord) in StatusCell(record: r) }.width(120).customizationID("status")
+        TableColumn("Queue") { (r: DownloadRecord) in QueueCell(record: r) }.width(90).customizationID("queue")
+        TableColumn("Added") { (r: DownloadRecord) in DateCell(date: r.added) }.width(90).customizationID("added")
+        TableColumn("Finished") { (r: DownloadRecord) in DateCell(date: r.finished) }.width(90).customizationID("finished").defaultVisibility(.hidden)
+        TableColumn("Folder") { (r: DownloadRecord) in FolderCell(record: r) }.width(160).customizationID("folder").defaultVisibility(.hidden)
+        TableColumn("Can Resume") { (r: DownloadRecord) in Text(ListColumns.resume(r)).foregroundStyle(.secondary) }.width(80).customizationID("resume").defaultVisibility(.hidden)
+    }
+}
+
+private struct NameCell: View {
+    let record: DownloadRecord
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(nsImage: FileIcon.image(for: record.fileName)).resizable().frame(width: 16, height: 16)
+            Text(record.fileName).lineLimit(1).truncationMode(.middle)
+        }
+    }
+}
+
+private struct ProgressCell: View {
+    let record: DownloadRecord
+    var body: some View {
+        let done = record.status == .finished
+        ProgressView(value: done ? 1 : record.progress).progressViewStyle(.linear).tint(done ? Color.green : brand)
+    }
+}
+
+private struct SpeedCell: View {
+    @EnvironmentObject var manager: DownloadManager
+    let record: DownloadRecord
+    var body: some View { Text(record.status.isActive ? speed(manager.speeds[record.id] ?? 0) : "") }
+}
+
+private struct TimeLeftCell: View {
+    @EnvironmentObject var manager: DownloadManager
+    let record: DownloadRecord
+    var body: some View { Text(record.status.isActive ? manager.eta(record) : "") }
+}
+
+private struct PeersCell: View {
+    let record: DownloadRecord
+    var body: some View {
+        let text: String = record.torrent?.metadata.map { record.status.isActive ? "\($0.seedsText) / \($0.peersText)" : "" } ?? ""
+        Text(text).foregroundStyle(.secondary).monospacedDigit()
+    }
+}
+
+private struct StatusCell: View {
+    let record: DownloadRecord
+    var body: some View {
+        HStack(spacing: 5) {
+            Circle().fill(statusColor(record)).frame(width: 7, height: 7)
+            Text(statusText(record)).foregroundStyle(record.status == .failed && !record.isCanceled ? Color.red : Color.primary)
+        }
+    }
+}
+
+private struct QueueCell: View {
+    @EnvironmentObject var manager: DownloadManager
+    let record: DownloadRecord
+    var body: some View { Text(manager.queueName(record.queue)).foregroundStyle(.secondary) }
+}
+
+private struct DateCell: View {
+    let date: Date?
+    var body: some View {
+        if let date { Text(date, style: .date).foregroundStyle(.secondary) } else { Text("") }
+    }
+}
+
+private struct FolderCell: View {
+    let record: DownloadRecord
+    var body: some View { Text(ListColumns.folder(record)).lineLimit(1).truncationMode(.middle).foregroundStyle(.secondary) }
 }
