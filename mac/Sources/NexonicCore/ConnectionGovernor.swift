@@ -6,7 +6,7 @@ import Foundation
 /// Not thread-safe: a transfer uses it on its own queue.
 public final class ConnectionGovernor {
     public static let autoStart = 4
-    public static let sample: TimeInterval = 2
+    public static let sample: TimeInterval = 1
 
     private let auto: Bool
     private let ceiling: Int
@@ -15,6 +15,7 @@ public final class ConnectionGovernor {
     private var bytes: Int64 = 0
     private var sampleStart: Date
     private var bestRate: Double = 0
+    private var refusedAt = Int.max  // the number of connections a server refused at: Auto stays below it
 
     public init(auto: Bool, maximum: Int, now: Date = Date()) {
         self.auto = auto
@@ -25,7 +26,8 @@ public final class ConnectionGovernor {
 
     public func received(_ n: Int) { bytes += Int64(n) }
 
-    /// At the end of each sample: Auto adds connections while the speed is still rising (by at least 10 %). A fixed setting
+    /// At the end of each sample (one second): Auto doubles the connections while the speed is still rising (by at least 10 %),
+    /// staying below a number the server refused. A fixed setting
     /// slowly returns to its number after a back-off.
     public func tick(now: Date, running: Int) {
         let span = now.timeIntervalSince(sampleStart)
@@ -36,12 +38,13 @@ public final class ConnectionGovernor {
         guard now >= quietUntil else { return }
         if !auto { if allowed < ceiling { allowed = min(ceiling, allowed + max(1, allowed / 4)) }; return }
         guard running >= allowed else { return }  // not every allowed connection is busy yet: the sample says nothing
-        if rate > bestRate * 1.10 { bestRate = rate; allowed = min(ceiling, allowed + max(2, allowed / 2)) }
+        if rate > bestRate * 1.10 { bestRate = rate; allowed = max(allowed, min(ceiling, refusedAt - 1, allowed * 2)) }
     }
 
     /// The server refused a connection: halve (one always stays) and wait as long as it asked (30 s when it did not say,
     /// at most 10 minutes).
     public func refused(now: Date, retryAfter: TimeInterval?) {
+        refusedAt = min(refusedAt, max(2, allowed))
         allowed = max(1, allowed / 2)
         let wait = retryAfter.map { min(max($0, 1), 600) } ?? 30
         quietUntil = max(quietUntil, now.addingTimeInterval(wait))

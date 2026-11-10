@@ -52,6 +52,22 @@ public class ConnectionGovernorTests
     }
 
     [Fact]
+    public void AutoStaysBelowTheNumberAServerRefused()
+    {
+        var g = new ConnectionGovernor(auto: true, maximum: 64, T0);
+        var t = T0;
+        double speed = 1_000_000;
+        void Rising() { t += ConnectionGovernor.Sample; g.Received((long)(speed * ConnectionGovernor.Sample.TotalSeconds)); g.Tick(t, g.Allowed); speed *= 2; }
+        Rising();
+        Assert.Equal(8, g.Allowed);       // doubles while the speed keeps rising
+        g.Refused(t, TimeSpan.FromSeconds(1));
+        Assert.Equal(4, g.Allowed);
+        t += TimeSpan.FromSeconds(2);
+        for (var i = 0; i < 6; i++) Rising();
+        Assert.Equal(7, g.Allowed);       // grows again, but never back to the 8 that were refused
+    }
+
+    [Fact]
     public void AutoNeverStartsAboveItsMaximum()
     {
         Assert.Equal(2, new ConnectionGovernor(true, 2, T0).Allowed);

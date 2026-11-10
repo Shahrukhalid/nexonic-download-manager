@@ -13,7 +13,7 @@ final class ConnectionGovernorTests: XCTestCase {
         let grown = g.allowed
         XCTAssertGreaterThan(grown, ConnectionGovernor.autoStart)
         for _ in 0..<4 { g.received(speed * 2); t += 2; g.tick(now: t, running: g.allowed) }
-        XCTAssertEqual(g.allowed, grown + max(2, grown / 2))  // only the first flat sample still counted as a gain
+        XCTAssertEqual(g.allowed, min(64, grown * 2))  // only the first flat sample still counted as a gain
     }
 
     func testRefusalHalvesAndWaitsAsAsked() {
@@ -32,6 +32,21 @@ final class ConnectionGovernorTests: XCTestCase {
         g.refused(now: start + 9, retryAfter: 3600)
         XCTAssertEqual(g.quietUntil, start + 609)
         XCTAssertEqual(ConnectionGovernor(auto: false, maximum: 999).allowed, 256)
+    }
+
+    func testAutoStaysBelowTheNumberAServerRefused() {
+        let start = Date(timeIntervalSince1970: 0)
+        let g = ConnectionGovernor(auto: true, maximum: 64, now: start)
+        var t = start
+        var speed = 1_000_000
+        func rising() { t += 1; g.received(speed); g.tick(now: t, running: g.allowed); speed *= 2 }
+        rising()
+        XCTAssertEqual(g.allowed, 8)
+        g.refused(now: t, retryAfter: 1)
+        XCTAssertEqual(g.allowed, 4)
+        t += 2
+        for _ in 0..<6 { rising() }
+        XCTAssertEqual(g.allowed, 7)
     }
 
     func testReadsRetryAfter() {

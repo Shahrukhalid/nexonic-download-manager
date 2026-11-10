@@ -24,7 +24,7 @@ class ConnectionGovernorTest {
         val grown = g.allowedNow
         assertTrue("grew to $grown", grown > ConnectionGovernor.AUTO_START)
         repeat(4) { g.received(speed * 2); t += 2_000; g.tick(t, g.allowedNow) }  // flat speed: no more growth
-        assertEquals(grown + maxOf(2, grown / 2), g.allowedNow)                   // only the first flat sample still counted as a gain
+        assertEquals(minOf(64, grown * 2), g.allowedNow)                          // only the first flat sample still counted as a gain
         assertTrue(g.allowedNow <= 64)
     }
 
@@ -43,6 +43,20 @@ class ConnectionGovernorTest {
         g.refused(9_000, 3_600_000)
         assertEquals(609_000, g.quietUntilMs) // at most 10 minutes
         assertEquals(256, ConnectionGovernor(false, 999, 0).allowedNow)
+    }
+
+    @Test fun autoStaysBelowTheNumberAServerRefused() {
+        val g = ConnectionGovernor(auto = true, maximum = 64, now = 0)
+        var t = 0L
+        var speed = 1_000_000L
+        fun rising() { t += 1_000; g.received(speed); g.tick(t, g.allowedNow); speed *= 2 }
+        rising()
+        assertEquals(8, g.allowedNow)
+        g.refused(t, 1_000)
+        assertEquals(4, g.allowedNow)
+        t += 2_000
+        repeat(6) { rising() }
+        assertEquals(7, g.allowedNow)
     }
 
     @Test fun readsRetryAfter() {

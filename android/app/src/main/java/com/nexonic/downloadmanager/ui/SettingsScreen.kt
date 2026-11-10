@@ -147,12 +147,12 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
                 singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
             )
-            var schedule by remember { mutableStateOf(s.speedSchedule) }
-            val scheduleProblem = remember(schedule) { com.nexonic.downloadmanager.core.SpeedSchedule.parse(schedule).problem }
+            var speedSchedule by remember { mutableStateOf(s.speedSchedule) }
+            val scheduleProblem = remember(speedSchedule) { com.nexonic.downloadmanager.core.SpeedSchedule.parse(speedSchedule).problem }
             OutlinedTextField(
-                value = schedule,
+                value = speedSchedule,
                 onValueChange = { v ->
-                    schedule = v
+                    speedSchedule = v
                     if (com.nexonic.downloadmanager.core.SpeedSchedule.parse(v).problem == null) { s.speedSchedule = v; Downloads.applySpeedLimit() }
                 },
                 label = { Text(tr("Speed schedule (one rule per line)")) },

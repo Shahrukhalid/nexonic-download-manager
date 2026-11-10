@@ -10,7 +10,7 @@ import java.io.IOException
 class ConnectionGovernor(private val auto: Boolean, maximum: Int, now: Long) {
     companion object {
         const val AUTO_START = 4
-        const val SAMPLE_MS = 2_000L
+        const val SAMPLE_MS = 1_000L
 
         fun isRefusal(code: Int) = code == 429 || code == 503 || code == 509
 
@@ -31,13 +31,14 @@ class ConnectionGovernor(private val auto: Boolean, maximum: Int, now: Long) {
     private var sampleStart = now
     private var bestRate = 0.0
     private var quietUntil = 0L
+    private var refusedAt = Int.MAX_VALUE  // the number of connections a server refused at: Auto stays below it
 
     @get:Synchronized val allowedNow: Int get() = allowed
     @get:Synchronized val quietUntilMs: Long get() = quietUntil
 
     @Synchronized fun received(n: Long) { bytes += n }
 
-    /** At the end of each sample: Auto adds connections while the speed is still rising (by at least 10 %). A fixed setting
+    /** At the end of each sample: Auto doubles the connections while the speed is still rising (by at least 10 %), staying below a number the server refused. A fixed setting
      *  slowly returns to its number after a back-off. */
     @Synchronized fun tick(now: Long, running: Int) {
         if (now - sampleStart < SAMPLE_MS) return
@@ -46,12 +47,13 @@ class ConnectionGovernor(private val auto: Boolean, maximum: Int, now: Long) {
         if (now < quietUntil) return
         if (!auto) { if (allowed < ceiling) allowed = minOf(ceiling, allowed + maxOf(1, allowed / 4)); return }
         if (running < allowed) return  // not every allowed connection is busy yet: the sample says nothing
-        if (rate > bestRate * 1.10) { bestRate = rate; allowed = minOf(ceiling, allowed + maxOf(2, allowed / 2)) }
+        if (rate > bestRate * 1.10) { bestRate = rate; allowed = maxOf(allowed, minOf(ceiling, refusedAt - 1, allowed * 2)) }
     }
 
     /** The server refused a connection: halve (one always stays) and wait as long as it asked (30 s when it did not say,
      *  at most 10 minutes). */
     @Synchronized fun refused(now: Long, retryAfterMs: Long?) {
+        refusedAt = minOf(refusedAt, maxOf(2, allowed))
         allowed = maxOf(1, allowed / 2)
         val wait = retryAfterMs?.coerceIn(1_000L, 600_000L) ?: 30_000L
         if (now + wait > quietUntil) quietUntil = now + wait
