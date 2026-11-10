@@ -40,7 +40,7 @@
 "Close" = "Funga";
 "Command line" = "Umurongo:";
 "Connection" = "Ukwihuza";
-"Connections per download (1-32)" = "Iyimura 1.";
+"Connections per download (1-128)" = "Iyimura 1.";
 "Copy Link" = "Ihuza";
 "Delete" = "Gusiba...";
 "Delete Completed" = "Byuzuye";

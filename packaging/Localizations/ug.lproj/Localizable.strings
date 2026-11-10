@@ -40,7 +40,7 @@
 "Close" = "تاق";
 "Command line" = "بۇيرۇق قۇرى";
 "Connection" = "باغلىنىش";
-"Connections per download (1-32)" = "چۈشۈرگەندە باغلىنىش سانى (1-32)";
+"Connections per download (1-128)" = "چۈشۈرگەندە باغلىنىش سانى (1-128)";
 "Copy Link" = "قىستۇرمىنى كۆچۈرۈش";
 "Delete" = "ئۆچۈرۈش";
 "Delete Completed" = "پۈتۈشكەنلەرنى ئۆچۈرۈش";

@@ -40,7 +40,7 @@
 "Close" = "Închide";
 "Command line" = "Linie de comandă";
 "Connection" = "Conexiune";
-"Connections per download (1-32)" = "Conexiuni per descărcare (1-32)";
+"Connections per download (1-128)" = "Conexiuni per descărcare (1-128)";
 "Copy Link" = "Copiază link-ul";
 "Delete" = "Șterge";
 "Delete Completed" = "Ștergere finalizată";

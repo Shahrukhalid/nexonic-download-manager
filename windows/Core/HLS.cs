@@ -119,6 +119,7 @@ public static class FFmpeg
     {
         get
         {
+            if (EnginePaths.FFmpeg.Length > 0) return EnginePaths.FFmpegFile;
             var name = OperatingSystem.IsWindows() ? "ffmpeg.exe" : "ffmpeg";
             var dirs = new List<string> { AppContext.BaseDirectory };
             dirs.AddRange((Environment.GetEnvironmentVariable("PATH") ?? "").Split(System.IO.Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries));
@@ -142,5 +143,45 @@ public static class FFmpeg
             return p.ExitCode == 0;
         }
         catch { return false; }
+    }
+}
+
+/// <summary>
+/// Options → Video: the user's own yt-dlp and FFmpeg programs instead of the ones the app downloads and finds. Empty =
+/// automatic. A custom yt-dlp is never updated or replaced by the app.
+/// </summary>
+public static class EnginePaths
+{
+    public static volatile string YtDlp = "";
+    public static volatile string FFmpeg = "";
+
+    public static string? YtDlpFile => Usable(YtDlp);
+    public static string? FFmpegFile => Usable(FFmpeg);
+
+    static string? Usable(string path) => path.Length > 0 && System.IO.Path.IsPathFullyQualified(path) && File.Exists(path) ? path : null;
+
+    /// <summary>Null when the path can be used (or is empty), else what is wrong with it.</summary>
+    public static string? Problem(string? path, string program)
+    {
+        var p = (path ?? "").Trim();
+        if (p.Length == 0) return null;
+        if (!System.IO.Path.IsPathFullyQualified(p)) return $"The {program} path must be a full path to the program.";
+        if (!File.Exists(p)) return $"There is no {program} program at {p}.";
+        return null;
+    }
+
+    /// <summary>The first line the program prints for --version / -version, or null when it does not run.</summary>
+    public static string? Version(string path, bool ffmpeg)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo(path) { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
+            psi.ArgumentList.Add(ffmpeg ? "-version" : "--version");
+            using var p = Process.Start(psi)!;
+            var line = p.StandardOutput.ReadLine();
+            if (!p.WaitForExit(10_000)) { try { p.Kill(true); } catch { } return null; }
+            return p.ExitCode == 0 && !string.IsNullOrWhiteSpace(line) ? line.Trim() : null;
+        }
+        catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException or IOException) { return null; }
     }
 }

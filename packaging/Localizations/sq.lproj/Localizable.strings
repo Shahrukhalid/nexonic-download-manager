@@ -40,7 +40,7 @@
 "Close" = "Mbyll";
 "Command line" = "Rreshti i komandës";
 "Connection" = "Lidhja";
-"Connections per download (1-32)" = "Lidhje për shkarkim (1-32)";
+"Connections per download (1-128)" = "Lidhje për shkarkim (1-128)";
 "Copy Link" = "Kopjo lidhjen";
 "Delete" = "Elemino";
 "Delete Completed" = "Elemino kompletuar";

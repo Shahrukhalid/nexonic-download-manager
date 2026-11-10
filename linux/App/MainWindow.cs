@@ -880,6 +880,7 @@ public sealed class MainWindow : Window
         var recheck = Item("Check Torrent Files Again", () => { if (One is { } r && r.Record.Torrent != null) manager.Recheck(r); });
         Item("Properties…", () => { if (One is { } r) _ = Dialogs.Properties(this, manager, r); });
         Item("Copy Link", () => { if (One is { } r) _ = Clipboard?.SetTextAsync(r.Record.Url); });
+        Item("Copy as cURL", () => { if (One is { } r) _ = Clipboard?.SetTextAsync(CurlCommand.ToCommand(r.Record)); });
         Item("Check Server…", () => _ = Dialogs.Diagnostics(this, manager, One?.Record.Url));
         Item("Show QR Code…", () => { if (Selected.Count > 0) _ = Dialogs.ShowQr(this, Selected.Select(r => r.Record.Url).ToList()); });
         menu.Items.Add(moveMenu);

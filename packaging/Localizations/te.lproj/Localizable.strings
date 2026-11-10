@@ -40,7 +40,7 @@
 "Close" = "మూసివేయి";
 "Command line" = "ఆదేశ వరుస";
 "Connection" = "అనుసంధానము";
-"Connections per download (1-32)" = "డౌన్ లోడ్ ప్రతి అనుసంధానములు (1- 32)";
+"Connections per download (1-128)" = "డౌన్ లోడ్ ప్రతి అనుసంధానములు (1- 32)";
 "Copy Link" = "లింకును నకలుతీయుము";
 "Delete" = "తొలగించు";
 "Delete Completed" = "పూర్తయినవి తొలగించు";

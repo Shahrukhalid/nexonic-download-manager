@@ -76,6 +76,8 @@ public sealed partial class DownloadManager
         Network.Options = Settings.Network.Clamped();
         Debrid.Settings = Settings.Debrid;
         FileCategories.Custom = CustomCategory.Clean(Settings.CustomCategories);
+        EnginePaths.YtDlp = Settings.YtDlpPath?.Trim() ?? "";
+        EnginePaths.FFmpeg = Settings.FFmpegPath?.Trim() ?? "";
         // The app reads the inbox once its windows are ready (CollectInbox), so browser links get the download window.
         Schedule();
         Task.Run(SiteVideoTools.Prepare); // keeps the video engine current
@@ -98,6 +100,8 @@ public sealed partial class DownloadManager
         Network.Options = s.Network.Clamped();
         Debrid.Settings = s.Debrid;
         FileCategories.Custom = CustomCategory.Clean(s.CustomCategories);
+        EnginePaths.YtDlp = s.YtDlpPath?.Trim() ?? "";
+        EnginePaths.FFmpeg = s.FFmpegPath?.Trim() ?? "";
         Write(AppPaths.Settings, s);
         Schedule();
     }
@@ -107,6 +111,16 @@ public sealed partial class DownloadManager
     public int AddLinks(string text, AddOptions? o = null)
     {
         o ??= new AddOptions();
+        if (CurlCommand.Looks(text))
+        {
+            // A browser's "Copy as cURL": the same address with its referrer, cookies, browser name and login.
+            if (CurlCommand.Parse(text).Request is not { } c) return 0;
+            var fromCurl = new DownloadJob(c.Url, string.IsNullOrWhiteSpace(o.FileName) ? null : o.FileName, c.Referrer, c.Cookies, c.UserAgent);
+            if (o.Username.Length == 0 && c.Username != null) fromCurl = fromCurl with { Username = c.Username, Password = c.Password };
+            if (!fromCurl.IsValid) return 0;
+            Add(fromCurl, o);
+            return 1;
+        }
         var lines = Links.Split(text);
         var n = 0;
         foreach (var line in lines)
@@ -573,7 +587,7 @@ public sealed partial class DownloadManager
                 if (slots-- <= 0) break;
                 var profile = HostProfiles.Match(Settings.HostProfiles, row.Record.Url);
                 var proxy = profile?.Proxy ?? Settings.Proxy;
-                var connections = Math.Clamp(profile?.MaxConnections ?? Settings.Connections, 1, 32);
+                var connections = Math.Clamp(profile?.MaxConnections ?? Settings.Connections, 1, Limits.MaxConnections);
                 var context = new DownloadContext(connections, limiter, Settings.SortIntoCategoryFolders, proxy,
                     TransferOptions.From(Network.Options, profile), Settings.TorrentsEnabled, Settings.SpeedLimitKBps,
                     Settings.TorrentPortForwarding, Settings.TorrentEncryption);

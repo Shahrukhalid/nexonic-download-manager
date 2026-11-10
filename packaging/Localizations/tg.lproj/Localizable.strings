@@ -40,7 +40,7 @@
 "Close" = "Пӯшидан";
 "Command line" = "Сатри фармон";
 "Connection" = "Пайвастшавӣ";
-"Connections per download (1-32)" = "Пайвастшавӣ дар як боркунӣ (1- 32)";
+"Connections per download (1-128)" = "Пайвастшавӣ дар як боркунӣ (1- 32)";
 "Copy Link" = "Нусха бардоштани пайванд";
 "Delete" = "& Ҳузф кардан";
 "Delete Completed" = "Несткунии ба итмом расида";

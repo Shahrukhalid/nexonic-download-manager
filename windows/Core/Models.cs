@@ -204,6 +204,9 @@ public sealed class AppSettings
     public bool SortIntoCategoryFolders { get; set; } = true;
     /// <summary>The user's own categories (file types and their folder), checked before the built-in types.</summary>
     public List<CustomCategory> CustomCategories { get; set; } = new();
+    /// <summary>The user's own yt-dlp and FFmpeg programs (full paths); empty = automatic.</summary>
+    public string YtDlpPath { get; set; } = "";
+    public string FFmpegPath { get; set; } = "";
     /// <summary>Size of the interface in percent (100 = normal, 75 to 200).</summary>
     public int InterfaceScale { get; set; } = 100;
     /// <summary>Optional access from phones and other devices on this network (off by default).</summary>

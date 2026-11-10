@@ -40,7 +40,7 @@
 "Close" = "Close";
 "Command line" = "Linea commandi";
 "Connection" = "Connexion";
-"Connections per download (1-32)" = "Despectus in Viam (1-32)";
+"Connections per download (1-128)" = "Despectus in Viam (1-128)";
 "Copy Link" = "Copia Link";
 "Delete" = "Eliminare";
 "Delete Completed" = "Eliminare finitum";

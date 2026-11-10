@@ -26,7 +26,7 @@ struct SettingsView: View {
                     Text("Light").tag("light")
                     Text("Dark").tag("dark")
                 }
-                Stepper("Connections per download: \(manager.settings.connections)", value: $manager.settings.connections, in: 1...32)
+                Stepper("Connections per download: \(manager.settings.connections)", value: $manager.settings.connections, in: 1...128)
                 Stepper("Downloads at the same time: \(manager.settings.maxActive)", value: $manager.settings.maxActive, in: 1...10)
                 LabeledContent("Save to") {
                     HStack {
@@ -307,7 +307,7 @@ struct SiteEditor: View {
             Form {
                 TextField("Website", text: $host, prompt: Text("example.com"))
                 Toggle("Use these settings", isOn: $enabled)
-                TextField("Connections per download (1-32)", text: $connections)
+                TextField("Connections per download (1-128)", text: $connections)
                 TextField("Speed limit in KB/s (0 = none)", text: $limit)
                 TextField("Tries per part (1-50)", text: $tries)
                 TextField("Reconnect after this many silent seconds", text: $timeout)
@@ -350,7 +350,7 @@ struct SiteEditor: View {
         var p = original
         p.host = h
         p.enabled = enabled
-        p.maxConnections = Self.number(connections, 1...32)
+        p.maxConnections = Self.number(connections, 1...128)
         p.speedLimitKBps = Self.number(limit, 0...10_000_000)
         p.retries = Self.number(tries, 1...50)
         p.timeoutSeconds = Self.number(timeout, 5...3600)

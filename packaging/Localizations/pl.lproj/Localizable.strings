@@ -40,7 +40,7 @@
 "Close" = "Close";
 "Command line" = "Wiersz poleceń";
 "Connection" = "Połączenie";
-"Connections per download (1-32)" = "Liczba połączeń na pobranie (1-32)";
+"Connections per download (1-128)" = "Liczba połączeń na pobranie (1-128)";
 "Copy Link" = "Kopiuj link";
 "Delete" = "Usuń";
 "Delete Completed" = "Usuń zakończone";

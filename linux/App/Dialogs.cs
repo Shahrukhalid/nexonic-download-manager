@@ -113,7 +113,11 @@ public static partial class Dialogs
                 InfoJson = OneVideo() is { } one && (user.Text ?? "").Trim().Length == 0 ? pf.Take(one) : null,
                 Engine = engine.SelectedIndex switch { 1 => DownloadEngine.File, 2 => DownloadEngine.Hls, 3 => DownloadEngine.Video, _ => DownloadEngine.Auto },
             });
-            if (n == 0) { error.Text = "Paste at least one http or https link."; return; }
+            if (n == 0)
+            {
+                error.Text = CurlCommand.Looks(text.Text) && CurlCommand.Parse(text.Text!).Problem is { } why ? why : "Paste at least one http or https link.";
+                return;
+            }
             f.Close();
         }
         f.AddButton("Cancel", f.Close, isCancel: true);
@@ -456,7 +460,7 @@ public static partial class Dialogs
         void Heading(StackPanel p, string text) => p.Children.Add(new TextBlock { Text = text, FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 16, 0, 0) });
 
         var general = Tab("General");
-        var conn = Box(general, "Connections per download (1-32)", s.Connections.ToString());
+        var conn = Box(general, "Connections per download (1-128)", s.Connections.ToString());
         var active = Box(general, "Downloads at the same time (main queue)", s.MaxActive.ToString());
         general.Children.Add(new TextBlock { Text = "Save to folder", Margin = new Thickness(0, 8, 0, 3) });
         var (folderRow, folder) = Form.FolderRow(f.Window, s.Folder);
@@ -488,6 +492,10 @@ public static partial class Dialogs
         var toFront = Tick(general, "Bring the main window to the front for browser downloads", s.BringToFrontOnBrowserDownload);
         Hint(general, "With the download window off, downloads start right away. Closing the main window keeps the app running in the tray " +
                       "(on GNOME the tray needs the AppIndicator extension); opening the app again from the menu brings the window back.");
+        Heading(general, "Video tools");
+        var ytdlpPath = Box(general, "Your own yt-dlp program (full path)", s.YtDlpPath ?? "");
+        var ffmpegPath = Box(general, "Your own FFmpeg program (full path)", s.FFmpegPath ?? "");
+        Hint(general, "Leave empty to use the ones the app downloads and keeps current. Your own yt-dlp is never updated or replaced by the app; FFmpeg needs ffprobe in the same folder.");
 
         var connection = Tab("Connection");
         var limit = Box(connection, "Speed limit for all downloads in KB/s (0 = none)", s.SpeedLimitKBps.ToString());
@@ -747,7 +755,7 @@ public static partial class Dialogs
             if (p is < 1 or > 65535) { error.Text = "The proxy port must be between 1 and 65535."; return; }
             if ((ProxyMode)Math.Max(0, mode.SelectedIndex) == ProxyMode.Pac && !Pac.AddressOk(host.Text))
             { error.Text = "Enter the proxy script's web address (http:// or https://) or the full path of the file."; return; }
-            s.Connections = Math.Clamp(Ui.Number(conn.Text, 8), 1, 32);
+            s.Connections = Math.Clamp(Ui.Number(conn.Text, 8), 1, Limits.MaxConnections);
             s.MaxActive = Math.Clamp(Ui.Number(active.Text, 3), 1, 10);
             s.Folder = (folder.Text ?? "").Trim().Length > 0 ? folder.Text!.Trim() : s.Folder;
             s.SortIntoCategoryFolders = sort.IsChecked == true;
@@ -784,11 +792,14 @@ public static partial class Dialogs
             s.ScanCommand = (scanCmd.Text ?? "").Trim();
             if (!string.IsNullOrWhiteSpace(doh.Text) && !NetworkOptions.DnsOverHttpsUrlOk(doh.Text)) { error.Text = "The DNS over HTTPS server must be an https:// address."; return; }
             if (Adapters.BlocklistProblem(blocklist.Text) is { } blockProblem) { error.Text = blockProblem; return; }
+            if ((EnginePaths.Problem(ytdlpPath.Text, "yt-dlp") ?? EnginePaths.Problem(ffmpegPath.Text, "FFmpeg")) is { } toolProblem) { error.Text = toolProblem; return; }
             var (customList, categoryProblem) = CustomCategory.ParseLines(categoryText.Text);
             if (categoryProblem != null) { error.Text = categoryProblem; tabs.SelectedIndex = 3; return; }
             var remotePortNumber = Ui.Number(remotePort.Text, -1);
             if (remoteOn.IsChecked == true && remotePortNumber is < 1024 or > 65535) { error.Text = "The remote port must be between 1024 and 65535."; return; }
             s.CustomCategories = customList;
+            s.YtDlpPath = (ytdlpPath.Text ?? "").Trim();
+            s.FFmpegPath = (ffmpegPath.Text ?? "").Trim();
             s.InterfaceScale = scales[Math.Max(0, scale.SelectedIndex)];
             s.Remote = new RemoteSettings
             {
@@ -847,7 +858,7 @@ public static partial class Dialogs
         f.Note("Leave a field empty to use the general setting.");
         var host = f.Text("Website (for example example.com)", p.Host);
         var enabled = f.Check("Use these settings", p.Enabled);
-        var conns = f.Text("Connections per download (1-32)", p.MaxConnections?.ToString() ?? "");
+        var conns = f.Text("Connections per download (1-128)", p.MaxConnections?.ToString() ?? "");
         var limit = f.Text("Speed limit in KB/s (0 = none)", p.SpeedLimitKBps?.ToString() ?? "");
         var tries = f.Text("Tries per part (1-50)", p.Retries?.ToString() ?? "");
         var timeout = f.Text("Reconnect after this many silent seconds", p.TimeoutSeconds?.ToString() ?? "");
@@ -872,7 +883,7 @@ public static partial class Dialogs
             result = new HostProfile
             {
                 Host = h, Enabled = enabled.IsChecked == true,
-                MaxConnections = Optional(conns.Text, 1, 32), SpeedLimitKBps = Optional(limit.Text, 0, 10_000_000),
+                MaxConnections = Optional(conns.Text, 1, Limits.MaxConnections), SpeedLimitKBps = Optional(limit.Text, 0, 10_000_000),
                 Retries = Optional(tries.Text, 1, 50), TimeoutSeconds = Optional(timeout.Text, 5, 3600),
                 UserAgent = string.IsNullOrWhiteSpace(ua.Text) ? null : ua.Text.Trim(),
                 Folder = string.IsNullOrWhiteSpace(folder.Text) ? null : folder.Text.Trim(),

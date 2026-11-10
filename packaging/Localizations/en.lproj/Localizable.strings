@@ -40,7 +40,7 @@
 "Close" = "Close";
 "Command line" = "Command line";
 "Connection" = "Connection";
-"Connections per download (1-32)" = "Connections per download (1-32)";
+"Connections per download (1-128)" = "Connections per download (1-128)";
 "Copy Link" = "Copy Link";
 "Delete" = "Delete";
 "Delete Completed" = "Delete Completed";

@@ -40,7 +40,7 @@
 "Close" = "மூடு";
 "Command line" = "கட்டளை வரி";
 "Connection" = "இணைப்பு";
-"Connections per download (1-32)" = "பதிவிறக்கத்திற்கு இணைப்புகள் (1- 32)";
+"Connections per download (1-128)" = "பதிவிறக்கத்திற்கு இணைப்புகள் (1- 32)";
 "Copy Link" = "இணைப்பை நகலெடு";
 "Delete" = "& நீக்கு";
 "Delete Completed" = "முடிந்தது நீக்கு";

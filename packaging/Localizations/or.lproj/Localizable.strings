@@ -40,7 +40,7 @@
 "Close" = "ବନ୍ଦ କରନ୍ତୁ";
 "Command line" = "ଆଦେଶ ରେଖା";
 "Connection" = "ସଂଯୋଗ";
-"Connections per download (1-32)" = "ପ୍ରତି ଆହରଣରେ ସଂଯୋଗଗୁଡ଼ିକ (1-32)";
+"Connections per download (1-128)" = "ପ୍ରତି ଆହରଣରେ ସଂଯୋଗଗୁଡ଼ିକ (1-128)";
 "Copy Link" = "ସଂଯୋଗକୁ ନକଲ କରନ୍ତୁ";
 "Delete" = "ଅପସାରଣ କରନ୍ତୁ";
 "Delete Completed" = "ଅପସାରଣ ସମ୍ପୂର୍ଣ୍ଣ ହେଲା";
