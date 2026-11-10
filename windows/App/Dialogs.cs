@@ -541,7 +541,7 @@ public static partial class Dialogs
         }
 
         var general = Tab("General");
-        var conn = Box(general, "Connections per download (1-128)", s.Connections.ToString());
+        var conn = Box(general, "Connections per download (1-256)", s.Connections.ToString());
         var active = Box(general, "Downloads at the same time (main queue)", s.MaxActive.ToString());
         var folder = Box(general, "Save to folder", s.Folder);
         var sort = Tick(general, "Put each type in its own folder (Video, Music, Documents, Programs, Compressed, Images)", s.SortIntoCategoryFolders);
@@ -891,7 +891,7 @@ public static partial class Dialogs
         f.Note("Leave a field empty to use the general setting.");
         var host = f.Text("Website (for example example.com)", p.Host);
         var enabled = f.Check("Use these settings", p.Enabled);
-        var conns = f.Text("Connections per download (1-128)", p.MaxConnections?.ToString() ?? "");
+        var conns = f.Text("Connections per download (1-256)", p.MaxConnections?.ToString() ?? "");
         var limit = f.Text("Speed limit in KB/s (0 = none)", p.SpeedLimitKBps?.ToString() ?? "");
         var tries = f.Text("Tries per part (1-50)", p.Retries?.ToString() ?? "");
         var timeout = f.Text("Reconnect after this many silent seconds", p.TimeoutSeconds?.ToString() ?? "");

@@ -42,7 +42,7 @@ public static class SegmentPlanner
 /// <summary>Limits shared by every part of the app.</summary>
 public static class Limits
 {
-    /// <summary>Connections per download (Options and site settings): 1 to 128. Servers often limit how many they allow;
+    /// <summary>Connections per download (Options and site settings): 1 to 256. Servers often limit how many they allow;
     /// the planner never makes parts smaller than 512 KB, so small files still use few connections.</summary>
-    public const int MaxConnections = 128;
+    public const int MaxConnections = 256;
 }

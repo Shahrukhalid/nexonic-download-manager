@@ -40,7 +40,7 @@
 "Close" = "Tutup";
 "Command line" = "Baris perintah";
 "Connection" = "Koneksi";
-"Connections per download (1-128)" = "Koneksi per unduhan (1-128)";
+"Connections per download (1-256)" = "Koneksi per unduhan (1-256)";
 "Copy Link" = "Salin Tautan";
 "Delete" = "Hapus";
 "Delete Completed" = "Hapus yang Selesai";

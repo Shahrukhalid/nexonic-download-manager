@@ -40,7 +40,7 @@
 "Close" = "Itxi";
 "Command line" = "Komando-lerroa";
 "Connection" = "Konexioa";
-"Connections per download (1-128)" = "Deskarga bakoitzeko konexioak (1-128)";
+"Connections per download (1-256)" = "Deskarga bakoitzeko konexioak (1-256)";
 "Copy Link" = "Kopiatu esteka";
 "Delete" = "Ezabatu";
 "Delete Completed" = "Ezabatu osatua";

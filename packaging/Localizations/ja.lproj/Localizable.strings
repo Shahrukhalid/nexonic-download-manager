@@ -40,7 +40,7 @@
 "Close" = "閉じる";
 "Command line" = "コマンドライン";
 "Connection" = "接続";
-"Connections per download (1-128)" = "ダウンロードあたりの接続数 (1-128)";
+"Connections per download (1-256)" = "ダウンロードあたりの接続数 (1-256)";
 "Copy Link" = "リンクをコピー";
 "Delete" = "削除";
 "Delete Completed" = "完了分を削除";

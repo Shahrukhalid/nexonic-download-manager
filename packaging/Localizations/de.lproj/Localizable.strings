@@ -40,7 +40,7 @@
 "Close" = "Schließen";
 "Command line" = "Befehlszeile";
 "Connection" = "Verbindung";
-"Connections per download (1-128)" = "Verbindungen pro Download (1-128)";
+"Connections per download (1-256)" = "Verbindungen pro Download (1-256)";
 "Copy Link" = "Link kopieren";
 "Delete" = "Löschen";
 "Delete Completed" = "Fertige löschen";

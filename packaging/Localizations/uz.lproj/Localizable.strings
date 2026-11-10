@@ -40,7 +40,7 @@
 "Close" = "Ёпиш";
 "Command line" = "Буйруқ сатри";
 "Connection" = "Алоқа";
-"Connections per download (1-128)" = "Ҳар бир юклаб олиш учун уланишлар (1-128)";
+"Connections per download (1-256)" = "Ҳар бир юклаб олиш учун уланишлар (1-256)";
 "Copy Link" = "Уланишдан нусха кўчириш";
 "Delete" = "Олиб ташлаш";
 "Delete Completed" = "Ўчириш тугатилди";

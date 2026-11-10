@@ -59,14 +59,14 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
         self.options = options
         self.record = record
         self.proxy = proxy
-        self.connections = max(1, min(128, connections))
+        self.connections = max(1, min(256, connections))
         self.limiter = limiter
         self.sortIntoCategories = sortIntoCategories
         queue = DispatchQueue(label: "nexonic.transfer.\(record.id.uuidString)")
         super.init()
         ownLimiter.setLimit(bytesPerSecond: (record.speedLimitKBps ?? 0) * 1024)
         let config = Network.configuration(proxy: proxy)
-        config.httpMaximumConnectionsPerHost = 128
+        config.httpMaximumConnectionsPerHost = 256
         config.timeoutIntervalForRequest = TimeInterval(options.readTimeoutSeconds)  // a silent connection is retried
         config.httpShouldSetCookies = false
         config.httpCookieAcceptPolicy = .never

@@ -460,7 +460,7 @@ public static partial class Dialogs
         void Heading(StackPanel p, string text) => p.Children.Add(new TextBlock { Text = text, FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 16, 0, 0) });
 
         var general = Tab("General");
-        var conn = Box(general, "Connections per download (1-128)", s.Connections.ToString());
+        var conn = Box(general, "Connections per download (1-256)", s.Connections.ToString());
         var active = Box(general, "Downloads at the same time (main queue)", s.MaxActive.ToString());
         general.Children.Add(new TextBlock { Text = "Save to folder", Margin = new Thickness(0, 8, 0, 3) });
         var (folderRow, folder) = Form.FolderRow(f.Window, s.Folder);
@@ -858,7 +858,7 @@ public static partial class Dialogs
         f.Note("Leave a field empty to use the general setting.");
         var host = f.Text("Website (for example example.com)", p.Host);
         var enabled = f.Check("Use these settings", p.Enabled);
-        var conns = f.Text("Connections per download (1-128)", p.MaxConnections?.ToString() ?? "");
+        var conns = f.Text("Connections per download (1-256)", p.MaxConnections?.ToString() ?? "");
         var limit = f.Text("Speed limit in KB/s (0 = none)", p.SpeedLimitKBps?.ToString() ?? "");
         var tries = f.Text("Tries per part (1-50)", p.Retries?.ToString() ?? "");
         var timeout = f.Text("Reconnect after this many silent seconds", p.TimeoutSeconds?.ToString() ?? "");

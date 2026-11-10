@@ -40,7 +40,7 @@
 "Close" = "Kapat";
 "Command line" = "Komut satırı";
 "Connection" = "Bağlantı";
-"Connections per download (1-128)" = "İndirme başına bağlantı (1-128)";
+"Connections per download (1-256)" = "İndirme başına bağlantı (1-256)";
 "Copy Link" = "Bağlantıyı Kopyala";
 "Delete" = "Sil";
 "Delete Completed" = "Tamamlananları Sil";

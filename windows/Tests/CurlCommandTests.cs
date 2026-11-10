@@ -59,10 +59,10 @@ public class CurlCommandTests
     }
 
     [Fact]
-    public void UpTo128Connections()
+    public void UpTo256Connections()
     {
-        Assert.Equal(128, Limits.MaxConnections);
-        Assert.Equal(128, SegmentPlanner.Plan(1024L * 1024 * 1024, 200).Count);
+        Assert.Equal(256, Limits.MaxConnections);
+        Assert.Equal(256, SegmentPlanner.Plan(1024L * 1024 * 1024, 300).Count);
         Assert.Equal(2, SegmentPlanner.Plan(1024L * 1024, 128).Count);
     }
 }

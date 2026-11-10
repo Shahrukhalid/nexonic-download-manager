@@ -40,7 +40,7 @@
 "Close" = "Жабуу";
 "Command line" = "Командалык сап";
 "Connection" = "Кошулуу";
-"Connections per download (1-128)" = "Жүктөө бирдигиндеги туташуулар (1-128)";
+"Connections per download (1-256)" = "Жүктөө бирдигиндеги туташуулар (1-256)";
 "Copy Link" = "Ссылкуларды көчүрүү";
 "Delete" = "Оңдоо";
 "Delete Completed" = "Оңдоо аяктады";

@@ -40,7 +40,7 @@
 "Close" = "Затвори";
 "Command line" = "Командна линија";
 "Connection" = "Повезивање";
-"Connections per download (1-128)" = "Повезивања по преузимању (1- 32)";
+"Connections per download (1-256)" = "Повезивања по преузимању (1- 32)";
 "Copy Link" = "Копирај везу";
 "Delete" = "& Обриши";
 "Delete Completed" = "Обрисање завршено";

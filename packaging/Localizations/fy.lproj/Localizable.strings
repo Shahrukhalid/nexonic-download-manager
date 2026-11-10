@@ -40,7 +40,7 @@
 "Close" = "Slute";
 "Command line" = "Kommandorigel";
 "Connection" = "Ferbining";
-"Connections per download (1-128)" = "Ferbinings per ynladen (1- 32)";
+"Connections per download (1-256)" = "Ferbinings per ynladen (1- 32)";
 "Copy Link" = "Keppeling kopiearje";
 "Delete" = "& Wiskje";
 "Delete Completed" = "Wiskje klear";

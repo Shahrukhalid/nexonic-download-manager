@@ -40,7 +40,7 @@
 "Close" = "Sulje";
 "Command line" = "Komentorivi";
 "Connection" = "Yhteys";
-"Connections per download (1-128)" = "Yhteyksiä latausta kohden (1-128)";
+"Connections per download (1-256)" = "Yhteyksiä latausta kohden (1-256)";
 "Copy Link" = "Kopioi linkki";
 "Delete" = "Poista";
 "Delete Completed" = "Poista valmis";

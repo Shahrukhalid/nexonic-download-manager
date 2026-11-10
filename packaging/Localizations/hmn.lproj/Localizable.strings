@@ -40,7 +40,7 @@
 "Close" = "Nco";
 "Command line" = "Cov lus qhia";
 "Connection" = "Txuas";
-"Connections per download (1-128)" = "Kev txuas per download (1-128)";
+"Connections per download (1-256)" = "Kev txuas per download (1-256)";
 "Copy Link" = "_Cia li Xaiv";
 "Delete" = "Xaiv";
 "Delete Completed" = "Xaiv";

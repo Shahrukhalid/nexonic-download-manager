@@ -40,7 +40,7 @@
 "Close" = "Dún";
 "Command line" = "Líne na nOrduithe";
 "Connection" = "Ceangal";
-"Connections per download (1-128)" = "Naisc in aghaidh an íoslódála (1-128)";
+"Connections per download (1-256)" = "Naisc in aghaidh an íoslódála (1-256)";
 "Copy Link" = "Cóipeáil Nasc";
 "Delete" = "Scrios";
 "Delete Completed" = "Scrios Críochnaithe";

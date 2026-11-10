@@ -40,7 +40,7 @@
 "Close" = "Funga";
 "Command line" = "Mstari wa amri";
 "Connection" = "Uhusiano";
-"Connections per download (1-128)" = "Mawasiliano kwa kupakua (1-128)";
+"Connections per download (1-256)" = "Mawasiliano kwa kupakua (1-256)";
 "Copy Link" = "Nakili kiungo";
 "Delete" = "Futa";
 "Delete Completed" = "Kufuta Kukamilika";

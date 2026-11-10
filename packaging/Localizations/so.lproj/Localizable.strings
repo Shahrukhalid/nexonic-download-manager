@@ -40,7 +40,7 @@
 "Close" = "_Dhismo";
 "Command line" = "Fariinta xadka";
 "Connection" = "Xidhiidh";
-"Connections per download (1-128)" = "Xiriirada per soo dejinta (1-128)";
+"Connections per download (1-256)" = "Xiriirada per soo dejinta (1-256)";
 "Copy Link" = "Nuqul Xidhiidhka";
 "Delete" = "Dib u Dhig";
 "Delete Completed" = "Dib u Dhig";

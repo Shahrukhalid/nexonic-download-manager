@@ -40,7 +40,7 @@
 "Close" = "Chivhara";
 "Command line" = "Chikamu cheCommand";
 "Connection" = "Kubatanidza";
-"Connections per download (1-128)" = "Kubatanidza pa download (1-128)";
+"Connections per download (1-256)" = "Kubatanidza pa download (1-256)";
 "Copy Link" = "_Kopa Kubatanidza";
 "Delete" = "_Dzaisa";
 "Delete Completed" = "Kudzima Kupera";

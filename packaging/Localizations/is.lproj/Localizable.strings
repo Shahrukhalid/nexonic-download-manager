@@ -40,7 +40,7 @@
 "Close" = "Loka";
 "Command line" = "Skipanalínan";
 "Connection" = "Tenging";
-"Connections per download (1-128)" = "Tengingar á niðurhal (1-128)";
+"Connections per download (1-256)" = "Tengingar á niðurhal (1-256)";
 "Copy Link" = "Afrita tengil";
 "Delete" = "Eyða";
 "Delete Completed" = "Eyða lokið";

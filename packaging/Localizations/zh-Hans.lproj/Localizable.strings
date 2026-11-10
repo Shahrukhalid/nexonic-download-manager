@@ -40,7 +40,7 @@
 "Close" = "关闭";
 "Command line" = "命令行";
 "Connection" = "连接";
-"Connections per download (1-128)" = "每个下载的连接数(1-128)";
+"Connections per download (1-256)" = "每个下载的连接数(1-256)";
 "Copy Link" = "复制链接";
 "Delete" = "删除";
 "Delete Completed" = "删除已完成";

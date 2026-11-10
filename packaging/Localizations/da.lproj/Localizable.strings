@@ -40,7 +40,7 @@
 "Close" = "Luk";
 "Command line" = "Kommandolinje";
 "Connection" = "Forbindelse";
-"Connections per download (1-128)" = "Forbindelser pr. download (1-128)";
+"Connections per download (1-256)" = "Forbindelser pr. download (1-256)";
 "Copy Link" = "Kopiér link";
 "Delete" = "Slet";
 "Delete Completed" = "Slet udført";

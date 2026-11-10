@@ -4,11 +4,11 @@ public enum SegmentPlanner {
     public static let minSegment: Int64 = 512 * 1024
     public static let minSplit: Int64 = 1 << 20
 
-    /// Equal segments of at least 512 KB, between 1 and 128 of them.
+    /// Equal segments of at least 512 KB, between 1 and 256 of them.
     public static func plan(size: Int64?, connections: Int, minSegment: Int64 = SegmentPlanner.minSegment) -> [Segment] {
         guard let size, size > 0 else { return [Segment(id: 0, start: 0, end: -1)] }
         let byMin = Int(max(1, size / max(1, minSegment)))
-        let n = max(1, min(connections, 128, byMin))
+        let n = max(1, min(connections, 256, byMin))
         let base = size / Int64(n)
         var out: [Segment] = []
         var start: Int64 = 0

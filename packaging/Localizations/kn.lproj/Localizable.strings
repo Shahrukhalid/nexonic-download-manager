@@ -40,7 +40,7 @@
 "Close" = "ಮುಚ್ಚು";
 "Command line" = "ಆದೇಶ ಸಾಲು";
 "Connection" = "ಸಂಪರ್ಕName";
-"Connections per download (1-128)" = "ಪ್ರತಿ ನಕಲಿಳಿಸು (ಡೌನ್ ಲೋಡ್) ಗೆ ಸಂಪರ್ಕಗಳು (೧- ೩೨)";
+"Connections per download (1-256)" = "ಪ್ರತಿ ನಕಲಿಳಿಸು (ಡೌನ್ ಲೋಡ್) ಗೆ ಸಂಪರ್ಕಗಳು (೧- ೩೨)";
 "Copy Link" = "ಕೊಂಡಿಯನ್ನು ಕಾಪಿ ಮಾಡು";
 "Delete" = "ಅಳಿಸಿಹಾಕು";
 "Delete Completed" = "ಪೂರ್ಣಗೊಂಡ ಅಳಿಸಿಹಾಕು";

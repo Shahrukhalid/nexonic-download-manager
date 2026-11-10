@@ -40,7 +40,7 @@
 "Close" = "Rufe";
 "Command line" = "Layin umarni";
 "Connection" = "QDialogButtonBox";
-"Connections per download (1-128)" = "Sauƙaƙe";
+"Connections per download (1-256)" = "Sauƙaƙe";
 "Copy Link" = "@ action";
 "Delete" = "@ action";
 "Delete Completed" = "@ action";

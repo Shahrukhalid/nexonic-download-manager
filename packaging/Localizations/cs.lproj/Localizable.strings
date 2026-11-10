@@ -40,7 +40,7 @@
 "Close" = "Close";
 "Command line" = "Příkazový řádek";
 "Connection" = "Připojení";
-"Connections per download (1-128)" = "Připojení na stažení (1-128)";
+"Connections per download (1-256)" = "Připojení na stažení (1-256)";
 "Copy Link" = "Kopírovat odkaz";
 "Delete" = "Vymazat";
 "Delete Completed" = "Delete Completed";

@@ -40,7 +40,7 @@
 "Close" = "Ябу";
 "Command line" = "Команда сызыгы";
 "Connection" = "Координатлар";
-"Connections per download (1-128)" = "Бер йөкләү өчен кушылу саны (1-128)";
+"Connections per download (1-256)" = "Бер йөкләү өчен кушылу саны (1-256)";
 "Copy Link" = "Сүзне күчерү";
 "Delete" = "Өстәмә";
 "Delete Completed" = "Эшләнгәнне юк итү";

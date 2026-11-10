@@ -40,7 +40,7 @@
 "Close" = "Պահպանել";
 "Command line" = "Գործողություն";
 "Connection" = "Կապ";
-"Connections per download (1-128)" = "Բեռնման համար կապեր (1-128)";
+"Connections per download (1-256)" = "Բեռնման համար կապեր (1-256)";
 "Copy Link" = "Կոպտել հղումը";
 "Delete" = "Հեռացնել";
 "Delete Completed" = "Հեռացնել կատարվածը";
