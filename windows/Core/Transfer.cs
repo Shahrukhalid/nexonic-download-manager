@@ -16,6 +16,12 @@ public sealed class Transfer : IDownloader
     public event Action<DownloadRecord>? Changed;
 
     readonly int connections;
+    readonly ConnectionGovernor governor;
+    MirrorPool? pool;
+    /// <summary>The sources of a multi-source download with their measured speeds (null for a single source).</summary>
+    public List<(Uri Url, long Bytes, double BytesPerSecond, bool Used)>? Sources => pool?.Report();
+    /// <summary>How many connections this download may use now (Auto grows it; refusals shrink it).</summary>
+    public int AllowedConnections => governor.Allowed;
     readonly SpeedLimiter limiter;
     /// <summary>This download's own limit, on top of the shared one (0 = none).</summary>
     public SpeedLimiter OwnLimiter { get; } = new();
@@ -52,8 +58,9 @@ public sealed class Transfer : IDownloader
     readonly TransferOptions options;
 
     public Transfer(DownloadRecord record, int connections, SpeedLimiter limiter, bool sortIntoCategories = false, ProxySettings? proxy = null,
-        TransferOptions? options = null)
+        TransferOptions? options = null, bool autoConnections = false)
     {
+        governor = new ConnectionGovernor(autoConnections, connections, DateTime.UtcNow);
         this.options = options ?? new TransferOptions(Retries: Network.Options.Retries, ReadTimeoutSeconds: Network.Options.ReadTimeoutSeconds);
         Record = record;
         this.connections = Math.Clamp(connections, 1, Limits.MaxConnections);
@@ -105,6 +112,8 @@ public sealed class Transfer : IDownloader
                 viaDebrid = true;
             }
             await ProbeAsync(ct);
+            if (!viaDebrid && Record.AcceptsRanges && Record.Size is > 0 && Record.Mirrors is { Count: > 0 })
+                pool = new MirrorPool(origin, await VerifyMirrorsAsync(ct));
             Record.Status = DownloadStatus.Downloading;
             Notify(true);
             await DownloadAllAsync(ct);
@@ -126,8 +135,8 @@ public sealed class Transfer : IDownloader
         }
     }
 
-    Task<HttpResponseMessage> SendAsync(string? range, CancellationToken ct, string? ifRange = null) =>
-        Network.SendAsync(http, origin, url =>
+    Task<HttpResponseMessage> SendAsync(string? range, CancellationToken ct, string? ifRange = null, Uri? from = null) =>
+        Network.SendAsync(http, from ?? origin, url =>
         {
             var req = new HttpRequestMessage(HttpMethod.Get, url);
             req.Headers.AcceptEncoding.Add(new StringWithQualityHeaderValue("identity"));
@@ -204,7 +213,7 @@ public sealed class Transfer : IDownloader
             lock (Record.Segments)
             {
                 Record.Segments = ranges
-                    ? SegmentPlanner.Plan(size, connections, options.MinSegment)
+                    ? SegmentPlanner.Plan(size, governor.Allowed, options.MinSegment)
                     : new() { new Segment { Id = 0, Start = 0, End = size is > 0 ? size.Value - 1 : -1 } };
             }
         }
@@ -213,42 +222,75 @@ public sealed class Transfer : IDownloader
     async Task DownloadAllAsync(CancellationToken outer)
     {
         // One failing part stops its siblings, and they are awaited before anything is cleaned up or reported.
+        // A part the server refuses (429/503) is not a failure: it waits and continues later, from where it stopped.
         using var stop = CancellationTokenSource.CreateLinkedTokenSource(outer);
         var ct = stop.Token;
-        var running = new List<Task>();
-        List<Segment> pending;
-        lock (Record.Segments) pending = Record.Segments.Where(s => !s.IsComplete).ToList();
-        foreach (var s in pending) running.Add(SegmentAsync(s, ct));
-        while (running.Count > 0)
+        var running = new Dictionary<Task, Segment>();
+        while (true)
         {
-            var done = await Task.WhenAny(running);
+            var now = DateTime.UtcNow;
+            governor.Tick(now, running.Count);
+            if (now >= governor.QuietUntil)
+            {
+                List<Segment> waiting;
+                lock (Record.Segments) waiting = Record.Segments.Where(s => !s.IsComplete && !running.ContainsValue(s)).ToList();
+                foreach (var seg in waiting)
+                {
+                    if (running.Count >= (Record.AcceptsRanges ? governor.Allowed : 1)) break;
+                    running[SegmentAsync(seg, ct, running.Count > 0)] = seg;
+                }
+                // Spare connections take over half of the largest remaining part.
+                while (Record.AcceptsRanges && running.Count < governor.Allowed)
+                {
+                    Segment? added = null;
+                    lock (Record.Segments)
+                    {
+                        var split = SegmentPlanner.SplitLargest(Record.Segments, Record.Segments.Max(s => s.Id) + 1, options.MinSegment);
+                        if (split is { } sp)
+                        {
+                            Record.Segments[sp.Index].End = sp.NewEnd;
+                            Record.Segments.Add(sp.Added);
+                            added = sp.Added;
+                        }
+                    }
+                    if (added == null) break;
+                    running[SegmentAsync(added, ct, true)] = added;
+                }
+            }
+            if (running.Count == 0)
+            {
+                bool left;
+                lock (Record.Segments) left = Record.Segments.Any(s => !s.IsComplete);
+                if (!left) return;
+                await Task.Delay(Max(TimeSpan.FromMilliseconds(200), governor.QuietUntil - DateTime.UtcNow), outer);
+                continue;
+            }
+            var tick = Task.Delay(ConnectionGovernor.Sample, outer);
+            var done = await Task.WhenAny(running.Keys.Append(tick));
+            if (done == tick) { outer.ThrowIfCancellationRequested(); continue; }
             running.Remove(done);
+            if (done.IsFaulted && done.Exception?.InnerException is RefusedException refused)
+            {
+                governor.Refused(DateTime.UtcNow, refused.RetryAfter);  // its part stays as it is and is picked up again
+                continue;
+            }
             if (done.IsFaulted || (done.IsCanceled && !outer.IsCancellationRequested))
             {
                 stop.Cancel();
-                try { await Task.WhenAll(running); } catch { /* stopped on purpose */ }
+                try { await Task.WhenAll(running.Keys); } catch { /* stopped on purpose */ }
             }
             await done; // rethrows a final failure
-            if (!Record.AcceptsRanges || running.Count >= connections) continue;
-            Segment? added = null;
-            lock (Record.Segments)
-            {
-                var split = SegmentPlanner.SplitLargest(Record.Segments, Record.Segments.Max(s => s.Id) + 1, options.MinSegment);
-                if (split is { } sp)
-                {
-                    Record.Segments[sp.Index].End = sp.NewEnd;
-                    Record.Segments.Add(sp.Added);
-                    added = sp.Added;
-                }
-            }
-            if (added != null) running.Add(SegmentAsync(added, ct));
         }
     }
 
-    async Task SegmentAsync(Segment seg, CancellationToken ct)
+    static TimeSpan Max(TimeSpan a, TimeSpan b) => a > b ? a : b;
+
+    /// <param name="mayYield">Other parts are running: when the server refuses this one, give it back instead of retrying.</param>
+    async Task SegmentAsync(Segment seg, CancellationToken ct, bool mayYield = false)
     {
         var buffer = new byte[64 * 1024];
         long writtenAtStart = -1;
+        var refusals = 0;
         for (var attempt = 1; ; attempt++)
         {
             try
@@ -259,10 +301,40 @@ public sealed class Transfer : IDownloader
                 string? range = null;
                 var from = seg.Start + seg.Written;
                 if (Record.AcceptsRanges) range = seg.End >= 0 ? $"bytes={from}-{seg.End}" : $"bytes={from}-";
-                using var res = await SendAsync(range, ct, Network.IfRange(Record.Validator));
+                // Multi-source: this part comes from the fastest source measured so far.
+                var src = Record.AcceptsRanges && pool != null ? pool.Take() : origin;
+                var mirror = src != origin;
+                var started = DateTime.UtcNow;
+                var writtenBefore = seg.Written;
+                var srcFailed = false;
+                try
+                {
+                using var res = await SendAsync(range, ct, mirror ? null : Network.IfRange(Record.Validator), src);
+                if (mirror && res.StatusCode != HttpStatusCode.PartialContent && !ConnectionGovernor.IsRefusal(res.StatusCode))
+                {
+                    pool!.Drop(src);  // a mirror that cannot send parts is not used again
+                    throw new IOException($"The mirror {src.Host} cannot send parts of the file (HTTP {(int)res.StatusCode})");
+                }
+                if (mirror && res.StatusCode == HttpStatusCode.PartialContent && !Network.RangeMatches(res.Content.Headers.ContentRange, from, Record.Size))
+                {
+                    pool!.Drop(src);  // a different file: never mixed in
+                    throw new IOException($"The mirror {src.Host} has a different file");
+                }
                 if (Record.AcceptsRanges && res.StatusCode == HttpStatusCode.OK && Network.IfRange(Record.Validator) != null)
                     throw new FileChangedException();
                 var ok = res.StatusCode == HttpStatusCode.PartialContent || (res.StatusCode == HttpStatusCode.OK && !Record.AcceptsRanges);
+                if (!ok && ConnectionGovernor.IsRefusal(res.StatusCode))
+                {
+                    var after = ConnectionGovernor.RetryAfter(res.Headers.RetryAfter, DateTime.UtcNow);
+                    if (mayYield) throw new RefusedException(after, (int)res.StatusCode);
+                    governor.Refused(DateTime.UtcNow, after);
+                    // The only connection: wait as long as asked (bounded), then try again without using up a retry.
+                    await Task.Delay(Max(TimeSpan.FromSeconds(1), governor.QuietUntil - DateTime.UtcNow), ct);
+                    attempt--;
+                    refusals++;
+                    if (refusals > 20) throw new HttpRequestException($"The server stayed busy (HTTP {(int)res.StatusCode})");
+                    continue;
+                }
                 if (!ok) throw new HttpRequestException($"HTTP {(int)res.StatusCode}");
                 if (res.StatusCode == HttpStatusCode.PartialContent && !Network.RangeMatches(res.Content.Headers.ContentRange, from, Record.Size))
                     throw new IOException("The server sent a different part of the file than asked for");
@@ -306,19 +378,60 @@ public sealed class Transfer : IDownloader
                     }
                     await file.WriteAsync(buffer.AsMemory(0, n), ct);
                     lock (Record.Segments) seg.Written += n;
+                    governor.Received(n);
                     Notify();
                     var a = limiter.Consume(n);
                     var b = OwnLimiter.Consume(n);
                     var wait = a > b ? a : b;
                     if (wait > TimeSpan.Zero) await Task.Delay(wait, ct);
                 }
+                }
+                catch (Exception e) when (e is not OperationCanceledException and not RefusedException) { srcFailed = true; throw; }
+                finally { pool?.Done(src, seg.Written - writtenBefore, DateTime.UtcNow - started, srcFailed); }
             }
-            catch (Exception e) when (e is not FileChangedException && !ct.IsCancellationRequested
+            catch (Exception e) when (e is not FileChangedException and not RefusedException && !ct.IsCancellationRequested
                                       && (attempt < options.Retries || (Record.AcceptsRanges && seg.Written > writtenAtStart)))
             {
                 await Task.Delay(TimeSpan.FromSeconds(Math.Min(30, Math.Pow(2, attempt - 1))), ct);
             }
         }
+    }
+
+    /// <summary>
+    /// Mirrors are used only when they have exactly the same file: the same size, and the same bytes as the main address
+    /// at the start, the middle and the end (64 KB each). Anything else is left out, so a wrong mirror can never get into the file.
+    /// </summary>
+    async Task<List<Uri>> VerifyMirrorsAsync(CancellationToken ct)
+    {
+        var size = Record.Size!.Value;
+        var len = (int)Math.Min(64 * 1024, size);
+        var starts = new[] { 0L, Math.Max(0, size / 2 - len / 2), Math.Max(0, size - len) }.Distinct().ToArray();
+        async Task<byte[]?> Sample(Uri src, long at)
+        {
+            try
+            {
+                using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                timeout.CancelAfter(TimeSpan.FromSeconds(20));
+                using var res = await SendAsync($"bytes={at}-{at + len - 1}", timeout.Token, null, src);
+                if (res.StatusCode != HttpStatusCode.PartialContent || !Network.RangeMatches(res.Content.Headers.ContentRange, at, size)) return null;
+                var data = await res.Content.ReadAsByteArrayAsync(timeout.Token);
+                return data.Length == len ? data : null;
+            }
+            catch (Exception e) when (e is HttpRequestException or IOException or OperationCanceledException or InvalidOperationException && !ct.IsCancellationRequested)
+            {
+                return null;
+            }
+        }
+        var reference = await Task.WhenAll(starts.Select(at => Sample(origin, at)));
+        if (reference.Any(r => r == null)) return new();  // the main address itself cannot be compared: use it alone
+        var mirrors = MirrorPool.Clean(Record.Mirrors, Record.Url).Select(m => new Uri(m)).ToList();
+        var ok = await Task.WhenAll(mirrors.Select(async m =>
+        {
+            for (var i = 0; i < starts.Length; i++)
+                if (await Sample(m, starts[i]) is not { } got || !got.AsSpan().SequenceEqual(reference[i])) return false;
+            return true;
+        }));
+        return mirrors.Where((_, i) => ok[i]).ToList();
     }
 
     /// <summary>The in-progress file's name ends with this until the download is complete.</summary>

@@ -201,6 +201,9 @@ public static partial class Dialogs
         var pass = new PasswordBox { Padding = new Thickness(4, 3, 4, 3) };
         inner.Children.Add(pass);
         var sum = Inner("Checksum (MD5, SHA-1, SHA-256 or SHA-512)");
+        var mirrorsBox = Inner("Mirrors: more addresses of the same file, one per line (downloaded from all at once)");
+        mirrorsBox.AcceptsReturn = true;
+        mirrorsBox.MinHeight = 48;
         var limit = Inner("Speed limit in KB/s (0 = none)");
         more.Content = inner;
         f.Body.Children.Add(more);
@@ -219,6 +222,7 @@ public static partial class Dialogs
                 Username = user.Text.Trim(),
                 Password = pass.Password,
                 Checksum = sum.Text.Trim(),
+                Mirrors = mirrorsBox.Text,
                 SpeedLimitKBps = Number(limit.Text),
                 AudioOnly = OneVideo() != null ? Chosen() == -1 : audio.IsChecked == true,
                 MaxHeight = OneVideo() != null && Chosen() > 0 ? Chosen() : null,
@@ -541,7 +545,11 @@ public static partial class Dialogs
         }
 
         var general = Tab("General");
-        var conn = Box(general, "Connections per download (1-256)", s.Connections.ToString());
+        var autoConn = Tick(general, "Choose the number of connections automatically (recommended)", s.AutoConnections);
+        var autoMax = Box(general, "Most connections in automatic mode (1-256)", s.AutoMaxConnections.ToString());
+        var conn = Box(general, "Connections per download when not automatic (1-256)", s.Connections.ToString());
+        Hint(general, "Automatic starts with a few connections and adds more only while the download gets faster; it slows down when " +
+                      "a server asks it to. Many servers limit connections, so very high numbers can make downloads slower or get them refused.");
         var active = Box(general, "Downloads at the same time (main queue)", s.MaxActive.ToString());
         var folder = Box(general, "Save to folder", s.Folder);
         var sort = Tick(general, "Put each type in its own folder (Video, Music, Documents, Programs, Compressed, Images)", s.SortIntoCategoryFolders);
@@ -794,6 +802,8 @@ public static partial class Dialogs
             if ((ProxyMode)Math.Max(0, mode.SelectedIndex) == ProxyMode.Pac && !Pac.AddressOk(host.Text))
             { error.Text = "Enter the proxy script's web address (http:// or https://) or the full path of the file."; return; }
             s.Connections = Math.Clamp(Number(conn.Text, 8), 1, Limits.MaxConnections);
+            s.AutoConnections = autoConn.IsChecked == true;
+            s.AutoMaxConnections = Math.Clamp(Number(autoMax.Text, 32), 1, Limits.MaxConnections);
             s.MaxActive = Math.Clamp(Number(active.Text, 3), 1, 10);
             s.Folder = folder.Text.Trim().Length > 0 ? folder.Text.Trim() : s.Folder;
             s.SortIntoCategoryFolders = sort.IsChecked == true;

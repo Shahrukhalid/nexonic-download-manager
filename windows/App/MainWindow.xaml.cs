@@ -425,6 +425,14 @@ public partial class MainWindow : Window
     void OnFeeds(object s, RoutedEventArgs e) => Dialogs.Feeds(this, manager, feeds, AddFeedItem);
 
     void OnBatch(object s, RoutedEventArgs e) => Dialogs.Batch(this, manager, CurrentQueue);
+    void OnMetalink(object s, RoutedEventArgs e)
+    {
+        var d = new Microsoft.Win32.OpenFileDialog { Title = "Open Metalink File", Filter = "Metalink (*.meta4;*.metalink)|*.meta4;*.metalink" };
+        if (d.ShowDialog(this) != true) return;
+        var info = new FileInfo(d.FileName);
+        var n = info.Length <= 4_000_000 ? manager.AddMetalink(File.ReadAllText(d.FileName), new AddOptions { QueueId = CurrentQueue }) : 0;
+        if (n == 0) MessageBox.Show(this, "This file has no downloads in it, or it is not a Metalink file.", "Open Metalink File", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
     void OnSettings(object s, RoutedEventArgs e) { Dialogs.Options(this, manager); BuildSidebar(); }
     void OnHelp(object s, RoutedEventArgs e) => HelpWindows.ShowHelp(this);
     void OnAbout(object s, RoutedEventArgs e) => HelpWindows.ShowAbout(this);

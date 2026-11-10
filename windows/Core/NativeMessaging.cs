@@ -70,6 +70,8 @@ public sealed record DownloadJob(string Url, string? FileName = null, string? Re
     public string? Username { get; init; }
     public string? Password { get; init; }
     public string? Checksum { get; init; }
+    /// <summary>More addresses of the same file (multi-source download).</summary>
+    public List<string>? Mirrors { get; init; }
     public int? SpeedLimitKBps { get; init; }
     public bool? Stream { get; init; }
     public bool? Site { get; init; }

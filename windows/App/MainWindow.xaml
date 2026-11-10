@@ -73,6 +73,7 @@
         <MenuItem Header="_Add URL…" InputGestureText="Ctrl+N" Click="OnAdd" />
         <MenuItem Header="Add _Torrent…" InputGestureText="Ctrl+Shift+T" Click="OnTorrents" />
         <MenuItem Header="Add _Batch Download…" InputGestureText="Ctrl+Shift+B" Click="OnBatch" />
+        <MenuItem Header="Open _Metalink File…" Click="OnMetalink" ToolTip="A .meta4 or .metalink file: each file is downloaded from all its mirrors at once and checked when done" />
         <MenuItem Header="Site _Grabber…" InputGestureText="Ctrl+Shift+G" Click="OnGrabber" />
         <MenuItem Header="_Link Grabber…" InputGestureText="Ctrl+Shift+K" Click="OnLinkGrabber" />
         <MenuItem Header="Download _Images from Page…" InputGestureText="Ctrl+Shift+I" Click="OnGallery" />

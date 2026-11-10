@@ -44,6 +44,8 @@ public sealed class DownloadRecord
     public string? QueueId { get; set; }
     public string? Username { get; set; }
     public string? Password { get; set; }
+    /// <summary>More addresses of the same file (multi-source download); checked against the main one before use.</summary>
+    public List<string>? Mirrors { get; set; }
     public string? Checksum { get; set; }
     public string? ChecksumResult { get; set; }
     public int? SpeedLimitKBps { get; set; }
@@ -206,6 +208,10 @@ public sealed class AppSettings
     public List<CustomCategory> CustomCategories { get; set; } = new();
     /// <summary>The user's own yt-dlp and FFmpeg programs (full paths); empty = automatic.</summary>
     public string YtDlpPath { get; set; } = "";
+    /// <summary>Auto connections (default): start with a few and add more while the speed rises, up to
+    /// <see cref="AutoMaxConnections"/>. Off: always use <c>Connections</c>.</summary>
+    public bool AutoConnections { get; set; } = true;
+    public int AutoMaxConnections { get; set; } = 32;
     public string FFmpegPath { get; set; } = "";
     /// <summary>Size of the interface in percent (100 = normal, 75 to 200).</summary>
     public int InterfaceScale { get; set; } = 100;
