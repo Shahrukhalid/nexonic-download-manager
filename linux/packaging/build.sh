@@ -94,8 +94,14 @@ case "$AI" in
   x86_64)  fetch https://github.com/AppImage/type2-runtime/releases/download/20251108/runtime-x86_64 runtime-x86_64 2fca8b443c92510f1483a883f60061ad09b46b978b2631c807cd873a47ec260d ;;
   aarch64) fetch https://github.com/AppImage/type2-runtime/releases/download/20251108/runtime-aarch64 runtime-aarch64 00cbdfcf917cc6c0ff6d3347d59e0ca1f7f45a6df1a428a0d6d8a78664d87444 ;;
 esac
+# Update information (read by AppImage update tools) and a .zsync file, so an update downloads only what changed.
+ZS="NexonicDownloadManager-Linux-$AI.AppImage.zsync"
 APPIMAGE_EXTRACT_AND_RUN=1 ARCH="$AI" "$TOOLDIR/appimagetool-$HOST_AI.AppImage" --no-appstream --runtime-file "$TOOLDIR/runtime-$AI" \
+  -u "gh-releases-zsync|Shahrukhalid|nexonic-download-manager|latest|$ZS" \
   "$AD" "$OUT/NexonicDownloadManager-Linux-$AI.AppImage"
+rm -f "$OUT/$ZS" "$ZS"  # made below from the final file, whatever appimagetool did
+command -v zsyncmake >/dev/null || { echo "zsyncmake is needed for the .zsync update file (apt install zsync)" >&2; exit 1; }
+( cd "$OUT" && zsyncmake -u "NexonicDownloadManager-Linux-$AI.AppImage" -o "$ZS" "NexonicDownloadManager-Linux-$AI.AppImage" )
 
 echo "== .deb"
 D="$OUT/deb"
@@ -175,6 +181,6 @@ rpmbuild -bb --quiet --define "_topdir $R" --target "$RPM" "$R/SPECS/nexonic-dow
 cp "$R/RPMS/$RPM/nexonic-download-manager-$VERSION-1.$RPM.rpm" "$OUT/"
 
 rm -rf "$AD" "$D" "$R"
-( cd "$OUT" && sha256sum *.AppImage *.deb *.rpm > SHA256SUMS-linux-$ARCH.txt )
+( cd "$OUT" && sha256sum *.AppImage *.AppImage.zsync *.deb *.rpm > SHA256SUMS-linux-$ARCH.txt )
 echo "Built in $OUT:"
 ls -la "$OUT"

@@ -31,7 +31,7 @@ jobs:
         timeout-minutes: 25
         run: |
           for try in 1 2 3; do
-            timeout 420 sudo apt-get update -qq && timeout 600 sudo apt-get install -y -qq rpm xvfb xauth imagemagick desktop-file-utils ffmpeg ninja-build pkg-config autoconf automake libtool >/dev/null && exit 0
+            timeout 420 sudo apt-get update -qq && timeout 600 sudo apt-get install -y -qq rpm xvfb xauth imagemagick desktop-file-utils zsync ffmpeg ninja-build pkg-config autoconf automake libtool >/dev/null && exit 0
             echo "Package install failed or stalled (try $try); retrying"; sleep 20
           done
           exit 1
@@ -73,6 +73,7 @@ jobs:
           if-no-files-found: ignore
           path: |
             build/linux-${{ matrix.arch }}/*.AppImage
+            build/linux-${{ matrix.arch }}/*.AppImage.zsync
             build/linux-${{ matrix.arch }}/*.deb
             build/linux-${{ matrix.arch }}/*.rpm
             build/linux-${{ matrix.arch }}/SHA256SUMS-*.txt

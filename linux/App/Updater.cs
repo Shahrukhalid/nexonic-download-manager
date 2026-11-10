@@ -152,9 +152,27 @@ public static class Updater
         try
         {
             using (var c = Client())
-            await using (var src = await c.GetStreamAsync(url))
-            await using (var dst = File.Create(temp))
-                await src.CopyToAsync(dst);
+            {
+                // Differential first: only the parts that changed since this version, rebuilt next to the AppImage.
+                // Anything unexpected (no control file, a server without ranges, a mismatch) falls back to the full file.
+                long? partial = null;
+                if (r.Assets.TryGetValue(asset + ".zsync", out var zsyncUrl) && Updates.TrustedAsset(zsyncUrl))
+                {
+                    try
+                    {
+                        var bytes = await c.GetByteArrayAsync(zsyncUrl);
+                        if (bytes.Length < 8 << 20 && ZsyncControl.Parse(bytes) is { } control)
+                            partial = await Zsync.BuildAsync(control, appImage, new Uri(url), temp, c, null, CancellationToken.None);
+                    }
+                    catch (Exception e) when (e is HttpRequestException or IOException or InvalidDataException or TaskCanceledException) { partial = null; }
+                }
+                if (partial == null)
+                {
+                    await using var src = await c.GetStreamAsync(url);
+                    await using var dst = File.Create(temp);
+                    await src.CopyToAsync(dst);
+                }
+            }
             progress.Close();
             if (!await Task.Run(() => Updates.Verify(temp, digest)))
             {

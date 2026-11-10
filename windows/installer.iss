@@ -14,13 +14,20 @@ DefaultDirName={localappdata}\Programs\Nexonic Download Manager
 DefaultGroupName=Nexonic Download Manager
 PrivilegesRequired=lowest
 OutputDir=..\build
+#define Arch GetEnv("NDM_ARCH")
+#if Arch == "arm64"
+OutputBaseFilename=NexonicDownloadManager-Setup-{#Version}-arm64
+ArchitecturesAllowed=arm64
+ArchitecturesInstallIn64BitMode=arm64
+#else
 OutputBaseFilename=NexonicDownloadManager-Setup-{#Version}
+ArchitecturesInstallIn64BitMode=x64compatible
+#endif
 SetupIconFile=App\app.ico
 UninstallDisplayIcon={app}\NexonicDownloadManager.exe
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
-ArchitecturesInstallIn64BitMode=x64compatible
 ChangesEnvironment=yes
 
 [InstallDelete]

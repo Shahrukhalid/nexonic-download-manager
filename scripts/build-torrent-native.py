@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CACHE = ROOT / '.native-cache'
 PIN = 'ef7dbf94b9198bc58f45951adcf1f041fcbc5ea0'
 TARGETS = {
-    'win-x64': 'x64-windows-static', 'linux-x64': 'x64-linux', 'linux-arm64': 'arm64-linux',
+    'win-x64': 'x64-windows-static', 'win-arm64': 'arm64-windows-static', 'linux-x64': 'x64-linux', 'linux-arm64': 'arm64-linux',
     'mac-x64': 'nexonic-x64-osx', 'mac-arm64': 'nexonic-arm64-osx',
     'mac-current': 'nexonic-arm64-osx' if platform.machine() == 'arm64' else 'nexonic-x64-osx', 'ios-arm64': 'nexonic-arm64-ios',
     'ios-sim-arm64': 'nexonic-arm64-ios-simulator', 'ios-sim-x64': 'nexonic-x64-ios-simulator',
@@ -65,6 +65,7 @@ def build(target, test):
                f'-DVCPKG_INSTALLED_DIR={installed}', f'-DVCPKG_OVERLAY_TRIPLETS={ROOT / "native/triplets"}', f'-DNDM_TORRENT_STATIC={"ON" if static else "OFF"}',
                f'-DNDM_TORRENT_TESTS={"ON" if test and not mobile else "OFF"}', f'-DCMAKE_INSTALL_PREFIX={stage}']
     if os.name != 'nt': command += ['-G', 'Ninja']
+    if target == 'win-arm64': command += ['-A', 'ARM64']
     if target.startswith('android-'):
         # vcpkg's toolchain only cross-compiles the dependencies; chain-load the NDK's so this library is built for the phone too.
         abi = {'android-arm64': 'arm64-v8a', 'android-arm': 'armeabi-v7a', 'android-x64': 'x86_64'}[target]

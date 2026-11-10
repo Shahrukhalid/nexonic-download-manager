@@ -1,14 +1,16 @@
 # Builds build\win\ (app, browser helper, extension), the portable zip and the installer .exe.
+# -Rid win-arm64 builds the Windows on Arm app (its own torrent engine; ffmpeg and QuickJS run through x64 emulation).
+param([ValidateSet("win-x64", "win-arm64")][string]$Rid = "win-x64")
 $ErrorActionPreference = "Stop"
 Set-Location (Join-Path $PSScriptRoot "..")
 $version = (Get-Content VERSION).Trim()
-python scripts/build-torrent-native.py win-x64
+python scripts/build-torrent-native.py $Rid
 if ($LASTEXITCODE -ne 0) { throw "Native torrent engine build failed" }
 $out = "build\win"
 if (Test-Path build) { Remove-Item build -Recurse -Force }
 # The app and the browser helper (also the ndm command) share one .NET runtime in the app folder, as on Linux:
 # the helper adds only its own files instead of carrying a second copy of the runtime.
-$common = @("-c", "Release", "-r", "win-x64", "--self-contained", "true", "-p:Version=$version")
+$common = @("-c", "Release", "-r", $Rid, "--self-contained", "true", "-p:Version=$version")
 dotnet publish windows\App\App.csproj @common -o $out
 if ($LASTEXITCODE -ne 0) { throw "App build failed" }
 dotnet publish windows\Host\Host.csproj @common -o build\host
@@ -35,9 +37,9 @@ if (Test-Path .tools-cache\windows\qjs.exe) {
 } else {
   Write-Warning "No .tools-cache\windows\qjs.exe: some video sites will not work in this build"
 }
-Copy-Item .native-cache\sdk\win-x64\bin\nexonic_torrent.dll $out
-Copy-Item .native-cache\sdk\win-x64\notices "$out\torrent-licenses" -Recurse
-Copy-Item .native-cache\sdk\win-x64\native-components.json "$out\torrent-components.json"
+Copy-Item .native-cache\sdk\$Rid\bin\nexonic_torrent.dll $out
+Copy-Item .native-cache\sdk\$Rid\notices "$out\torrent-licenses" -Recurse
+Copy-Item .native-cache\sdk\$Rid\native-components.json "$out\torrent-components.json"
 Copy-Item packaging\TERMS.txt $out
 python scripts\build-extensions.py
 if ($LASTEXITCODE -ne 0) { throw "Extension build failed" }
@@ -46,7 +48,8 @@ Copy-Item "build\NexonicFirefoxAddon-$version.xpi" "$out\Firefox Add-on.xpi"
 # The ndm command runs the helper in command-line mode; the installer puts this folder on the user's PATH.
 Set-Content -Path "$out\ndm.cmd" -Value "@echo off`r`n`"%~dp0nexonic-host.exe`" %*" -Encoding ascii -NoNewline
 # Strongest standard zip compression (any unzip tool opens it); Compress-Archive only when 7-Zip is missing.
-$zip = "build\NexonicDownloadManager-$version-windows-portable.zip"
+$suffix = if ($Rid -eq "win-arm64") { "-arm64" } else { "" }
+$zip = "build\NexonicDownloadManager-$version-windows$suffix-portable.zip"
 $sevenZip = "${env:ProgramFiles}\7-Zip\7z.exe"
 if (Test-Path $sevenZip) {
   & $sevenZip a -tzip -mx=9 -mfb=258 -mpass=15 -mmt=on $zip ".\$out\*" | Out-Null
@@ -55,6 +58,7 @@ if (Test-Path $sevenZip) {
 $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
 if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
 $env:NDM_VERSION = $version
+$env:NDM_ARCH = if ($Rid -eq "win-arm64") { "arm64" } else { "x64" }
 & $iscc windows\installer.iss
 if ($LASTEXITCODE -ne 0) { throw "Installer build failed" }
-Write-Host "Built build\NexonicDownloadManager-Setup-$version.exe and the portable zip"
+Write-Host "Built build\NexonicDownloadManager-Setup-$version$suffix.exe and the portable zip"

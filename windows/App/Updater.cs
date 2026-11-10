@@ -125,7 +125,9 @@ public static class Updater
     /// </summary>
     static async Task Install(Updates.Release r)
     {
-        const string asset = "NexonicDownloadManager-Windows-Setup.exe";
+        // Windows on Arm copies of the Arm build update to the Arm setup; the x64 build keeps the x64 one.
+        var asset = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture == System.Runtime.InteropServices.Architecture.Arm64
+            ? "NexonicDownloadManager-Windows-ARM64-Setup.exe" : "NexonicDownloadManager-Windows-Setup.exe";
         var installed = File.Exists(Path.Combine(AppContext.BaseDirectory, "unins000.exe"));
         // Only this app's own release file, and only when GitHub tells us its checksum; otherwise the release page.
         if (!installed || !r.Assets.TryGetValue(asset, out var url) || !Updates.TrustedAsset(url) || Updates.Digest(r, asset) is not { } digest)
