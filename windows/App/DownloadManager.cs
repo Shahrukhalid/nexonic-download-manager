@@ -796,6 +796,9 @@ public sealed partial class DownloadManager
 
     public void Save() => Write(AppPaths.Downloads, Rows.Select(r => r.Record).ToList());
 
+    /// <summary>Saves the settings as they are now (for small changes made outside Options, like the column layout).</summary>
+    public void SaveSettings() => Write(AppPaths.Settings, Settings);
+
     /// <summary>Saves atomically, with cookies and passwords encrypted for this Windows user (see Secrets).</summary>
     static void Write<T>(string path, T value)
     {

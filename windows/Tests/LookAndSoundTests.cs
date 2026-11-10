@@ -55,3 +55,38 @@ public class LookAndSoundTests
         finally { File.Delete(file); }
     }
 }
+
+public class ColumnLayoutTests
+{
+    [Fact]
+    public void LayoutRoundTripsAndIgnoresNonsense()
+    {
+        var text = ColumnLayout.Format(new[] { ("0", 2, 230.4), ("1", 0, 80.0), ("2", 1, 100.0) });
+        Assert.Equal("0=2:230;1=0:80;2=1:100", text);
+        var back = ColumnLayout.Parse(text);
+        Assert.Equal((2, 230.0), back["0"]);
+        Assert.Equal(3, back.Count);
+        var odd = ColumnLayout.Parse("a=1:5;b=x:80;c=99:80;;d=3:5000;e=2:120");
+        Assert.True(double.IsNaN(odd["a"].Width));   // too narrow: the default width is kept
+        Assert.True(double.IsNaN(odd["d"].Width));   // too wide
+        Assert.False(odd.ContainsKey("b"));
+        Assert.False(odd.ContainsKey("c"));          // index out of range
+        Assert.Equal((2, 120.0), odd["e"]);
+    }
+}
+
+public class CategoryEditorTests
+{
+    [Fact]
+    public void MovesAndRemovesCategoryLinesKeepingComments()
+    {
+        const string text = "# mine\nA: zip\n\nB: pdf\nC: mp3";
+        Assert.Equal(new[] { "A: zip", "B: pdf", "C: mp3" }, CustomCategory.Lines(text));
+        Assert.Equal("# mine\nC: mp3\nA: zip\nB: pdf", CustomCategory.Move(text, 2, 0));
+        Assert.Equal("# mine\nB: pdf\nA: zip\nC: mp3", CustomCategory.Move(text, 0, 1));
+        Assert.Equal("# mine\nB: pdf\nC: mp3\nA: zip", CustomCategory.Move(text, 0, 99));   // past the end: last
+        Assert.Equal(text, CustomCategory.Move(text, 7, 0));                                // nothing selected: unchanged
+        Assert.Equal("# mine\nA: zip\nC: mp3", CustomCategory.Remove(text, 1));
+        Assert.Equal(new[] { "C: mp3", "A: zip", "B: pdf" }, CustomCategory.ParseLines(CustomCategory.Move(text, 2, 0)).List.Select(c => c.Name + ": " + c.Extensions));
+    }
+}

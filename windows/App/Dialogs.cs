@@ -761,6 +761,53 @@ public static partial class Dialogs
             Height = 200, Margin = new Thickness(0, 8, 0, 0), VerticalScrollBarVisibility = ScrollBarVisibility.Auto, FontFamily = new FontFamily("Consolas") };
         System.Windows.Automation.AutomationProperties.SetName(categoryText, "Your categories, one per line");
         categories.Children.Add(categoryText);
+        // The same categories as a list: select one and move it, or drag it to its new place.
+        var categoryList = new ListBox { Height = 110, Margin = new Thickness(0, 6, 0, 0), AllowDrop = true };
+        System.Windows.Automation.AutomationProperties.SetName(categoryList, "Your categories in the order they are checked");
+        void RefreshCategoryList()
+        {
+            var keep = categoryList.SelectedIndex;
+            categoryList.ItemsSource = CustomCategory.Lines(categoryText.Text);
+            categoryList.SelectedIndex = Math.Min(keep, categoryList.Items.Count - 1);
+        }
+        void MoveCategory(int from, int to)
+        {
+            if (from < 0) return;
+            categoryText.Text = CustomCategory.Move(categoryText.Text, from, to);
+            categoryList.SelectedIndex = Math.Clamp(to, 0, categoryList.Items.Count - 1);
+        }
+        categoryText.TextChanged += (_, _) => RefreshCategoryList();
+        Point dragStart = default;
+        categoryList.PreviewMouseLeftButtonDown += (_, e) => dragStart = e.GetPosition(categoryList);
+        categoryList.PreviewMouseMove += (_, e) =>
+        {
+            var at = e.GetPosition(categoryList);
+            if (e.LeftButton != System.Windows.Input.MouseButtonState.Pressed || categoryList.SelectedIndex < 0
+                || Math.Abs(at.Y - dragStart.Y) < SystemParameters.MinimumVerticalDragDistance) return;
+            DragDrop.DoDragDrop(categoryList, categoryList.SelectedIndex, DragDropEffects.Move);
+        };
+        categoryList.Drop += (_, e) =>
+        {
+            if (e.Data.GetData(typeof(int)) is not int from) return;
+            var target = (e.OriginalSource as DependencyObject) is { } src && ItemsControl.ContainerFromElement(categoryList, src) is ListBoxItem item
+                ? categoryList.ItemContainerGenerator.IndexFromContainer(item) : categoryList.Items.Count - 1;
+            MoveCategory(from, target);
+        };
+        categories.Children.Add(categoryList);
+        var categoryButtons = new WrapPanel { Margin = new Thickness(0, 4, 0, 0) };
+        foreach (var (label, act) in new (string, Action)[]
+                 {
+                     ("Move Up", () => MoveCategory(categoryList.SelectedIndex, categoryList.SelectedIndex - 1)),
+                     ("Move Down", () => MoveCategory(categoryList.SelectedIndex, categoryList.SelectedIndex + 1)),
+                     ("Remove", () => { if (categoryList.SelectedIndex >= 0) categoryText.Text = CustomCategory.Remove(categoryText.Text, categoryList.SelectedIndex); }),
+                 })
+        {
+            var b = new Button { Content = label, Padding = new Thickness(10, 3, 10, 3), Margin = new Thickness(0, 0, 6, 0) };
+            b.Click += (_, _) => act();
+            categoryButtons.Children.Add(b);
+        }
+        categories.Children.Add(categoryButtons);
+        RefreshCategoryList();
 
         var remoteTab = Tab("Remote");
         var rs = s.Remote;

@@ -77,3 +77,27 @@ public static class ListColumns
         return r.Size is long || r.Received > 0 ? "No" : "";
     }
 }
+
+/// <summary>The download list's column order and widths as the user arranged them, saved as "Header=index:width;…".</summary>
+public static class ColumnLayout
+{
+    public static string Format(IEnumerable<(string Header, int Index, double Width)> columns) =>
+        string.Join(";", columns.Select(c => $"{Uri.EscapeDataString(c.Header)}={c.Index}:{Math.Round(c.Width).ToString(System.Globalization.CultureInfo.InvariantCulture)}"));
+
+    /// <summary>Header → (index, width); unreadable parts and widths outside 24–2000 are left out.</summary>
+    public static Dictionary<string, (int Index, double Width)> Parse(string? text)
+    {
+        var result = new Dictionary<string, (int, double)>();
+        foreach (var part in (text ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var eq = part.IndexOf('=');
+            var colon = part.IndexOf(':', Math.Max(0, eq));
+            if (eq <= 0 || colon < 0) continue;
+            var header = Uri.UnescapeDataString(part[..eq]);
+            if (!int.TryParse(part[(eq + 1)..colon], out var index) || index < 0 || index > 64) continue;
+            if (!double.TryParse(part[(colon + 1)..], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var w)) continue;
+            result[header] = (index, w is >= 24 and <= 2000 ? w : double.NaN);
+        }
+        return result;
+    }
+}

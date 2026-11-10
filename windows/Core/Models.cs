@@ -249,6 +249,8 @@ public sealed class AppSettings
     public string ColorSchemeJson { get; set; } = "";
     /// <summary>The font of the whole app; empty = the system's.</summary>
     public string FontFamily { get; set; } = "";
+    /// <summary>The download list's column order and widths (Windows), see <see cref="ColumnLayout"/>.</summary>
+    public string ColumnLayout { get; set; } = "";
     public bool MarkDownloads { get; set; } = true;
     public bool ScanEnabled { get; set; }
     // Added in 0.5.0: download and progress windows
