@@ -135,6 +135,10 @@ class Settings(context: Context) {
     var vpnOnly: Boolean get() = p.getBoolean("vpnOnly", false); set(v) = p.edit().putBoolean("vpnOnly", v).apply()
     var askBeforeDownload: Boolean get() = p.getBoolean("ask", true); set(v) = p.edit().putBoolean("ask", v).apply()
     var categoryFolders: Boolean get() = p.getBoolean("categoryFolders", true); set(v) = p.edit().putBoolean("categoryFolders", v).apply()
+    /** The user's own categories (Settings), checked in order before the built-in types. */
+    var customCategories: List<com.nexonic.downloadmanager.core.CustomCategory>
+        get() = com.nexonic.downloadmanager.core.CustomCategory.parse(p.getString("customCategories", "")).first
+        set(v) = p.edit().putString("customCategories", com.nexonic.downloadmanager.core.CustomCategory.toLines(com.nexonic.downloadmanager.core.CustomCategory.clean(v))).apply()
     var scheduleEnabled: Boolean get() = p.getBoolean("scheduleEnabled", false); set(v) = p.edit().putBoolean("scheduleEnabled", v).apply()
     var scheduleMinutes: Int get() = p.getInt("scheduleMinutes", 2 * 60); set(v) = p.edit().putInt("scheduleMinutes", v.coerceIn(0, 24 * 60 - 1)).apply()
     var blockThirdPartyCookies: Boolean get() = p.getBoolean("block3p", true); set(v) = p.edit().putBoolean("block3p", v).apply()
@@ -168,11 +172,12 @@ object Publisher {
     data class Saved(val uri: Uri, val name: String, val path: String)
 
     /** Into the folder chosen in Settings (SD card, USB…) when it is still available, else into Downloads. */
-    fun publish(context: Context, source: File, fileName: String, mime: String?, categoryFolders: Boolean, tree: String?): Saved {
+    fun publish(context: Context, source: File, fileName: String, mime: String?, categoryFolders: Boolean, tree: String?, url: String? = null): Saved {
         val treeUri = tree?.let { Uri.parse(it) }
         val allowed = treeUri != null && context.contentResolver.persistedUriPermissions.any { it.uri == treeUri && it.isWritePermission }
-        return if (allowed) publishToTree(context, treeUri!!, source, fileName, mime, categoryFolders)
-        else publish(context, source, fileName, mime, categoryFolders)
+        val sub = com.nexonic.downloadmanager.core.CustomCategory.subfolderFor(Downloads.settings.customCategories, fileName, url, categoryFolders)
+        return if (allowed) publishToTree(context, treeUri!!, source, fileName, mime, sub)
+        else publish(context, source, fileName, mime, sub)
     }
 
     private fun mimeOf(fileName: String, mime: String?): String =
@@ -181,11 +186,11 @@ object Publisher {
             ?: "application/octet-stream"
 
     /** Saves into a folder the user picked with the system file picker (works for SD cards and USB drives). */
-    private fun publishToTree(context: Context, tree: Uri, source: File, fileName: String, mime: String?, categoryFolders: Boolean): Saved {
+    private fun publishToTree(context: Context, tree: Uri, source: File, fileName: String, mime: String?, subfolder: String?): Saved {
         val resolver = context.contentResolver
         var dir = DocumentsContract.buildDocumentUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))
         var path = Downloads.settings.saveTreeName.ifEmpty { "Chosen folder" }
-        if (categoryFolders) FileCategory.of(fileName).folder?.let { sub ->
+        subfolder?.split('/')?.filter { it.isNotEmpty() }?.forEach { sub ->
             dir = childFolder(resolver, tree, dir, sub)
             path += "/$sub"
         }
@@ -216,10 +221,10 @@ object Publisher {
         return DocumentsContract.createDocument(resolver, parent, DocumentsContract.Document.MIME_TYPE_DIR, name) ?: parent
     }
 
-    fun publish(context: Context, source: File, fileName: String, mime: String?, categoryFolders: Boolean): Saved {
+    private fun publish(context: Context, source: File, fileName: String, mime: String?, subfolder: String?): Saved {
         val folder = buildString {
             append(Environment.DIRECTORY_DOWNLOADS).append("/Nexonic")
-            if (categoryFolders) FileCategory.of(fileName).folder?.let { append('/').append(it) }
+            subfolder?.takeIf { it.isNotEmpty() }?.let { append('/').append(it) }
         }
         val resolver = context.contentResolver
         val values = ContentValues().apply {
