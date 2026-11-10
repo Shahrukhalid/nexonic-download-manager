@@ -100,6 +100,8 @@ jobs:
           name: tools-windows
           path: .tools-cache/windows
   windows:
+    # The x64 job keeps the name "windows": branch protection requires a check with that name.
+    name: ${{ matrix.rid == 'win-x64' && 'windows' || 'windows-arm64' }}
     needs: ffmpeg-windows
     strategy:
       fail-fast: false
