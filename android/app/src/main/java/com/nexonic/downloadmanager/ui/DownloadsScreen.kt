@@ -407,6 +407,11 @@ fun DetailSheet(item: DownloadItem, onDismiss: () -> Unit, message: (String) -> 
                 }
                 if (item.status != Status.COMPLETE && !item.isTorrent) OutlinedButton(onClick = { refresh = true }) { Text(tr("Refresh link")) }
                 OutlinedButton(onClick = { copy(context, item.url); message("Link copied") }) { Text(tr("Copy link")) }
+                if (!item.isTorrent) OutlinedButton(onClick = {
+                    val sec = com.nexonic.downloadmanager.data.Downloads.secrets.get(item.id)
+                    copy(context, com.nexonic.downloadmanager.core.CurlCommand.command(item.url, item.fileName, item.referer, item.userAgent, sec.cookies, sec.user, sec.password))
+                    message("cURL command copied")
+                }) { Text(tr("Copy as cURL")) }
                 OutlinedButton(onClick = { confirmDelete = true }) { Text(tr("Delete")) }
             }
             Spacer(Modifier.height(16.dp))
