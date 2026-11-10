@@ -136,6 +136,21 @@ final class DownloadManager: ObservableObject {
     }
 
     func add(links text: String, options: AddOptions = AddOptions()) {
+        // A browser's "Copy as cURL": the address with its referrer, cookies, browser name and login.
+        if CurlCommand.looks(text) {
+            switch CurlCommand.parse(text) {
+            case .success(let r):
+                var job = DownloadJob(url: r.url.absoluteString)
+                job.referrer = r.referrer; job.cookies = r.cookies; job.userAgent = r.userAgent
+                job.username = r.username; job.password = r.password
+                if let n = options.fileName, !n.isEmpty { job.fileName = n }
+                add(job, options: options)
+                if !r.ignored.isEmpty { post("Added from cURL", "Not repeated: \(r.ignored.joined(separator: ", ")).") }
+            case .failure(let f):
+                post("Could not add the cURL command", f.description)
+            }
+            return
+        }
         let lines = Links.split(text)
         for line in lines {
             var job = DownloadJob(url: line)

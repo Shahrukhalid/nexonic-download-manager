@@ -340,6 +340,12 @@ struct ContentView: View {
                     NSPasteboard.general.setString(u.absoluteString, forType: .string)
                 }
             }
+            Button("Copy as cURL") {
+                if let r = manager.items.first(where: { $0.id == id }) {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(CurlCommand.command(for: r), forType: .string)
+                }
+            }
         }
         Button(ids.count == 1 ? "Show QR Code…" : "Show QR Code for \(ids.count) Downloads…") {
             QrWindow.show(manager.items.filter { ids.contains($0.id) }.map(\.url))
