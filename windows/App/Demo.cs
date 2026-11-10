@@ -10,7 +10,8 @@ namespace Nexonic.App;
 /// <summary>
 /// Fills the app with a sample list and saves pictures of its windows, for the README screenshots.
 /// Only active when started with NDM_DEMO=1; NDM_SNAPSHOT=folder saves the pictures and quits,
-/// NDM_SHEET=add|scheduler|batch|info|progress opens that window first, NDM_LIVE=link adds one real running download.
+/// NDM_SHEET=add|scheduler|batch|info|progress|options opens that window first, NDM_LIVE=link adds one real running download,
+/// NDM_THEME=light|dark|scheme:Ocean… shows the app in that look.
 /// </summary>
 public static class Demo
 {
@@ -21,6 +22,7 @@ public static class Demo
     {
         if (Env("NDM_DEMO") != "1") return;
         Seed(m);
+        if (Env("NDM_THEME") is { Length: > 0 } theme) AppTheme.Apply(theme);
         window.BuildSidebar();
         window.Width = Math.Min(1240, SystemParameters.WorkArea.Width - 20);
         window.Height = Math.Min(720, SystemParameters.WorkArea.Height - 20);
@@ -44,6 +46,7 @@ public static class Demo
                 case "add": Dialogs.Add(window, m, "https://example.com/files/course-lecture-09-1080p.mp4", DownloadQueue.MainId); break;
                 case "scheduler": Dialogs.Scheduler(window, m, NightQueueId); break;
                 case "batch": Dialogs.Batch(window, m, DownloadQueue.MainId); break;
+                case "options": Dialogs.Options(window, m); break;
                 case "info":
                     DownloadWindows.ShowInfo(m, new DownloadJob("https://example.com/releases/studio-suite-2026-installer.exe")
                         { Size = 1_840_000_000, FromBrowser = true });
