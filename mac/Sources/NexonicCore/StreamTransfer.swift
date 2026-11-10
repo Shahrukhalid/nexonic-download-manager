@@ -228,8 +228,7 @@ public final class StreamTransfer: Downloader, @unchecked Sendable {
 
     private func finish(_ joined: [(Track, URL)]) throws {
         let r = record
-        var folder = r.folder
-        if sortIntoCategories { folder.appendPathComponent(FileCategory.video.rawValue, isDirectory: true) }
+        let folder = CategoryRules.targetFolder(r.folder, fileName: "video.mp4", url: r.url.absoluteString, sortBuiltIn: sortIntoCategories)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let base = (r.fileName as NSString).deletingPathExtension
         func ext(_ t: Track) -> String {

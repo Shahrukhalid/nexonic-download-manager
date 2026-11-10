@@ -598,8 +598,8 @@ public final class SiteVideoTransfer: Downloader, @unchecked Sendable {
             self?.notify(force: true)
         }) else { return fail(SiteVideoTools.missing) }
         change { $0.videoStep = nil }
-        var folder = r.folder
-        if sortIntoCategories { folder.appendPathComponent(r.audioOnly == true ? FileCategory.music.rawValue : FileCategory.video.rawValue) }
+        let folder = CategoryRules.targetFolder(r.folder, fileName: r.audioOnly == true ? "audio.m4a" : "video.mp4",
+                                                url: r.url.absoluteString, sortBuiltIn: sortIntoCategories)
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         try? FileManager.default.createDirectory(at: temp, withIntermediateDirectories: true)
         let p = Process()
