@@ -40,7 +40,7 @@
 "Close" = "បិទ";
 "Command line" = "បន្ទាត់​ពាក្យ​បញ្ជា";
 "Connection" = "ការ​តភ្ជាប់";
-"Connections per download (1-32)" = "ការ​តភ្ជាប់​ក្នុង​មួយ​ការ​ទាញយក (1-32)";
+"Connections per download (1-128)" = "ការ​តភ្ជាប់​ក្នុង​មួយ​ការ​ទាញយក (1-128)";
 "Copy Link" = "ចម្លង​តំណ";
 "Delete" = "លុប";
 "Delete Completed" = "លុប​បាន​បញ្ចប់";

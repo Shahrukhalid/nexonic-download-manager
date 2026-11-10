@@ -40,7 +40,7 @@
 "Close" = "بند کریں";
 "Command line" = "کمانڈ لائن";
 "Connection" = "کنکشن";
-"Connections per download (1-32)" = "فی ڈاؤن لوڈ کنکشنز (1-32)";
+"Connections per download (1-128)" = "فی ڈاؤن لوڈ کنکشنز (1-128)";
 "Copy Link" = "لنک کاپی کریں";
 "Delete" = "حذف کریں";
 "Delete Completed" = "مکمل شدہ حذف کریں";

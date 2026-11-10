@@ -40,7 +40,7 @@
 "Close" = "إغلاق";
 "Command line" = "سطر الأوامر";
 "Connection" = "الاتصال";
-"Connections per download (1-32)" = "الاتصالات لكل تنزيل (1-32)";
+"Connections per download (1-128)" = "الاتصالات لكل تنزيل (1-128)";
 "Copy Link" = "نسخ الرابط";
 "Delete" = "حذف";
 "Delete Completed" = "حذف المكتملة";

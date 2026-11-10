@@ -40,7 +40,7 @@
 "Close" = "بند ڪريو";
 "Command line" = "ڪمانڊ لائين";
 "Connection" = "رابطو";
-"Connections per download (1-32)" = "ڊائون لوڊ";
+"Connections per download (1-128)" = "ڊائون لوڊ";
 "Copy Link" = "لنڪ ڪاپي ڪريو";
 "Delete" = "حذف";
 "Delete Completed" = "مڪمل";

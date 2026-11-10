@@ -40,7 +40,7 @@
 "Close" = "Κλείσιμο";
 "Command line" = "Γραμμή εντολών";
 "Connection" = "Σύνδεση";
-"Connections per download (1-32)" = "Συνδέσεις ανά λήψη (1-32)";
+"Connections per download (1-128)" = "Συνδέσεις ανά λήψη (1-128)";
 "Copy Link" = "Αντιγραφή συνδέσμου";
 "Delete" = "Διαγραφή";
 "Delete Completed" = "Διαγραφή ολοκληρωμένη";

@@ -70,7 +70,7 @@ public static class HelpWindows
         }),
         ("Speed and Options", new[]
         {
-            ("Faster downloads", "Each file is split into parts that download at the same time. Change the number of connections in Options (up to 32)."),
+            ("Faster downloads", "Each file is split into parts that download at the same time. Change the number of connections in Options (up to 128)."),
             ("Speed limit", "Set a limit for all downloads in Options, or for one download in its Properties."),
             ("Proxy and sign-in", "Set a proxy in Options, Connection. For password-protected downloads, add the user name and password in the Add window or under Properties."),
         }),

@@ -40,7 +40,7 @@
 "Close" = "Bezárás";
 "Command line" = "A parancssor";
 "Connection" = "Kapcsolat";
-"Connections per download (1-32)" = "Kapcsolatok letöltésenként (1-32)";
+"Connections per download (1-128)" = "Kapcsolatok letöltésenként (1-128)";
 "Copy Link" = "A link másolása";
 "Delete" = "Törlés";
 "Delete Completed" = "Befejezett törlése";

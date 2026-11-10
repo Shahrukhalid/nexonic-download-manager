@@ -40,7 +40,7 @@
 "Close" = "Agħlaq";
 "Command line" = "Linja tal-kmand";
 "Connection" = "Konnessjoni";
-"Connections per download (1-32)" = "Konnessjonijiet għal kull tniżżil (1-32)";
+"Connections per download (1-128)" = "Konnessjonijiet għal kull tniżżil (1-128)";
 "Copy Link" = "Ikkopja l-Link";
 "Delete" = "Ħassar";
 "Delete Completed" = "Ħassar lest";

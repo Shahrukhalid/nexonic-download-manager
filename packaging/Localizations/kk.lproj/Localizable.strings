@@ -40,7 +40,7 @@
 "Close" = "Жабу";
 "Command line" = "Команда жолы";
 "Connection" = "Қосылым";
-"Connections per download (1-32)" = "Жүктеп алуда қосылымдар саны (1- 32)";
+"Connections per download (1-128)" = "Жүктеп алуда қосылымдар саны (1- 32)";
 "Copy Link" = "Сілтемені көшірмелеу";
 "Delete" = "& Өшіру";
 "Delete Completed" = "Толығымен өшіру";

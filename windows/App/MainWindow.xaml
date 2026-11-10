@@ -216,6 +216,7 @@
               <MenuItem x:Name="RecheckItem" Header="Check Torrent Files Again" Click="OnRecheck" />
               <MenuItem Header="Properties…" Click="OnProperties" />
               <MenuItem Header="Copy Link" Click="OnCopyLink" />
+              <MenuItem Header="Copy as cURL" Click="OnCopyCurl" ToolTip="A command that fetches the same file elsewhere, with its cookies and login: share it with care" />
               <MenuItem Header="Check Server…" Click="OnDiagnostics" />
               <MenuItem Header="Show QR Code…" Click="OnShowQr" />
               <MenuItem x:Name="MoveMenu" Header="Move to Queue" />

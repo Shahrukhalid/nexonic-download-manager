@@ -40,7 +40,7 @@
 "Close" = "بندول_";
 "Command line" = "بولۍ ليکه";
 "Connection" = "نښلن";
-"Connections per download (1-32)" = "په هر ډاونلوډ کې اړیکې (1-32)";
+"Connections per download (1-128)" = "په هر ډاونلوډ کې اړیکې (1-128)";
 "Copy Link" = "تړنه لمېسل";
 "Delete" = "ړنګول";
 "Delete Completed" = "بشپړ شوی ړنګول";

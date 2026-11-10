@@ -40,7 +40,7 @@
 "Close" = "Затвори";
 "Command line" = "Команден ред";
 "Connection" = "Връзка";
-"Connections per download (1-32)" = "Връзки за изтегляне (1-32)";
+"Connections per download (1-128)" = "Връзки за изтегляне (1-128)";
 "Copy Link" = "Копиране на връзка";
 "Delete" = "Изтриване";
 "Delete Completed" = "Изтриване завършено";

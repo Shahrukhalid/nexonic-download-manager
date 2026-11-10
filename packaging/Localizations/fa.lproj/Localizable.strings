@@ -40,7 +40,7 @@
 "Close" = "بستن";
 "Command line" = "خط فرمان";
 "Connection" = "اتصال";
-"Connections per download (1-32)" = "اتصالها در هر بارگیری) ۱- ۳۲ (";
+"Connections per download (1-128)" = "اتصالها در هر بارگیری) ۱- ۳۲ (";
 "Copy Link" = "رونوشت پیوند";
 "Delete" = "حذف";
 "Delete Completed" = "حذف کامل شد";

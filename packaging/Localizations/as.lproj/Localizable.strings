@@ -40,7 +40,7 @@
 "Close" = "বন্ধ কৰক";
 "Command line" = "কমান্ড শাৰী";
 "Connection" = "সংযোগ";
-"Connections per download (1-32)" = "প্ৰতি ডাউনল'ডত সংযোগ (1-32)";
+"Connections per download (1-128)" = "প্ৰতি ডাউনল'ডত সংযোগ (1-128)";
 "Copy Link" = "লিঙ্ক কপি কৰক";
 "Delete" = "আঁতৰাওক (_D)";
 "Delete Completed" = "সম্পূৰ্ণ মচি পেলাওক";

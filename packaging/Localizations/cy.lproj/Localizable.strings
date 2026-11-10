@@ -40,7 +40,7 @@
 "Close" = "Cau";
 "Command line" = "Llinell orchymyn";
 "Connection" = "Cysylltiad";
-"Connections per download (1-32)" = "Cysylltiadau fesul lawrlwythiad (1-32)";
+"Connections per download (1-128)" = "Cysylltiadau fesul lawrlwythiad (1-128)";
 "Copy Link" = "Copïo Cyswllt";
 "Delete" = "& Dileu";
 "Delete Completed" = "Dileu wedi' i Gwblhau";

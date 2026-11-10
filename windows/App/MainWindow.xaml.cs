@@ -469,6 +469,7 @@ public partial class MainWindow : Window
     void OnRecheck(object s, RoutedEventArgs e) { if (One is { Record.Torrent: not null } r) manager.Recheck(r); }
     void OnShowQr(object s, RoutedEventArgs e) => Dialogs.ShowQr(this, Selected.Select(r => r.Record.Url).ToList());
     void OnCopyLink(object s, RoutedEventArgs e) { if (One is { } r) Clipboard.SetText(r.Record.Url); }
+    void OnCopyCurl(object s, RoutedEventArgs e) { if (One is { } r) Clipboard.SetText(CurlCommand.ToCommand(r.Record)); }
     void OnRefreshLink(object s, RoutedEventArgs e) { if (One is { } r) Dialogs.RefreshLink(this, manager, r); }
     void OnProperties(object s, RoutedEventArgs e) { if (One is { } r) Dialogs.Properties(this, manager, r); }
 

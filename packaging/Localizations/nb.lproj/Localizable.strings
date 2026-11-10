@@ -40,7 +40,7 @@
 "Close" = "Lukk";
 "Command line" = "Kommandolinje";
 "Connection" = "Tilkobling";
-"Connections per download (1-32)" = "Tilkoblinger per nedlasting (1-32)";
+"Connections per download (1-128)" = "Tilkoblinger per nedlasting (1-128)";
 "Copy Link" = "Kopier lenke";
 "Delete" = "Slett";
 "Delete Completed" = "Slett fullført";

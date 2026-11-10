@@ -40,7 +40,7 @@
 "Close" = "बन्द गर्नुहोस्";
 "Command line" = "आदेश रेखा";
 "Connection" = "जडान गर्नुहोस्";
-"Connections per download (1-32)" = "प्रति डाउनलोड जडान (१-३२)";
+"Connections per download (1-128)" = "प्रति डाउनलोड जडान (१-३२)";
 "Copy Link" = "लिङ्क प्रतिलिपि गर्नुहोस्";
 "Delete" = "मेट्नुहोस्";
 "Delete Completed" = "समाप्त भएको मेट्नुहोस्";

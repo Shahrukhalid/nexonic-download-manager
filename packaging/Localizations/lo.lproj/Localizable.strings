@@ -40,7 +40,7 @@
 "Close" = "ປິດ";
 "Command line" = "បន្ទាត់​ຄໍາ​ສັ່ງ";
 "Connection" = "ການ​ເຊື່ອມຕໍ່";
-"Connections per download (1-32)" = "ການເຊື່ອມຕໍ່ຕໍ່ການດາວໂຫລດ (1-32)";
+"Connections per download (1-128)" = "ການເຊື່ອມຕໍ່ຕໍ່ການດາວໂຫລດ (1-128)";
 "Copy Link" = "ចម្លង​តំណ";
 "Delete" = "ລຶບ";
 "Delete Completed" = "ລຶບ​ທີ່​ສຳເລັດ";

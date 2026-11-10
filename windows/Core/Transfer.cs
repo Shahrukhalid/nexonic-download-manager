@@ -56,7 +56,7 @@ public sealed class Transfer : IDownloader
     {
         this.options = options ?? new TransferOptions(Retries: Network.Options.Retries, ReadTimeoutSeconds: Network.Options.ReadTimeoutSeconds);
         Record = record;
-        this.connections = Math.Clamp(connections, 1, 32);
+        this.connections = Math.Clamp(connections, 1, Limits.MaxConnections);
         this.limiter = limiter;
         this.sortIntoCategories = sortIntoCategories;
         origin = new Uri(record.Url);
@@ -498,7 +498,7 @@ public static class Network
             AllowAutoRedirect = false,
             UseCookies = false,
             AutomaticDecompression = DecompressionMethods.None,
-            MaxConnectionsPerServer = 32,
+            MaxConnectionsPerServer = Limits.MaxConnections,
             ConnectTimeout = TimeSpan.FromSeconds(Math.Clamp(Options.ConnectTimeoutSeconds, 3, 300)),
         };
         // DNS over HTTPS for direct connections (with a proxy, the proxy looks the name up).

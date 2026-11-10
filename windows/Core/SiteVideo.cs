@@ -388,6 +388,7 @@ public static class SiteVideoTools
     {
         get
         {
+            if (EnginePaths.YtDlpFile is { } own) return own;
             if (!OperatingSystem.IsWindows()) return Path.Combine(Folder, Exe(EngineName));
             var best = Engines().FirstOrDefault();
             if (best.Dir != null) return Path.Combine(best.Dir, EngineExe);
@@ -406,6 +407,7 @@ public static class SiteVideoTools
     /// </summary>
     public static bool EnsureInstalled(Action<string>? status = null)
     {
+        if (EnginePaths.YtDlp.Length > 0) return EnginePaths.YtDlpFile != null;  // the user's own copy: never replaced
         if (File.Exists(YtDlp)) return true;
         installing.Wait();
         try
@@ -515,6 +517,7 @@ public static class SiteVideoTools
 
     static bool DueForUpdate()
     {
+        if (EnginePaths.YtDlp.Length > 0) return false;  // the user's own copy is updated by them
         var checkedFile = Path.Combine(Folder, "last-update");
         if (File.Exists(checkedFile) && DateTime.UtcNow - File.GetLastWriteTimeUtc(checkedFile) < TimeSpan.FromDays(1)) return false;
         File.WriteAllText(checkedFile, "");

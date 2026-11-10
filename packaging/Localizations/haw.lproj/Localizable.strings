@@ -40,7 +40,7 @@
 "Close" = "Kuhi";
 "Command line" = "Hoʻouka i ka hua'ōlelo";
 "Connection" = "Kaʻana like";
-"Connections per download (1-32)" = "Hoʻopili i kēlā me kēia hoʻoiho (1-32)";
+"Connections per download (1-128)" = "Hoʻopili i kēlā me kēia hoʻoiho (1-128)";
 "Copy Link" = "_Kope i ka loulou";
 "Delete" = "_Hoʻouka hou";
 "Delete Completed" = "Hoʻopau i ka hoʻopau";
