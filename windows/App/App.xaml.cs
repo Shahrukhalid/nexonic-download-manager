@@ -42,7 +42,8 @@ public partial class App : Application
         RegisterBrowserHost();
         var manager = new DownloadManager();
         L.Use(manager.Settings.Language);
-        AppTheme.Apply(manager.Settings.Theme);
+        AppTheme.HookWindows();
+        AppTheme.Apply(manager.Settings.Theme, manager.Settings.ColorSchemeJson, manager.Settings.FontFamily);
         Translate.Install();
         window = new MainWindow(manager);
         // Started by the browser helper: stay in the tray unless the user wants the window for browser downloads.

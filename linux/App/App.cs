@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
 using Avalonia.Threading;
 using Nexonic.Core;
@@ -25,13 +26,43 @@ public sealed class App : Application
     public override void Initialize()
     {
         Name = "Nexonic Download Manager";
-        Styles.Add(new FluentTheme());
-        RequestedThemeVariant = Prefs.Load().Variant;
+        Apply(this, Prefs.Load());
     }
 
     public static void ApplyTheme(Prefs prefs)
     {
-        if (Current != null) Current.RequestedThemeVariant = prefs.Variant;
+        if (Current != null) Apply(Current, prefs);
+    }
+
+    static Avalonia.Styling.Style? fontStyle;
+
+    /// <summary>Light/dark/system, a colour scheme (through the Fluent theme's palette: accent, surfaces, text) and the font.</summary>
+    static void Apply(Application app, Prefs prefs)
+    {
+        app.RequestedThemeVariant = prefs.Variant;
+        var fluent = new FluentTheme();
+        if (prefs.Scheme is { } c)
+        {
+            static Avalonia.Media.Color C(string hex) => Avalonia.Media.Color.Parse(hex);
+            fluent.Palettes[c.Base == "dark" ? ThemeVariant.Dark : ThemeVariant.Light] = new ColorPaletteResources
+            {
+                Accent = C(c.Accent), RegionColor = C(c.Background), AltHigh = C(c.Panel), AltMedium = C(c.Panel), AltLow = C(c.Panel),
+                BaseHigh = C(c.Text), BaseMediumHigh = C(c.Text), BaseMedium = C(c.Muted), BaseMediumLow = C(c.Muted), BaseLow = C(c.Line),
+                ChromeLow = C(ColorScheme.Mix(c.Panel, c.Background, 0.5)), ChromeMediumLow = C(c.Panel), ChromeMedium = C(ColorScheme.Mix(c.Panel, c.Text, 0.06)),
+                ChromeHigh = C(c.Line), ListLow = C(ColorScheme.Mix(c.Panel, c.Accent, 0.08)), ListMedium = C(c.Selected),
+            };
+        }
+        var old = app.Styles.OfType<FluentTheme>().FirstOrDefault();
+        if (old != null) app.Styles[app.Styles.IndexOf(old)] = fluent; else app.Styles.Insert(0, fluent);
+        if (fontStyle != null) { app.Styles.Remove(fontStyle); fontStyle = null; }
+        if (prefs.Font.Trim().Length > 0)
+        {
+            fontStyle = new Avalonia.Styling.Style(x => x.OfType<Window>())
+            {
+                Setters = { new Avalonia.Styling.Setter(Avalonia.Controls.Primitives.TemplatedControl.FontFamilyProperty, new Avalonia.Media.FontFamily(prefs.Font.Trim())) },
+            };
+            app.Styles.Add(fontStyle);
+        }
     }
 
     public override void OnFrameworkInitializationCompleted()

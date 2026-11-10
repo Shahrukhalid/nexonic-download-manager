@@ -583,9 +583,49 @@ public static partial class Dialogs
         };
         general.Children.Add(language);
         general.Children.Add(new TextBlock { Text = "Appearance", Margin = new Thickness(0, 10, 0, 2) });
-        var theme = new ComboBox { ItemsSource = AppTheme.Choices.Select(c => L.T(AppTheme.Title(c))).ToList(), SelectedIndex = Math.Max(0, Array.IndexOf(AppTheme.Choices, s.Theme)) };
+        var customJson = s.ColorSchemeJson ?? "";
+        var themeChoices = AppTheme.AllChoices(customJson);
+        var theme = new ComboBox { ItemsSource = themeChoices.Select(c => L.T(AppTheme.Title(c))).ToList(), SelectedIndex = Math.Max(0, Array.IndexOf(themeChoices, s.Theme)) };
         System.Windows.Automation.AutomationProperties.SetName(theme, "Appearance");
         general.Children.Add(theme);
+        var schemeButtons = new WrapPanel { Margin = new Thickness(0, 4, 0, 0) };
+        Button SchemeButton(string text, Action click)
+        {
+            var b = new Button { Content = text, Padding = new Thickness(10, 3, 10, 3), Margin = new Thickness(0, 0, 6, 0) };
+            b.Click += (_, _) => click();
+            schemeButtons.Children.Add(b);
+            return b;
+        }
+        var schemeNote = new TextBlock { TextWrapping = TextWrapping.Wrap, Foreground = Brushes.Gray, Margin = new Thickness(0, 2, 0, 0) };
+        SchemeButton("Import Colour Scheme…", () =>
+        {
+            var d = new Microsoft.Win32.OpenFileDialog { Title = "Import Colour Scheme", Filter = "Colour scheme (*.json)|*.json" };
+            if (d.ShowDialog(f.Window) != true) return;
+            var info = new System.IO.FileInfo(d.FileName);
+            var (scheme, problem) = info.Length <= 64 * 1024 ? ColorScheme.Import(System.IO.File.ReadAllText(d.FileName)) : (null, "This file is too large to be a colour scheme.");
+            if (scheme == null) { schemeNote.Text = problem; return; }
+            customJson = scheme.Export();
+            themeChoices = AppTheme.AllChoices(customJson);
+            theme.ItemsSource = themeChoices.Select(c => L.T(AppTheme.Title(c))).ToList();
+            theme.SelectedIndex = Array.IndexOf(themeChoices, "custom");
+            schemeNote.Text = $"{scheme.Name} is ready; it is used when you press OK.";
+        });
+        SchemeButton("Export Colour Scheme…", () =>
+        {
+            var chosen = AppTheme.SchemeFor(themeChoices[Math.Max(0, theme.SelectedIndex)], customJson);
+            if (chosen == null) { schemeNote.Text = "Choose a colour scheme in the list to export it."; return; }
+            var d = new Microsoft.Win32.SaveFileDialog { Title = "Export Colour Scheme", Filter = "Colour scheme (*.json)|*.json", FileName = chosen.Name + ".json" };
+            if (d.ShowDialog(f.Window) != true) return;
+            System.IO.File.WriteAllText(d.FileName, chosen.Export());
+            schemeNote.Text = "Saved.";
+        });
+        general.Children.Add(schemeButtons);
+        general.Children.Add(schemeNote);
+        general.Children.Add(new TextBlock { Text = "Font", Margin = new Thickness(0, 10, 0, 2) });
+        var fontNames = new List<string> { L.T("Same as Windows") }.Concat(AppTheme.InstalledFonts()).ToList();
+        var font = new ComboBox { ItemsSource = fontNames, SelectedIndex = Math.Max(0, fontNames.IndexOf(s.FontFamily ?? "")) };
+        System.Windows.Automation.AutomationProperties.SetName(font, "Font");
+        general.Children.Add(font);
         general.Children.Add(new TextBlock { Text = "Interface size", Margin = new Thickness(0, 10, 0, 2) });
         var scales = new[] { 75, 90, 100, 110, 125, 150, 175, 200 };
         var scale = new ComboBox { ItemsSource = scales.Select(v => v + "%").ToList(), SelectedIndex = Array.IndexOf(scales, s.InterfaceScale) is var si && si >= 0 ? si : 2 };
@@ -792,6 +832,10 @@ public static partial class Dialogs
         var after = Tab("After Download");
         var complete = Tick(after, "Show the Download Complete window", s.ShowCompleteDialog);
         var sound = Tick(after, "Play a sound", s.PlaySound);
+        var soundDone = Box(after, "Sound when a download finishes (empty = the system's sound, none = silent, or a sound file)", s.SoundFinished ?? "");
+        var soundFailed = Box(after, "Sound when a download fails (empty = silent, or a sound file)", s.SoundFailed ?? "");
+        var soundQueue = Box(after, "Sound when a queue is done (empty = the system's sound, none = silent, or a sound file)", s.SoundQueueDone ?? "");
+        var quiet = Box(after, "Quiet hours, no sounds (for example 22:00-07:00; empty = none)", s.QuietHours ?? "");
         var mark = Tick(after, "Mark files as downloaded from the internet so Windows checks them when opened", s.MarkDownloads);
         var scan = Tick(after, "Scan each finished file with a virus scanner", s.ScanEnabled);
         var scanCmd = Box(after, "Scanner command (the file is added at the end)", s.ScanCommand);
@@ -840,8 +884,10 @@ public static partial class Dialogs
             s.Notifications = notify.IsChecked == true;
             s.CheckForUpdates = updates.IsChecked == true;
             s.Language = languageChoices[Math.Max(0, language.SelectedIndex)];
-            s.Theme = AppTheme.Choices[Math.Max(0, theme.SelectedIndex)];
-            AppTheme.Apply(s.Theme);
+            s.Theme = themeChoices[Math.Max(0, theme.SelectedIndex)];
+            s.ColorSchemeJson = customJson;
+            s.FontFamily = font.SelectedIndex > 0 ? fontNames[font.SelectedIndex] : "";
+            AppTheme.Apply(s.Theme, s.ColorSchemeJson, s.FontFamily);
             if (L.Resolve(s.Language) != L.Code)
             {
                 L.Use(s.Language);
@@ -868,6 +914,12 @@ public static partial class Dialogs
             s.ClipboardTypes = clipTypes.Text;
             s.ShowCompleteDialog = complete.IsChecked == true;
             s.PlaySound = sound.IsChecked == true;
+            var failedText = (soundFailed.Text).Trim();
+            if ((Sounds.Problem(soundDone.Text, quiet.Text) ?? Sounds.Problem(failedText, null) ?? Sounds.Problem(soundQueue.Text, null)) is { } soundProblem) { error.Text = soundProblem; return; }
+            s.SoundFinished = (soundDone.Text).Trim();
+            s.SoundFailed = failedText;
+            s.SoundQueueDone = (soundQueue.Text).Trim();
+            s.QuietHours = (quiet.Text).Trim();
             s.MarkDownloads = mark.IsChecked == true;
             s.ScanEnabled = scan.IsChecked == true;
             s.ScanCommand = scanCmd.Text.Trim();

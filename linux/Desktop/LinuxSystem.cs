@@ -145,6 +145,9 @@ public static class LinuxSystem
     }
 
     /// <summary>The desktop's "complete" sound.</summary>
+    /// <summary>Plays a sound file with PipeWire or PulseAudio; false when neither could.</summary>
+    public static bool PlayFile(string path) => File.Exists(path) && (Run("pw-play", path) || Run("paplay", path));
+
     public static void PlayDoneSound()
     {
         if (Run("canberra-gtk-play", "-i", "complete", "-d", "Nexonic Download Manager")) return;
