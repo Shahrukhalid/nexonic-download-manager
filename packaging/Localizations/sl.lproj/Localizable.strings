@@ -40,7 +40,7 @@
 "Close" = "Zapri";
 "Command line" = "Ukazna vrstica";
 "Connection" = "Povezava";
-"Connections per download (1-32)" = "Povezave na prenos (1-32)";
+"Connections per download (1-256)" = "Povezave na prenos (1-256)";
 "Copy Link" = "Kopiraj povezavo";
 "Delete" = "Izbriši";
 "Delete Completed" = "Izbriši dokončano";

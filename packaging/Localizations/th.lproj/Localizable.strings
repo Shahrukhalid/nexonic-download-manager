@@ -40,7 +40,7 @@
 "Close" = "ปิด";
 "Command line" = "คำสั่ง";
 "Connection" = "การเชื่อมต่อ";
-"Connections per download (1-32)" = "จำนวนการเชื่อมต่อต่อการดาวน์โหลด (1- 32)";
+"Connections per download (1-256)" = "จำนวนการเชื่อมต่อต่อการดาวน์โหลด (1- 32)";
 "Copy Link" = "คัดลอกส่วนเชื่อมโยง";
 "Delete" = "ลบ";
 "Delete Completed" = "การลบเสร็จสมบูรณ์แล้ว";

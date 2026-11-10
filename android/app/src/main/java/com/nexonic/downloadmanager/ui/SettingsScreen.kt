@@ -132,7 +132,7 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
 
             Section("Downloads")
             Text("Connections per download: ${connections.toInt()}", style = MaterialTheme.typography.bodyLarge)
-            Slider(connections, { connections = it }, valueRange = 1f..32f, steps = 30, onValueChangeFinished = { s.connections = connections.toInt() })
+            Slider(connections, { connections = it }, valueRange = 1f..256f, steps = 254, onValueChangeFinished = { s.connections = connections.toInt() })
             Hint("More connections are faster on most servers. Each part is at least 512 KB.")
             Spacer(Modifier.height(8.dp))
             Text("Downloads at the same time: ${maxActive.toInt()}", style = MaterialTheme.typography.bodyLarge)

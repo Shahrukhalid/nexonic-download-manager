@@ -40,7 +40,7 @@
 "Close" = "Stäng";
 "Command line" = "Kommandorad";
 "Connection" = "Anslutning";
-"Connections per download (1-32)" = "Anslutningar per nedladdning (1-32)";
+"Connections per download (1-256)" = "Anslutningar per nedladdning (1-256)";
 "Copy Link" = "Kopiera länk";
 "Delete" = "Radera";
 "Delete Completed" = "Ta bort Slutförd";

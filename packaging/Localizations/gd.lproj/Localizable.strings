@@ -40,7 +40,7 @@
 "Close" = "Dùin";
 "Command line" = "Command line";
 "Connection" = "Ceangal";
-"Connections per download (1-32)" = "Ceanglaichean gach luchdadh a-nuas (1-32)";
+"Connections per download (1-256)" = "Ceanglaichean gach luchdadh a-nuas (1-256)";
 "Copy Link" = "Dèan lethbhreac dhen ceangal";
 "Delete" = "Sguab às";
 "Delete Completed" = "Sguab às crìochnaichte";

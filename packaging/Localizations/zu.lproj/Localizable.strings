@@ -40,7 +40,7 @@
 "Close" = "Vala";
 "Command line" = "Umlayezo";
 "Connection" = "Ukuxhumana";
-"Connections per download (1-32)" = "Ukuxhumeka kokulanda ngasinye (1-32)";
+"Connections per download (1-256)" = "Ukuxhumeka kokulanda ngasinye (1-256)";
 "Copy Link" = "Kopela umxhumanisi";
 "Delete" = "Cima";
 "Delete Completed" = "Cima okuqediwe";

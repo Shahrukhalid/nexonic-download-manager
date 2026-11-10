@@ -40,7 +40,7 @@
 "Close" = "_بمەزرێنە";
 "Command line" = "هێڵی فەرمان";
 "Connection" = "پەیوەندیکردن";
-"Connections per download (1-32)" = "پەیوەندیەکان بۆ هەر دابەزاندنێک (١-٣٢)";
+"Connections per download (1-256)" = "پەیوەندیەکان بۆ هەر دابەزاندنێک (١-٣٢)";
 "Copy Link" = "نەخشەسازی";
 "Delete" = "فڕێ بدە";
 "Delete Completed" = "پاککردنەوە تەواو بوو";

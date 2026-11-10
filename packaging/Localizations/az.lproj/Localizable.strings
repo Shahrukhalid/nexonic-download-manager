@@ -40,7 +40,7 @@
 "Close" = "Bağla";
 "Command line" = "Əmr sətri";
 "Connection" = "Bağlan";
-"Connections per download (1-32)" = "Bağlantılar (1-32)";
+"Connections per download (1-256)" = "Bağlantılar (1-256)";
 "Copy Link" = "Körpünü Köçür";
 "Delete" = "_Sil";
 "Delete Completed" = "_Sil";

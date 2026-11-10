@@ -40,7 +40,7 @@
 "Close" = "ዝጋ";
 "Command line" = "ትእዛዝ መስመር";
 "Connection" = "ግንኙነት";
-"Connections per download (1-32)" = "መተላለፊያ";
+"Connections per download (1-256)" = "መተላለፊያ";
 "Copy Link" = "ቅጂ";
 "Delete" = "አጥፉ (_D)";
 "Delete Completed" = "የተፈጸመውን አጥፉ";

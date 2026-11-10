@@ -40,7 +40,7 @@
 "Close" = "Maak toe";
 "Command line" = "Opdrag lyn";
 "Connection" = "Verbinding";
-"Connections per download (1-32)" = "Verbindinge per aflaai (1-32)";
+"Connections per download (1-256)" = "Verbindinge per aflaai (1-256)";
 "Copy Link" = "KopiÃ«er Skakel";
 "Delete" = "Uitvee";
 "Delete Completed" = "Uitvee Voltooi";

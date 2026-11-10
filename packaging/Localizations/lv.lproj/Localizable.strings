@@ -40,7 +40,7 @@
 "Close" = "Aizvērt";
 "Command line" = "Komandrinda";
 "Connection" = "Savienojums";
-"Connections per download (1-32)" = "Savienojumi vienā lejupielādē (1-32)";
+"Connections per download (1-256)" = "Savienojumi vienā lejupielādē (1-256)";
 "Copy Link" = "Kopēt saiti";
 "Delete" = "Dzēst";
 "Delete Completed" = "Dzēst pabeigto";

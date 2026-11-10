@@ -40,7 +40,7 @@
 "Close" = "වසන්න";
 "Command line" = "විධාන රේඛාව";
 "Connection" = "සම්බන්ධතාවය";
-"Connections per download (1-32)" = "බාගත එක් සම්බන්ධතා (1-32)";
+"Connections per download (1-256)" = "බාගත එක් සම්බන්ධතා (1-256)";
 "Copy Link" = "සබැඳිය පිටපත් කරන්න";
 "Delete" = "මකන්න";
 "Delete Completed" = "සම්පූර්ණ මකන්න";

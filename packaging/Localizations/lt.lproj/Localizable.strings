@@ -40,7 +40,7 @@
 "Close" = "Uždaryti";
 "Command line" = "Komandų eilutė";
 "Connection" = "Ryšys";
-"Connections per download (1-32)" = "Prisijungimai vienam atsisiuntimui (1-32)";
+"Connections per download (1-256)" = "Prisijungimai vienam atsisiuntimui (1-256)";
 "Copy Link" = "Kopijuoti nuorodą";
 "Delete" = "Ištrinti";
 "Delete Completed" = "Ištrinti baigtą";

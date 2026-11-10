@@ -40,7 +40,7 @@
 "Close" = "დახურვა";
 "Command line" = "ბრძანების ხაზი";
 "Connection" = "კავშირი";
-"Connections per download (1-32)" = "ჩამოტვირთვის კავშირები (1- 32)";
+"Connections per download (1-256)" = "ჩამოტვირთვის კავშირები (1- 32)";
 "Copy Link" = "ბმულის ასლი";
 "Delete" = "წაშლა";
 "Delete Completed" = "დასრულებული წაშლა";

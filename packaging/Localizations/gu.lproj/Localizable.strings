@@ -40,7 +40,7 @@
 "Close" = "બંધ કરો";
 "Command line" = "આદેશ વાક્ય";
 "Connection" = "જોડાણ";
-"Connections per download (1-32)" = "ડાઉનલોડ પ્રતિ જોડાણો (૧-૩૨)";
+"Connections per download (1-256)" = "ડાઉનલોડ પ્રતિ જોડાણો (૧-૩૨)";
 "Copy Link" = "કડી નકલ કરો";
 "Delete" = "કાઢી નાંખો";
 "Delete Completed" = "કાઢી નાંખવાનું સમાપ્ત થયું";

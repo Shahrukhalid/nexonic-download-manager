@@ -40,7 +40,7 @@
 "Close" = "Close";
 "Command line" = "שורת פקודה";
 "Connection" = "חיבור";
-"Connections per download (1-32)" = "חיבורים להורדה (1-32)";
+"Connections per download (1-256)" = "חיבורים להורדה (1-256)";
 "Copy Link" = "העתקת קישור";
 "Delete" = "הסר";
 "Delete Completed" = "הוסרה";

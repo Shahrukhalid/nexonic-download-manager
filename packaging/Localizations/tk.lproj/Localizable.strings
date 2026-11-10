@@ -40,7 +40,7 @@
 "Close" = "Bagla";
 "Command line" = "Buýruk Haty";
 "Connection" = "Baglanyşyk";
-"Connections per download (1-32)" = "Baglanyşyklary ýükle";
+"Connections per download (1-256)" = "Baglanyşyklary ýükle";
 "Copy Link" = "Baglaýyşy Nusgala";
 "Delete" = "Poz";
 "Delete Completed" = "Poz";

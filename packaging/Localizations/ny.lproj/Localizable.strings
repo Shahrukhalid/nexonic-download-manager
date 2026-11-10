@@ -40,7 +40,7 @@
 "Close" = "Sungani";
 "Command line" = "Lamulo la lamulo";
 "Connection" = "Kugwirizana";
-"Connections per download (1-32)" = "Kulumikizana pa kutsitsa (1-32)";
+"Connections per download (1-256)" = "Kulumikizana pa kutsitsa (1-256)";
 "Copy Link" = "_Kopera Chingwe";
 "Delete" = "Chotsani";
 "Delete Completed" = "Ku_chotsa Zomaliza";

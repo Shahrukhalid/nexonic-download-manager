@@ -40,7 +40,7 @@
 "Close" = "Закрыть";
 "Command line" = "Командная строка";
 "Connection" = "Соединение";
-"Connections per download (1-32)" = "Соединений на загрузку (1-32)";
+"Connections per download (1-256)" = "Соединений на загрузку (1-256)";
 "Copy Link" = "Копировать ссылку";
 "Delete" = "Удалить";
 "Delete Completed" = "Удалить завершённые";

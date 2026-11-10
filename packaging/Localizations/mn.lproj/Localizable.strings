@@ -40,7 +40,7 @@
 "Close" = "Хаах";
 "Command line" = "Командын мөр";
 "Connection" = "Холбоо";
-"Connections per download (1-32)" = "Дэлгэцийг татаж авахдаа холболтууд (1- 32)";
+"Connections per download (1-256)" = "Дэлгэцийг татаж авахдаа холболтууд (1- 32)";
 "Copy Link" = "Холбоог хуулбарлах";
 "Delete" = "Хуучирсан";
 "Delete Completed" = "Үргэлжлүүлэх";

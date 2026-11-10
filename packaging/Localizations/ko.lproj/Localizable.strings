@@ -40,7 +40,7 @@
 "Close" = "닫기";
 "Command line" = "명령줄";
 "Connection" = "연결";
-"Connections per download (1-32)" = "다운로드당 연결 수 (1-32)";
+"Connections per download (1-256)" = "다운로드당 연결 수 (1-256)";
 "Copy Link" = "링크 복사";
 "Delete" = "삭제";
 "Delete Completed" = "완료 항목 삭제";

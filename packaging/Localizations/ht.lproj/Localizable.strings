@@ -40,7 +40,7 @@
 "Close" = "Fermeture";
 "Command line" = "Liy kòmandman";
 "Connection" = "Koneksyon";
-"Connections per download (1-32)" = "Koneksyon pou chak telechaje (1-32)";
+"Connections per download (1-256)" = "Koneksyon pou chak telechaje (1-256)";
 "Copy Link" = "Kopi Lyen";
 "Delete" = "Efase";
 "Delete Completed" = "Supprimer complété";

@@ -40,7 +40,7 @@
 "Close" = "Đóng";
 "Command line" = "Đường lệnh";
 "Connection" = "Kết nối";
-"Connections per download (1-32)" = "Số kết nối mỗi lần tải về (1- 32)";
+"Connections per download (1-256)" = "Số kết nối mỗi lần tải về (1- 32)";
 "Copy Link" = "Sao chép liên kết";
 "Delete" = "Xoá";
 "Delete Completed" = "Xoá xong";

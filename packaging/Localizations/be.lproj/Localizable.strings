@@ -40,7 +40,7 @@
 "Close" = "Закрыць";
 "Command line" = "Камандны радок";
 "Connection" = "Злучэнне";
-"Connections per download (1-32)" = "Злучэнняў на сцягванне (1- 32)";
+"Connections per download (1-256)" = "Злучэнняў на сцягванне (1- 32)";
 "Copy Link" = "Скапіраваць спасылку";
 "Delete" = "& Выдаліць";
 "Delete Completed" = "Выдаліць завершана";

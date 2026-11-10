@@ -40,7 +40,7 @@
 "Close" = "Ka tata";
 "Command line" = "Te rārangi tohu";
 "Connection" = "Whakapānga";
-"Connections per download (1-32)" = "Whakapānga i ia whakataki (1-32)";
+"Connections per download (1-256)" = "Whakapānga i ia whakataki (1-256)";
 "Copy Link" = "_Kopa i te pānga";
 "Delete" = "Ka tangohia";
 "Delete Completed" = "Kua oti te tangohanga";

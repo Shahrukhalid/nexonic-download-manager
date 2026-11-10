@@ -40,7 +40,7 @@
 "Close" = "Tanca";
 "Command line" = "Línia d' ordres";
 "Connection" = "Connexió";
-"Connections per download (1-32)" = "Connexions per baixada (1- 32)";
+"Connections per download (1-256)" = "Connexions per baixada (1- 32)";
 "Copy Link" = "Copia l' enllaç";
 "Delete" = "Esborra";
 "Delete Completed" = "Esborrat completat";

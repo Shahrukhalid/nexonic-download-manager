@@ -40,7 +40,7 @@
 "Close" = "Magsara";
 "Command line" = "Linya ng utos";
 "Connection" = "Koneksyon";
-"Connections per download (1-32)" = "Koneksyon sa bawat pag-download (1-32)";
+"Connections per download (1-256)" = "Koneksyon sa bawat pag-download (1-256)";
 "Copy Link" = "Kopyahin ang Link";
 "Delete" = "I-clear";
 "Delete Completed" = "I-delete ang nakumpleto";

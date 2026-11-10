@@ -5,11 +5,11 @@ public static class SegmentPlanner
     public const long MinSegment = 512 * 1024;
     public const long MinSplit = 1 << 20;
 
-    /// <summary>Equal segments of at least <paramref name="minSegment"/> (512 KB), between 1 and 32 of them.</summary>
+    /// <summary>Equal segments of at least <paramref name="minSegment"/> (512 KB), between 1 and <see cref="Limits.MaxConnections"/> of them.</summary>
     public static List<Segment> Plan(long? size, int connections, long minSegment = MinSegment)
     {
         if (size is not > 0) return new() { new Segment { Id = 0, Start = 0, End = -1 } };
-        var n = (int)Math.Max(1, Math.Min(Math.Min(connections, 32), Math.Max(1, size.Value / Math.Max(1, minSegment))));
+        var n = (int)Math.Max(1, Math.Min(Math.Min(connections, Limits.MaxConnections), Math.Max(1, size.Value / Math.Max(1, minSegment))));
         var basis = size.Value / n;
         var list = new List<Segment>();
         long start = 0;
@@ -37,4 +37,12 @@ public static class SegmentPlanner
         var mid = seg.Start + seg.Written + bestLeft / 2;
         return (best, mid - 1, new Segment { Id = nextId, Start = mid, End = seg.End });
     }
+}
+
+/// <summary>Limits shared by every part of the app.</summary>
+public static class Limits
+{
+    /// <summary>Connections per download (Options and site settings): 1 to 256. Servers often limit how many they allow;
+    /// the planner never makes parts smaller than 512 KB, so small files still use few connections.</summary>
+    public const int MaxConnections = 256;
 }

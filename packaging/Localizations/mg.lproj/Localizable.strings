@@ -40,7 +40,7 @@
 "Close" = "Hidio";
 "Command line" = "Lazam-baiko";
 "Connection" = "Fifandraisana";
-"Connections per download (1-32)" = "Fifandraisana isaky ny fampidinana (1-32)";
+"Connections per download (1-256)" = "Fifandraisana isaky ny fampidinana (1-256)";
 "Copy Link" = "Adikao ilay rohy";
 "Delete" = "_Fafao";
 "Delete Completed" = "Fafao ny vita";

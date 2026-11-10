@@ -40,7 +40,7 @@
 "Close" = "Fermi";
 "Command line" = "Komandlinio";
 "Connection" = "Konekto";
-"Connections per download (1-32)" = "Konektoj po elŝuto (1- 32)";
+"Connections per download (1-256)" = "Konektoj po elŝuto (1- 32)";
 "Copy Link" = "Kopii ligilon";
 "Delete" = "Forigi";
 "Delete Completed" = "Forigi kompletigita";

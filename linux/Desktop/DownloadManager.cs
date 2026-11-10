@@ -21,7 +21,8 @@ public sealed class AddOptions
     public string? InfoJson { get; set; }  // a single video link's details, already looked up in the Add window
     public string? Package { get; set; }   // Link Grabber package name
     public bool Unpack { get; set; }       // unpack the package's archives when all of it is done
-    public bool Gallery { get; set; }      // the whole gallery with the gallery engine
+    public bool Gallery { get; set; }
+    public string Mirrors { get; set; } = "";  // more addresses of the same file, one per line      // the whole gallery with the gallery engine
 }
 
 /// <summary>
@@ -76,6 +77,8 @@ public sealed partial class DownloadManager
         Network.Options = Settings.Network.Clamped();
         Debrid.Settings = Settings.Debrid;
         FileCategories.Custom = CustomCategory.Clean(Settings.CustomCategories);
+        EnginePaths.YtDlp = Settings.YtDlpPath?.Trim() ?? "";
+        EnginePaths.FFmpeg = Settings.FFmpegPath?.Trim() ?? "";
         // The app reads the inbox once its windows are ready (CollectInbox), so browser links get the download window.
         Schedule();
         Task.Run(SiteVideoTools.Prepare); // keeps the video engine current
@@ -98,15 +101,40 @@ public sealed partial class DownloadManager
         Network.Options = s.Network.Clamped();
         Debrid.Settings = s.Debrid;
         FileCategories.Custom = CustomCategory.Clean(s.CustomCategories);
+        EnginePaths.YtDlp = s.YtDlpPath?.Trim() ?? "";
+        EnginePaths.FFmpeg = s.FFmpegPath?.Trim() ?? "";
         Write(AppPaths.Settings, s);
         Schedule();
     }
 
     // ---- adding ----
 
+    /// <summary>Adds every file of a Metalink document with its mirrors and checksum (checked when it finishes).</summary>
+    public int AddMetalink(string xml, AddOptions? o = null)
+    {
+        o ??= new AddOptions();
+        var n = 0;
+        foreach (var e in Metalink.Parse(xml))
+        {
+            var job = new DownloadJob(e.Urls[0], e.Name) { Mirrors = e.Urls.Skip(1).ToList(), Checksum = e.Checksum };
+            if (job.IsValid) { Add(job, o); n++; }
+        }
+        return n;
+    }
+
     public int AddLinks(string text, AddOptions? o = null)
     {
         o ??= new AddOptions();
+        if (CurlCommand.Looks(text))
+        {
+            // A browser's "Copy as cURL": the same address with its referrer, cookies, browser name and login.
+            if (CurlCommand.Parse(text).Request is not { } c) return 0;
+            var fromCurl = new DownloadJob(c.Url, string.IsNullOrWhiteSpace(o.FileName) ? null : o.FileName, c.Referrer, c.Cookies, c.UserAgent);
+            if (o.Username.Length == 0 && c.Username != null) fromCurl = fromCurl with { Username = c.Username, Password = c.Password };
+            if (!fromCurl.IsValid) return 0;
+            Add(fromCurl, o);
+            return 1;
+        }
         var lines = Links.Split(text);
         var n = 0;
         foreach (var line in lines)
@@ -169,6 +197,7 @@ public sealed partial class DownloadManager
             Username = job.Username ?? NullIfEmpty(o.Username) ?? NullIfEmpty(profile?.Username ?? ""),
             Password = job.Password ?? NullIfEmpty(o.Password) ?? (job.Username == null && NullIfEmpty(o.Username) == null ? NullIfEmpty(profile?.Password ?? "") : null),
             Checksum = job.Checksum ?? NullIfEmpty(o.Checksum),
+            Mirrors = MirrorPool.Clean(job.Mirrors ?? (o.Mirrors ?? "").Split('\n').ToList(), job.Url) is { Count: > 0 } mirrors ? mirrors : null,
             SpeedLimitKBps = limit > 0 ? limit : null,
             Status = start ? DownloadStatus.Queued : DownloadStatus.Paused,
             IsStream = stream ? true : null,
@@ -573,10 +602,12 @@ public sealed partial class DownloadManager
                 if (slots-- <= 0) break;
                 var profile = HostProfiles.Match(Settings.HostProfiles, row.Record.Url);
                 var proxy = profile?.Proxy ?? Settings.Proxy;
-                var connections = Math.Clamp(profile?.MaxConnections ?? Settings.Connections, 1, 32);
+                // Auto (the default) grows up to its maximum while it helps; a number set in Options or for the site is used as is.
+                var auto = Settings.AutoConnections && profile?.MaxConnections == null;
+                var connections = Math.Clamp(auto ? Settings.AutoMaxConnections : profile?.MaxConnections ?? Settings.Connections, 1, Limits.MaxConnections);
                 var context = new DownloadContext(connections, limiter, Settings.SortIntoCategoryFolders, proxy,
                     TransferOptions.From(Network.Options, profile), Settings.TorrentsEnabled, Settings.SpeedLimitKBps,
-                    Settings.TorrentPortForwarding, Settings.TorrentEncryption);
+                    Settings.TorrentPortForwarding, Settings.TorrentEncryption, auto);
                 var t = new DownloadProviders().Create(row.Record, context);
                 transfers[row.Record.Id] = t;
                 row.Record.Status = DownloadStatus.Probing;

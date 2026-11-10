@@ -40,7 +40,7 @@
 "Close" = "Pagsara";
 "Command line" = "Kommando nga linya";
 "Connection" = "Koneksyon";
-"Connections per download (1-32)" = "Adunay 1,332 ka molupyo.";
+"Connections per download (1-256)" = "Adunay 1,332 ka molupyo.";
 "Copy Link" = "Kopyahin ang Link";
 "Delete" = "Pag-ilis";
 "Delete Completed" = "Pag-ilis sa gi-andam";

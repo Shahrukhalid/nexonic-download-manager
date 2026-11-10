@@ -40,7 +40,7 @@
 "Close" = "Sulge";
 "Command line" = "Käsurea";
 "Connection" = "Ühendus";
-"Connections per download (1-32)" = "Ühendusi allalaadimise kohta (1-32)";
+"Connections per download (1-256)" = "Ühendusi allalaadimise kohta (1-256)";
 "Copy Link" = "Kopeeri link";
 "Delete" = "Kustuta";
 "Delete Completed" = "Kustuta lõpetatud";

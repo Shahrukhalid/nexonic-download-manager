@@ -40,7 +40,7 @@
 "Close" = "Faʻamau";
 "Command line" = "Failauga";
 "Connection" = "Faʻafesoʻotaʻiga";
-"Connections per download (1-32)" = "Fesoʻotaʻiga i le download (1-32)";
+"Connections per download (1-256)" = "Fesoʻotaʻiga i le download (1-256)";
 "Copy Link" = "Faʻakopi le fesoʻotaiga";
 "Delete" = "Suʻe";
 "Delete Completed" = "Suʻe Faʻatino";

@@ -40,7 +40,7 @@
 "Close" = "ပိတ်ပါ";
 "Command line" = "ကွန်မန်းလိုင်း";
 "Connection" = "ဆက်သွယ်မှု";
-"Connections per download (1-32)" = "download ကိုတစ်ဦးချင်းဆက်သွယ်မှု (1-32)";
+"Connections per download (1-256)" = "download ကိုတစ်ဦးချင်းဆက်သွယ်မှု (1-256)";
 "Copy Link" = "လင့်ကို မိတ္တူကူးပါ";
 "Delete" = "ဖျက်ပစ်ပါ";
 "Delete Completed" = "ပြီးဆုံးပြီ";

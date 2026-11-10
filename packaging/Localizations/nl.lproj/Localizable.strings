@@ -40,7 +40,7 @@
 "Close" = "Sluiten";
 "Command line" = "Opdrachtregel";
 "Connection" = "Verbinding";
-"Connections per download (1-32)" = "Verbindingen per download (1-32)";
+"Connections per download (1-256)" = "Verbindingen per download (1-256)";
 "Copy Link" = "Link kopiëren";
 "Delete" = "Verwijderen";
 "Delete Completed" = "Voltooid verwijderen";

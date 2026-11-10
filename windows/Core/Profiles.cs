@@ -278,6 +278,9 @@ public static class Backup
             s.Remote = new RemoteSettings();
             s.Debrid = new DebridSettings();
             s.CustomCategories = CustomCategory.Clean(s.CustomCategories);
+            // Programs to run are never taken from a file either: they stay as set on this computer.
+            s.YtDlpPath = "";
+            s.FFmpegPath = "";
             s.TorrentsEnabled = false;
             s.HostProfiles = (s.HostProfiles ?? new()).Where(p => p != null).ToList();
             foreach (var p in s.HostProfiles) { p.Password = null; if (p.Proxy != null) p.Proxy.Password = ""; }

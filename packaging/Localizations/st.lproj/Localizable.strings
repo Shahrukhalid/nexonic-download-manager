@@ -40,7 +40,7 @@
 "Close" = "_Tlosa";
 "Command line" = "Laesense";
 "Connection" = "Khoasolla";
-"Connections per download (1-32)" = "Likopano ka ho kenya (1-32)";
+"Connections per download (1-256)" = "Likopano ka ho kenya (1-256)";
 "Copy Link" = "Kopa _lihokela";
 "Delete" = "_Tš'oara";
 "Delete Completed" = "Cima completato";

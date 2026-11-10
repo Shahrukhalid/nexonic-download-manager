@@ -40,7 +40,7 @@
 "Close" = "Tutup";
 "Command line" = "Baris Panggonan";
 "Connection" = "Sambungan";
-"Connections per download (1-32)" = "Sambungan saben ngundhuh (1-32)";
+"Connections per download (1-256)" = "Sambungan saben ngundhuh (1-256)";
 "Copy Link" = "Salin Pauger";
 "Delete" = "Hapus";
 "Delete Completed" = "Dirampungake";
