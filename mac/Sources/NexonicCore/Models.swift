@@ -245,6 +245,10 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var connections: Int = 8
     /// Auto (default): each download starts with a few connections and adds more while the speed rises, up to `connections`.
     public var autoConnections: Bool = true
+    /// Speed limits by time of day, one rule per line ("Mon-Fri 09:00-17:00 300").
+    public var speedSchedule: String = ""
+    /// A link that is already in the list: "ask", "skip" or "again" (download a new copy).
+    public var duplicateAction: String = "ask"
     public var maxActive: Int = 3
     public var speedLimitKBps: Int = 0
     public var folder: URL = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)[0]
@@ -304,7 +308,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         case torrentsEnabled, connections, maxActive, speedLimitKBps, folder, sortIntoCategoryFolders = "categoryFolders", notifications, monitorClipboard,
              clipboardTypes, proxy, showCompleteDialog, playSound, markDownloads, scanEnabled, scanCommand,
              showDownloadDialog, showProgressWindow, bringToFrontOnBrowserDownload, checkForUpdates, skippedVersion, network, hostProfiles, torrentNetwork,
-             dataCapMB, dataCapHours, rememberLastFolder, lastFolder, appearance, customCategories, autoConnections
+             dataCapMB, dataCapHours, rememberLastFolder, lastFolder, appearance, customCategories, autoConnections, speedSchedule, duplicateAction
     }
 
     /// Missing keys keep their defaults, so settings from older versions still load.
@@ -314,6 +318,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         torrentsEnabled = try c.decodeIfPresent(Bool.self, forKey: .torrentsEnabled) ?? false
         connections = try c.decodeIfPresent(Int.self, forKey: .connections) ?? d.connections
         autoConnections = try c.decodeIfPresent(Bool.self, forKey: .autoConnections) ?? d.autoConnections
+        speedSchedule = try c.decodeIfPresent(String.self, forKey: .speedSchedule) ?? d.speedSchedule
+        duplicateAction = try c.decodeIfPresent(String.self, forKey: .duplicateAction) ?? d.duplicateAction
         maxActive = try c.decodeIfPresent(Int.self, forKey: .maxActive) ?? d.maxActive
         speedLimitKBps = try c.decodeIfPresent(Int.self, forKey: .speedLimitKBps) ?? d.speedLimitKBps
         folder = try c.decodeIfPresent(URL.self, forKey: .folder) ?? d.folder
