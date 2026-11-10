@@ -18,11 +18,26 @@ final class GalleryEngineTests: XCTestCase {
     }
 
     func testArgumentsAndOutput() {
-        XCTAssertEqual(GalleryDl.arguments(url: "https://s.test/a", folder: "/d", speedLimitKBps: 200, proxyURL: "", referrer: nil),
+        XCTAssertEqual(GalleryDl.arguments(url: "https://s.test/a", folder: "/d", speedLimitKBps: 200, referrer: nil),
                        ["--directory", "/d", "--limit-rate", "200k", "--", "https://s.test/a"])
+        XCTAssertEqual(GalleryDl.arguments(url: "https://s.test/a", folder: "/d", speedLimitKBps: 0, referrer: nil, settingsFile: "/p/g.json"),
+                       ["--directory", "/d", "--config", "/p/g.json", "--", "https://s.test/a"])
         XCTAssertEqual(GalleryDl.savedFile("/d/a.jpg")?.saved, true)
         XCTAssertEqual(GalleryDl.savedFile("# /d/a.jpg")?.path, "/d/a.jpg")
         XCTAssertNil(GalleryDl.savedFile("[gallery-dl][error] Unsupported URL"))
+    }
+
+    func testSiteLoginAndCookiesStayOffTheCommandLine() throws {
+        XCTAssertEqual(GalleryDl.settings(cookies: nil, userAgent: "", username: nil, password: nil, proxyURL: ""), "")
+        let json = GalleryDl.settings(cookies: "sid=a=b; theme=dark ;bad", userAgent: "Agent/1", username: "me", password: "pw", proxyURL: "http://p:8080")
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any])
+        let e = try XCTUnwrap(root["extractor"] as? [String: Any])
+        XCTAssertEqual(e["cookies"] as? [String: String], ["sid": "a=b", "theme": "dark"])
+        XCTAssertEqual(e["user-agent"] as? String, "Agent/1")
+        XCTAssertEqual(e["username"] as? String, "me")
+        XCTAssertEqual(e["password"] as? String, "pw")
+        XCTAssertEqual(e["proxy"] as? String, "http://p:8080")
+        XCTAssertNil(try GalleryDl.writeSettings(""))
     }
 
     func testGalleryBytesCountAsReceived() {

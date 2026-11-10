@@ -76,16 +76,60 @@ public static class GalleryDl
         File.Move(tmp, Program, true);
     }
 
-    /// <summary>The engine's arguments: everything goes straight into <paramref name="folder"/>; files already there are skipped.</summary>
-    public static List<string> Arguments(string url, string folder, int speedLimitKBps, string? proxyUrl, string? referrer)
+    /// <summary>The engine's arguments: everything goes straight into <paramref name="folder"/>; files already there are skipped.
+    /// The site login, cookies and proxy are never here: they go in the private settings file (see <see cref="Settings"/>).</summary>
+    public static List<string> Arguments(string url, string folder, int speedLimitKBps, string? referrer, string? settingsFile = null)
     {
         var args = new List<string> { "--directory", folder };
+        if (settingsFile != null) args.AddRange(new[] { "--config", settingsFile });
         if (speedLimitKBps > 0) args.AddRange(new[] { "--limit-rate", speedLimitKBps + "k" });
-        if (proxyUrl is { Length: > 0 }) args.AddRange(new[] { "--proxy", proxyUrl });
         if (referrer is { Length: > 0 } && Uri.IsWellFormedUriString(referrer, UriKind.Absolute)) args.AddRange(new[] { "-o", "extractor.referer=" + referrer });
         args.Add("--");
         args.Add(url);
         return args;
+    }
+
+    /// <summary>
+    /// The private settings for one gallery (the engine's JSON settings file): the browser's cookies for the site, its
+    /// browser name, the site login and the proxy. "" when there is nothing private. Lets galleries that need you signed in work.
+    /// </summary>
+    public static string Settings(string? cookies, string? userAgent, string? username, string? password, string? proxyUrl)
+    {
+        var extractor = new Dictionary<string, object>();
+        var jar = Cookies(cookies);
+        if (jar.Count > 0) extractor["cookies"] = jar;
+        if (userAgent is { Length: > 0 }) extractor["user-agent"] = userAgent;
+        if (username is { Length: > 0 }) { extractor["username"] = username; extractor["password"] = password ?? ""; }
+        if (proxyUrl is { Length: > 0 }) extractor["proxy"] = proxyUrl;
+        return extractor.Count == 0 ? "" : JsonSerializer.Serialize(new Dictionary<string, object> { ["extractor"] = extractor });
+    }
+
+    /// <summary>"a=1; b=2" (a Cookie header) as name → value.</summary>
+    public static Dictionary<string, string> Cookies(string? header)
+    {
+        var jar = new Dictionary<string, string>();
+        foreach (var part in (header ?? "").Split(';'))
+        {
+            var eq = part.IndexOf('=');
+            var name = eq > 0 ? part[..eq].Trim() : "";
+            if (name.Length > 0) jar[name] = part[(eq + 1)..].Trim();
+        }
+        return jar;
+    }
+
+    /// <summary>Writes the private settings, readable only by this user, next to the download parts (deleted when the
+    /// engine is done); null when there are none.</summary>
+    public static string? WriteSettings(string settings)
+    {
+        if (settings.Length == 0) return null;
+        Directory.CreateDirectory(AppPaths.Parts);
+        var path = Path.Combine(AppPaths.Parts, $"gallery-{Guid.NewGuid():N}.json");
+        using (var f = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+        {
+            if (!OperatingSystem.IsWindows()) File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+            f.Write(Encoding.UTF8.GetBytes(settings));
+        }
+        return path;
     }
 
     /// <summary>A line of the engine's output: a saved file (true), a file it already had ("# path", false), or neither.</summary>
@@ -152,7 +196,24 @@ public sealed class GalleryTransfer(DownloadRecord record, bool sortIntoCategori
         };
         psi.Environment["PYTHONIOENCODING"] = "utf-8";
         var limit = new[] { Record.SpeedLimitKBps ?? 0, speedLimitKBps }.Where(x => x > 0).DefaultIfEmpty(0).Min();
-        foreach (var a in GalleryDl.Arguments(Record.Url, folder, limit, proxy == null ? null : SiteVideo.ProxyUrl(proxy, Record.Url), Record.Referrer))
+        string? settingsFile;
+        try
+        {
+            settingsFile = GalleryDl.WriteSettings(GalleryDl.Settings(Record.Cookies, Record.UserAgent, Record.Username, Record.Password,
+                proxy == null ? null : SiteVideo.ProxyUrl(proxy, Record.Url)));
+        }
+        catch (Exception e)  // never fall back to cookies and passwords on the command line
+        {
+            Fail("The gallery engine's private settings could not be written: " + e.Message);
+            return;
+        }
+        try { Run(psi, folder, limit, settingsFile); }
+        finally { if (settingsFile != null) try { File.Delete(settingsFile); } catch { } }
+    }
+
+    void Run(ProcessStartInfo psi, string folder, int limit, string? settingsFile)
+    {
+        foreach (var a in GalleryDl.Arguments(Record.Url, folder, limit, Record.Referrer, settingsFile))
             psi.ArgumentList.Add(a);
         try
         {

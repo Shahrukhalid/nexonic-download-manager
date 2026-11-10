@@ -61,12 +61,49 @@ public enum GalleryDl {
     }
 
     /// The engine's arguments: everything goes straight into `folder`; files already there are skipped.
-    public static func arguments(url: String, folder: String, speedLimitKBps: Int, proxyURL: String?, referrer: String?) -> [String] {
+    /// The site login, cookies and proxy are never here: they go in the private settings file (see `settings`).
+    public static func arguments(url: String, folder: String, speedLimitKBps: Int, referrer: String?, settingsFile: String? = nil) -> [String] {
         var args = ["--directory", folder]
+        if let settingsFile { args += ["--config", settingsFile] }
         if speedLimitKBps > 0 { args += ["--limit-rate", "\(speedLimitKBps)k"] }
-        if let proxyURL, !proxyURL.isEmpty { args += ["--proxy", proxyURL] }
         if let referrer, URL(string: referrer)?.scheme?.hasPrefix("http") == true { args += ["-o", "extractor.referer=" + referrer] }
         return args + ["--", url]
+    }
+
+    /// The private settings for one gallery (the engine's JSON settings file): the browser's cookies for the site, its
+    /// browser name, the site login and the proxy. "" when there is nothing private. Lets galleries that need you signed in work.
+    public static func settings(cookies: String?, userAgent: String?, username: String?, password: String?, proxyURL: String?) -> String {
+        var extractor: [String: Any] = [:]
+        let jar = cookieJar(cookies)
+        if !jar.isEmpty { extractor["cookies"] = jar }
+        if let userAgent, !userAgent.isEmpty { extractor["user-agent"] = userAgent }
+        if let username, !username.isEmpty { extractor["username"] = username; extractor["password"] = password ?? "" }
+        if let proxyURL, !proxyURL.isEmpty { extractor["proxy"] = proxyURL }
+        guard !extractor.isEmpty,
+              let data = try? JSONSerialization.data(withJSONObject: ["extractor": extractor], options: [.sortedKeys]) else { return "" }
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    /// "a=1; b=2" (a Cookie header) as name → value.
+    public static func cookieJar(_ header: String?) -> [String: String] {
+        var jar: [String: String] = [:]
+        for part in (header ?? "").split(separator: ";") {
+            guard let eq = part.firstIndex(of: "=") else { continue }
+            let name = part[..<eq].trimmingCharacters(in: .whitespaces)
+            if !name.isEmpty { jar[name] = part[part.index(after: eq)...].trimmingCharacters(in: .whitespaces) }
+        }
+        return jar
+    }
+
+    /// Writes the private settings, readable only by this user, next to the download parts (delete it when the engine is
+    /// done); nil when there are none. Throws when it can't be written: never falls back to secrets on the command line.
+    public static func writeSettings(_ settings: String) throws -> URL? {
+        guard !settings.isEmpty else { return nil }
+        try FileManager.default.createDirectory(at: AppPaths.parts, withIntermediateDirectories: true)
+        let file = AppPaths.parts.appendingPathComponent("gallery-\(UUID().uuidString).json")
+        guard FileManager.default.createFile(atPath: file.path, contents: Data(settings.utf8), attributes: [.posixPermissions: 0o600])
+        else { throw CocoaError(.fileWriteUnknown, userInfo: [NSFilePathErrorKey: file.path]) }
+        return file
     }
 
     /// A line of the engine's output: a saved file (true), a file it already had ("# path", false), or neither (nil).
@@ -138,10 +175,16 @@ public final class GalleryTransfer: Downloader, @unchecked Sendable {
         }
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         change { $0.savedPath = folder.path }
+        let settingsFile: URL?
+        do {
+            settingsFile = try GalleryDl.writeSettings(GalleryDl.settings(cookies: r.cookies, userAgent: r.userAgent, username: r.username,
+                                                                          password: r.password, proxyURL: proxy.flatMap(SiteVideo.proxyURL)))
+        } catch { return fail("The gallery engine's private settings could not be written: \(error.localizedDescription)") }
+        defer { if let settingsFile { try? FileManager.default.removeItem(at: settingsFile) } }
         let p = Process()
         p.executableURL = GalleryDl.program
         p.arguments = GalleryDl.arguments(url: r.url.absoluteString, folder: folder.path, speedLimitKBps: speedLimitKBps,
-                                          proxyURL: proxy.flatMap(SiteVideo.proxyURL), referrer: r.referrer)
+                                          referrer: r.referrer, settingsFile: settingsFile?.path)
         let out = Pipe(), err = Pipe()
         p.standardOutput = out
         p.standardError = err

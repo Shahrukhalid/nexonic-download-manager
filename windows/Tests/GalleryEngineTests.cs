@@ -23,9 +23,33 @@ public class GalleryEngineTests
     [Fact]
     public void ArgumentsEndWithTheAddress()
     {
-        var args = GalleryDl.Arguments("https://site.test/user/a", "/data/Gallery", 500, "http://p:8080", "https://site.test/");
-        Assert.Equal(new[] { "--directory", "/data/Gallery", "--limit-rate", "500k", "--proxy", "http://p:8080", "-o", "extractor.referer=https://site.test/", "--", "https://site.test/user/a" }, args);
-        Assert.Equal(new[] { "--directory", "/d", "--", "-x" }, GalleryDl.Arguments("-x", "/d", 0, "", null));
+        var args = GalleryDl.Arguments("https://site.test/user/a", "/data/Gallery", 500, "https://site.test/", "/p/g.json");
+        Assert.Equal(new[] { "--directory", "/data/Gallery", "--config", "/p/g.json", "--limit-rate", "500k", "-o", "extractor.referer=https://site.test/", "--", "https://site.test/user/a" }, args);
+        Assert.Equal(new[] { "--directory", "/d", "--", "-x" }, GalleryDl.Arguments("-x", "/d", 0, null));
+    }
+
+    [Fact]
+    public void SiteLoginAndCookiesStayOffTheCommandLine()
+    {
+        Assert.Equal("", GalleryDl.Settings(null, "", null, null, ""));
+        var json = GalleryDl.Settings("sid=a=b; theme=dark ;bad", "Agent/1", "me", "pw\"x", "http://p:8080");
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        var e = doc.RootElement.GetProperty("extractor");
+        Assert.Equal("a=b", e.GetProperty("cookies").GetProperty("sid").GetString());
+        Assert.Equal("dark", e.GetProperty("cookies").GetProperty("theme").GetString());
+        Assert.Equal(2, e.GetProperty("cookies").EnumerateObject().Count());
+        Assert.Equal("Agent/1", e.GetProperty("user-agent").GetString());
+        Assert.Equal("me", e.GetProperty("username").GetString());
+        Assert.Equal("pw\"x", e.GetProperty("password").GetString());
+        Assert.Equal("http://p:8080", e.GetProperty("proxy").GetString());
+        var file = GalleryDl.WriteSettings(json)!;
+        try
+        {
+            Assert.Equal(json, File.ReadAllText(file));
+            if (!OperatingSystem.IsWindows()) Assert.Equal(UnixFileMode.UserRead | UnixFileMode.UserWrite, File.GetUnixFileMode(file));
+        }
+        finally { File.Delete(file); }
+        Assert.Null(GalleryDl.WriteSettings(""));
     }
 
     [Fact]
