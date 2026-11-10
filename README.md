@@ -31,6 +31,7 @@ Download faster, pause and resume anytime, and save videos from YouTube, Instagr
 | **Mac** (macOS 13+, Apple silicon and Intel) | [NexonicDownloadManager-Mac.dmg](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Mac.dmg) |
 | **Windows** 10 / 11 | [NexonicDownloadManager-Windows-Setup.exe](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Setup.exe) |
 | Windows, no install | [NexonicDownloadManager-Windows-Portable.zip](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Portable.zip) |
+| Windows 11 on Arm | [NexonicDownloadManager-Windows-ARM64-Setup.exe](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-ARM64-Setup.exe) · [portable](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-ARM64-Portable.zip) |
 | **Linux**, any distribution (64-bit) | [NexonicDownloadManager-Linux-x86_64.AppImage](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Linux-x86_64.AppImage) |
 | Linux on ARM (64-bit) | [NexonicDownloadManager-Linux-aarch64.AppImage](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Linux-aarch64.AppImage) |
 | Ubuntu, Debian, Mint, Pop!_OS (.deb) and Fedora, openSUSE (.rpm) | [All Linux files](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest) · [Linux guide](docs/LINUX.md) |
@@ -130,7 +131,17 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
 
 ## Features
 
-- **Fast downloads** that split each file into parts and download them at the same time.
+- **Fast downloads** that split each file into parts and download them at the same time. **Automatic connections**
+  start with 4 and double while the speed keeps rising, up to 256; a busy server (429/503) is given the time it asks
+  for and nothing is lost (all apps).
+- **Checked downloads from several sources:** add mirror addresses or a Metalink (`.meta4`) file; each part comes from
+  the fastest source and a mirror that sends a different file is dropped. Checksums are verified at the end.
+- **cURL in and out:** paste a browser's *Copy as cURL* (referrer, cookies and login are kept) and copy any download as
+  a cURL command (all apps).
+- **Encrypted DNS** over HTTPS or TLS with a strict mode, and server details: country (from a database on your
+  computer), HTTP version and measured speed.
+- **Speed schedule** by time of day (`Mon-Fri 09:00-17:00 300`), and a warning before a link already in the list is
+  added again.
 - **Pause and resume**, even after a restart. Expired links can be refreshed without starting over.
 - **Videos from YouTube, Instagram, Facebook, X, TikTok and 1,000+ sites**, in the quality you pick (the
   qualities each video offers are listed, up to 4K/8K) or sound only.
@@ -146,7 +157,11 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
 - **Image galleries:** Download Images from Page lists a page's pictures (full-size versions where the page links to
   them) and saves the ones you tick in a folder named after the page (Windows and Linux).
 - **Your own categories:** file types and the folder they go to, for example `Comics: cbz cbr > Comics` (Options →
-  Categories on Windows and Linux).
+  Categories on Windows and Linux), reordered by dragging.
+- **Your look:** colour schemes checked for readable contrast (import and export your own), your font, sounds for
+  finished, failed and queue done with quiet hours, and a saved column layout (Windows and Linux).
+- **Smarter RSS and debrid:** feed rules with size limits, one download per episode in the quality you prefer and a
+  preview; torrents through your own debrid account (off until you add a key).
 - **Manage downloads from your phone:** turn on Options → Remote, scan the code, and the phone lists, adds, stops and
   resumes downloads on the same network (Windows and Linux). **Server and Docker** for NAS boxes and home servers,
   without a window: [docs/SERVER.md](docs/SERVER.md).
@@ -167,7 +182,7 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
   Pick one in Settings (Options on Windows and Linux).
 - **Same app on Mac, Windows and Linux**, light and dark mode, no account, no tracking.
 - **Android app** with the same download and video engines: videos from YouTube, Facebook, Instagram, TikTok and
-  1,000+ sites with quality choices, up to 32 connections, pause and resume, queues, scheduler, Wi-Fi only,
+  1,000+ sites with quality choices, up to 256 automatic connections, pause and resume, queues, scheduler, Wi-Fi only,
   speed limit, a built-in browser that catches downloads and lists the videos and files on a page, and
   **Share → Download with Nexonic** from Chrome or any app. Files are saved in *Download/Nexonic*.
   Details and Android limits: [android/README.md](android/README.md).
@@ -199,8 +214,18 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
   <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/windows-main.png" alt="Windows" width="290">
 </p>
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/windows-ocean.png" alt="Windows in the Ocean colour scheme" width="440">
+  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/windows-options.png" alt="Windows: Options" width="440">
+</p>
+
 ## What's new
 
+- **0.28.0: faster verified downloads and smaller installs.** Measured against 0.27.0 on the same machine, every file
+  checked against its SHA-256: 120 MB from a server sending 1 MB/s per connection 15.1 s → 6.0 s; the Android app
+  60 MB → 30 MB, the Linux AppImage 51 MB → 46 MB, the Windows installer 56 MB → about 47 MB. Also: Windows on Arm,
+  AppImage updates that download only what changed, chapters and subtitles embedded again, mirrors and Metalink,
+  encrypted DNS over TLS, cURL import, colour schemes and sounds. Details in the [changelog](CHANGELOG.md).
 - **0.25.0: manage downloads from your phone, a server for NAS and Docker, image galleries and your own categories**
   (Windows and Linux), Network Diagnostics, interface size, and smaller Mac, Linux and Android downloads.
 - **0.20.1: Support the Project** in the Help menu and the About window on every app (Settings → About on phones).

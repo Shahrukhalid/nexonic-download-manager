@@ -363,9 +363,10 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <div class="dl" id="card-win">
         <span class="tag">Recommended for you</span>
         <div class="os"><div class="logo"><svg class="i"><use href="#i-win"/></svg></div><h3>Windows</h3></div>
-        <p class="req">Windows 10 and 11 · 64-bit</p>
+        <p class="req">Windows 10 and 11 · 64-bit · Windows 11 on Arm</p>
         <a class="btn primary" href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Setup.exe"><svg class="i"><use href="#i-dl"/></svg>Download for Windows (.exe)</a>
         <a class="btn outline" href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Portable.zip">Portable, no install (.zip)</a>
+        <a class="btn outline" href="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-ARM64-Setup.exe">Windows on Arm (.exe)</a>
         <ul>
           <li><svg class="i"><use href="#i-check"/></svg>Installer adds the <code>ndm</code> command</li>
           <li><svg class="i"><use href="#i-check"/></svg>Portable version runs from any folder</li>
@@ -427,7 +428,12 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
     <h2>Everything you expect from a download manager</h2>
     <p class="sub">An open-source alternative to Internet Download Manager (IDM), built natively for each system with the same features on both.</p>
     <div class="f-grid">
-      <div class="f"><div class="ic"><svg class="i"><use href="#i-bolt"/></svg></div><h3>Faster downloads</h3><p>Each file is split into parts that download at the same time, with up to 32 connections. Finished connections help the slowest part, so all stay busy to the end.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-bolt"/></svg></div><h3>Faster downloads</h3><p>Each file downloads in parts at the same time. Automatic connections start with 4 and double while the speed keeps rising, up to 256; a busy server is given the time it asks for, and nothing is lost.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-shield"/></svg></div><h3>Checked, from several sources</h3><p>Add mirror addresses or a Metalink file: each part comes from the fastest source, and a mirror that sends a different file is dropped before it can damage yours. Checksums are verified when the download finishes.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-lock"/></svg></div><h3>Encrypted DNS and server details</h3><p>Look up servers over DNS over HTTPS or TLS, with a strict mode that never falls back to plain lookups. See a server's country, HTTP version and measured speed.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-term"/></svg></div><h3>cURL in and out</h3><p>Paste a browser's Copy as cURL and the download keeps its referrer, cookies and login. Copy any download as a cURL command.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-grid"/></svg></div><h3>Smarter RSS and debrid</h3><p>Feed rules with size limits, one download per episode in the quality you prefer, and a preview. Send torrents to your own debrid account and download the result at full speed.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-folder"/></svg></div><h3>Your look</h3><p>Colour schemes checked for readable contrast, your own font, sounds for finished, failed and queue done with quiet hours, a saved column layout and a category list you can reorder.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-pause"/></svg></div><h3>Pause and resume</h3><p>Stop and continue later, even after you quit the app or restart the computer. A file that changed on the server is downloaded again instead of mixed up.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-refresh"/></svg></div><h3>Refresh expired links</h3><p>Right-click a download, choose Refresh Link and paste a fresh link. It continues where it stopped, without starting over.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-globe"/></svg></div><h3>Browser integration</h3><p>Click a download link in Chrome, Edge, Brave, Opera or Firefox and a compact window shows name, size, category and folder. If the app isn't running, the browser simply keeps the download.</p></div>
@@ -486,6 +492,21 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       </div>
       <div class="media"><img src="img/mac-progress.png" data-focus style="--fx:50%;--fy:47%" alt="Progress window with transfer rate, speed graph and eight connections" width="1240" height="684" loading="lazy" data-zoom></div>
     </div>
+
+    <div class="split">
+      <div>
+        <span class="chip">Measured in 0.28</span>
+        <h3 style="margin-top:14px">Faster, lighter, smaller</h3>
+        <p>Every number compares 0.27.0 with 0.28.0 on the same machine, and every file was checked against its SHA-256.</p>
+        <ul class="checks">
+          <li><svg class="i"><use href="#i-check"/></svg>120 MB from a server sending 1 MB/s per connection: 15.1 s → 6.0 s</li>
+          <li><svg class="i"><use href="#i-check"/></svg>1 GB without a speed limit: the same speed, CPU time and memory as before</li>
+          <li><svg class="i"><use href="#i-check"/></svg>Android app 60 MB → 30 MB, Linux AppImage 51 MB → 46 MB, Windows installer 56 MB → about 47 MB</li>
+          <li><svg class="i"><use href="#i-check"/></svg>AppImage updates download only what changed</li>
+        </ul>
+      </div>
+      <div class="media"><img src="img/windows-ocean.png" data-focus style="--fx:50%;--fy:47%" alt="Windows app in the Ocean colour scheme" width="1240" height="684" loading="lazy" data-zoom></div>
+    </div>
   </div>
 </section>
 
@@ -524,7 +545,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <div class="f"><div class="ic"><svg class="i"><use href="#i-dl"/></svg></div><h3>Videos from 1,000+ sites</h3><p>Share or paste a YouTube, Facebook, Instagram, TikTok or X link and pick the quality, up to 4K, or sound only. Same video engine as the desktop apps, updated automatically.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-globe"/></svg></div><h3>Built-in browser</h3><p>Browse as usual: downloads open the Nexonic download window, long-press any link or image to save it, and <b>Found on this page</b> lists the videos, music and files on the page.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-dl"/></svg></div><h3>Share from Chrome</h3><p>In Chrome or any other app, tap <b>Share → Download with Nexonic</b>. Several links at once and batch patterns work too.</p></div>
-      <div class="f"><div class="ic"><svg class="i"><use href="#i-bolt"/></svg></div><h3>Fast and resumable</h3><p>Up to 32 connections per file, pause and resume even after a restart, retries, refresh expired links.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-bolt"/></svg></div><h3>Fast and resumable</h3><p>Up to 256 connections per file, chosen automatically, pause and resume even after a restart, retries, refresh expired links.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-clock"/></svg></div><h3>Runs in the background</h3><p>A progress notification with Pause all, queues, a daily scheduler, Wi-Fi only and a speed limit.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-folder"/></svg></div><h3>Files you can find</h3><p>Saved in <b>Download/Nexonic</b>, sorted by type, visible in the Files app. Open, share or delete from the app.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-lock"/></svg></div><h3>Private</h3><p>Cookies and passwords are encrypted on the phone and sent only to their own site. Third-party cookies are blocked in the browser.</p></div>

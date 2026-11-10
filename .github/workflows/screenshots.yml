@@ -59,8 +59,9 @@ jobs:
           $server = Start-Process python -ArgumentList "scripts/demo-server.py", "8099" -PassThru -WindowStyle Hidden
           Start-Sleep 1
           New-Item -ItemType Directory shots | Out-Null
-          foreach ($shot in @("main:", "add:add", "scheduler:scheduler", "batch:batch", "info:info", "progress:progress")) {
-            $name, $sheet = $shot.Split(":")
+          foreach ($shot in @("main::", "add:add:", "scheduler:scheduler:", "batch:batch:", "info:info:", "progress:progress:", "options:options:", "ocean::scheme:Ocean")) {
+            $name, $sheet, $theme = $shot -split ":", 3
+            $env:NDM_THEME = $theme
             Remove-Item "$env:LOCALAPPDATA\Nexonic Download Manager" -Recurse -Force -ErrorAction SilentlyContinue
             $env:NDM_DEMO = "1"; $env:NDM_SNAPSHOT = "$PWD\shots"; $env:NDM_NAME = "windows-$name"; $env:NDM_SHEET = $sheet
             $env:NDM_LIVE = "http://127.0.0.1:8099/keynote.mp4"; $env:NDM_LIMIT = "6000"
