@@ -1,3 +1,48 @@
+## 0.28.0
+
+What this release was measured on: faster verified downloads, lower resource use, a more reliable app and smaller
+installs. Every number below compares 0.27.0 with 0.28.0 on the same machine.
+
+**Faster downloads, every file checked**
+- Automatic connections (on by default, all apps): each download starts with 4 connections and doubles them every
+  second while the speed keeps rising, up to your setting (now up to 256). A server that answers "too busy" (429/503)
+  is given the time it asks for, and the app never climbs back to the number it refused. A refused part waits; nothing
+  is lost or written twice.
+  On a local test server, every file checked against its SHA-256: 120 MB from a server sending 1 MB/s per connection
+  took 15.1 s with 0.27.0 and 6.0 s now; from a server that refuses more than 6 connections, 16.3 s and 15.2 s. Without
+  a speed limit (1 GB) speed, CPU time and memory are the same as before.
+- Several sources for one file: extra mirror addresses or a Metalink (.meta4) file. Each part comes from the source
+  measured fastest so far; a mirror that sends a different file is dropped before it can damage yours.
+- Mac: downloads really use more than 32 connections now (the setting offered 256, the engine stopped at 32).
+
+**Smaller installs** (release files of 0.27.0, CI builds of 0.28.0)
+- Android: 60.3 MB to 30.0 MB (32-bit: 53.0 MB to 27.4 MB). The video engine's FFmpeg is now a small build made from
+  source that only re-packs video; phones that update also get back the 78 MB the old one took after unpacking.
+- Linux AppImage: 50.9 MB to 46.1 MB (Arm: 48.5 MB to 43.7 MB). Updates of the AppImage download only the parts that
+  changed (a .zsync file comes with every release); anything unexpected falls back to the full file, always checked.
+- Windows installer: 55.8 MB to about 47 MB. Windows Forms and the .NET debugger files are no longer installed.
+- New: Windows on Arm (its own installer and portable zip, built and tested on an Arm machine).
+
+**More reliable**
+- Chapters and subtitles go into saved videos again: the bundled FFmpeg (Windows, Linux, Mac) could not read them, so
+  the video engine stopped with an error after downloading. Checked with the real engine on every build.
+
+**Also new**
+- Encrypted DNS over TLS as well as HTTPS, with a strict mode that never falls back to unencrypted lookups.
+- Server panel: the server's country (from a database on your computer; addresses are never sent anywhere), its HTTP
+  version and a measured speed.
+- Speed schedule by time of day (Windows, Linux, Mac, Android): "Mon-Fri 09:00-17:00 300".
+- cURL: paste a browser's "Copy as cURL" into Add URL (address, referrer, cookies, login), and Copy as cURL on any
+  download (all apps).
+- A link that is already in the list (or downloaded, with the file still there) is pointed out before it is added.
+- RSS rules: size limits, one download per episode in the quality you prefer, and a preview of what a rule takes.
+- Torrents through your own debrid account (Real-Debrid, Premiumize; off until you add a key).
+- Colour schemes (contrast-checked, import and export), your choice of font, sounds for finished, failed and queue
+  done with quiet hours, a saved column layout, and a category list you can reorder (Windows and Linux).
+- Wake the computer to start a queue on Linux (where the system allows it) and Mac; Android can be the default app for
+  web links.
+- Your own yt-dlp and FFmpeg can be chosen in Options (Windows and Linux).
+
 ## 0.27.0
 
 - **Remote management is back** (Windows, Linux, server): manage downloads from a phone or another device on your
