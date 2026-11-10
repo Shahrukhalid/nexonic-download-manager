@@ -38,7 +38,7 @@ public static class Updater
 
     static HttpClient Client()
     {
-        var c = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
+        var c = Network.Client(TimeSpan.FromMinutes(10));
         c.DefaultRequestHeaders.UserAgent.ParseAdd("NexonicDownloadManager/" + HelpWindows.Version);
         c.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
         return c;

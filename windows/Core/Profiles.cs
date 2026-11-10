@@ -18,6 +18,12 @@ public sealed class NetworkOptions
     public int ReadTimeoutSeconds { get; set; } = 60;
     /// <summary>DNS-over-HTTPS server (JSON API, e.g. https://cloudflare-dns.com/dns-query); empty = the system's DNS.</summary>
     public string DnsOverHttps { get; set; } = "";
+    /// <summary>DNS-over-TLS resolver as "address#certificate-name" (e.g. 1.1.1.1#cloudflare-dns.com); used instead of DNS
+    /// over HTTPS when both are set.</summary>
+    public string DnsOverTls { get; set; } = "";
+    /// <summary>Strict encrypted DNS: names are never looked up with the system's DNS. Anything that would (the video and
+    /// gallery engines and torrents without a proxy) stops with the reason instead.</summary>
+    public bool StrictDns { get; set; }
     /// <summary>Network adapter every download must use (a VPN, for example); empty = any. When it is down, downloads
     /// stop instead of using another adapter (kill switch).</summary>
     public string BindAdapter { get; set; } = "";
@@ -35,6 +41,8 @@ public sealed class NetworkOptions
         ConnectTimeoutSeconds = Math.Clamp(ConnectTimeoutSeconds, 3, 300),
         ReadTimeoutSeconds = Math.Clamp(ReadTimeoutSeconds, 5, 3600),
         DnsOverHttps = DnsOverHttpsUrlOk(DnsOverHttps) ? DnsOverHttps.Trim() : "",
+        DnsOverTls = Nexonic.Core.DnsOverTls.ParseServer(DnsOverTls) != null ? DnsOverTls.Trim() : "",
+        StrictDns = StrictDns && (Nexonic.Core.DnsOverTls.ParseServer(DnsOverTls) != null || DnsOverHttpsUrlOk(DnsOverHttps)),
         BindAdapter = (BindAdapter ?? "").Trim(),
         TorrentBlocklist = (TorrentBlocklist ?? "").Trim(),
         IpVersion = IpVersion is "ipv4" or "ipv6" ? IpVersion : "any",
@@ -50,6 +58,23 @@ public sealed class NetworkOptions
 
     public static bool DnsOverHttpsUrlOk(string? url) =>
         Uri.TryCreate((url ?? "").Trim(), UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttps;
+
+    /// <summary>Names are looked up with encrypted DNS (over TLS or HTTPS).</summary>
+    public bool EncryptedDns => Nexonic.Core.DnsOverTls.ParseServer(DnsOverTls) != null || DnsOverHttpsUrlOk(DnsOverHttps);
+
+    /// <summary>What is wrong with the DNS settings, or null. Strict mode needs the resolver as an address, so that finding
+    /// the resolver itself never uses the system's DNS.</summary>
+    public static string? DnsProblem(string? doh, string? dot, bool strict)
+    {
+        if (!string.IsNullOrWhiteSpace(doh) && !DnsOverHttpsUrlOk(doh)) return "The DNS over HTTPS server must be an https:// address.";
+        if (!string.IsNullOrWhiteSpace(dot) && Nexonic.Core.DnsOverTls.ParseServer(dot) == null)
+            return "Write the DNS over TLS server as address#certificate-name, for example 1.1.1.1#cloudflare-dns.com.";
+        if (!strict) return null;
+        if (string.IsNullOrWhiteSpace(doh) && string.IsNullOrWhiteSpace(dot)) return "Strict encrypted DNS needs a DNS over TLS or DNS over HTTPS server.";
+        if (string.IsNullOrWhiteSpace(dot) && !IPAddress.TryParse(new Uri(doh!.Trim()).Host.Trim('[', ']'), out _))
+            return "With strict encrypted DNS, give the DNS over HTTPS server by its address (for example https://1.1.1.1/dns-query), so finding it never uses the system's DNS.";
+        return null;
+    }
 }
 
 /// <summary>Settings used for every download from one website (Options → Sites). Empty fields keep the general setting.</summary>
@@ -318,10 +343,10 @@ public static class NetworkCheck
         }
         try
         {
-            var ips = NetworkOptions.DnsOverHttpsUrlOk(doh)
-                ? await DnsOverHttps.ResolveAsync(doh, u.Host, ct)
-                : await Dns.GetHostAddressesAsync(u.Host, ct);
-            lines.Add($"Name lookup ({(NetworkOptions.DnsOverHttpsUrlOk(doh) ? "DNS over HTTPS" : "system DNS")}): {u.Host} → {string.Join(", ", ips.Take(3).Select(i => i.ToString()))} in {sw.ElapsedMilliseconds} ms");
+            var encrypted = Network.Options.EncryptedDns;
+            var ips = await Network.Resolve(u.Host, encrypted ? doh : null, "any", ct);
+            var how = DnsOverTls.ParseServer(Network.Options.DnsOverTls) != null ? "DNS over TLS" : encrypted ? "DNS over HTTPS" : "system DNS";
+            lines.Add($"Name lookup ({how}): {u.Host} → {string.Join(", ", ips.Take(3).Select(i => i.ToString()))} in {sw.ElapsedMilliseconds} ms");
         }
         catch (Exception e) { lines.Add($"Name lookup failed: {e.Message}"); }
         sw.Restart();

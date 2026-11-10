@@ -5,3 +5,8 @@ The app ships with these open-source parts, used unmodified. Their licences requ
 
 - SharpCompress (MIT License), Copyright (c) 2014 Adam Hathcock, used to unpack .7z, .rar and .tar archives:
   https://github.com/adamhathcock/sharpcompress
+
+Downloaded on first use (not part of the installers):
+
+- DB-IP IP to Country Lite database (Creative Commons Attribution 4.0 International), used offline by Check Server to
+  show a server's country: IP Geolocation by DB-IP, https://db-ip.com

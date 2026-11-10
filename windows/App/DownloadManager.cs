@@ -149,8 +149,10 @@ public sealed partial class DownloadManager
     }
 
     /// <summary>Called every few seconds: the "while in use" limit when someone uses the computer, else the usual one.</summary>
+    /// The speed schedule, when a rule applies now, replaces the general limit.
     public void ApplyIdleLimit() =>
-        limiter.SetLimit(Idle.Effective(Settings.SpeedLimitKBps, Settings.ActiveSpeedLimitKBps, Settings.ActiveSpeedLimitKBps > 0 ? Idle.Time() : null) * 1024);
+        limiter.SetLimit(Idle.Effective(SpeedSchedule.LimitAt(SpeedSchedule.Parse(Settings.SpeedScheduleText).Rules, DateTime.Now) ?? Settings.SpeedLimitKBps,
+            Settings.ActiveSpeedLimitKBps, Settings.ActiveSpeedLimitKBps > 0 ? Idle.Time() : null) * 1024);
 
     public Guid? Add(DownloadJob job, AddOptions? o = null)
     {

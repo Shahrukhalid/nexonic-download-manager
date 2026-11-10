@@ -231,6 +231,8 @@ public sealed class AppSettings
     public DebridSettings Debrid { get; set; } = new();
     /// <summary>Limit for all downloads while the computer is in use (KB/s, 0 = off); full speed when it is idle.</summary>
     public int ActiveSpeedLimitKBps { get; set; }
+    /// <summary>Speed limits by time of day, one rule per line (see <see cref="SpeedSchedule"/>).</summary>
+    public string SpeedScheduleText { get; set; } = "";
     /// <summary>Language code ("ur", "de"…); empty = the system's language.</summary>
     public string Language { get; set; } = "";
     public bool ShowCompleteDialog { get; set; } = true;
