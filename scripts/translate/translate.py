@@ -82,16 +82,16 @@ def existing(code):
     for path in (DESKTOP / f"{code}.json", ANDROID / f"{code}.json", EXT / f"{code}.json"):
         f = read_json(path)
         if f:
-            have.update({k: v for k, v in f["strings"].items() if v and (v != k or lang["reviewed"])})
+            have.update({k: v for k, v in f["strings"].items() if v and (v != k or lang["reviewed"]) and (lang["reviewed"] or good(k, v))})
     if lang["apple"]:
         _, pairs = read_strings(APPLE / f"{lang['apple']}.lproj/Localizable.strings")
-        have.update({k: v for k, v in pairs.items() if v and (v != k or lang["reviewed"])})
+        have.update({k: v for k, v in pairs.items() if v and (v != k or lang["reviewed"]) and (lang["reviewed"] or good(k, v))})
     return have
 
 # ---------- keeping names, links and placeholders ----------
 
 KEEP = re.compile(
-    r"https?://\S+|nexonic://\S+|\{\w*\}|%(?:\d+\$)?(?:@|lld|ld|d|s|f)|\((?:Ctrl|Cmd|⌘)\+[^)]+\)|Ctrl\+\w+|⌘⇧?\w"
+    r"https?://\S+|nexonic://\S+|\{\w*\}|%(?:\d+\$)?(?:@|lld|ld|d|s|f)|\((?:Ctrl|Cmd|⌘)\+[^)]+\)|Ctrl\+\w+|⌘⇧?\w|\bF\d{1,2}\b"
     r"|Nexonic Download Manager|Downloads/Nexonic|Files › Nexonic|\.(?:zip|7z|rar|tar|torrent|exe|dmg|deb|rpm|AppImage)\b"
     r"|\b(?:Nexonic|ndm|yt-dlp|gallery-dl|PAC|HTTP|HTTPS|SOCKS5|URL|HH:mm|MD5|SHA-\d+|KB/s|MB|GB|Wi-Fi|VPN|QR|Reddit|Pixiv"
     r"|DeviantArt|Imgur|YouTube|Chrome|Firefox|Edge|Safari|Windows|macOS|Linux|Android|iPhone|iPad|GitHub)\b")
@@ -110,9 +110,15 @@ def unmask(text, kept):
         text = text.replace(f"X{i}X", k)
     return text
 
+def keeps(english, translated):
+    """Every name, link, placeholder and shortcut of the English text is still in the translation."""
+    return all(translated.count(k) >= english.count(k) for k in set(KEEP.findall(english)))
+
 def good(english, translated):
     """A machine translation is used only when it keeps every protected part and looks sane."""
     if not translated or not translated.strip():
+        return False
+    if not keeps(english, translated):
         return False
     if len(translated) > 4 * len(english) + 30:
         return False
