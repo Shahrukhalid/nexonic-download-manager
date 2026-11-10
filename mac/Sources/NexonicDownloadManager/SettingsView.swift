@@ -26,7 +26,10 @@ struct SettingsView: View {
                     Text("Light").tag("light")
                     Text("Dark").tag("dark")
                 }
-                Stepper("Connections per download: \(manager.settings.connections)", value: $manager.settings.connections, in: 1...256)
+                Toggle("Automatic connections", isOn: $manager.settings.autoConnections)
+                    .help("Starts with a few connections and adds more while the speed keeps rising; slows down when a server asks.")
+                Stepper((manager.settings.autoConnections ? "Most connections per download: " : "Connections per download: ")
+                        + "\(manager.settings.connections)", value: $manager.settings.connections, in: 1...256)
                 Stepper("Downloads at the same time: \(manager.settings.maxActive)", value: $manager.settings.maxActive, in: 1...10)
                 LabeledContent("Save to") {
                     HStack {

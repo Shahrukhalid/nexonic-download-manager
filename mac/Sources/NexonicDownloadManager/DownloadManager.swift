@@ -454,7 +454,7 @@ final class DownloadManager: ObservableObject {
                 let t: Downloader
                 let profile = HostProfiles.match(settings.hostProfiles, item.url)
                 let proxy = profile?.proxy ?? settings.proxy
-                let connections = max(1, min(32, profile?.maxConnections ?? settings.connections))
+                let connections = max(1, min(256, profile?.maxConnections ?? settings.connections))
                 if item.gallery == true {
                     t = GalleryTransfer(record: item, sortIntoCategories: settings.sortIntoCategoryFolders,
                                         speedLimitKBps: settings.speedLimitKBps, proxy: proxy)
@@ -469,7 +469,11 @@ final class DownloadManager: ObservableObject {
                 } else {
                     t = Transfer(record: item, connections: connections, limiter: limiter,
                                  sortIntoCategories: settings.sortIntoCategoryFolders, proxy: proxy,
-                                 options: .from(settings.network, profile))
+                                 options: {
+                                     var o = TransferOptions.from(settings.network, profile)
+                                     o.autoConnections = settings.autoConnections && profile?.maxConnections == nil  // a site's own number is kept
+                                     return o
+                                 }())
                 }
                 t.onChange = { [weak self] rec in Task { @MainActor in self?.changed(rec) } }
                 transfers[item.id] = t

@@ -23,6 +23,9 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
     private var stopping = false
     private var probeTask: Int?
     private var lastNotify = Date.distantPast
+    private var governor: ConnectionGovernor!
+    private var refusals: [Int: TimeInterval?] = [:]  // tasks the server refused (429/503), by task identifier
+    private var pacer: DispatchSourceTimer?
 
     private struct Running {
         let task: URLSessionDataTask
@@ -64,6 +67,7 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
         self.sortIntoCategories = sortIntoCategories
         queue = DispatchQueue(label: "nexonic.transfer.\(record.id.uuidString)")
         super.init()
+        governor = ConnectionGovernor(auto: options.autoConnections, maximum: self.connections)
         ownLimiter.setLimit(bytesPerSecond: (record.speedLimitKBps ?? 0) * 1024)
         let config = Network.configuration(proxy: proxy)
         config.httpMaximumConnectionsPerHost = 256
@@ -191,14 +195,43 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
             record.size = size
             record.acceptsRanges = ranges
             record.validator = validator
-            record.segments = SegmentPlanner.plan(size: ranges ? size : nil, connections: ranges ? connections : 1, minSegment: options.minSegment)
+            record.segments = SegmentPlanner.plan(size: ranges ? size : nil, connections: ranges ? governor.allowed : 1, minSegment: options.minSegment)
             if !ranges, let size { record.segments = [Segment(id: 0, start: 0, end: size - 1)] }
         }
         if !singleFile { try? FileManager.default.createDirectory(at: partsFolder, withIntermediateDirectories: true) }
         record.status = .downloading
         notify(force: true)
-        for seg in record.segments where !seg.isComplete { launch(seg.id) }
+        for seg in record.segments.filter({ !$0.isComplete }).prefix(governor.allowed) { launch(seg.id) }
+        startPacer()
         finishIfDone()
+    }
+
+    /// Twice a second: the governor measures, then connections are opened up to what it allows (parts waiting after a
+    /// refusal first, then halves of the largest remaining parts).
+    private func startPacer() {
+        pacer?.cancel()
+        let t = DispatchSource.makeTimerSource(queue: queue)
+        t.schedule(deadline: .now() + 0.5, repeating: 0.5)
+        t.setEventHandler { [weak self] in
+            guard let self, !self.stopping, self.record.status == .downloading else { return }
+            self.governor.tick(now: Date(), running: self.running.count)
+            self.fill()
+        }
+        pacer = t
+        t.resume()
+    }
+
+    private func fill() {
+        guard !stopping, Date() >= governor.quietUntil else { return }
+        let busy = Set(running.values.map(\.segmentID))
+        for seg in record.segments where !seg.isComplete && !busy.contains(seg.id) && running.count < governor.allowed {
+            launch(seg.id)
+        }
+        while record.acceptsRanges && running.count < governor.allowed {
+            let before = running.count
+            splitAndLaunch()
+            if running.count == before { break }
+        }
     }
 
     private func partURL(_ id: Int) -> URL { partsFolder.appendingPathComponent("\(id).part") }
@@ -245,6 +278,8 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
     }
 
     private func cancelAll() {
+        pacer?.cancel()
+        pacer = nil
         for r in running.values {
             r.task.cancel()
             try? r.handle.close()
@@ -304,6 +339,12 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
             completionHandler(.cancel)  // a different part than asked for: retried, never written
             return
         }
+        if ConnectionGovernor.isRefusal(code) {
+            // Too many connections for this server: this part waits (nothing is lost) and the rest slow down.
+            refusals.updateValue(ConnectionGovernor.retryAfter(http?.value(forHTTPHeaderField: "Retry-After")), forKey: dataTask.taskIdentifier)
+            completionHandler(.cancel)
+            return
+        }
         if code == 206 || (code == 200 && !wantsRange) {
             completionHandler(.allow)
         } else {
@@ -325,6 +366,7 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
                 return fail("Writing failed: \(error.localizedDescription)")
             }
             record.segments[i].written += Int64(chunk.count)
+            governor.received(chunk.count)
         }
         if record.segments[i].isComplete {
             dataTask.cancel()  // the range may have been shortened by a split
@@ -344,7 +386,19 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
         }
         guard let run = running.removeValue(forKey: task.taskIdentifier) else { return }
         try? run.handle.close()
+        let refusal = refusals.removeValue(forKey: task.taskIdentifier)
         guard !stopping, let i = record.segments.firstIndex(where: { $0.id == run.segmentID }) else { return }
+        if let retryAfter = refusal, !record.segments[i].isComplete {
+            governor.refused(now: Date(), retryAfter: retryAfter)
+            if !running.isEmpty { return }  // the pacer starts this part again when the server is ready
+            let wait = max(1, governor.quietUntil.timeIntervalSinceNow)
+            let id = run.segmentID
+            queue.asyncAfter(deadline: .now() + wait) { [weak self] in
+                guard let self, !self.stopping, !self.running.values.contains(where: { $0.segmentID == id }) else { return }
+                self.launch(id)
+            }
+            return
+        }
         var seg = record.segments[i]
         if seg.end < 0, error == nil {  // unknown size: the stream ended normally
             seg.end = seg.start + seg.written - 1
@@ -368,7 +422,7 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
     }
 
     private func splitAndLaunch() {
-        guard record.acceptsRanges, running.count < connections else { return }
+        guard record.acceptsRanges, running.count < governor.allowed else { return }
         let nextID = (record.segments.map(\.id).max() ?? 0) + 1
         guard let split = SegmentPlanner.splitLargest(record.segments, nextID: nextID, minSegment: options.minSegment) else { return }
         record.segments[split.index].end = split.newEnd
@@ -449,6 +503,8 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
     }
 
     private func complete(_ target: URL) {
+        pacer?.cancel()
+        pacer = nil
         if let expected = record.checksum, let (algorithm, hex) = Checksum.parse(expected) {
             let actual = (try? Checksum.compute(algorithm, file: target)) ?? ""
             record.checksumResult = actual == hex ? "\(algorithm.rawValue) matches" : "\(algorithm.rawValue) does not match (got \(actual))"
