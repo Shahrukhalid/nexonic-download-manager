@@ -120,6 +120,8 @@ class Settings(context: Context) {
     private val p = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
 
     var connections: Int get() = p.getInt("connections", 8); set(v) = p.edit().putInt("connections", v.coerceIn(1, 256)).apply()
+    /** Auto (default): each download starts with a few connections and adds more while the speed rises, up to [connections]. */
+    var autoConnections: Boolean get() = p.getBoolean("autoConnections", true); set(v) = p.edit().putBoolean("autoConnections", v).apply()
     var maxActive: Int get() = p.getInt("maxActive", 3); set(v) = p.edit().putInt("maxActive", v.coerceIn(1, 6)).apply()
     var speedLimitKB: Long get() = p.getLong("speedLimitKB", 0); set(v) = p.edit().putLong("speedLimitKB", v.coerceAtLeast(0)).apply()
     var wifiOnly: Boolean get() = p.getBoolean("wifiOnly", false); set(v) = p.edit().putBoolean("wifiOnly", v).apply()

@@ -466,7 +466,7 @@ object Downloads {
                 main.post { pump() }
             }
         }
-        val t = Transfer(request, partFile(id), settings.connections, item.state, listener, limiter)
+        val t = Transfer(request, partFile(id), settings.connections, item.state, listener, limiter, auto = settings.autoConnections)
         transfers[id] = t
         update(id) { it.copy(status = Status.DOWNLOADING, error = null) }
         t.start()

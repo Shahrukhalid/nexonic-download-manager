@@ -16,9 +16,9 @@ data class Segment(val id: Int, val start: Long, var end: Long, var written: Lon
 object SegmentPlanner {
     const val MIN_SEGMENT: Long = 512 * 1024
     const val MIN_SPLIT: Long = 1L shl 20
-    const val MAX_CONNECTIONS = 32
+    const val MAX_CONNECTIONS = 256
 
-    /** Equal segments of at least 512 KB, between 1 and 32 of them. */
+    /** Equal segments of at least 512 KB, between 1 and 256 of them. */
     fun plan(size: Long?, connections: Int): List<Segment> {
         if (size == null || size <= 0) return listOf(Segment(0, 0, -1))
         val byMin = maxOf(1L, size / MIN_SEGMENT).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()

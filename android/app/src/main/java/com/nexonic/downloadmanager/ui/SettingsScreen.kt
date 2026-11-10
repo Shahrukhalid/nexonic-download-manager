@@ -131,7 +131,9 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
             }
 
             Section("Downloads")
-            Text("Connections per download: ${connections.toInt()}", style = MaterialTheme.typography.bodyLarge)
+            var auto by remember { mutableStateOf(s.autoConnections) }
+            Toggle("Automatic connections", "Starts with a few and adds more while the speed keeps rising; slows down when a server asks.", auto) { auto = it; s.autoConnections = it }
+            Text((if (auto) "Most connections per download: " else "Connections per download: ") + connections.toInt(), style = MaterialTheme.typography.bodyLarge)
             Slider(connections, { connections = it }, valueRange = 1f..256f, steps = 254, onValueChangeFinished = { s.connections = connections.toInt() })
             Hint("More connections are faster on most servers. Each part is at least 512 KB.")
             Spacer(Modifier.height(8.dp))
