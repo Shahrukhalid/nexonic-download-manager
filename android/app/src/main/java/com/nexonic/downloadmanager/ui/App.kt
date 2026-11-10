@@ -105,7 +105,7 @@ fun App(ui: UiState, browser: Browser) {
 
     if (ui.addOffer != null || ui.addText != null) {
         AddDownloadSheet(
-            offer = ui.addOffer,
+            given = ui.addOffer,
             text = ui.addText,
             onDone = { msg ->
                 ui.addOffer = null; ui.addText = null

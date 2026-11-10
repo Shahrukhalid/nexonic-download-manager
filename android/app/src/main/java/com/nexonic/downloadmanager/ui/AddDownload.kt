@@ -50,6 +50,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.nexonic.downloadmanager.browser.Offer
+import com.nexonic.downloadmanager.core.CurlCommand
 import com.nexonic.downloadmanager.core.tr
 import com.nexonic.downloadmanager.core.BatchPattern
 import com.nexonic.downloadmanager.core.DownloadRequest
@@ -78,12 +79,12 @@ import kotlinx.coroutines.withContext
  * with Start Download, Download Later or Cancel. Also takes pasted or shared links, several at once, and batch patterns.
  */
 @Composable
-fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
+fun AddDownloadSheet(given: Offer?, text: String?, onDone: (String?) -> Unit) {
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val context = LocalContext.current
-    var input by remember { mutableStateOf(offer?.url ?: text.orEmpty()) }
+    var input by remember { mutableStateOf(given?.url ?: text.orEmpty()) }
     var batch by remember { mutableStateOf(false) }
-    var name by remember { mutableStateOf(offer?.fileName.orEmpty()) }
+    var name by remember { mutableStateOf(given?.fileName.orEmpty()) }
     var nameEdited by remember { mutableStateOf(false) }
     var probe by remember { mutableStateOf<ProbeResult?>(null) }
     var probing by remember { mutableStateOf(false) }
@@ -97,7 +98,15 @@ fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
     var page by remember { mutableStateOf<VideoPage?>(null) }
     var pick by remember { mutableStateOf(0) }
 
-    val links: List<String> = remember(input, batch) {
+    // A browser's "Copy as cURL" pasted here: one download with the command's referrer, cookies, browser name and login.
+    val curl = remember(input) { if (given == null && CurlCommand.looks(input)) CurlCommand.parse(input) else null }
+    val offer: Offer? = given ?: curl?.request?.let { Offer(url = it.url, referer = it.referrer, userAgent = it.userAgent, cookies = it.cookies) }
+    LaunchedEffect(curl) {
+        curl?.request?.let { c -> if (c.username != null) { user = c.username; password = c.password.orEmpty() } }
+    }
+
+    val links: List<String> = remember(input, batch, curl) {
+        if (curl != null) return@remember listOfNotNull(curl.request?.url)
         // Any pasted text works: when it is not just links, the links in it are found (Link Grabber).
         val l = if (batch) Links.split(input).flatMap { BatchPattern.expand(it, 2000) }.filter { Links.isWebLink(it) }
             else Links.split(input).takeIf { s -> s.all { Links.isWebLink(it) || it.startsWith("magnet:", true) } }
@@ -105,6 +114,11 @@ fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
         l.distinct()
     }
     val single = links.singleOrNull()
+    // A link that is already in the list (or was downloaded before) is pointed out; adding it again saves a new copy.
+    val repeat = remember(links) {
+        val list = Downloads.items.value
+        links.mapNotNull { u -> list.firstOrNull { com.nexonic.downloadmanager.core.Duplicates.same(it.url, u) } }
+    }
 
     // Ask the server for the name and size of a single link.
     LaunchedEffect(single, user, password) {
@@ -187,7 +201,7 @@ fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
         ) {
             Text(tr(if (isVideo) "Download video" else "Download file"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
 
-            if (offer == null) {
+            if (given == null) {
                 OutlinedTextField(
                     value = input, onValueChange = { input = it },
                     label = { Text(tr("Links (one or more)")) },
@@ -210,7 +224,21 @@ fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
                     Switch(checked = batch, onCheckedChange = { batch = it })
                 }
             } else {
-                Text(offer.url, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(given.url, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+            if (repeat.isNotEmpty()) {
+                val r = repeat.first()
+                Text(
+                    if (links.size > 1) tr("Some of these links are already in the list:") + " ${repeat.size}"
+                    else if (r.status == com.nexonic.downloadmanager.data.Status.COMPLETE) tr("This file was downloaded before:") + " ${r.fileName}"
+                    else tr("This link is already in the list:") + " ${r.fileName}",
+                    color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            curl?.problem?.let { Text(tr(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+            curl?.request?.ignored?.takeIf { it.isNotEmpty() }?.let {
+                Text(tr("Not repeated from the cURL command:") + " " + it.joinToString(", "), style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
             when {

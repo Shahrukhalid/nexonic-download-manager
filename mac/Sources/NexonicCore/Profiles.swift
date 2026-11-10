@@ -92,6 +92,8 @@ public struct TransferOptions: Equatable, Sendable {
     public var minSegment: Int64 = SegmentPlanner.minSegment
     public var retries: Int = 6
     public var readTimeoutSeconds: Int = 30
+    /// Auto: start with a few connections and add more while the speed keeps rising, up to the connection setting.
+    public var autoConnections = false
 
     public init() {}
 

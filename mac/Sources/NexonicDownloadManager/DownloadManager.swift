@@ -26,7 +26,7 @@ final class DownloadManager: ObservableObject {
     @Published var addRequest: AddRequest?
     @Published var settings: AppSettings {
         didSet {
-            limiter.setLimit(bytesPerSecond: settings.speedLimitKBps * 1024)
+            applySpeedLimit()
             Adapters.required = settings.network.bindAdapter
             CategoryRules.list = settings.customCategories
             if settings.network.torrentBlocklist != oldValue.network.torrentBlocklist {
@@ -93,7 +93,7 @@ final class DownloadManager: ObservableObject {
         if !qs.contains(where: \.isMain) { qs.insert(.main, at: 0) }
         queues = qs
         for i in items.indices where items[i].status.isActive { items[i].status = .queued }  // interrupted by quit
-        limiter.setLimit(bytesPerSecond: settings.speedLimitKBps * 1024)
+        applySpeedLimit()
         Self.applyAppearance(settings.appearance)
         timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.tick() }
@@ -136,6 +136,21 @@ final class DownloadManager: ObservableObject {
     }
 
     func add(links text: String, options: AddOptions = AddOptions()) {
+        // A browser's "Copy as cURL": the address with its referrer, cookies, browser name and login.
+        if CurlCommand.looks(text) {
+            switch CurlCommand.parse(text) {
+            case .success(let r):
+                var job = DownloadJob(url: r.url.absoluteString)
+                job.referrer = r.referrer; job.cookies = r.cookies; job.userAgent = r.userAgent
+                job.username = r.username; job.password = r.password
+                if let n = options.fileName, !n.isEmpty { job.fileName = n }
+                add(job, options: options)
+                if !r.ignored.isEmpty { post("Added from cURL", "Not repeated: \(r.ignored.joined(separator: ", ")).") }
+            case .failure(let f):
+                post("Could not add the cURL command", f.description)
+            }
+            return
+        }
         let lines = Links.split(text)
         for line in lines {
             var job = DownloadJob(url: line)
@@ -165,6 +180,23 @@ final class DownloadManager: ObservableObject {
             persist()
             schedule()
             return items[i].id
+        }
+        // The same link is already in the list (or was downloaded and the file is still there): ask, skip or add again.
+        if !o.gallery, let existing = Duplicates.find(items, url) {
+            switch settings.duplicateAction {
+            case "skip":
+                post("Already in the list", existing.fileName)
+                return nil
+            case "again":
+                break
+            default:
+                let alert = NSAlert()
+                alert.messageText = existing.status == .finished ? "This file was downloaded before" : "This link is already in the list"
+                alert.informativeText = "\(existing.fileName)\n\nDownloading it again saves a new copy; nothing is written over."
+                alert.addButton(withTitle: "Skip")
+                alert.addButton(withTitle: "Download Again")
+                if alert.runModal() == .alertFirstButtonReturn { return nil }
+            }
         }
         // Settings for this website (Settings → Sites): its folder unless another one was chosen, its login, user agent and limit.
         let profile = HostProfiles.match(settings.hostProfiles, url)
@@ -439,7 +471,7 @@ final class DownloadManager: ObservableObject {
                 let t: Downloader
                 let profile = HostProfiles.match(settings.hostProfiles, item.url)
                 let proxy = profile?.proxy ?? settings.proxy
-                let connections = max(1, min(32, profile?.maxConnections ?? settings.connections))
+                let connections = max(1, min(256, profile?.maxConnections ?? settings.connections))
                 if item.gallery == true {
                     t = GalleryTransfer(record: item, sortIntoCategories: settings.sortIntoCategoryFolders,
                                         speedLimitKBps: settings.speedLimitKBps, proxy: proxy)
@@ -454,7 +486,11 @@ final class DownloadManager: ObservableObject {
                 } else {
                     t = Transfer(record: item, connections: connections, limiter: limiter,
                                  sortIntoCategories: settings.sortIntoCategoryFolders, proxy: proxy,
-                                 options: .from(settings.network, profile))
+                                 options: {
+                                     var o = TransferOptions.from(settings.network, profile)
+                                     o.autoConnections = settings.autoConnections && profile?.maxConnections == nil  // a site's own number is kept
+                                     return o
+                                 }())
                 }
                 t.onChange = { [weak self] rec in Task { @MainActor in self?.changed(rec) } }
                 transfers[item.id] = t
@@ -674,8 +710,15 @@ final class DownloadManager: ObservableObject {
         persist()
     }
 
+    /// The speed schedule's limit when one of its rules applies now, else the normal limit.
+    func applySpeedLimit() {
+        let scheduled = SpeedSchedule.limit(SpeedSchedule.parse(settings.speedSchedule).rules, at: Date())
+        limiter.setLimit(bytesPerSecond: (scheduled ?? settings.speedLimitKBps) * 1024)
+    }
+
     private func tick() {
         ticks += 1
+        if ticks % 60 == 0 { applySpeedLimit() }  // every 30 seconds
         var s: [UUID: Double] = [:]
         // Averaged over the last 6 seconds: video sites deliver in bursts, so a single tick is often 0.
         for item in items where item.status.isActive {

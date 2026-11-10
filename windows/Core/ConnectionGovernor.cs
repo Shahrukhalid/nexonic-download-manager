@@ -8,7 +8,7 @@ namespace Nexonic.Core;
 public sealed class ConnectionGovernor
 {
     public const int AutoStart = 4;
-    public static readonly TimeSpan Sample = TimeSpan.FromSeconds(2);
+    public static readonly TimeSpan Sample = TimeSpan.FromSeconds(1);
 
     readonly int ceiling;
     readonly bool auto;
@@ -19,6 +19,7 @@ public sealed class ConnectionGovernor
     double bestRate;
     int flat;
     DateTime quietUntil;
+    int refusedAt = int.MaxValue;  // the number of connections a server refused at: Auto stays below it
 
     /// <param name="auto">Auto: grow from <see cref="AutoStart"/> up to <paramref name="maximum"/>; else use <paramref name="maximum"/>.</param>
     public ConnectionGovernor(bool auto, int maximum, DateTime now)
@@ -36,8 +37,9 @@ public sealed class ConnectionGovernor
 
     public void Received(long n) { lock (gate) bytes += n; }
 
-    /// <summary>Called regularly: at the end of each sample, Auto adds connections while the speed is still rising (by at
-    /// least 10 %), and stops after three samples without gain. A fixed setting slowly returns to its number after a back-off.</summary>
+    /// <summary>Called regularly: at the end of each sample (one second), Auto doubles the connections while the speed is still
+    /// rising (by at least 10 %), stays below a number the server refused, and stops when the speed no longer rises. A fixed
+    /// setting slowly returns to its number after a back-off.</summary>
     public void Tick(DateTime now, int running)
     {
         lock (gate)
@@ -53,7 +55,7 @@ public sealed class ConnectionGovernor
             {
                 bestRate = rate;
                 flat = 0;
-                allowed = Math.Min(ceiling, allowed + Math.Max(2, allowed / 2));
+                allowed = Math.Max(allowed, Math.Min(Math.Min(ceiling, refusedAt - 1), allowed * 2));
             }
             else if (++flat >= 3) flat = 3;  // no gain: stay at this number
         }
@@ -65,6 +67,7 @@ public sealed class ConnectionGovernor
     {
         lock (gate)
         {
+            refusedAt = Math.Min(refusedAt, Math.Max(2, allowed));
             allowed = Math.Max(1, allowed / 2);
             var wait = retryAfter is { } r ? TimeSpan.FromSeconds(Math.Clamp(r.TotalSeconds, 1, 600)) : TimeSpan.FromSeconds(30);
             if (now + wait > quietUntil) quietUntil = now + wait;

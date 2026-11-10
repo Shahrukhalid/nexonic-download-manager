@@ -26,7 +26,10 @@ struct SettingsView: View {
                     Text("Light").tag("light")
                     Text("Dark").tag("dark")
                 }
-                Stepper("Connections per download: \(manager.settings.connections)", value: $manager.settings.connections, in: 1...256)
+                Toggle("Automatic connections", isOn: $manager.settings.autoConnections)
+                    .help("Starts with a few connections and adds more while the speed keeps rising; slows down when a server asks.")
+                Stepper((manager.settings.autoConnections ? "Most connections per download: " : "Connections per download: ")
+                        + "\(manager.settings.connections)", value: $manager.settings.connections, in: 1...256)
                 Stepper("Downloads at the same time: \(manager.settings.maxActive)", value: $manager.settings.maxActive, in: 1...10)
                 LabeledContent("Save to") {
                     HStack {
@@ -56,6 +59,19 @@ struct SettingsView: View {
 
             Form {
                 TextField("Speed limit for all downloads in KB/s (0 = none)", value: $manager.settings.speedLimitKBps, format: .number)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Speed schedule (one rule per line: days start-end KB/s, 0 = no limit)")
+                    TextEditor(text: $manager.settings.speedSchedule)
+                        .font(.system(.body, design: .monospaced)).frame(height: 60)
+                    Text(SpeedSchedule.parse(manager.settings.speedSchedule).problem
+                         ?? "For example Mon-Fri 09:00-17:00 300 or weekends 23:00-07:00 0. The first rule that applies wins; at other times the limit above applies.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Picker("When a link is already in the list", selection: $manager.settings.duplicateAction) {
+                    Text("Ask").tag("ask")
+                    Text("Skip it").tag("skip")
+                    Text("Download a new copy").tag("again")
+                }
                 Section("Download limit") {
                     TextField("At most this many MB (0 = no limit)", value: $manager.settings.dataCapMB, format: .number.grouping(.never))
                     Stepper("… every \(manager.settings.dataCapHours) hours", value: $manager.settings.dataCapHours, in: 1...744)

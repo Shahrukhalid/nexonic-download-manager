@@ -120,8 +120,12 @@ class Settings(context: Context) {
     private val p = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
 
     var connections: Int get() = p.getInt("connections", 8); set(v) = p.edit().putInt("connections", v.coerceIn(1, 256)).apply()
+    /** Auto (default): each download starts with a few connections and adds more while the speed rises, up to [connections]. */
+    var autoConnections: Boolean get() = p.getBoolean("autoConnections", true); set(v) = p.edit().putBoolean("autoConnections", v).apply()
     var maxActive: Int get() = p.getInt("maxActive", 3); set(v) = p.edit().putInt("maxActive", v.coerceIn(1, 6)).apply()
     var speedLimitKB: Long get() = p.getLong("speedLimitKB", 0); set(v) = p.edit().putLong("speedLimitKB", v.coerceAtLeast(0)).apply()
+    /** Speed limits by time of day, one rule per line ("Mon-Fri 09:00-17:00 300"). */
+    var speedSchedule: String get() = p.getString("speedSchedule", "") ?: ""; set(v) = p.edit().putString("speedSchedule", v).apply()
     var wifiOnly: Boolean get() = p.getBoolean("wifiOnly", false); set(v) = p.edit().putBoolean("wifiOnly", v).apply()
     /** Download limit: at most this many MB (0 = no limit) every [dataCapHours] hours. */
     var dataCapMB: Int get() = p.getInt("dataCapMB", 0); set(v) = p.edit().putInt("dataCapMB", v.coerceAtLeast(0)).apply()

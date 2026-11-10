@@ -170,7 +170,10 @@ class Transfer(
     private val listener: TransferListener,
     private val limiter: SpeedLimiter = SpeedLimiter(),
     private val maxRetries: Int = 6,
+    /** Auto: start with a few connections and add more while the speed keeps rising, up to [connections]. */
+    private val auto: Boolean = false,
 ) : Job {
+    private val governor = ConnectionGovernor(auto, connections, System.currentTimeMillis())
     private val lock = Any()
     private var state = initial?.copy() ?: TransferState()
     private val stopped = AtomicBoolean(false)
@@ -207,7 +210,7 @@ class Transfer(
                 state.size == probe.size && Net.sameVersion(state.validator, probe.validator) && file.exists()
             if (!same) {
                 state = TransferState(probe.size, probe.resumable, probe.validator,
-                    SegmentPlanner.plan(if (probe.resumable) probe.size else null, if (probe.resumable) connections else 1).toMutableList())
+                    SegmentPlanner.plan(if (probe.resumable) probe.size else null, if (probe.resumable) governor.allowedNow else 1).toMutableList())
                 file.parentFile?.mkdirs()
                 file.delete()
             } else {
@@ -224,7 +227,25 @@ class Transfer(
         val workers = state.segments.filter { !it.isComplete }
         if (workers.isEmpty()) { finishIfDone(); return }
         pool = Executors.newFixedThreadPool(SegmentPlanner.MAX_CONNECTIONS)
-        workers.forEach { launch(it) }
+        workers.take(governor.allowedNow).forEach { launch(it) }
+    }
+
+    /** Opens connections up to what the governor allows now: parts waiting after a refusal first, then halves of the
+     *  largest remaining parts. */
+    private fun fill() {
+        if (stopped.get() || done.get() || System.currentTimeMillis() < governor.quietUntilMs) return
+        while (true) {
+            val seg = synchronized(lock) {
+                if (pool == null || running.size >= governor.allowedNow) return
+                state.segments.firstOrNull { !it.isComplete && it.id !in running }
+            } ?: break
+            launch(seg)
+        }
+        while (synchronized(lock) { pool != null && state.resumable && running.size < governor.allowedNow }) {
+            val before = synchronized(lock) { running.size }
+            splitAndLaunch()
+            if (synchronized(lock) { running.size } == before) break
+        }
     }
 
     private fun launch(seg: Segment) {
@@ -251,6 +272,9 @@ class Transfer(
                 val range = if (resumable) "bytes=$from-${if (end >= 0) end.toString() else ""}" else null
                 conn = Http.open(request, range = range, ifRange = validator) { c -> synchronized(lock) { open.add(c) } }
                 val code = conn.responseCode
+                if (ConnectionGovernor.isRefusal(code)) {
+                    throw RefusedException(ConnectionGovernor.retryAfterMs(conn.getHeaderField("Retry-After"), System.currentTimeMillis()), code)
+                }
                 if (resumable) {
                     if (code == 200 && !validator.isNullOrEmpty()) { fileChanged(); return }
                     if (code != 206 || !Net.rangeMatches(conn.getHeaderField("Content-Range"), from, state.size)) {
@@ -274,7 +298,7 @@ class Transfer(
                         if (allowed <= n) finished = true
                         w
                     }
-                    if (w > 0) { total.addAndGet(w.toLong()); progressed = true; attempts = 0; limiter.take(w) }
+                    if (w > 0) { total.addAndGet(w.toLong()); governor.received(w.toLong()); progressed = true; attempts = 0; limiter.take(w) }
                     if (finished) break
                 }
                 if (!alive(g)) return
@@ -290,6 +314,17 @@ class Transfer(
                 throw IOException("The connection closed early")
             } catch (e: Exception) {
                 if (!alive(g)) return
+                // Too many connections for this server: this part waits (nothing is lost) and the rest slow down.
+                if (e is RefusedException && synchronized(lock) { state.resumable && running.size > 1 }) {
+                    governor.refused(System.currentTimeMillis(), e.retryAfterMs)
+                    synchronized(lock) { running.remove(seg.id) }
+                    return
+                }
+                if (e is RefusedException) {
+                    governor.refused(System.currentTimeMillis(), e.retryAfterMs)
+                    Thread.sleep(maxOf(1_000L, governor.quietUntilMs - System.currentTimeMillis()))
+                    continue
+                }
                 if (e is HttpStatusException && e.code in listOf(401, 403, 404, 410) && !progressed) {
                     fail(if (e.code == 403 || e.code == 401) "The server refused the download (${e.code}). Try again from the page, or refresh the link."
                          else "The file is no longer there (${e.code}). Refresh the link to continue.")
@@ -313,7 +348,7 @@ class Transfer(
     private fun splitAndLaunch() {
         if (stopped.get()) return
         val added = synchronized(lock) {
-            if (!state.resumable || running.size >= connections) return
+            if (!state.resumable || running.size >= governor.allowedNow) return
             val split = SegmentPlanner.splitLargest(state.segments, nextId) ?: return
             nextId++
             state.segments[split.first].end = split.second
@@ -386,6 +421,8 @@ class Transfer(
                     speed = if (speed == 0.0) inst else speed * 0.7 + inst * 0.3
                     last = t; lastTime = now
                     if (!stopped.get() && !done.get()) {
+                        governor.tick(System.currentTimeMillis(), synchronized(lock) { running.size })
+                        fill()
                         listener.progress(snapshot(), speed.toLong())
                         if (++ticks % 6 == 0) {
                             synchronized(lock) { runCatching { raf?.fd?.sync() } }

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -131,7 +132,9 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
             }
 
             Section("Downloads")
-            Text("Connections per download: ${connections.toInt()}", style = MaterialTheme.typography.bodyLarge)
+            var auto by remember { mutableStateOf(s.autoConnections) }
+            Toggle("Automatic connections", "Starts with a few and adds more while the speed keeps rising; slows down when a server asks.", auto) { auto = it; s.autoConnections = it }
+            Text((if (auto) "Most connections per download: " else "Connections per download: ") + connections.toInt(), style = MaterialTheme.typography.bodyLarge)
             Slider(connections, { connections = it }, valueRange = 1f..256f, steps = 254, onValueChangeFinished = { s.connections = connections.toInt() })
             Hint("More connections are faster on most servers. Each part is at least 512 KB.")
             Spacer(Modifier.height(8.dp))
@@ -144,6 +147,20 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
                 singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
             )
+            var speedSchedule by remember { mutableStateOf(s.speedSchedule) }
+            val scheduleProblem = remember(speedSchedule) { com.nexonic.downloadmanager.core.SpeedSchedule.parse(speedSchedule).problem }
+            OutlinedTextField(
+                value = speedSchedule,
+                onValueChange = { v ->
+                    speedSchedule = v
+                    if (com.nexonic.downloadmanager.core.SpeedSchedule.parse(v).problem == null) { s.speedSchedule = v; Downloads.applySpeedLimit() }
+                },
+                label = { Text(tr("Speed schedule (one rule per line)")) },
+                placeholder = { Text("Mon-Fri 09:00-17:00 300") },
+                isError = scheduleProblem != null,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
+            )
+            Hint(scheduleProblem ?: "Days, start-end time and KB/s (0 = no limit), for example weekends 23:00-07:00 0. The first rule that applies wins; at other times the speed limit above applies.")
             Toggle("Wi-Fi only", "Wait for Wi-Fi or another unmetered network before downloading.", wifiOnly) {
                 wifiOnly = it; s.wifiOnly = it; Downloads.pump()
             }
