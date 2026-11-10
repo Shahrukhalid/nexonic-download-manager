@@ -35,6 +35,7 @@ struct SettingsView: View {
                     }
                 }
                 Toggle("Put each type in its own folder (Video, Music, Documents, Programs, Compressed, Images)", isOn: $manager.settings.sortIntoCategoryFolders)
+                CategoriesEditor()
                 Toggle("Start the Add window in the folder I used last time", isOn: $manager.settings.rememberLastFolder)
                 Toggle("Notifications", isOn: $manager.settings.notifications)
                 HStack {

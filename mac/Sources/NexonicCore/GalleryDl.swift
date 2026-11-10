@@ -169,8 +169,7 @@ public final class GalleryTransfer: Downloader, @unchecked Sendable {
         if let earlier = r.savedPath, FileManager.default.fileExists(atPath: earlier) {
             folder = URL(fileURLWithPath: earlier, isDirectory: true)
         } else {
-            folder = r.folder
-            if sortIntoCategories { folder.appendPathComponent(FileCategory.images.rawValue) }
+            folder = CategoryRules.targetFolder(r.folder, fileName: "picture.jpg", url: r.url.absoluteString, sortBuiltIn: sortIntoCategories)
             folder.appendPathComponent(FileNames.sanitize(r.fileName.isEmpty ? "Gallery" : r.fileName), isDirectory: true)
         }
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)

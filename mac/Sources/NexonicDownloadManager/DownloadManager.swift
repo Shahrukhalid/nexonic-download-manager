@@ -28,6 +28,7 @@ final class DownloadManager: ObservableObject {
         didSet {
             limiter.setLimit(bytesPerSecond: settings.speedLimitKBps * 1024)
             Adapters.required = settings.network.bindAdapter
+            CategoryRules.list = settings.customCategories
             if settings.network.torrentBlocklist != oldValue.network.torrentBlocklist {
                 let list = settings.network.torrentBlocklist
                 Task.detached { await TorrentBlocklist.refresh(list) }
@@ -84,6 +85,7 @@ final class DownloadManager: ObservableObject {
         }
         settings = loadedSettings
         Adapters.required = loadedSettings.network.bindAdapter
+        CategoryRules.list = loadedSettings.customCategories
         let blocklist = loadedSettings.network.torrentBlocklist
         Task.detached { await TorrentBlocklist.refresh(blocklist) }
         items = loadedItems

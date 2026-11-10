@@ -49,9 +49,7 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
     }
 
     private func targetFolder() -> URL {
-        var folder = record.folder
-        if sortIntoCategories, let sub = record.category.folder { folder.appendPathComponent(sub, isDirectory: true) }
-        return folder
+        CategoryRules.targetFolder(record.folder, fileName: record.fileName, url: record.url.absoluteString, sortBuiltIn: sortIntoCategories)
     }
 
     private let options: TransferOptions
