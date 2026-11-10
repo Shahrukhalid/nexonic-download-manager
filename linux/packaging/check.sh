@@ -57,6 +57,7 @@ PY
 fi
 
 echo "== AppImage"
+ls -l "$OUT"/*.AppImage "$OUT"/*.deb "$OUT"/*.rpm  # sizes, for the release notes
 AI="$(ls "$OUT"/NexonicDownloadManager-Linux-*.AppImage)"
 # The differential update file must describe this exact AppImage, and the AppImage must say where to find it.
 [ "$(sed -n 's/^SHA-1: //p' "$AI.zsync" 2>/dev/null)" = "$(sha1sum "$AI" | cut -d' ' -f1)" ] || fail "the .zsync update file does not match the AppImage"
