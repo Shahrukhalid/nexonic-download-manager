@@ -22,6 +22,15 @@ jobs:
         with:
           path: .ffmpeg-cache/mac
           key: ffmpeg-mac-${{ hashFiles('scripts/build-ffmpeg.sh') }}
+      # The torrent engine's libraries from the CI cache, so the pictures do not depend on downloading every source again
+      # (a busy download server stopped this job with HTTP 429).
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .native-cache/installed
+            .native-cache/binaries
+            .native-cache/vcpkg/downloads
+          key: native-mac-current-${{ hashFiles('native/vcpkg.json', 'native/triplets/**') }}
       - run: UNIVERSAL=0 bash scripts/build-app.sh
       - name: Take the pictures
         run: |
