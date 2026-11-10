@@ -9,6 +9,7 @@ struct NexonicDownloadManagerApp: App {
 
     init() {
         AppLanguage.start()
+        CrashReports.install(version: AppLinks.version)
         HostInstaller.install()
     }
 
@@ -85,6 +86,10 @@ struct AppCommands: Commands {
             Button("Online Help") { AppLinks.open(AppLinks.onlineHelp) }
             Divider()
             Button("Report a Problem…") { AppLinks.open(AppLinks.reportProblem) }
+            Button("Crash Reports") {
+                try? FileManager.default.createDirectory(at: CrashReports.folder, withIntermediateDirectories: true)
+                NSWorkspace.shared.open(CrashReports.folder)
+            }
             Button("Release Notes") { AppLinks.open(AppLinks.releases) }
             Divider()
             Button("Website") { AppLinks.open(AppLinks.website) }

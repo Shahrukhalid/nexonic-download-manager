@@ -7,6 +7,7 @@ public enum CommandLineTool {
 
       ndm <link> [<link> …] [options]      add one or more downloads
       ndm batch <pattern> [options]        add a numbered series, e.g. "https://example.com/img[001-100].jpg"
+      ndm list [--json]                    show the download list (--json: for scripts)
       ndm help                             show this help
 
     Options:
@@ -20,24 +21,39 @@ public enum CommandLineTool {
       --checksum <value>    expected MD5, SHA-1, SHA-256 or SHA-512 (checked when finished)
       --limit <KB/s>        speed limit for these downloads
       --audio               video sites: save the sound only
+      --json                print the result as JSON (for scripts)
+
+    IDM-style switches work too:
+      /d <link>  /p <folder>  /f <file name>  /a (add without starting)
+      /n /q /h /s are accepted and ignored (the app never asks questions for added downloads).
     """
 
     public enum Outcome: Equatable {
         case help
         case jobs([DownloadJob])
         case failure(String)
+        case list
+    }
+
+    static let idmSwitches: Set<String> = ["/d", "/p", "/f", "/a", "/n", "/q", "/h", "/s"]
+
+    /// `--json` anywhere: the answer is printed as JSON. Returns the arguments without it.
+    public static func json(_ args: [String]) -> (args: [String], json: Bool) {
+        (args.filter { $0 != "--json" }, args.contains("--json"))
     }
 
     /// True when the arguments are a command rather than a browser starting the helper.
     public static func isCommand(_ args: [String]) -> Bool {
         guard let first = args.first?.lowercased() else { return false }
-        return first.hasPrefix("http://") || first.hasPrefix("https://") || ["batch", "help", "add", "--help", "-h"].contains(first)
+        return first.hasPrefix("http://") || first.hasPrefix("https://") || ["batch", "help", "add", "list", "--help", "-h"].contains(first)
+            || idmSwitches.contains(first)
     }
 
     public static func parse(_ args: [String]) -> Outcome {
         var args = args
         if args.first?.lowercased() == "add" { args.removeFirst() }
         guard let first = args.first, !["help", "--help", "-h"].contains(first.lowercased()) else { return .help }
+        if first.lowercased() == "list" { return args.count == 1 ? .list : .failure("list takes no other options than --json") }
         var links: [String] = []
         var batch: String?
         var template = DownloadJob(url: "")
@@ -49,6 +65,17 @@ public enum CommandLineTool {
         }
         while i < args.count {
             let a = args[i]
+            // IDM's switches: /d link, /p folder, /f file name, /a = add without starting; /n /q /h /s need nothing here.
+            if idmSwitches.contains(a.lowercased()) {
+                let s = a.lowercased()
+                if ["/n", "/q", "/h", "/s"].contains(s) { i += 1; continue }
+                if s == "/a" { template.start = false; i += 1; continue }
+                guard i + 1 < args.count else { return .failure("\(a) needs a value") }
+                let v = args[i + 1]
+                if s == "/d" { links.append(v) } else if s == "/p" { template.folder = (v as NSString).expandingTildeInPath } else { template.fileName = v }
+                i += 2
+                continue
+            }
             if a.hasPrefix("--") {
                 if a == "--later" { template.start = false; i += 1; continue }
                 if a == "--audio" { template.audioOnly = true; i += 1; continue }
@@ -90,6 +117,28 @@ public enum CommandLineTool {
             jobs.append(job)
         }
         return .jobs(jobs)
+    }
+
+    /// One download for `ndm list`: no cookies, passwords or private settings.
+    public static func listItem(_ r: DownloadRecord) -> [String: Any] {
+        var d: [String: Any] = [
+            "id": r.id.uuidString, "url": r.url.absoluteString, "fileName": r.fileName, "folder": ListColumns.folder(r),
+            "status": r.status.rawValue, "received": r.received, "progress": (r.progress * 1000).rounded() / 10, "queue": r.queue,
+            "added": ISO8601DateFormatter().string(from: r.added),
+        ]
+        if let s = r.size { d["size"] = s }
+        if let f = r.finished { d["finished"] = ISO8601DateFormatter().string(from: f) }
+        if let e = r.error { d["error"] = e }
+        return d
+    }
+
+    public static func listJSON(_ list: [DownloadRecord]) -> String {
+        let data = (try? JSONSerialization.data(withJSONObject: list.map(listItem), options: [.prettyPrinted, .sortedKeys])) ?? Data("[]".utf8)
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    public static func listText(_ list: [DownloadRecord]) -> String {
+        list.isEmpty ? "No downloads." : list.map { "\($0.status.rawValue.padding(toLength: 11, withPad: " ", startingAt: 0)) \(Int(($0.progress * 100).rounded()))%  \($0.fileName)" }.joined(separator: "\n")
     }
 
     /// Splits a command such as `"/opt/scan tool/scan" --quiet` into words (double or single quotes group words).

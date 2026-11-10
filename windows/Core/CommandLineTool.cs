@@ -8,6 +8,7 @@ public static class CommandLineTool
 
       ndm <link> [<link> …] [options]      add one or more downloads
       ndm batch <pattern> [options]        add a numbered series, e.g. "https://example.com/img[001-100].jpg"
+      ndm list [--json]                    show the download list (--json: for scripts)
       ndm help                             show this help
 
     Options:
@@ -21,16 +22,22 @@ public static class CommandLineTool
       --checksum <value>    expected MD5, SHA-1, SHA-256 or SHA-512 (checked when finished)
       --limit <KB/s>        speed limit for these downloads
       --audio               video sites: save the sound only
+      --json                print the result as JSON (for scripts)
+
+    IDM-style switches work too:
+      /d <link>  /p <folder>  /f <file name>  /a (add without starting)
+      /n /q /h /s are accepted and ignored (the app never asks questions for added downloads).
     """;
 
-    public sealed record Outcome(bool Help, List<DownloadJob> Jobs, string? Error);
+    public sealed record Outcome(bool Help, List<DownloadJob> Jobs, string? Error, bool List = false, bool Json = false);
 
     /// <summary>True when the arguments are a command rather than a browser starting the helper.</summary>
     public static bool IsCommand(string[] args)
     {
         if (args.Length == 0) return false;
         var first = args[0].ToLowerInvariant();
-        return first.StartsWith("http://") || first.StartsWith("https://") || first is "batch" or "help" or "add" or "--help" or "-h" or "/?";
+        return first.StartsWith("http://") || first.StartsWith("https://") || first is "batch" or "help" or "add" or "list" or "--help" or "-h" or "/?"
+            or "/d" or "/p" or "/f" or "/a" or "/n" or "/q" or "/h" or "/s";
     }
 
     static Outcome Fail(string e) => new(false, new(), e);
@@ -40,6 +47,9 @@ public static class CommandLineTool
         var args = input.ToList();
         if (args.Count > 0 && args[0].Equals("add", StringComparison.OrdinalIgnoreCase)) args.RemoveAt(0);
         if (args.Count == 0 || args[0].ToLowerInvariant() is "help" or "--help" or "-h" or "/?") return new(true, new(), null);
+        var json = args.Remove("--json");
+        if (args[0].Equals("list", StringComparison.OrdinalIgnoreCase))
+            return args.Count == 1 ? new(false, new(), null, List: true, Json: json) : Fail("list takes no other options than --json");
         var links = new List<string>();
         string? batch = null;
         var t = new DownloadJob("");
@@ -53,6 +63,20 @@ public static class CommandLineTool
         while (i < args.Count)
         {
             var a = args[i];
+            // IDM's switches: /d link, /p folder, /f file name, /a = add without starting; /n /q /h /s need nothing here.
+            if (a.Length == 2 && a[0] == '/' && "dpfanqhsDPFANQHS".Contains(a[1]))
+            {
+                var s = char.ToLowerInvariant(a[1]);
+                if (s is 'n' or 'q' or 'h' or 's') { i++; continue; }
+                if (s == 'a') { t = t with { Start = false }; i++; continue; }
+                if (i + 1 >= args.Count) return Fail($"{a} needs a value");
+                var v = args[i + 1];
+                if (s == 'd') links.Add(v);
+                else if (s == 'p') t = t with { Folder = Path.GetFullPath(Environment.ExpandEnvironmentVariables(v)) };
+                else t = t with { FileName = v };
+                i += 2;
+                continue;
+            }
             if (a.StartsWith("--"))
             {
                 if (a == "--later") { t = t with { Start = false }; i++; continue; }
@@ -94,7 +118,24 @@ public static class CommandLineTool
             if (!job.IsValid) return Fail($"Not a web link: {link}");
             jobs.Add(job);
         }
-        return new(false, jobs, null);
+        return new(false, jobs, null, Json: json);
+    }
+
+    /// <summary>The download list for <c>ndm list</c>: no cookies, passwords or private settings.</summary>
+    public static object ListItem(DownloadRecord r) => new
+    {
+        id = r.Id, url = r.Url, fileName = r.FileName, folder = ListColumns.Folder(r), status = r.Status.ToString().ToLowerInvariant(),
+        size = r.Size, received = r.Received, progress = Math.Round(r.Progress * 100, 1), queue = r.Queue,
+        added = r.Added, finished = r.Finished, error = r.Error,
+    };
+
+    public static string ListJson(IEnumerable<DownloadRecord> list) =>
+        System.Text.Json.JsonSerializer.Serialize(list.Select(ListItem), new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+
+    public static string ListText(IEnumerable<DownloadRecord> list)
+    {
+        var lines = list.Select(r => $"{r.Status,-11} {Math.Round(r.Progress * 100),3}%  {r.FileName}").ToList();
+        return lines.Count == 0 ? "No downloads." : string.Join(Environment.NewLine, lines);
     }
 
     /// <summary>Splits a command such as "C:\Scan Tool\scan.exe" /quiet into words (quotes group words).</summary>

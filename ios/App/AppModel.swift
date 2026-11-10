@@ -18,6 +18,10 @@ final class AppModel {
     var demoShowFound = false
 
     @ObservationIgnored private var observer: ChangeObserver?
+    // Download limit: bytes seen at the last tick, and downloads stopped by the limit (started again in the next period).
+    @ObservationIgnored private var lastWritten: [UUID: Int64] = [:]
+    @ObservationIgnored private var heldByCap: Set<UUID> = []
+    @ObservationIgnored private var cap = DataCap.saved
     @ObservationIgnored private var timer: Timer?
 
     init() {
@@ -44,11 +48,38 @@ final class AppModel {
     }
 
     private func tick() {
+        countData()
         guard jobs.contains(where: { $0.status == .downloading }) else { if !speeds.isEmpty { speeds = [:] }; return }
         var s: [UUID: Int64] = [:]
         for id in Set(jobs.filter { $0.status == .downloading }.compactMap { $0.sessionID }) { s.merge(Downloader.shared(id).currentSpeeds) { a, _ in a } }
         speeds = s
         jobs = Store.shared.load()
+    }
+
+    /// Download limit (while the app is open): at the limit, downloads stop until the next period starts.
+    private func countData() {
+        var got: Int64 = 0
+        for j in jobs {
+            if j.status == .downloading, let before = lastWritten[j.id], j.written > before { got += j.written - before }
+            lastWritten[j.id] = j.written
+        }
+        let limit = SharedSettings.dataCapMB, hours = SharedSettings.dataCapHours
+        if cap.roll(Date(), hours: hours) || limit == 0 || !cap.reached(limitMB: limit) {
+            if !heldByCap.isEmpty {
+                let held = heldByCap
+                heldByCap = []
+                jobs.filter { held.contains($0.id) && $0.status == .paused }.forEach(resume)
+            }
+        }
+        guard limit > 0 else { return }
+        cap.add(got)
+        if got > 0 { DataCap.saved = cap }
+        guard cap.reached(limitMB: limit), heldByCap.isEmpty else { return }
+        let active = jobs.filter { $0.isActive }
+        guard !active.isEmpty else { return }
+        heldByCap = Set(active.map(\.id))
+        active.forEach(pause)
+        toast = "Download limit reached. Downloads continue " + cap.nextPeriod(hours: hours).formatted(date: .abbreviated, time: .shortened) + "."
     }
 
     func firstLaunch() {

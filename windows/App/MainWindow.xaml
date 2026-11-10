@@ -116,6 +116,7 @@
       <MenuItem Header="_Help">
         <MenuItem Header="_Help" InputGestureText="F1" Click="OnHelp" />
         <MenuItem Header="Network _Diagnostics…" Click="OnDiagnostics" />
+        <MenuItem Header="_Crash Reports" Click="OnCrashReports" />
         <MenuItem Header="Support the Project" Click="OnSupport" />
         <MenuItem Header="_About Nexonic Download Manager" Click="OnAbout" />
       </MenuItem>

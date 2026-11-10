@@ -12,19 +12,26 @@ func openApp(_ url: String) {
     p.waitUntilExit()
 }
 
-let arguments = Array(CommandLine.arguments.dropFirst())
+let (arguments, wantsJSON) = CommandLineTool.json(Array(CommandLine.arguments.dropFirst()))
+func printJSON(_ object: [String: Any]) {
+    if let data = try? JSONSerialization.data(withJSONObject: object, options: [.sortedKeys]) { print(String(decoding: data, as: UTF8.self)) }
+}
 if CommandLineTool.isCommand(arguments) {
     switch CommandLineTool.parse(arguments) {
     case .help:
         print(CommandLineTool.usage)
     case .failure(let message):
-        FileHandle.standardError.write(Data("ndm: \(message)\n".utf8))
+        if wantsJSON { printJSON(["ok": false, "error": message]) } else { FileHandle.standardError.write(Data("ndm: \(message)\n".utf8)) }
         exit(2)
+    case .list:
+        // Read as it is saved; cookies and passwords are kept elsewhere and never printed.
+        let list = (try? Data(contentsOf: AppPaths.downloads)).flatMap { try? JSONDecoder().decode([DownloadRecord].self, from: $0) } ?? []
+        print(wantsJSON ? CommandLineTool.listJSON(list) : CommandLineTool.listText(list))
     case .jobs(let jobs):
         do {
             for job in jobs { try Inbox().drop(job) }
             openApp("nexonicdm://inbox")
-            print("Added \(jobs.count) download\(jobs.count == 1 ? "" : "s")")
+            if wantsJSON { printJSON(["ok": true, "added": jobs.count]) } else { print("Added \(jobs.count) download\(jobs.count == 1 ? "" : "s")") }
         } catch {
             FileHandle.standardError.write(Data("ndm: \(error.localizedDescription)\n".utf8))
             exit(1)

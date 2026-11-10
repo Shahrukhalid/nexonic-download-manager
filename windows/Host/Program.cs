@@ -23,12 +23,26 @@ if (CommandLineTool.IsCommand(args))
 {
     var r = CommandLineTool.Parse(args);
     if (r.Help) { Console.WriteLine(CommandLineTool.Usage); return 0; }
-    if (r.Error != null) { Console.Error.WriteLine($"ndm: {r.Error}"); return 2; }
+    if (r.Error != null)
+    {
+        if (r.Json) Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new { ok = false, error = r.Error }));
+        else Console.Error.WriteLine($"ndm: {r.Error}");
+        return 2;
+    }
     try
     {
+        if (r.List)
+        {
+            // Read as it is saved (secret fields stay encrypted; they are not printed anyway).
+            var list = File.Exists(AppPaths.Downloads)
+                ? System.Text.Json.JsonSerializer.Deserialize<List<DownloadRecord>>(File.ReadAllText(AppPaths.Downloads)) ?? new() : new();
+            Console.WriteLine(r.Json ? CommandLineTool.ListJson(list) : CommandLineTool.ListText(list));
+            return 0;
+        }
         foreach (var j in r.Jobs) new Inbox().Drop(j);
         StartApp();
-        Console.WriteLine($"Added {r.Jobs.Count} download{(r.Jobs.Count == 1 ? "" : "s")}");
+        Console.WriteLine(r.Json ? System.Text.Json.JsonSerializer.Serialize(new { ok = true, added = r.Jobs.Count })
+            : $"Added {r.Jobs.Count} download{(r.Jobs.Count == 1 ? "" : "s")}");
         return 0;
     }
     catch (Exception e) { Console.Error.WriteLine($"ndm: {e.Message}"); return 1; }

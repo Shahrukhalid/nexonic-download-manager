@@ -75,6 +75,14 @@ struct ContentView: View {
 
     private func row(_ f: SidebarFilter) -> some View {
         Label(f.title(manager), systemImage: icon(f)).badge(count(f)).tag(f)
+            // Drag downloads from the list onto a queue to move them there.
+            .dropDestination(for: String.self) { items, _ in
+                guard case .queue(let id) = f else { return false }
+                let ids = Set(items.flatMap { $0.split(separator: ",") }.compactMap { UUID(uuidString: String($0)) })
+                guard !ids.isEmpty else { return false }
+                moveTo(ids, id)
+                return true
+            }
     }
 
     private func categoryRows(_ make: @escaping (FileCategory) -> SidebarFilter) -> some View {
@@ -557,11 +565,22 @@ struct DownloadTable<MenuContent: View>: View {
     @SceneStorage("downloadColumns") private var columns = TableColumnCustomization<DownloadRecord>()
 
     var body: some View {
-        Table(rows, selection: $selection, columnCustomization: $columns) {
+        Table(of: DownloadRecord.self, selection: $selection, columnCustomization: $columns) {
             mainColumns
             moreColumns
+        } rows: {
+            ForEach(rows) { (r: DownloadRecord) in
+                // Dragging a selected row takes the whole selection (drop it on a queue in the sidebar).
+                TableRow(r).itemProvider { dragItem(r) }
+            }
         }
         .contextMenu(forSelectionType: UUID.self) { ids in menu(ids) } primaryAction: { ids in primary(ids) }
+    }
+
+    private func dragItem(_ r: DownloadRecord) -> NSItemProvider {
+        let ids: Set<UUID> = selection.contains(r.id) ? selection : [r.id]
+        let text: String = ids.map(\.uuidString).joined(separator: ",")
+        return NSItemProvider(object: text as NSString)
     }
 
     @TableColumnBuilder<DownloadRecord, Never>

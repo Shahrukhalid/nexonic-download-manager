@@ -103,6 +103,7 @@ public sealed class MainWindow : Window
         DragDrop.SetAllowDrop(this, true);
         AddHandler(DragDrop.DragOverEvent, (_, e) => e.DragEffects = DragDropEffects.Copy);
         AddHandler(DragDrop.DropEvent, OnDrop);
+        EnableDragToQueues();
 
         Closing += (_, e) =>
         {
@@ -289,6 +290,7 @@ public sealed class MainWindow : Window
         menu.Items.Add(Group("_Help",
             Item("_Help", () => HelpWindows.ShowHelp(this), "F1"),
             Item("Network _Diagnostics…", () => _ = Dialogs.Diagnostics(this, manager, One?.Record.Url)),
+            Item("_Crash Reports", () => { Directory.CreateDirectory(CrashReports.Folder); LinuxSystem.Open(CrashReports.Folder); }),
             Item("Support the Project", () => LinuxSystem.Open(HelpWindows.Support)),
             Item("_About Nexonic Download Manager", () => _ = HelpWindows.ShowAbout(this))));
         return menu;
@@ -699,6 +701,50 @@ public sealed class MainWindow : Window
     // ---- selection and details ----
 
     List<Row> Selected => list.SelectedItems?.OfType<Row>().ToList() ?? new List<Row>();
+
+    /// <summary>Drag downloads from the list onto a queue in the sidebar to move them there.</summary>
+    void EnableDragToQueues()
+    {
+        const string format = "application/x-nexonic-downloads";
+        Point? start = null;
+        list.AddHandler(PointerPressedEvent, (_, e) =>
+            start = e.GetCurrentPoint(list).Properties.IsLeftButtonPressed ? e.GetPosition(list) : null, RoutingStrategies.Tunnel);
+        list.AddHandler(PointerReleasedEvent, (_, _) => start = null, RoutingStrategies.Tunnel);
+        list.AddHandler(PointerMovedEvent, async (_, e) =>
+        {
+            if (start is not { } p || !e.GetCurrentPoint(list).Properties.IsLeftButtonPressed) return;
+            var d = e.GetPosition(list) - p;
+            if (Math.Abs(d.X) + Math.Abs(d.Y) < 8) return;
+            start = null;
+            var ids = Selected.Select(r => r.Record.Id.ToString()).ToArray();
+            if (ids.Length == 0) return;
+            var data = new DataObject();
+            data.Set(format, string.Join(",", ids));
+            await DragDrop.DoDragDrop(e, data, DragDropEffects.Move);
+        }, RoutingStrategies.Tunnel);
+        string? QueueAt(DragEventArgs e)
+        {
+            for (var v = e.Source as StyledElement; v != null; v = v.Parent)
+                if (v is ListBoxItem { Tag: string key }) return key.StartsWith("queue:", StringComparison.Ordinal) ? key[6..] : null;
+            return null;
+        }
+        DragDrop.SetAllowDrop(sidebar, true);
+        sidebar.AddHandler(DragDrop.DragOverEvent, (_, e) =>
+        {
+            e.DragEffects = e.Data.Contains(format) && QueueAt(e) != null ? DragDropEffects.Move : DragDropEffects.None;
+            e.Handled = true;
+        });
+        sidebar.AddHandler(DragDrop.DropEvent, (_, e) =>
+        {
+            if (e.Data.Get(format) is string ids && QueueAt(e) is { } queue)
+            {
+                var set = ids.Split(',').ToHashSet();
+                manager.MoveToQueue(manager.Rows.Where(r => set.Contains(r.Record.Id.ToString())), queue);
+                BuildSidebar();
+            }
+            e.Handled = true;
+        });
+    }
     Row? One => list.SelectedItems is { Count: 1 } ? list.SelectedItem as Row : null;
 
     void ShowDetails()

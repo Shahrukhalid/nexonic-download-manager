@@ -98,7 +98,10 @@ fun AddDownloadSheet(offer: Offer?, text: String?, onDone: (String?) -> Unit) {
     var pick by remember { mutableStateOf(0) }
 
     val links: List<String> = remember(input, batch) {
-        val l = if (batch) Links.split(input).flatMap { BatchPattern.expand(it, 2000) }.filter { Links.isWebLink(it) } else Links.split(input)
+        // Any pasted text works: when it is not just links, the links in it are found (Link Grabber).
+        val l = if (batch) Links.split(input).flatMap { BatchPattern.expand(it, 2000) }.filter { Links.isWebLink(it) }
+            else Links.split(input).takeIf { s -> s.all { Links.isWebLink(it) || it.startsWith("magnet:", true) } }
+                ?: com.nexonic.downloadmanager.core.LinkGrabber.find(input)
         l.distinct()
     }
     val single = links.singleOrNull()

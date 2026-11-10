@@ -60,6 +60,13 @@ object Downloads {
     private val _items = MutableStateFlow<List<DownloadItem>>(emptyList())
     val items: StateFlow<List<DownloadItem>> = _items.asStateFlow()
 
+    // Download limit: bytes counted since the last save, and downloads stopped by it (started again in the next period).
+    private var cap = com.nexonic.downloadmanager.core.DataCap()
+    private var capUnsaved = 0L
+    private val heldByCap = mutableSetOf<Long>()
+    private val _capReached = MutableStateFlow(false)
+    val capReached: StateFlow<Boolean> = _capReached.asStateFlow()
+
     private val _waitingForWifi = MutableStateFlow(false)
     val waitingForWifi: StateFlow<Boolean> = _waitingForWifi.asStateFlow()
 
@@ -70,6 +77,7 @@ object Downloads {
         secrets = SecretStore(app)
         settings = Settings(app)
         limiter.bytesPerSecond = settings.speedLimitKB * 1024
+        cap = settings.dataCap
         Vpn.init(app, settings.vpnOnly)
         // Downloads that were running when the app stopped continue.
         _items.value = store.load().map { if (it.status == Status.DOWNLOADING) it.copy(status = Status.QUEUED, speed = 0) else it.copy(speed = 0) }
@@ -156,8 +164,44 @@ object Downloads {
     }
 
     @Synchronized private fun update(id: Long, save: Boolean = true, change: (DownloadItem) -> DownloadItem) {
-        _items.value = _items.value.map { if (it.id == id) change(it) else it }
+        var got = 0L
+        _items.value = _items.value.map { if (it.id == id) change(it).also { n -> got = n.written - it.written } else it }
         if (save) persist()
+        if (got > 0) countData(got)
+    }
+
+    /** Download limit: counts what arrived; at the limit, downloads stop until the next period. */
+    private fun countData(bytes: Long) {
+        val limit = settings.dataCapMB
+        if (limit <= 0) return
+        val now = System.currentTimeMillis()
+        cap = cap.rolled(now, settings.dataCapHours).plus(bytes)
+        capUnsaved += bytes
+        if (capUnsaved > 4L shl 20) { settings.dataCap = cap; capUnsaved = 0 }
+        if (!cap.reached(limit) || _capReached.value) return
+        settings.dataCap = cap
+        _capReached.value = true
+        main.post {
+            _items.value.filter { it.status == Status.DOWNLOADING || it.status == Status.QUEUED }.forEach { heldByCap.add(it.id); pause(it.id) }
+            Notifier.message(app, "Download limit reached", "Downloads continue " +
+                java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT).format(java.util.Date(cap.nextPeriod(settings.dataCapHours))))
+            main.postDelayed({ releaseCap() }, (cap.nextPeriod(settings.dataCapHours) - System.currentTimeMillis()).coerceAtLeast(1000))
+        }
+    }
+
+    /** The next period started (or the limit was raised or turned off): what the limit stopped starts again. */
+    fun releaseCap() {
+        if (!_capReached.value) return
+        cap = cap.rolled(System.currentTimeMillis(), settings.dataCapHours)
+        if (settings.dataCapMB > 0 && cap.reached(settings.dataCapMB)) {
+            main.postDelayed({ releaseCap() }, (cap.nextPeriod(settings.dataCapHours) - System.currentTimeMillis()).coerceAtLeast(1000))
+            return
+        }
+        _capReached.value = false
+        val held = heldByCap.toList()
+        heldByCap.clear()
+        held.forEach { resume(it) }
+        pump()
     }
 
     private fun persist() {
@@ -301,6 +345,7 @@ object Downloads {
     /** Starts queued downloads while there is room. */
     @Synchronized fun pump() {
         if (!::app.isInitialized) return
+        if (_capReached.value) { if (transfers.isEmpty()) DownloadService.stop(app); return }
         val queued = _items.value.filter { it.status == Status.QUEUED && it.id !in transfers }
         if (queued.isEmpty()) { if (transfers.isEmpty()) DownloadService.stop(app); return }
         if (!Vpn.ready()) {

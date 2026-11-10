@@ -8,6 +8,9 @@ struct SettingsView: View {
     @State private var folders = SharedSettings.categoryFolders
     @State private var confirmClear = false
     @State private var language = AppLanguage.chosen
+    @AppStorage("appearance") private var appearance = "system"
+    @State private var capMB = SharedSettings.dataCapMB
+    @State private var capHours = SharedSettings.dataCapHours
 
     var body: some View {
         NavigationStack {
@@ -24,6 +27,11 @@ struct SettingsView: View {
                         ForEach(AppLanguage.all, id: \.code) { Text(verbatim: $0.name).tag($0.code) }
                     }
                     .onChange(of: language) { _, v in AppLanguage.use(v) }
+                    Picker("Appearance", selection: $appearance) {
+                        Text("Same as the phone").tag("system")
+                        Text("Light").tag("light")
+                        Text("Dark").tag("dark")
+                    }
                 }
 
                 Section("Downloads") {
@@ -31,6 +39,26 @@ struct SettingsView: View {
                     Toggle("Folders by type", isOn: $folders).onChange(of: folders) { _, v in SharedSettings.categoryFolders = v }
                     Button("Start All Downloads Kept for Later") { model.startLater() }
                     Button("Clear Finished from List") { confirmClear = true }
+                }
+
+                Section {
+                    TextField("At most this many MB (0 = no limit)", value: $capMB, format: .number.grouping(.never))
+                        .keyboardType(.numberPad)
+                        .onChange(of: capMB) { _, v in SharedSettings.dataCapMB = v }
+                    Stepper("… every \(capHours) hours", value: $capHours, in: 1...744)
+                        .onChange(of: capHours) { _, v in SharedSettings.dataCapHours = v }
+                } header: { Text("Download limit") } footer: {
+                    Text("When the amount is reached, downloads stop and continue when the next period starts. Counted while Nexonic is open.")
+                }
+
+                Section {
+                    if let report = CrashReports.latest {
+                        ShareLink("Share the Latest Crash Report", item: report)
+                    } else {
+                        Text("No crash reports").foregroundStyle(.secondary)
+                    }
+                } header: { Text("Crash Reports") } footer: {
+                    Text("When the app stops because of an error, a report is saved on this device. It is never sent anywhere.")
                 }
 
                 Section {

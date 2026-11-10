@@ -17,6 +17,12 @@ static class Program
             return 0;
         }
         Directory.CreateDirectory(AppPaths.Support);
+        // Errors that stop the app are written to a crash report on this computer (Help → Crash Reports).
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+        {
+            if (e.ExceptionObject is Exception ex) CrashReports.Write(ex, "app", HelpWindows.Version);
+        };
+        TaskScheduler.UnobservedTaskException += (_, e) => { CrashReports.Write(e.Exception, "background task", HelpWindows.Version); e.SetObserved(); };
         // Links and link files given on the command line (Open With, nexonic: links) go to the inbox like the ndm command's.
         LaunchArgs.Drop(args);
         var single = new SingleInstance();

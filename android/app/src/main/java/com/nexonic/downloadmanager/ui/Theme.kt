@@ -5,6 +5,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import com.nexonic.downloadmanager.core.FileCategory
 
@@ -26,7 +28,13 @@ private val Dark = darkColorScheme(
 
 @Composable
 fun NexonicTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = if (isSystemInDarkTheme()) Dark else Light, content = content)
+    val dark = when (Appearance.choice) { "light" -> false; "dark" -> true; else -> isSystemInDarkTheme() }
+    MaterialTheme(colorScheme = if (dark) Dark else Light, content = content)
+}
+
+/** Settings → Appearance: the same as the phone, light or dark (changes right away). */
+object Appearance {
+    var choice by androidx.compose.runtime.mutableStateOf("system")
 }
 
 fun categoryColor(c: FileCategory): Color = when (c) {

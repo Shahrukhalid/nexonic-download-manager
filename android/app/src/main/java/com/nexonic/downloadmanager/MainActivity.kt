@@ -28,7 +28,15 @@ class NexonicApp : Application() {
     override fun onCreate() {
         super.onCreate()
         AppLanguage.load(this)
+        // Errors that stop the app are written to a report on the phone (Settings → Crash reports); never sent anywhere.
+        val previous = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, error ->
+            com.nexonic.downloadmanager.core.CrashReports.write(java.io.File(filesDir, "crash-reports"),
+                com.nexonic.downloadmanager.core.CrashReports.text(error, BuildConfig.VERSION_NAME, "Android ${Build.VERSION.RELEASE}, ${Build.MODEL}"))
+            previous?.uncaughtException(thread, error)
+        }
         Downloads.init(this)
+        com.nexonic.downloadmanager.ui.Appearance.choice = Downloads.settings.appearance
         Notifier.channels(this)
         Scheduler.apply(this)
         VideoEngine.init(this)

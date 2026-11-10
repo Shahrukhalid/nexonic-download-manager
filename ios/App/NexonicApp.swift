@@ -20,11 +20,17 @@ struct NexonicApp: App {
     @State private var browser = BrowserState()
     @Environment(\.scenePhase) private var phase
 
-    init() { AppLanguage.start() }
+    @AppStorage("appearance") private var appearance = "system"
+
+    init() {
+        AppLanguage.start()
+        CrashReports.install()
+    }
 
     var body: some Scene {
         WindowGroup {
             RootView()
+                .preferredColorScheme(appearance == "light" ? .light : appearance == "dark" ? .dark : nil)
                 .environment(model)
                 .environment(browser)
                 .onOpenURL { url in model.open(url) }
