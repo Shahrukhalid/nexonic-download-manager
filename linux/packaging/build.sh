@@ -37,6 +37,9 @@ host() { # SELF_CONTAINED DEST
 host true "$APP"
 host false "$SYS"
 find "$APP" "$SYS" -name "*.pdb" -delete
+# Debugger and crash-dump support of the bundled .NET (used only by attached debuggers and dump tools, never by the app;
+# its own crash reports are plain text): about 4 MB less to download and install.
+rm -f "$APP"/libmscordaccore.so "$APP"/libmscordbi.so "$APP"/createdump
 
 python3 "$ROOT/scripts/build-extensions.py" >/dev/null
 extras() { # DEST: everything besides .NET and the app itself
@@ -97,6 +100,7 @@ esac
 # Update information (read by AppImage update tools) and a .zsync file, so an update downloads only what changed.
 ZS="NexonicDownloadManager-Linux-$AI.AppImage.zsync"
 APPIMAGE_EXTRACT_AND_RUN=1 ARCH="$AI" "$TOOLDIR/appimagetool-$HOST_AI.AppImage" --no-appstream --runtime-file "$TOOLDIR/runtime-$AI" \
+  --comp zstd --mksquashfs-opt -Xcompression-level --mksquashfs-opt 22 --mksquashfs-opt -b --mksquashfs-opt 1M \
   -u "gh-releases-zsync|Shahrukhalid|nexonic-download-manager|latest|$ZS" \
   "$AD" "$OUT/NexonicDownloadManager-Linux-$AI.AppImage"
 rm -f "$OUT/$ZS" "$ZS"  # made below from the final file, whatever appimagetool did
@@ -136,7 +140,7 @@ Description: Fast download manager with queues, a scheduler and video downloads
  series and whole website sections, and saves videos from YouTube and other
  sites. Works with Chrome, Edge, Brave, Vivaldi, Opera and Firefox.
 CONTROL
-dpkg-deb --root-owner-group -Zxz --build "$D" "$OUT/nexonic-download-manager_${VERSION}_${DEB}.deb" >/dev/null
+dpkg-deb --root-owner-group -Zxz -z9 --build "$D" "$OUT/nexonic-download-manager_${VERSION}_${DEB}.deb" >/dev/null
 
 echo "== .rpm"
 R="$OUT/rpm"

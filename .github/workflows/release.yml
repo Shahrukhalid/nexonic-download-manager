@@ -179,7 +179,7 @@ jobs:
         timeout-minutes: 25
         run: |
           for try in 1 2 3; do
-            timeout 420 sudo apt-get update -qq && timeout 600 sudo apt-get install -y -qq rpm xvfb xauth imagemagick desktop-file-utils zsync ffmpeg ninja-build pkg-config autoconf automake libtool >/dev/null && exit 0
+            timeout 420 sudo apt-get update -qq && timeout 600 sudo apt-get install -y -qq rpm xvfb xauth imagemagick desktop-file-utils zsync squashfs-tools ffmpeg ninja-build pkg-config autoconf automake libtool >/dev/null && exit 0
             echo "Package install failed or stalled (try $try); retrying"; sleep 20
           done
           exit 1

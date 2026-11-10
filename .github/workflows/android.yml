@@ -2,9 +2,9 @@ name: Android
 on:
   push:
     branches: [main, feature/mobile-platforms]
-    paths: ["VERSION", "android/**", "native/**", "scripts/android-torrent-libs.sh", ".github/workflows/android.yml"]
+    paths: ["VERSION", "android/**", "native/**", "scripts/android-torrent-libs.sh", "scripts/build-ffmpeg.sh", ".github/workflows/android.yml"]
   pull_request:
-    paths: ["VERSION", "android/**", "native/**", "scripts/android-torrent-libs.sh", ".github/workflows/android.yml"]
+    paths: ["VERSION", "android/**", "native/**", "scripts/android-torrent-libs.sh", "scripts/build-ffmpeg.sh", ".github/workflows/android.yml"]
   workflow_dispatch:
 permissions:
   contents: read
@@ -35,6 +35,21 @@ jobs:
           restore-keys: native-android-
       - name: Torrent engine for Android
         run: bash scripts/android-torrent-libs.sh arm64 arm
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: ffmpeg-android
+        with:
+          path: .ffmpeg-cache/android
+          key: ffmpeg-android-${{ hashFiles('scripts/build-ffmpeg.sh') }}
+      - name: FFmpeg for Android (re-packing only, from source)
+        run: |
+          set -e
+          for t in arm64:arm64-v8a arm:armeabi-v7a; do
+            a=${t%%:*}; abi=${t#*:}; c=.ffmpeg-cache/android/$abi
+            [ -f "$c/libffmpeg.so" ] || bash scripts/build-ffmpeg.sh android-$a "$c"
+            mkdir -p android/app/src/main/jniLibs/$abi && cp "$c"/libffmpeg.so "$c"/libffprobe.so android/app/src/main/jniLibs/$abi/
+          done
+          cp .ffmpeg-cache/android/arm64-v8a/NOTICE-video-tools-1.txt android/app/src/main/assets/licenses/FFmpeg-LGPL-2.1.txt
+          ls -la android/app/src/main/jniLibs/*/libff*.so
       - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: temurin
@@ -85,7 +100,7 @@ jobs:
           REL=$(ls out/NexonicDownloadManager-Android-release*.apk | head -1)
           CLASSES=$("$AN" dex packages --defined-only "$REL")
           for cls in org.apache.commons.compress.archivers.zip.ExtraFieldUtils org.apache.commons.compress.archivers.zip.AsiExtraField \
-                     com.yausername.youtubedl_android.YoutubeDL com.yausername.youtubedl_android.mapper.VideoInfo com.yausername.ffmpeg.FFmpeg; do
+                     com.yausername.youtubedl_android.YoutubeDL com.yausername.youtubedl_android.mapper.VideoInfo; do
             # The class name is the last column of apkanalyzer's list.
             echo "$CLASSES" | awk '{print $NF}' | grep -qx "$cls" || {
               echo "R8 removed or renamed $cls: the video engine would break"
@@ -107,7 +122,7 @@ jobs:
           set -e
           REL=$(ls out/NexonicDownloadManager-Android-release*.apk | head -1)
           # The license screen must ship in every APK.
-          for f in NOTICES.txt GPL-3.0.txt Apache-2.0.txt PSF-2.0-Python.txt MIT-Nexonic.txt; do
+          for f in NOTICES.txt GPL-3.0.txt Apache-2.0.txt PSF-2.0-Python.txt MIT-Nexonic.txt FFmpeg-LGPL-2.1.txt; do
             unzip -l "$REL" "assets/licenses/$f" >/dev/null || { echo "missing assets/licenses/$f"; exit 1; }
           done
           # Inventory for the third-party notices: Java libraries, and the native files inside the video engine.
@@ -135,3 +150,35 @@ jobs:
           path: |
             out/*.apk
             out/android-components.txt
+  ffmpeg-on-android:
+    # The app's FFmpeg is cross-built like the release one (x86_64 here, because the emulator runs it at full speed) and
+    # must do on a real Android system what yt-dlp asks of it.
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Build FFmpeg for Android (x86_64)
+        run: bash scripts/build-ffmpeg.sh android-x64 "$RUNNER_TEMP/ff"
+      - name: Sample video, audio, subtitles and chapters
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
+          S="$RUNNER_TEMP/sample" && mkdir -p "$S" && cd "$S"
+          ffmpeg -hide_banner -loglevel error -f lavfi -i testsrc=size=160x120:rate=10 -t 4 -c:v libx264 -pix_fmt yuv420p video.mp4
+          ffmpeg -hide_banner -loglevel error -f lavfi -i sine -t 4 -c:a aac audio.m4a
+          printf 'WEBVTT\n\n00:00.000 --> 00:02.000\nHello\n\n00:02.000 --> 00:04.000\nWorld\n' > en.vtt
+          printf ';FFMETADATA1\ntitle=Sample\n[CHAPTER]\nTIMEBASE=1/1000\nSTART=0\nEND=2000\ntitle=One\n[CHAPTER]\nTIMEBASE=1/1000\nSTART=2000\nEND=4000\ntitle=Two\n' > chapters.txt
+      - name: Allow the emulator to use KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Run it on Android
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-boot-timeout: 1200
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          script: bash android/ffmpeg-check.sh "$RUNNER_TEMP/ff" "$RUNNER_TEMP/sample"

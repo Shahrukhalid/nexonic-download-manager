@@ -67,7 +67,7 @@ recipe() { # prints SRCURL, SHA256 and DEPENDS of a recipe, one value per line, 
     printf 'dep\t%s\n' "${TERMUX_PKG_DEPENDS:-}" )
 }
 declare -A seen=()
-queue=(ffmpeg python)
+queue=(python)  # FFmpeg is built from source by scripts/build-ffmpeg.sh, not from Termux
 : > "$ROOT/COMPONENTS.txt"
 while [ ${#queue[@]} -gt 0 ]; do
   name="${queue[0]}"; queue=("${queue[@]:1}")
@@ -116,7 +116,7 @@ if [ -n "${DRY:-}" ]; then cat "$ROOT/COMPONENTS.txt"; rm -rf "$WORK"; exit 0; f
 cat > "$ROOT/README.txt" <<TXT
 Source code for the GPL-3.0 parts of Nexonic Download Manager for Android
 
-The Android app includes youtubedl-android $YTDL_TAG (GPL-3.0) with Python and FFmpeg built from Termux packages.
+The Android app includes youtubedl-android $YTDL_TAG (GPL-3.0) with Python built from Termux packages (FFmpeg is built from the FFmpeg n7.1 source by scripts/build-ffmpeg.sh).
 This archive holds:
 - youtubedl-android/: its source at tag $YTDL_TAG (https://github.com/yausername/youtubedl-android),
   with BUILD_PYTHON.md and BUILD_FFMPEG.md describing how its bundled files are built;

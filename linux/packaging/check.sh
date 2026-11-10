@@ -38,12 +38,35 @@ if command -v ffmpeg >/dev/null && [ "$(command -v ffmpeg)" != "$APP/ffmpeg" ]; 
   kill $SERVER
   "$APP/ffprobe" -v error -show_entries stream=codec_type -of csv "$SITE/out/test.mp4" | sort | tr '\n' ' ' | grep -q "stream,audio stream,video" \
     || fail "picture and sound were not joined"
+  echo "== Chapters, tags and subtitles go into the file (what the app asks for with every video)"
+  printf 'WEBVTT\n\n00:00.000 --> 00:02.000\nHello\n' > "$SITE/en.vtt"
+  python3 - "$SITE" <<'PY'
+import json, sys
+d = sys.argv[1]
+json.dump({"id": "t", "title": "Chapters", "ext": "mp4", "url": "file://" + d + "/out/test.mp4", "protocol": "file",
+           "extractor": "generic", "extractor_key": "Generic", "webpage_url": "file://" + d + "/out/test.mp4",
+           "chapters": [{"start_time": 0, "end_time": 2, "title": "One"}, {"start_time": 2, "end_time": 4, "title": "Two"}],
+           "subtitles": {"en": [{"ext": "vtt", "url": "file://" + d + "/en.vtt"}]}}, open(d + "/info.json", "w"))
+PY
+  "$ENGINE" --ignore-config --enable-file-urls --load-info-json "$SITE/info.json" --ffmpeg-location "$APP" --embed-metadata \
+    --embed-chapters --write-subs --sub-langs en --embed-subs -P "$SITE/emb" -o "x.%(ext)s" || fail "embedding chapters and subtitles failed"
+  EMB="$("$APP/ffprobe" -v error -show_streams -show_chapters "$SITE/emb/x.mp4")"
+  for want in codec_name=mov_text "TAG:title=One" "TAG:title=Two"; do
+    grep -q "$want" <<<"$EMB" || fail "the joined file has no $want"
+  done
 fi
 
 echo "== AppImage"
 AI="$(ls "$OUT"/NexonicDownloadManager-Linux-*.AppImage)"
 # The differential update file must describe this exact AppImage, and the AppImage must say where to find it.
 [ "$(sed -n 's/^SHA-1: //p' "$AI.zsync" 2>/dev/null)" = "$(sha1sum "$AI" | cut -d' ' -f1)" ] || fail "the .zsync update file does not match the AppImage"
+# Packed with large zstd blocks (smaller download, same start-up speed); the debugger files are not shipped.
+OFF="$(APPIMAGE_EXTRACT_AND_RUN=1 "$AI" --appimage-offset)"
+if command -v unsquashfs >/dev/null; then
+  SB="$(unsquashfs -s -o "$OFF" "$AI")"; LIST="$(unsquashfs -l -o "$OFF" "$AI")"
+  [[ "$SB" == *"Block size 1048576"* ]] || fail "the AppImage is not packed with 1 MB blocks"
+  if grep -qE "libmscordbi|libmscordaccore|/createdump$" <<<"$LIST"; then fail "debugger files are in the AppImage"; fi
+fi
 grep -aq "gh-releases-zsync|Shahrukhalid|nexonic-download-manager|latest|$(basename "$AI").zsync" "$AI" || fail "the AppImage has no update information"
 chmod +x "$AI"
 [ "$(APPIMAGE_EXTRACT_AND_RUN=1 "$AI" --version)" = "$V" ] || fail "the AppImage does not start"

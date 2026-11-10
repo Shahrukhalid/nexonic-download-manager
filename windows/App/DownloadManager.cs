@@ -597,7 +597,7 @@ public sealed partial class DownloadManager
                 break;
             case Nexonic.Core.AfterQueue.Sleep:
                 Notify?.Invoke("Queue finished", $"{q.Name} is done. The computer will sleep now.");
-                System.Windows.Forms.Application.SetSuspendState(System.Windows.Forms.PowerState.Suspend, false, false);
+                SetSuspendState(false, false, false);  // sleep (not hibernate)
                 break;
             case Nexonic.Core.AfterQueue.ShutDown:
                 Save();
@@ -907,6 +907,9 @@ public static class FileIcon
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)] public string szDisplayName;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)] public string szTypeName;
     }
+
+    [DllImport("powrprof.dll")]
+    static extern bool SetSuspendState(bool hibernate, bool force, bool disableWakeEvents);
 
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
     static extern IntPtr SHGetFileInfo(string path, uint attributes, ref SHFILEINFO info, uint size, uint flags);

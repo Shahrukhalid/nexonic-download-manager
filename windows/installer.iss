@@ -25,7 +25,8 @@ ArchitecturesInstallIn64BitMode=x64compatible
 #endif
 SetupIconFile=App\app.ico
 UninstallDisplayIcon={app}\NexonicDownloadManager.exe
-Compression=lzma2
+Compression=lzma2/ultra64
+LZMAUseSeparateProcess=yes
 SolidCompression=yes
 WizardStyle=modern
 ChangesEnvironment=yes

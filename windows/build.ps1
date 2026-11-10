@@ -22,6 +22,9 @@ foreach ($f in "nexonic-host.exe", "nexonic-host.dll", "nexonic-host.deps.json",
 if ((Get-FileHash build\host\Nexonic.Core.dll).Hash -ne (Get-FileHash "$out\Nexonic.Core.dll").Hash) { throw "Helper and app were built from different code" }
 Remove-Item build\host -Recurse -Force
 Get-ChildItem $out -Filter *.pdb | Remove-Item
+# Debugger and crash-dump support of the bundled .NET (only attached debuggers and dump tools use it; the app's own crash
+# reports are plain text): about 6 MB less installed.
+foreach ($f in "createdump.exe", "mscordbi.dll", "mscordaccore*.dll", "Microsoft.DiaSymReader.Native.*.dll") { Get-ChildItem $out -Filter $f | Remove-Item }
 # Small bundled ffmpeg (re-packs streamed video into .mp4), cross-built on Linux by scripts/build-ffmpeg.sh windows.
 if (Test-Path .ffmpeg-cache\windows\ffmpeg.exe) {
   Copy-Item .ffmpeg-cache\windows\ffmpeg.exe, .ffmpeg-cache\windows\ffprobe.exe $out

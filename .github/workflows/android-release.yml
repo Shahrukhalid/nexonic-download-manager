@@ -69,6 +69,21 @@ jobs:
           restore-keys: native-android-
       - name: Torrent engine for Android
         run: bash scripts/android-torrent-libs.sh arm64 arm
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: ffmpeg-android
+        with:
+          path: .ffmpeg-cache/android
+          key: ffmpeg-android-${{ hashFiles('scripts/build-ffmpeg.sh') }}
+      - name: FFmpeg for Android (re-packing only, from source)
+        run: |
+          set -e
+          for t in arm64:arm64-v8a arm:armeabi-v7a; do
+            a=${t%%:*}; abi=${t#*:}; c=.ffmpeg-cache/android/$abi
+            [ -f "$c/libffmpeg.so" ] || bash scripts/build-ffmpeg.sh android-$a "$c"
+            mkdir -p android/app/src/main/jniLibs/$abi && cp "$c"/libffmpeg.so "$c"/libffprobe.so android/app/src/main/jniLibs/$abi/
+          done
+          cp .ffmpeg-cache/android/arm64-v8a/NOTICE-video-tools-1.txt android/app/src/main/assets/licenses/FFmpeg-LGPL-2.1.txt
+          ls -la android/app/src/main/jniLibs/*/libff*.so
       - name: Torrent engine sources (exact source archives used for the build)
         run: |
           set -euo pipefail
