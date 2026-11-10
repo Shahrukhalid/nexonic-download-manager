@@ -186,6 +186,33 @@ public sealed class CustomCategory
         string.Join("\n", list.Select(c => (c.Icon.Length > 0 ? c.Icon + " " : "") + $"{c.Name}: {c.Extensions}"
             + (c.Sites.Length > 0 ? (c.Extensions.Length > 0 ? " @ " : "@ ") + c.Sites : "") + (c.Folder.Length > 0 ? " > " + c.Folder : "")));
 
+    /// <summary>The category lines of the Options text (comments and blank lines left out), for the editor's list.</summary>
+    public static List<string> Lines(string? text) =>
+        (text ?? "").Replace("\r", "").Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0 && !l.StartsWith('#')).ToList();
+
+    /// <summary>The text with category <paramref name="index"/> moved to <paramref name="to"/> (comments are kept at the top).</summary>
+    public static string Move(string? text, int index, int to)
+    {
+        var all = (text ?? "").Replace("\r", "").Split('\n').ToList();
+        var comments = all.Where(l => l.Trim().StartsWith('#')).ToList();
+        var lines = Lines(text);
+        if (index < 0 || index >= lines.Count) return text ?? "";
+        to = Math.Clamp(to, 0, lines.Count - 1);
+        var item = lines[index];
+        lines.RemoveAt(index);
+        lines.Insert(to, item);
+        return string.Join("\n", comments.Concat(lines));
+    }
+
+    /// <summary>The text without category <paramref name="index"/>.</summary>
+    public static string Remove(string? text, int index)
+    {
+        var comments = (text ?? "").Replace("\r", "").Split('\n').Where(l => l.Trim().StartsWith('#'));
+        var lines = Lines(text);
+        if (index >= 0 && index < lines.Count) lines.RemoveAt(index);
+        return string.Join("\n", comments.Concat(lines));
+    }
+
     /// <summary>A leading symbol of a name ("📚 Books" → "📚", "Books"): one text element that is not a letter or digit.</summary>
     public static (string Icon, string Name) SplitIcon(string name)
     {

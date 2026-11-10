@@ -573,8 +573,22 @@ public sealed partial class DownloadManager
         }
     }
 
+    /// <summary>The sound for this event (Options → After Download), unless it is quiet time.</summary>
+    void PlaySound(Sounds.Event e)
+    {
+        if (Sounds.Pick(Settings, e, DateTime.Now) is not { } file) return;
+        if (file.Length == 0)
+        {
+            (e == Sounds.Event.Failed ? System.Media.SystemSounds.Hand : e == Sounds.Event.QueueDone ? System.Media.SystemSounds.Exclamation : System.Media.SystemSounds.Asterisk).Play();
+            return;
+        }
+        try { new System.Media.SoundPlayer(file).Play(); }  // plays on its own thread
+        catch (Exception x) when (x is InvalidOperationException or IOException or UriFormatException) { System.Media.SystemSounds.Asterisk.Play(); }
+    }
+
     void AfterQueue(DownloadQueue q)
     {
+        PlaySound(Sounds.Event.QueueDone);
         switch (q.AfterDone)
         {
             case Nexonic.Core.AfterQueue.Quit:
@@ -634,7 +648,7 @@ public sealed partial class DownloadManager
         if (rec.Status is not (DownloadStatus.Finished or DownloadStatus.Failed or DownloadStatus.Paused)) return;
         transfers.Remove(rec.Id);
         if (rec.Status == DownloadStatus.Finished && rec.Torrent == null) AfterDownload(rec);
-        if (rec.Status == DownloadStatus.Failed) Notify?.Invoke("Download failed", $"{rec.FileName}: {rec.Error}");
+        if (rec.Status == DownloadStatus.Failed) { Notify?.Invoke("Download failed", $"{rec.FileName}: {rec.Error}"); PlaySound(Sounds.Event.Failed); }
         Save();
         Schedule();
     }
@@ -649,7 +663,7 @@ public sealed partial class DownloadManager
             // Mark of the web: Windows checks the file (SmartScreen, Office protected view) as it does for browser downloads.
             try { File.WriteAllText(path + ":Zone.Identifier", $"[ZoneTransfer]\r\nZoneId=3\r\nHostUrl={rec.Url}\r\n"); } catch { }
         }
-        if (Settings.PlaySound) System.Media.SystemSounds.Asterisk.Play();
+        PlaySound(Sounds.Event.Finished);
         if (Settings.ScanEnabled) Scan(path);
         Finished?.Invoke(rec);
     }
@@ -781,6 +795,9 @@ public sealed partial class DownloadManager
     }
 
     public void Save() => Write(AppPaths.Downloads, Rows.Select(r => r.Record).ToList());
+
+    /// <summary>Saves the settings as they are now (for small changes made outside Options, like the column layout).</summary>
+    public void SaveSettings() => Write(AppPaths.Settings, Settings);
 
     /// <summary>Saves atomically, with cookies and passwords encrypted for this Windows user (see Secrets).</summary>
     static void Write<T>(string path, T value)

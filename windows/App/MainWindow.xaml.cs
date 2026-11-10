@@ -22,6 +22,8 @@ public partial class MainWindow : Window
         WindowPlace.Restore(this);
         this.manager = manager;
         Grid.ItemsSource = manager.Rows;
+        RestoreColumnLayout();
+        Grid.ColumnReordered += (_, _) => SaveColumnLayout();
         BuildSidebar();
         manager.Queues.CollectionChanged += (_, _) => BuildSidebar();
         EnableDragToQueues();
@@ -69,10 +71,36 @@ public partial class MainWindow : Window
         timer.Start();
     }
 
+    /// <summary>The column order and widths as you left them (columns are named by their place in the original order).</summary>
+    void RestoreColumnLayout()
+    {
+        var saved = ColumnLayout.Parse(manager.Settings.ColumnLayout);
+        if (saved.Count != Grid.Columns.Count) return;  // a different set of columns: start from the default layout
+        try
+        {
+            foreach (var (i, column) in Grid.Columns.Select((c, i) => (i, c)).OrderBy(x => saved.TryGetValue(x.i.ToString(), out var v) ? v.Index : x.i))
+            {
+                if (!saved.TryGetValue(i.ToString(), out var v)) continue;
+                column.DisplayIndex = Math.Min(v.Index, Grid.Columns.Count - 1);
+                if (!double.IsNaN(v.Width) && !column.Width.IsStar) column.Width = new DataGridLength(v.Width);
+            }
+        }
+        catch (ArgumentOutOfRangeException) { }  // an inconsistent saved layout keeps the default
+    }
+
+    void SaveColumnLayout()
+    {
+        var layout = ColumnLayout.Format(Grid.Columns.Select((c, i) => (i.ToString(), c.DisplayIndex, c.ActualWidth)));
+        if (layout == manager.Settings.ColumnLayout) return;
+        manager.Settings.ColumnLayout = layout;
+        manager.SaveSettings();
+    }
+
     // Closing the window keeps downloads running in the tray.
     protected override void OnClosing(CancelEventArgs e)
     {
         e.Cancel = true;
+        SaveColumnLayout();
         manager.Save();
         WindowPlace.Save(this);
         Hide();

@@ -573,8 +573,16 @@ public sealed partial class DownloadManager
         }
     }
 
+    /// <summary>The sound for this event (Options → After Download), unless it is quiet time.</summary>
+    void PlaySound(Sounds.Event e)
+    {
+        if (Sounds.Pick(Settings, e, DateTime.Now) is not { } file) return;
+        Task.Run(() => { if (file.Length == 0 || !LinuxSystem.PlayFile(file)) LinuxSystem.PlayDoneSound(); });
+    }
+
     void AfterQueue(DownloadQueue q)
     {
+        PlaySound(Sounds.Event.QueueDone);
         switch (q.AfterDone)
         {
             case Nexonic.Core.AfterQueue.Quit:
@@ -640,7 +648,7 @@ public sealed partial class DownloadManager
         if (rec.Status is not (DownloadStatus.Finished or DownloadStatus.Failed or DownloadStatus.Paused)) return;
         transfers.Remove(rec.Id);
         if (rec.Status == DownloadStatus.Finished && rec.Torrent == null) AfterDownload(rec);
-        if (rec.Status == DownloadStatus.Failed) Notify?.Invoke("Download failed", $"{rec.FileName}: {rec.Error}");
+        if (rec.Status == DownloadStatus.Failed) { Notify?.Invoke("Download failed", $"{rec.FileName}: {rec.Error}"); PlaySound(Sounds.Event.Failed); }
         Save();
         Schedule();
     }
@@ -652,7 +660,7 @@ public sealed partial class DownloadManager
         if (rec.SavedPath is not { } path) return;
         // Where the file came from, as browsers record it on Linux (shown by file managers).
         if (Settings.MarkDownloads) LinuxSystem.MarkOrigin(path, rec.Url);
-        if (Settings.PlaySound) Task.Run(LinuxSystem.PlayDoneSound);
+        PlaySound(Sounds.Event.Finished);
         if (Settings.ScanEnabled) Scan(path);
         Finished?.Invoke(rec);
     }

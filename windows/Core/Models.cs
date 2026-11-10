@@ -239,6 +239,18 @@ public sealed class AppSettings
     public string Language { get; set; } = "";
     public bool ShowCompleteDialog { get; set; } = true;
     public bool PlaySound { get; set; } = true;
+    /// <summary>Sounds per event: "" = the system's sound, "none" = silent, else a sound file (see <see cref="Sounds"/>).</summary>
+    public string SoundFinished { get; set; } = "";
+    public string SoundFailed { get; set; } = "";
+    public string SoundQueueDone { get; set; } = "";
+    /// <summary>No sounds during these hours ("22:00-07:00"); empty = none.</summary>
+    public string QuietHours { get; set; } = "";
+    /// <summary>A colour scheme of the user's (JSON, see <see cref="ColorScheme"/>) used instead of Light/Dark; empty = none.</summary>
+    public string ColorSchemeJson { get; set; } = "";
+    /// <summary>The font of the whole app; empty = the system's.</summary>
+    public string FontFamily { get; set; } = "";
+    /// <summary>The download list's column order and widths (Windows), see <see cref="ColumnLayout"/>.</summary>
+    public string ColumnLayout { get; set; } = "";
     public bool MarkDownloads { get; set; } = true;
     public bool ScanEnabled { get; set; }
     // Added in 0.5.0: download and progress windows
