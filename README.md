@@ -4,10 +4,11 @@
 
 <img src="packaging/icon-1024.png" alt="Nexonic Universal Download Manager icon" width="112" height="112">
 
-**Free, open-source download manager for Mac, Windows, Linux, Android, iPhone and iPad: an alternative to Internet Download Manager (IDM).**
+**Free, open-source download manager for macOS, Windows, Linux and Android, with an iPhone and iPad build for testing.**
 
-Download faster, pause and resume anytime, and save videos from YouTube, Instagram, Facebook, X (Twitter), TikTok and
-1,000+ other sites in the best quality.
+An alternative to Internet Download Manager (IDM) with up to 256 adaptive connections on desktop and Android,
+resumable downloads, queues, scheduling, BitTorrent, and browser integration. Save videos from supported sites
+such as YouTube, Instagram, Facebook, X and TikTok on desktop and Android.
 
 [![Latest release](https://img.shields.io/github/v/release/Shahrukhalid/nexonic-download-manager?label=download)](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest)
 [![Support on Patreon](https://img.shields.io/badge/support-Patreon-f96854?logo=patreon&logoColor=white)](https://www.patreon.com/Shahrukhalid)
@@ -20,7 +21,7 @@ Download faster, pause and resume anytime, and save videos from YouTube, Instagr
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16392/badge)](https://www.bestpractices.dev/projects/16392)
 [![Website](https://img.shields.io/badge/website-online-2563eb)](https://shahrukhalid.github.io/nexonic-download-manager/)
 
-<img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/mac-main.png" alt="Nexonic Download Manager" width="880">
+<img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/mac-main.png" alt="Nexonic Download Manager on macOS" width="880">
 
 </div>
 
@@ -31,37 +32,26 @@ Download faster, pause and resume anytime, and save videos from YouTube, Instagr
 | **Mac** (macOS 13+, Apple silicon and Intel) | [NexonicDownloadManager-Mac.dmg](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Mac.dmg) |
 | **Windows** 10 / 11 | [NexonicDownloadManager-Windows-Setup.exe](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Setup.exe) |
 | Windows, no install | [NexonicDownloadManager-Windows-Portable.zip](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Portable.zip) |
-| Windows 11 on Arm | [NexonicDownloadManager-Windows-ARM64-Setup.exe](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-ARM64-Setup.exe) · [portable](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-ARM64-Portable.zip) |
-| **Linux**, any distribution (64-bit) | [NexonicDownloadManager-Linux-x86_64.AppImage](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Linux-x86_64.AppImage) |
+| **Windows 11 on Arm** | [NexonicDownloadManager-Windows-ARM64-Setup.exe](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-ARM64-Setup.exe) · [portable](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-ARM64-Portable.zip) |
+| **Linux**, x86-64 | [NexonicDownloadManager-Linux-x86_64.AppImage](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Linux-x86_64.AppImage) |
 | Linux on ARM (64-bit) | [NexonicDownloadManager-Linux-aarch64.AppImage](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Linux-aarch64.AppImage) |
 | Ubuntu, Debian, Mint, Pop!_OS (.deb) and Fedora, openSUSE (.rpm) | [All Linux files](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest) · [Linux guide](docs/LINUX.md) |
 | **Android** 10+ (phones and tablets) | [NexonicDownloadManager-Android.apk](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android.apk) |
 | Android, older 32-bit phones | [NexonicDownloadManager-Android-32bit.apk](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android-32bit.apk) |
+| **iPhone and iPad** (iOS/iPadOS 17+, testing) | [Unsigned IPA](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-iOS-unsigned.ipa) · [Signing and installation guide](ios/README.md) |
 | Chrome, Edge, Brave, Opera extension | [NexonicExtension-Chrome.zip](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicExtension-Chrome.zip) |
 | Firefox add-on | [NexonicAddon-Firefox.xpi](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicAddon-Firefox.xpi) |
 
-The file and torrent engines are included. On Mac, Windows and Linux the video engine (for YouTube and 1,000+ sites)
-is downloaded from its official release the first time you save a video, which keeps the download small. On Mac, Windows and Linux (x64) the
-gallery engine (gallery-dl, for whole galleries on sites like Reddit, Pixiv and DeviantArt) is fetched the same way the first time it is used. Torrents work on Mac, Windows, Linux, Android, iPhone and
-iPad with the same built-in engine and are off until you turn them on; see [the torrent guide](docs/TORRENTS.md).
+The file and torrent engines are included. On macOS, Windows and Linux, the app fetches the video engine from its
+official release the first time you save a video. On macOS, Windows and Linux x64, whole-gallery downloads also fetch their engine on first use.
+Torrents are off by default. See the [torrent guide](docs/TORRENTS.md).
 
-Windows with [Scoop](https://scoop.sh): `scoop bucket add nexonic https://github.com/Shahrukhalid/nexonic-download-manager` then
-`scoop install nexonic-download-manager`. More package managers: [docs/PACKAGES.md](docs/PACKAGES.md).
-
-> **Mac users:** the easiest way is one command in Terminal. It installs or updates the app and opens it without the
-> "Apple could not verify" message:
->
-> ```bash
-> curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | bash
-> ```
->
-> Prefer the `.dmg`? That works too: macOS asks once (System Settings → Privacy & Security → **Open Anyway**), and
-> never again for that version.
+Release assets come with SHA-256 checksums and GitHub build attestations. See [Verify your download](docs/VERIFY.md).
 
 ## Install
 
-**Mac, quickest:** paste this into Terminal. It installs (or updates) the app in Applications and opens it, with no
-security warning:
+**Mac, Terminal installer:** this installs or updates the app in Applications and opens it. You can
+[inspect the installer script](https://shahrukhalid.github.io/nexonic-download-manager/install.sh) before running it.
 
 ```bash
 curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | bash
@@ -72,15 +62,26 @@ curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | 
 1. Open the `.dmg`, read the Terms of Use and click **Agree**.
 2. Drag **Nexonic Download Manager** onto **Applications** (replace the old version if asked), then open it from
    Applications.
-3. The first time, macOS says it *could not verify* the app. That's expected: the app is free and not sold through
-   Apple. Allow it once (see [First launch on Mac](#first-launch-on-mac) below); after that it opens normally, and
-   in-app updates never ask again.
+3. If macOS says it could not verify the app, follow [First launch on Mac](#first-launch-on-mac) below.
 4. If macOS says the app *is damaged and can't be opened*, open **Terminal** and run
    `xattr -cr "/Applications/Nexonic Download Manager.app"`, then open the app again.
 
+**Package managers**
+
+- **Homebrew (Mac):** `brew install --cask shahrukhalid/nexonic/nexonic-download-manager`.
+- **Scoop (Windows x64 and Arm64):** run `scoop bucket add nexonic https://github.com/Shahrukhalid/nexonic-download-manager`
+  and then `scoop install nexonic-download-manager`. Scoop uses the portable build.
+- **WinGet (Windows x64 and Arm64):** the [catalog submission for v0.28.0](https://github.com/microsoft/winget-pkgs/pull/470114)
+  tracks availability. See the [package manager guide](docs/PACKAGES.md).
+
+**Linux**
+
+Use the AppImage for your architecture or install the distribution's `.deb` or `.rpm`. See the
+[Linux installation guide](docs/LINUX.md). AppImage updates download the changed parts when possible.
+
 **Windows**
 
-1. Run the Setup file. If Windows says "Windows protected your PC", click **More info → Run anyway**.
+1. Run the Setup file for your architecture. If Windows says "Windows protected your PC", click **More info → Run anyway**.
 2. Read the Terms of Use, choose **I accept the agreement** and follow the steps.
 
 **Android**
@@ -94,8 +95,9 @@ Updates install over the old version; your downloads list is kept.
 
 **iPhone and iPad** (in testing, not on the App Store yet)
 
-Install it with Xcode on your own device (free Apple ID): see [ios/README.md](ios/README.md). Then use
-**Share → Download with Nexonic** from Safari, Chrome or any app. Files go to **Files › On My iPhone/iPad › Nexonic**.
+Build and run it from Xcode or sign the release IPA before installing. See the [iOS setup guide](ios/README.md).
+Then use **Share → Download with Nexonic** from Safari, Chrome or another app. Files go to
+**Files › On My iPhone/iPad › Nexonic**.
 
 **Browser** (open the app once first):
 
@@ -111,7 +113,7 @@ still shows the old icon, quit the app and open it again (on Mac, restarting the
 
 ### First launch on Mac
 
-macOS shows a warning the first time you open an app that isn't sold through Apple. Allow it once:
+macOS may warn when you first open the current, unnotarized build. To open it:
 
 1. **Open the app. When macOS says it was *Not Opened*, click Done** (not *Move to Bin*).
 
@@ -126,69 +128,54 @@ macOS shows a warning the first time you open an app that isn't sold through App
 
    <img src="docs/img/mac-first-launch-3.svg" alt="Step 3: Open Anyway" width="480">
 
-That's it: macOS won't ask again for this version, and updates installed from inside the app (**Update Now**) open
-without any warning. On macOS 13–14 you can also right-click the app → **Open** → **Open**.
+On macOS 13–14 you can also right-click the app → **Open** → **Open**.
 
 ## Features
 
-- **Fast downloads** that split each file into parts and download them at the same time. **Automatic connections**
-  start with 4 and double while the speed keeps rising, up to 256; a busy server (429/503) is given the time it asks
-  for and nothing is lost (all apps).
-- **Checked downloads from several sources:** add mirror addresses or a Metalink (`.meta4`) file; each part comes from
-  the fastest source and a mirror that sends a different file is dropped. Checksums are verified at the end.
-- **cURL in and out:** paste a browser's *Copy as cURL* (referrer, cookies and login are kept) and copy any download as
-  a cURL command (all apps).
-- **Encrypted DNS** over HTTPS or TLS with a strict mode, and server details: country (from a database on your
-  computer), HTTP version and measured speed.
-- **Speed schedule** by time of day (`Mon-Fri 09:00-17:00 300`), and a warning before a link already in the list is
-  added again.
-- **Pause and resume**, even after a restart. Expired links can be refreshed without starting over.
-- **Videos from YouTube, Instagram, Facebook, X, TikTok and 1,000+ sites**, in the quality you pick (the
-  qualities each video offers are listed, up to 4K/8K) or sound only.
-- **Download this video** button on any web page, and streamed video saved as one `.mp4`.
-- **Browser integration** for Chrome, Edge, Brave, Opera and Firefox: click a download link (or the video button on a
-  page) and a compact download window
-  shows the name, size, category and folder (Start, Download Later or Cancel). If the app can't be reached, the browser
-  simply keeps the download.
-- **A progress window for every download** with speed, time left, a live speed graph, each connection's progress, and
-  Pause/Resume/Cancel. Several downloads run side by side, each in its own window.
-- **Scheduler and queues:** start at night, stop in the morning, sleep or shut down when done.
-- **Batch downloads** (`img[001-100].jpg`), a **site grabber**, and **clipboard** detection.
-- **Image galleries:** Download Images from Page lists a page's pictures (full-size versions where the page links to
-  them) and saves the ones you tick in a folder named after the page (Windows and Linux).
-- **Your own categories:** file types and the folder they go to, for example `Comics: cbz cbr > Comics` (Options →
-  Categories on Windows and Linux), reordered by dragging.
-- **Your look:** colour schemes checked for readable contrast (import and export your own), your font, sounds for
-  finished, failed and queue done with quiet hours, and a saved column layout (Windows and Linux).
-- **Smarter RSS and debrid:** feed rules with size limits, one download per episode in the quality you prefer and a
-  preview; torrents through your own debrid account (off until you add a key).
-- **Manage downloads from your phone:** turn on Options → Remote, scan the code, and the phone lists, adds, stops and
-  resumes downloads on the same network (Windows and Linux). **Server and Docker** for NAS boxes and home servers,
-  without a window: [docs/SERVER.md](docs/SERVER.md).
-- **Network Diagnostics** (Help menu) checks a link step by step, and downloads can use **IPv4 only or IPv6 only**.
-- **Speed limits**, proxy, password-protected downloads and checksum checks.
-- **Torrents on every platform**, like a BitTorrent client: open a magnet link or a `.torrent` file, choose the files,
-  and see seeds, peers, speeds, trackers and pieces. Change limits, connections and upload slots while it runs. Every
-  piece is checked and each file gets a SHA-256. Works with your proxy; off until you turn it on.
-- **Playlists and channels:** list a YouTube playlist or channel (or a Vimeo, SoundCloud or Bandcamp list) and pick
-  the videos to save. Optional **subtitles** inside videos, and a **Media Library** of your finished videos and music
-  with preview pictures.
-- **An IDM-style toolbar** on Mac, Windows and Linux with large buttons and their names, and menus for every command.
-- **Updates inside the app:** a new version shows up when you open the app, with what's new and Update Now, Remind
-  Me Later or Skip This Version.
-- **110 languages** on every app and in the browser extension. 15 are checked by people (English, Arabic, Chinese
-  Simplified and Traditional, French, German, Hindi, Indonesian, Japanese, Korean, Portuguese, Russian, Spanish, Turkish
-  and Urdu); the others are machine translations, open to corrections (see [docs/TRANSLATIONS.md](docs/TRANSLATIONS.md)).
-  Pick one in Settings (Options on Windows and Linux).
-- **Same app on Mac, Windows and Linux**, light and dark mode, no account, no tracking.
-- **Android app** with the same download and video engines: videos from YouTube, Facebook, Instagram, TikTok and
-  1,000+ sites with quality choices, up to 256 automatic connections, pause and resume, queues, scheduler, Wi-Fi only,
-  speed limit, a built-in browser that catches downloads and lists the videos and files on a page, and
-  **Share → Download with Nexonic** from Chrome or any app. Files are saved in *Download/Nexonic*.
-  Details and Android limits: [android/README.md](android/README.md).
-- **iPhone and iPad app** (in testing): **Share → Download with Nexonic** from Safari, Chrome or any app, a
-  **Download with Nexonic** action for Shortcuts and Siri, background downloads, a built-in browser, and files in the
-  Files app. Details and iOS limits: [ios/README.md](ios/README.md).
+### Downloads and scheduling
+
+- **Adaptive downloads (desktop and Android).** Start with four connections and increase up to 256 while speed
+  improves. Nexonic backs off when a server reports HTTP 429 or 503.
+- **Mirrors and Metalink.** Add alternate sources or a `.meta4` file. Nexonic measures the sources, rejects a mirror
+  serving a different file and verifies the finished file when a checksum is available.
+- **Pause, resume and refresh links.** Resume after restarting the app, or replace an expired link and keep the data
+  already downloaded. Import a browser's **Copy as cURL** command with its request details, or export a download as cURL.
+- **Queues, scheduling and speed limits.** Start downloads at set times, set time-of-day speed rules on desktop and
+  Android, and set a data budget for capped connections. Desktop tools include batch patterns, clipboard detection,
+  a site grabber and a link grabber that groups split archives.
+- **Network controls.** Use a proxy, encrypted DNS over HTTPS or TLS, or select IPv4 or IPv6. The desktop server panel
+  shows HTTP version, measured speed and server country from a local database.
+
+### Browser, media and torrents
+
+- **Desktop browser integration.** Chrome, Edge, Brave, Opera and Firefox can hand downloads to Nexonic. The download
+  window lets you choose the destination and start now or add the file to a queue.
+- **Video, audio and playlists.** Choose from the qualities the source offers, save audio only, or select items from
+  supported playlists and channels. Where available, save subtitles and chapters and browse completed media in the
+  Media Library. On macOS, Windows and Linux x64 you can also save entire galleries from supported sites. Windows and Linux can list and
+  save selected images from a single page.
+- **BitTorrent on desktop and mobile.** Open a magnet link or `.torrent` file, choose files and track peers, pieces and
+  transfer speeds. The built-in engine checks each piece. Mobile background behavior varies by platform. See the
+  [torrent guide](docs/TORRENTS.md).
+- **RSS and debrid (Windows and Linux).** Preview feed rules, set size limits and keep one download per episode in
+  your preferred quality. Debrid integration is optional and uses your own account.
+
+### Desktop, server and mobile
+
+- **Desktop controls.** See each download's speed, estimated time and progress. Use custom categories to route
+  downloads by file type or site. Windows and Linux also offer custom colour schemes, fonts, quiet hours for sounds
+  and saved column layouts.
+- **Local remote management.** On Windows and Linux, enable **Options → Remote** and scan the pairing code to manage
+  downloads from a phone on the same network. For headless use on a NAS or home server, see the
+  [server and Docker guide](docs/SERVER.md).
+- **Android.** Share links to Nexonic, find files or videos in its built-in browser, and use Wi-Fi-only transfers.
+  Files are saved in `Download/Nexonic`. See the [Android guide](android/README.md).
+- **iPhone and iPad (testing).** Use the Share extension, Shortcuts or the built-in browser. iOS manages background
+  file transfers with one connection per file. See the [iOS guide](ios/README.md) for media and background limits.
+- **Languages and updates.** The apps offer 110 languages, including 15 reviewed translations. Choose a language in
+  Settings or Options. See [translations](docs/TRANSLATIONS.md) and check **About** for the installed version.
+
+## Screenshots
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/mac-info.png" alt="Download window that opens when a link is clicked in the browser" width="440">
@@ -219,47 +206,17 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
   <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/windows-options.png" alt="Windows: Options" width="440">
 </p>
 
-## What's new
+## What's new in v0.28.0
 
-- **0.28.0: faster verified downloads and smaller installs.** Measured against 0.27.0 on the same machine, every file
-  checked against its SHA-256: 120 MB from a server sending 1 MB/s per connection 15.1 s → 6.0 s; the Android app
-  60 MB → 30 MB, the Linux AppImage 51 MB → 46 MB, the Windows installer 56 MB → about 47 MB. Also: Windows on Arm,
-  AppImage updates that download only what changed, chapters and subtitles embedded again, mirrors and Metalink,
-  encrypted DNS over TLS, cURL import, colour schemes and sounds. Details in the [changelog](CHANGELOG.md).
-- **0.25.0: manage downloads from your phone, a server for NAS and Docker, image galleries and your own categories**
-  (Windows and Linux), Network Diagnostics, interface size, and smaller Mac, Linux and Android downloads.
-- **0.20.1: Support the Project** in the Help menu and the About window on every app (Settings → About on phones).
-- **0.20.0: 15 languages, chosen in every app.** Chinese (Simplified and Traditional), Japanese, Korean, Russian,
-  Indonesian and Turkish join Arabic, French, German, Hindi, Portuguese, Spanish and Urdu, on every platform and in
-  the browser extension. Pick one in Settings; English stays the default
-  ([docs/TRANSLATIONS.md](docs/TRANSLATIONS.md)).
-- **0.19.0 – 0.19.2: big downloads finish instantly** (one file is written directly, with no joining step), Add
-  Torrent opens a torrent's files by itself on Windows and Linux, and an **iPhone and iPad app for sideloading** in
-  every release.
-- **0.17.0: playlists, subtitles and the Media Library on phones.** Android lists a playlist's or channel's videos
-  so you can pick which to save, keeps subtitles inside videos (optional) and has a Media Library with preview
-  pictures. iPhone and iPad get the Media Library too.
-- **0.16.0: playlists, subtitles and a Media Library** on Mac, Windows and Linux. Add a YouTube playlist or channel,
-  Vimeo showcase, SoundCloud set or Bandcamp album and tick the videos you want (up to 500). Keep subtitles in your
-  language inside videos (optional). Browse finished videos and music with preview pictures, search and Play.
-- **0.15.0: videos keep their details and chapters.** Title, channel or artist, date, description and chapter marks
-  are saved inside the file on every platform.
-- **0.14.0: an IDM-style toolbar and menus on Windows and Linux**, with large coloured buttons, keyboard shortcuts
-  and Tasks, Downloads, View and Help menus. Also: unzip finished `.zip` files automatically (optional, Mac, Windows
-  and Linux).
-- **0.13.0: torrents on Android, iPhone and iPad.** Open a magnet link or `.torrent` file, choose the files and
-  download; every piece is checked. Android downloads in the background; iPhone and iPad download while the app is
-  open and continue when you come back. Also: torrent details, Peers and Trackers windows and live settings on
-  Windows and Linux, `.torrent` files and magnet links open the app, and faster torrents (no upload cap by default).
-- **0.11.4: an IDM-style toolbar on Mac**, with large coloured buttons and their names, and a Downloads menu.
-- **0.11.0 – 0.11.3: torrents on Mac**, with uTorrent-style details (General, Trackers, Peers, Files), settings that
-  apply while a torrent runs, and support for your proxy.
-- **0.10.0: torrents on Windows and Linux** with a built-in engine.
-- **0.8.0:** site settings, backup and restore, QR codes to your phone, iPhone Shortcuts and Siri, an optional local
-  API ([docs/API.md](docs/API.md)), and seven more languages (machine translations under review,
-  [docs/TRANSLATIONS.md](docs/TRANSLATIONS.md)).
+- Adaptive downloads now use up to 256 connections on macOS as well as Windows, Linux and Android. In the release
+  benchmark, a SHA-256-verified 120 MB download took 6.0 seconds versus 15.1 seconds on v0.27.0 with a local server
+  limited to 1 MB/s per connection.
+- Windows on Arm has its own installer and portable ZIP. The Android APK, Linux AppImage and Windows installer are
+  smaller, and Linux AppImages support differential updates.
+- Desktop video downloads can embed chapters and subtitles again. This release also adds Metalink and mirrors,
+  encrypted DNS over TLS, scheduled speed rules, cURL import and export, and more appearance controls on Windows and Linux.
 
-Full list in the [changelog](CHANGELOG.md).
+See the [changelog](CHANGELOG.md) for benchmark conditions and previous releases.
 
 ## How to use
 
@@ -271,8 +228,8 @@ Full list in the [changelog](CHANGELOG.md).
 | Download at night | **Scheduler** → **New Queue** → set the time → add downloads with **Download Later** |
 | Continue an expired download | Right-click → **Refresh Link…** |
 
-Command line: `ndm <link>` (Mac: **Settings → Browsers & Command Line → Install ndm Command**; Windows: added by the
-installer). Run `ndm help` for options.
+Use `ndm <link>` on the command line and run `ndm help` for options. On Mac, install the command from
+**Settings → Browsers & Command Line → Install ndm Command**. The Windows installer adds it for you.
 
 Copy-protected services (Netflix, Disney+, Prime Video, Spotify) are not supported. Only download videos you have the
 right to save.
@@ -293,8 +250,8 @@ Nexonic Download Manager is free and stays free for everyone. If it saves you ti
 
 ## Privacy and terms
 
-No account, no ads, no tracking: your downloads and settings stay on your computer. The app only connects to the
-addresses you download from, and to GitHub to keep its video engine up to date and when you check for updates.
+Nexonic requires no account and has no ads or tracking. Download history and settings stay on your device. The app
+uses the network for your downloads, updates and optional features you enable, such as RSS feeds or a debrid provider.
 By installing you agree to the **[Terms of Use and License Agreement](TERMS.md)**: download only what you have the
 right to, and respect copyright and each site's terms.
 
