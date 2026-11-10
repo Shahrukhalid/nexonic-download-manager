@@ -42,6 +42,9 @@ fi
 
 echo "== AppImage"
 AI="$(ls "$OUT"/NexonicDownloadManager-Linux-*.AppImage)"
+# The differential update file must describe this exact AppImage, and the AppImage must say where to find it.
+[ "$(sed -n 's/^SHA-1: //p' "$AI.zsync" 2>/dev/null)" = "$(sha1sum "$AI" | cut -d' ' -f1)" ] || fail "the .zsync update file does not match the AppImage"
+grep -aq "gh-releases-zsync|Shahrukhalid|nexonic-download-manager|latest|$(basename "$AI").zsync" "$AI" || fail "the AppImage has no update information"
 chmod +x "$AI"
 [ "$(APPIMAGE_EXTRACT_AND_RUN=1 "$AI" --version)" = "$V" ] || fail "the AppImage does not start"
 APPIMAGE_EXTRACT_AND_RUN=1 "$AI" --host help | grep -q "ndm batch" || fail "the AppImage's ndm command"

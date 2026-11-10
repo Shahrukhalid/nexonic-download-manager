@@ -155,6 +155,30 @@ public static class LinuxSystem
         if (File.Exists(sound) && !Run("pw-play", sound)) Run("paplay", sound);
     }
 
+    const string WakeAlarm = "/sys/class/rtc/rtc0/wakealarm";
+
+    [DllImport("libc", EntryPoint = "access", SetLastError = true)]
+    static extern int access(string path, int mode);
+
+    /// <summary>Null when this computer can be woken by the app (its clock's wake alarm can be set), else why not.</summary>
+    public static string? WakeUnavailable() =>
+        !File.Exists(WakeAlarm) ? "This computer has no wake-up clock the app can use."
+        : access(WakeAlarm, 2) != 0 ? "Waking from sleep needs permission to set the wake-up clock. An administrator can allow it, for example with the udev rule ACTION==\"add\", SUBSYSTEM==\"rtc\", RUN+=\"/bin/chmod 0666 /sys/class/rtc/%k/wakealarm\"."
+        : null;
+
+    /// <summary>Sets (or with null, clears) the time the computer wakes from sleep. False when it could not be set.</summary>
+    public static bool SetWake(DateTime? at)
+    {
+        if (WakeUnavailable() != null) return false;
+        try
+        {
+            File.WriteAllText(WakeAlarm, "0");  // the clock takes a new time only after the old one is cleared
+            if (at is { } t && t > DateTime.Now) File.WriteAllText(WakeAlarm, new DateTimeOffset(t).ToUnixTimeSeconds().ToString());
+            return true;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return false; }
+    }
+
     public static bool Suspend() => RunWait("systemctl", new[] { "suspend" }, 10000) == 0 || RunWait("loginctl", new[] { "suspend" }, 10000) == 0;
 
     /// <summary>Shuts down in one minute (cancel with <c>shutdown -c</c>), through systemd-logind; false when not allowed.</summary>

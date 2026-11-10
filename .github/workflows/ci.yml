@@ -100,9 +100,19 @@ jobs:
           name: tools-windows
           path: .tools-cache/windows
   windows:
+    # The x64 job keeps the name "windows": branch protection requires a check with that name.
+    name: ${{ matrix.rid == 'win-x64' && 'windows' || 'windows-arm64' }}
     needs: ffmpeg-windows
-    runs-on: windows-latest
-    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: win-x64
+            runner: windows-latest
+          - rid: win-arm64
+            runner: windows-11-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
@@ -122,16 +132,16 @@ jobs:
             .native-cache/installed
             .native-cache/binaries
             .native-cache/vcpkg/downloads
-          key: native-win-x64-${{ hashFiles('native/vcpkg.json', 'native/triplets/**') }}
+          key: native-${{ matrix.rid }}-${{ hashFiles('native/vcpkg.json', 'native/triplets/**') }}
       - name: Native torrent engine and legal-data transfer
-        run: python scripts/build-torrent-native.py win-x64 --test
+        run: python scripts/build-torrent-native.py ${{ matrix.rid }} --test
       - name: Managed provider integration
         shell: pwsh
-        run: dotnet run --project native/tests/dotnet "-p:NativeTorrentLibrary=$env:GITHUB_WORKSPACE/.native-cache/sdk/win-x64/bin/nexonic_torrent.dll" -- .native-cache/sdk/win-x64/bin/nexonic_torrent.dll
+        run: dotnet run --project native/tests/dotnet "-p:NativeTorrentLibrary=$env:GITHUB_WORKSPACE/.native-cache/sdk/${{ matrix.rid }}/bin/nexonic_torrent.dll" -- .native-cache/sdk/${{ matrix.rid }}/bin/nexonic_torrent.dll
       - name: Tests
         run: dotnet test windows/Tests/Tests.csproj
       - name: Build the app and installer
-        run: ./windows/build.ps1
+        run: ./windows/build.ps1 -Rid ${{ matrix.rid }}
         shell: pwsh
       - name: Bundled ffmpeg runs
         shell: pwsh
@@ -143,9 +153,21 @@ jobs:
           & .tools-cache\windows\yt-dlp\yt-dlp.exe --version
           if ($LASTEXITCODE -ne 0) { throw "the video engine does not run" }
       - name: Upgrade from v0.21.0 preserves data
-        if: startsWith(github.head_ref, 'release/')
+        if: startsWith(github.head_ref, 'release/') && matrix.rid == 'win-x64'
         shell: pwsh
         run: ./scripts/test-windows-upgrade.ps1
+      - name: The Arm build is an Arm program
+        if: matrix.rid == 'win-arm64'
+        shell: pwsh
+        run: |
+          # PE machine type 0xAA64 = ARM64 (the x64 build is 0x8664).
+          foreach ($f in "NexonicDownloadManager.exe", "nexonic-host.exe", "nexonic_torrent.dll") {
+            $b = [IO.File]::ReadAllBytes("build\win\$f"); $pe = [BitConverter]::ToInt32($b, 0x3C)
+            $m = [BitConverter]::ToUInt16($b, $pe + 4)
+            if ($m -ne 0xAA64) { throw "$f is not an ARM64 program (machine 0x$($m.ToString('X')))" }
+          }
+          $v = (Get-Content VERSION).Trim()
+          if (-not (Test-Path "build\NexonicDownloadManager-Setup-$v-arm64.exe")) { throw "the Arm installer was not built" }
       - name: Helper answers a ping
         shell: pwsh
         run: |
@@ -162,7 +184,7 @@ jobs:
           if ($out -notmatch '"ok":true') { throw "no ping answer: $out" }
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: nexonic-download-manager-windows
+          name: nexonic-download-manager-${{ matrix.rid }}
           path: build/*.exe
   extension:
     runs-on: ubuntu-latest

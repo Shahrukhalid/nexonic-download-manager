@@ -149,6 +149,8 @@ public struct DownloadQueue: Codable, Identifiable, Equatable, Sendable {
     public var days: [Int]  // 1 = Monday … 7 = Sunday
     public var afterDone: AfterQueue
     public var lastStartDay: String?
+    /// Wake the Mac from sleep for the start time (an optional so lists saved by older versions still load).
+    public var wakeToStart: Bool?
 
     public init(id: String = UUID().uuidString, name: String, running: Bool = false, maxActive: Int = 3) {
         self.id = id
@@ -189,6 +191,24 @@ public enum QueueClock {
         guard q.startEnabled, !q.running, q.days.contains(weekday(date, calendar: calendar)),
               q.lastStartDay != dayKey(date, calendar: calendar) else { return false }
         return hhmm(date, calendar: calendar) == q.startTime
+    }
+
+    /// The `pmset` arguments that wake the Mac one minute before the queue starts, on the queue's days; nil when the
+    /// queue has no start time or no days. pmset keeps one repeating wake, so this replaces any earlier one.
+    public static func wakeArguments(_ q: DownloadQueue) -> [String]? {
+        guard q.startEnabled, !q.days.isEmpty else { return nil }
+        let p = q.startTime.split(separator: ":").compactMap { Int($0) }
+        guard p.count == 2, (0..<24).contains(p[0]), (0..<60).contains(p[1]) else { return nil }
+        var minutes = p[0] * 60 + p[1]
+        var days = Set(q.days.filter { (1...7).contains($0) })
+        if minutes == 0 {  // just before midnight of the day before
+            minutes = 24 * 60
+            days = Set(days.map { $0 == 1 ? 7 : $0 - 1 })
+        }
+        minutes -= 1
+        let letters = Array("MTWRFSU")
+        let code = String(days.sorted().map { letters[$0 - 1] })
+        return ["repeat", "wakeorpoweron", code, String(format: "%02d:%02d:00", minutes / 60, minutes % 60)]
     }
 
     public static func shouldStop(_ q: DownloadQueue, at date: Date, calendar: Calendar = .current) -> Bool {

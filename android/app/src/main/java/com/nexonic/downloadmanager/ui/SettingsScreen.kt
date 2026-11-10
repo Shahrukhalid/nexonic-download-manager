@@ -182,6 +182,21 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
             }
             Toggle("Ask before downloading", "Show the download window when the browser starts a download.", ask) { ask = it; s.askBeforeDownload = it }
             Toggle("Folders by type", "Save into Nexonic/Video, /Music, /Documents…", folders) { folders = it; s.categoryFolders = it }
+            // Default browser: links from other apps open here (pages in the built-in browser, files as downloads).
+            val roles = remember { context.getSystemService(android.app.role.RoleManager::class.java) }
+            var isDefault by remember { mutableStateOf(roles?.isRoleHeld(android.app.role.RoleManager.ROLE_BROWSER) == true) }
+            val askRole = androidx.activity.compose.rememberLauncherForActivityResult(
+                androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+            ) { isDefault = roles?.isRoleHeld(android.app.role.RoleManager.ROLE_BROWSER) == true }
+            Text(
+                tr(if (isDefault) "Nexonic opens your links (it is the default browser)." else "Open links from other apps with Nexonic"),
+                style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp),
+            )
+            TextButton(onClick = {
+                val available = roles?.isRoleAvailable(android.app.role.RoleManager.ROLE_BROWSER) == true
+                if (available && !isDefault) askRole.launch(roles!!.createRequestRoleIntent(android.app.role.RoleManager.ROLE_BROWSER))
+                else runCatching { context.startActivity(Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)) }
+            }) { Text(tr(if (isDefault) "Change the default browser" else "Make Nexonic the default browser")) }
             var categoriesText by remember { mutableStateOf(com.nexonic.downloadmanager.core.CustomCategory.toLines(s.customCategories)) }
             var categoriesProblem by remember { mutableStateOf<String?>(null) }
             OutlinedTextField(
