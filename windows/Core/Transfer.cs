@@ -46,7 +46,7 @@ public sealed class Transfer : IDownloader
 
     string TargetFolder()
     {
-        return FileCategories.TargetFolder(Record.Folder, Record.FileName, sortIntoCategories);
+        return FileCategories.TargetFolder(Record.Folder, Record.FileName, sortIntoCategories, Record.Url);
     }
 
     readonly TransferOptions options;

@@ -586,9 +586,13 @@ public static partial class Dialogs
         };
 
         var categories = Tab("Categories");
-        Hint(categories, "Your own file types and their folder, one per line: Name: types > folder. The folder can be a full path or a folder " +
-                         "inside the download folder (left out: the category's name). They come before the built-in types and apply even when " +
-                         "\"Put each type in its own folder\" is off.");
+        Hint(categories, "Your own categories, one per line, in the order they are checked: [icon] Name: types @ sites > folder. " +
+                         "The icon, the sites and the folder can be left out. Sites limit a category to files from those addresses " +
+                         "(example.com includes its subdomains; * matches anything, as in github.com/*/releases); with sites and no types, " +
+                         "every file from those sites goes there. The folder can be a full path or a folder inside the download folder " +
+                         "(left out: the category's name). Rename or reorder a category by editing its line. Your categories come before the " +
+                         "built-in types, appear in the sidebar and apply even when \"Put each type in its own folder\" is off. " +
+                         "Example: 📚 Comics: cbz cbr cb7 > Comics");
         var categoryText = new TextBox { Text = CustomCategory.ToLines(s.CustomCategories), AcceptsReturn = true, TextWrapping = TextWrapping.NoWrap,
             Height = 220, Margin = new Thickness(0, 8, 0, 0), Watermark = "Comics: cbz cbr cb7 > Comics\nE-books: epub mobi azw3 > /home/me/Books" };
         AutomationProperties.SetName(categoryText, "Your categories, one per line");

@@ -109,6 +109,12 @@ public partial class MainWindow : Window
         Types("ucat:");
         Entry(L.T("Finished"), "finished");
         Types("fcat:");
+        if (FileCategories.Custom.Count > 0)
+        {
+            // The user's own categories, in their order (Options → Categories), with their icons.
+            Header(L.T("Categories"));
+            foreach (var c in FileCategories.Custom) Entry((c.Icon.Length > 0 ? c.Icon + " " : "") + c.Name, "ccat:" + c.Name);
+        }
         Header(L.T("Queues"));
         foreach (var q in manager.Queues) Entry((q.Running ? "▶ " : "⏸ ") + (q.IsMain ? L.T(q.Name) : q.Name), "queue:" + q.Id);
         Sidebar.SelectedItem = Sidebar.Items.OfType<ListBoxItem>().FirstOrDefault(i => (string?)i.Tag == filter)
@@ -126,6 +132,7 @@ public partial class MainWindow : Window
         _ when f.StartsWith("ucat:") => r.Status != DownloadStatus.Finished && r.Category.ToString() == f[5..],
         _ when f.StartsWith("fcat:") => r.Status == DownloadStatus.Finished && r.Category.ToString() == f[5..],
         _ when f.StartsWith("queue:") => r.Queue == f[6..],
+        _ when f.StartsWith("ccat:") => FileCategories.CustomFor(r.FileName, r.Url)?.Name == f[5..],
         _ => true,
     };
 
@@ -418,7 +425,7 @@ public partial class MainWindow : Window
     void OnFeeds(object s, RoutedEventArgs e) => Dialogs.Feeds(this, manager, feeds, AddFeedItem);
 
     void OnBatch(object s, RoutedEventArgs e) => Dialogs.Batch(this, manager, CurrentQueue);
-    void OnSettings(object s, RoutedEventArgs e) => Dialogs.Options(this, manager);
+    void OnSettings(object s, RoutedEventArgs e) { Dialogs.Options(this, manager); BuildSidebar(); }
     void OnHelp(object s, RoutedEventArgs e) => HelpWindows.ShowHelp(this);
     void OnAbout(object s, RoutedEventArgs e) => HelpWindows.ShowAbout(this);
     void OnSupport(object s, RoutedEventArgs e) => HelpWindows.Open(HelpWindows.Support);

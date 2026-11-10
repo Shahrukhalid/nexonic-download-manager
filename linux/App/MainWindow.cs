@@ -222,6 +222,8 @@ public sealed class MainWindow : Window
     void OpenBatch() => _ = Dialogs.Batch(this, manager, CurrentQueue);
     void ResumeSelected() { foreach (var r in Selected) manager.Resume(r); }
     void StopSelected() { foreach (var r in Selected) manager.Pause(r); }
+    async Task OpenOptions() { await Dialogs.Options(this, manager); BuildSidebar(); }
+
     void StartQueue() { manager.StartQueue(CurrentQueue); BuildSidebar(); }
     void StopQueue() { manager.StopQueue(CurrentQueue); BuildSidebar(); }
 
@@ -264,7 +266,7 @@ public sealed class MainWindow : Window
             Item("Add _Playlist or Channel…", () => _ = OpenPlaylist(""), "Ctrl+Shift+L"),
             Item("_RSS Feeds…", () => _ = Dialogs.Feeds(this, manager, feeds, AddFeedItem)),
             Line(),
-            Item("_Options…", () => _ = Dialogs.Options(this, manager)),
+            Item("_Options…", () => _ = OpenOptions()),
             Line(),
             Item("_Quit", manager.RequestQuit, "Ctrl+Q")));
         menu.Items.Add(Group("_Downloads",
@@ -367,7 +369,7 @@ public sealed class MainWindow : Window
         Gap();
         Tool(Ui.Icons.Globe, "#1F6FEB", "Grabber", "Download files from a website section (Ctrl+Shift+G)", OpenGrabber);
         Tool(Ui.Icons.Batch, "#9A6700", "Batch", "Download a numbered series of files (Ctrl+Shift+B)", OpenBatch);
-        Tool(Ui.Icons.Options, "#6E7781", "Options", "Options", () => _ = Dialogs.Options(this, manager));
+        Tool(Ui.Icons.Options, "#6E7781", "Options", "Options", () => _ = OpenOptions());
 
         var top = new DockPanel { LastChildFill = true };
         var searchBox = new DockPanel { Margin = new Thickness(8, 0, 12, 0), VerticalAlignment = VerticalAlignment.Center };
@@ -609,6 +611,12 @@ public sealed class MainWindow : Window
         Types("ucat:");
         Entry(L.T("Finished"), "finished");
         Types("fcat:");
+        if (FileCategories.Custom.Count > 0)
+        {
+            // The user's own categories, in their order (Options → Categories), with their icons.
+            Header(L.T("Categories"));
+            foreach (var c in FileCategories.Custom) Entry((c.Icon.Length > 0 ? c.Icon + " " : "") + c.Name, "ccat:" + c.Name);
+        }
         Header(L.T("Queues"));
         foreach (var q in manager.Queues) Entry((q.Running ? "▶ " : "⏸ ") + (q.IsMain ? L.T(q.Name) : q.Name), "queue:" + q.Id);
         sidebar.SelectedItem = sidebar.Items.OfType<ListBoxItem>().FirstOrDefault(i => (string?)i.Tag == filter)
@@ -626,6 +634,7 @@ public sealed class MainWindow : Window
         _ when f.StartsWith("ucat:") => r.Status != DownloadStatus.Finished && r.Category.ToString() == f[5..],
         _ when f.StartsWith("fcat:") => r.Status == DownloadStatus.Finished && r.Category.ToString() == f[5..],
         _ when f.StartsWith("queue:") => r.Queue == f[6..],
+        _ when f.StartsWith("ccat:") => FileCategories.CustomFor(r.FileName, r.Url)?.Name == f[5..],
         _ => true,
     };
 

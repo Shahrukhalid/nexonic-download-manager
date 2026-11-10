@@ -184,7 +184,7 @@ public sealed class GalleryTransfer(DownloadRecord record, bool sortIntoCategori
         if (GalleryDl.Asset == null) { Fail(GalleryDl.NotAvailable); return; }
         if (!GalleryDl.EnsureInstalled(step => { Record.VideoStep = step; Changed?.Invoke(Record); })) { Fail(GalleryDl.Missing); return; }
         Record.VideoStep = null;
-        var folder = FileCategories.TargetFolder(Record.Folder, "picture.jpg", sortIntoCategories);
+        var folder = FileCategories.TargetFolder(Record.Folder, "picture.jpg", sortIntoCategories, Record.Url);
         if (Record.SavedPath is { Length: > 0 } earlier && Directory.Exists(earlier)) folder = earlier;
         else folder = Path.Combine(folder, FileNames.Sanitize(Record.FileName.Length > 0 ? Record.FileName : "Gallery"));
         Directory.CreateDirectory(folder);
