@@ -628,6 +628,24 @@ final class DownloadManager: ObservableObject {
         }
     }
 
+    /// Sets the Mac's repeating wake to one minute before this queue starts (pmset needs administrator rights, so macOS
+    /// asks for the password). The result is reported as a notification.
+    func scheduleWake(for queueID: String) {
+        guard let i = queues.firstIndex(where: { $0.id == queueID }), let args = QueueClock.wakeArguments(queues[i]) else {
+            post("Wake not set", "Turn on the start time and pick at least one day first.")
+            return
+        }
+        let name = queues[i].name
+        switch MacWake.apply(args) {
+        case nil:
+            queues[i].wakeToStart = true
+            persist()
+            post("Wake scheduled", "The Mac will wake \(args[3].prefix(5)) on the days of \(name).")
+        case let problem?:
+            post("Wake not set", problem)
+        }
+    }
+
     private func run(_ path: String, _ args: [String]) {
         let p = Process()
         p.executableURL = URL(fileURLWithPath: path)

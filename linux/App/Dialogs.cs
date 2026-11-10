@@ -233,7 +233,12 @@ public static partial class Dialogs
             }
             var stop = new CheckBox { Content = "Stop at (HH:mm)", IsChecked = q.StopEnabled, Margin = new Thickness(0, 10, 0, 2) };
             var stopTime = new TextBox { Text = q.StopTime, Width = 90, HorizontalAlignment = HorizontalAlignment.Left };
-            foreach (var e in new Control[] { start, startTime, days, stop, stopTime }) editor.Children.Add(e);
+            // Waking from sleep: offered only when this computer allows the app to set its wake-up clock.
+            var wakeProblem = LinuxSystem.WakeUnavailable();
+            var wake = new CheckBox { Content = "Wake the computer from sleep to start", IsChecked = q.WakeToStart && wakeProblem == null, IsEnabled = wakeProblem == null, Margin = new Thickness(0, 6, 0, 0) };
+            if (wakeProblem != null) ToolTip.SetTip(wake, wakeProblem);
+            var wakeNote = new TextBlock { Text = wakeProblem ?? "", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = 0.7, IsVisible = wakeProblem != null };
+            foreach (var e in new Control[] { start, startTime, days, wake, wakeNote, stop, stopTime }) editor.Children.Add(e);
 
             Label("Downloads at the same time");
             var active = new TextBox { Text = (q.IsMain ? m.Settings.MaxActive : q.MaxActive).ToString(), Width = 90, HorizontalAlignment = HorizontalAlignment.Left };
@@ -263,6 +268,7 @@ public static partial class Dialogs
                 error.Text = "";
                 if ((name.Text ?? "").Trim().Length > 0 && !q.IsMain) q.Name = name.Text!.Trim();
                 q.StartEnabled = start.IsChecked == true;
+                q.WakeToStart = wake.IsChecked == true && wakeProblem == null;
                 q.StartTime = startTime.Text!.Trim();
                 q.StopEnabled = stop.IsChecked == true;
                 q.StopTime = stopTime.Text!.Trim();

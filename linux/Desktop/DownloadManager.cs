@@ -82,6 +82,7 @@ public sealed partial class DownloadManager
         EnginePaths.FFmpeg = Settings.FFmpegPath?.Trim() ?? "";
         // The app reads the inbox once its windows are ready (CollectInbox), so browser links get the download window.
         Schedule();
+        UpdateWakeTimer();
         Task.Run(SiteVideoTools.Prepare); // keeps the video engine current
     }
 
@@ -541,7 +542,20 @@ public sealed partial class DownloadManager
         if (before != Settings.LastFolder) Write(AppPaths.Settings, Settings);
     }
 
-    public void SaveQueues() => Write(AppPaths.Queues, Queues.ToList());
+    public void SaveQueues()
+    {
+        Write(AppPaths.Queues, Queues.ToList());
+        UpdateWakeTimer();
+    }
+
+    /// <summary>Sets the computer's wake-up clock for the next queue start that should wake it (a minute early).</summary>
+    public void UpdateWakeTimer()
+    {
+        if (!Queues.Any(q => q.WakeToStart) || LinuxSystem.WakeUnavailable() != null) return;
+        var now = DateTime.Now;
+        var next = Queues.Where(q => q.WakeToStart).Select(q => QueueClock.NextStart(q, now.AddMinutes(1))).Where(t => t != null).Min();
+        LinuxSystem.SetWake(next?.AddMinutes(-1));
+    }
 
     void RunTimetable()
     {

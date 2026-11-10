@@ -394,6 +394,13 @@ struct SchedulerSheet: View {
                         .toggleStyle(.button)
                     }
                 }
+                HStack {
+                    Button("Wake the Mac for This Start…") { manager.scheduleWake(for: selected) }
+                        .disabled(!MacWake.available)
+                    Text(MacWake.available ? "Asks for an administrator password once; replaces any repeating wake set before."
+                                           : "This Mac cannot schedule a wake (pmset is missing).")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             }
             Toggle("Stop at", isOn: q.stopEnabled)
             if manager.queues[i].stopEnabled {

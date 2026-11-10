@@ -44,7 +44,24 @@ final class FeatureTests: XCTestCase {
         XCTAssertFalse(SiteGrabber.wanted(URL(string: "https://e.com/files/pic.jpg")!, o))
     }
 
-    func testQueueTimetable() {
+    func testWakeArgumentsAreAMinuteEarlyOnTheQueueDays() {
+        var q = DownloadQueue(name: "Night")
+        XCTAssertNil(QueueClock.wakeArguments(q))  // no start time
+        q.startEnabled = true
+        q.startTime = "02:30"
+        q.days = [1, 3, 7]
+        XCTAssertEqual(QueueClock.wakeArguments(q), ["repeat", "wakeorpoweron", "MWU", "02:29:00"])
+        q.startTime = "00:00"
+        q.days = [1, 5]  // midnight Monday and Friday: wake 23:59 Sunday and Thursday
+        XCTAssertEqual(QueueClock.wakeArguments(q), ["repeat", "wakeorpoweron", "RU", "23:59:00"])
+        q.days = []
+        XCTAssertNil(QueueClock.wakeArguments(q))
+        // Lists saved before the setting existed still load.
+        let old = #"{"id":"a","name":"A","running":false,"maxActive":2,"startEnabled":false,"startTime":"02:00","stopEnabled":false,"stopTime":"08:00","days":[1],"afterDone":"nothing"}"#
+        XCTAssertNil(try JSONDecoder().decode(DownloadQueue.self, from: Data(old.utf8)).wakeToStart)
+    }
+
+        func testQueueTimetable() {
         var cal = Calendar(identifier: .gregorian)
         cal.timeZone = TimeZone(identifier: "UTC")!
         let monday2am = Date(timeIntervalSince1970: 1_793_584_800)  // 2026-11-02 02:00 UTC, a Monday
