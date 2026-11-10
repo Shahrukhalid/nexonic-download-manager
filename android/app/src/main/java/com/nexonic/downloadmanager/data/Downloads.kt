@@ -135,7 +135,7 @@ object Downloads {
                             val base = f.path.substringAfterLast('/')
                             val name = if (files.size == 1) base else FileNames.sanitize(info.name + " - " + base)
                             val mime = android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(base.substringAfterLast('.', "").lowercase())
-                            val saved = Publisher.publish(app, source, name, mime, settings.categoryFolders, settings.saveTree)
+                            val saved = Publisher.publish(app, source, name, mime, settings.categoryFolders, settings.saveTree, item.url)
                             if (first == null) first = saved
                         }
                         update(id) {
@@ -398,7 +398,7 @@ object Downloads {
                         else current.fileName.substringBeforeLast('.', current.fileName) + "." + ext
                     val mime = android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext)
                     val length = file.length()
-                    val saved = Publisher.publish(app, file, name, mime, settings.categoryFolders, settings.saveTree)
+                    val saved = Publisher.publish(app, file, name, mime, settings.categoryFolders, settings.saveTree, current.url)
                     videoDir(id).deleteRecursively()
                     update(id) {
                         it.copy(status = Status.COMPLETE, written = length, size = length, speed = 0,
@@ -445,7 +445,7 @@ object Downloads {
                 synchronized(this@Downloads) { transfers.remove(id) }
                 val current = get(id) ?: return
                 try {
-                    val saved = Publisher.publish(app, partFile(id), current.fileName, mimes[id], settings.categoryFolders, settings.saveTree)
+                    val saved = Publisher.publish(app, partFile(id), current.fileName, mimes[id], settings.categoryFolders, settings.saveTree, current.url)
                     update(id) {
                         it.copy(status = Status.COMPLETE, written = state.written, size = state.size ?: state.written, speed = 0,
                             fileName = saved.name, contentUri = saved.uri.toString(), savedPath = saved.path,

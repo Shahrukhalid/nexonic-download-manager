@@ -182,6 +182,27 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
             }
             Toggle("Ask before downloading", "Show the download window when the browser starts a download.", ask) { ask = it; s.askBeforeDownload = it }
             Toggle("Folders by type", "Save into Nexonic/Video, /Music, /Documents…", folders) { folders = it; s.categoryFolders = it }
+            var categoriesText by remember { mutableStateOf(com.nexonic.downloadmanager.core.CustomCategory.toLines(s.customCategories)) }
+            var categoriesProblem by remember { mutableStateOf<String?>(null) }
+            OutlinedTextField(
+                value = categoriesText,
+                onValueChange = { categoriesText = it; categoriesProblem = null },
+                label = { Text(tr("Your categories")) },
+                isError = categoriesProblem != null,
+                supportingText = {
+                    Text(categoriesProblem ?: tr("One per line, checked in order: [icon] Name: types @ sites > folder. Sites limit a category to files from those addresses (example.com includes its subdomains; * matches anything). The folder is inside Downloads/Nexonic. Example: 📚 Comics: cbz cbr > Comics"))
+                },
+                minLines = 3,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            )
+            TextButton(onClick = {
+                val (list, problem) = com.nexonic.downloadmanager.core.CustomCategory.parse(categoriesText)
+                categoriesProblem = problem
+                if (problem == null) {
+                    s.customCategories = list
+                    categoriesText = com.nexonic.downloadmanager.core.CustomCategory.toLines(list)
+                }
+            }) { Text(tr("Save Categories")) }
             Toggle("Save subtitles with videos", "Subtitles in your phone's language and English, inside the video file.", subtitles) { subtitles = it; s.videoSubtitles = it }
             Text(tr("Save to"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp))
             Hint(if (treeName.isEmpty()) "Downloads/Nexonic on this phone" else treeName)
