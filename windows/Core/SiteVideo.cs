@@ -714,7 +714,7 @@ public sealed class SiteVideoTransfer : IDownloader
         Notify(true);
         if (!SiteVideoTools.EnsureInstalled(step => { Record.VideoStep = step; Notify(true); })) { Fail(SiteVideoTools.Missing); return; }
         Record.VideoStep = null;
-        var folder = FileCategories.TargetFolder(Record.Folder, Record.AudioOnly == true ? "audio.m4a" : "video.mp4", sortIntoCategories);
+        var folder = FileCategories.TargetFolder(Record.Folder, Record.AudioOnly == true ? "audio.m4a" : "video.mp4", sortIntoCategories, Record.Url);
         Directory.CreateDirectory(folder);
         Directory.CreateDirectory(Temp);
         var psi = new ProcessStartInfo(SiteVideoTools.YtDlp)
