@@ -614,9 +614,9 @@ public static class Network
             MaxConnectionsPerServer = Limits.MaxConnections,
             ConnectTimeout = TimeSpan.FromSeconds(Math.Clamp(Options.ConnectTimeoutSeconds, 3, 300)),
         };
-        // DNS over HTTPS for direct connections (with a proxy, the proxy looks the name up).
+        // Encrypted DNS for direct connections (with a proxy, the proxy looks the name up).
         var doh = Options.DnsOverHttps.Trim();
-        var useDoh = NetworkOptions.DnsOverHttpsUrlOk(doh) && (p.Mode is ProxyMode.None or ProxyMode.System) && (p.Mode == ProxyMode.None || !HasSystemProxy());
+        var useDoh = Options.EncryptedDns && (p.Mode is ProxyMode.None or ProxyMode.System) && (p.Mode == ProxyMode.None || !HasSystemProxy());
         var bind = Options.BindAdapter.Trim();
         var ipVersion = Options.IpVersion is "ipv4" or "ipv6" ? Options.IpVersion : "any";
         if (useDoh || bind.Length > 0 || ipVersion != "any")
@@ -647,15 +647,40 @@ public static class Network
         return h;
     }
 
-    /// <summary>The server's addresses (from the system's DNS or a DNS-over-HTTPS server) in the chosen IP version.</summary>
-    public static async Task<IPAddress[]> Resolve(string host, string? doh, string ipVersion, CancellationToken ct)
+    /// <summary>The server's addresses (from the system's DNS, or DNS over TLS / HTTPS when set) in the chosen IP version.
+    /// With encrypted DNS there is never a fallback to the system's DNS: a failed lookup fails the connection.</summary>
+    public static Task<IPAddress[]> Resolve(string host, string? doh, string ipVersion, CancellationToken ct) => Resolve(host, doh, ipVersion, Options, ct);
+
+    /// <summary>The same with the given network settings instead of the app's.</summary>
+    public static async Task<IPAddress[]> Resolve(string host, string? doh, string ipVersion, NetworkOptions options, CancellationToken ct)
     {
-        var all = doh != null ? await DnsOverHttps.ResolveAsync(doh, host, ct) : await Dns.GetHostAddressesAsync(host, ct);
+        IPAddress[] all;
+        if (doh != null && Nexonic.Core.DnsOverTls.ParseServer(options.DnsOverTls) is { } dot) all = await Nexonic.Core.DnsOverTls.ResolveAsync(dot, host, ct);
+        else if (doh != null && NetworkOptions.DnsOverHttpsUrlOk(doh)) all = await DnsOverHttps.ResolveAsync(doh, host, ct);
+        else if (doh != null) throw new HttpRequestException("Encrypted DNS is set up but no server can be used (Options → Connection).");
+        else all = await Dns.GetHostAddressesAsync(host, ct);
         var usable = NetworkOptions.OfVersion(all, ipVersion);
         if (usable.Length == 0 && all.Length > 0)
             throw new HttpRequestException($"{host} has no {(ipVersion == "ipv6" ? "IPv6" : "IPv4")} address (Options → Connection → Internet addresses).");
         return usable;
     }
+
+    /// <summary>An HTTP client for the app's own downloads (engines, updates): system proxy, encrypted DNS when set,
+    /// redirects followed (https never drops to http).</summary>
+    public static HttpClient Client(TimeSpan timeout)
+    {
+        var h = Handler(new ProxySettings { Mode = ProxyMode.System });
+        h.AllowAutoRedirect = true;
+        h.MaxAutomaticRedirections = 10;
+        return new HttpClient(h) { Timeout = timeout };
+    }
+
+    /// <summary>Null when this kind of download may run with the DNS settings; else why not. With strict encrypted DNS,
+    /// programs that look names up themselves (video and gallery engines, torrents) need a proxy that does the lookup.</summary>
+    public static string? StrictDnsBlocks(string what, ProxySettings proxy, NetworkOptions? options = null) =>
+        (options ?? Options) is var o && o.StrictDns && o.EncryptedDns && !(proxy.Mode is ProxyMode.Http or ProxyMode.Socks && proxy.Host.Trim().Length > 0)
+            ? $"Strict encrypted DNS is on: {what} would look names up with the system's DNS. Set a proxy in Options → Connection, or turn strict mode off."
+            : null;
 
     static bool HasSystemProxy()
     {

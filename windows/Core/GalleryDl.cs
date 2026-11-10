@@ -61,7 +61,7 @@ public static class GalleryDl
 
     static async Task InstallAsync(string asset)
     {
-        using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
+        using var http = Network.Client(TimeSpan.FromMinutes(10));
         http.DefaultRequestHeaders.UserAgent.ParseAdd("NexonicDownloadManager");
         var (url, want) = Pick(await http.GetStringAsync(Api), asset) ?? throw new InvalidOperationException("The gallery engine's release has no " + asset);
         var bytes = await http.GetByteArrayAsync(url);
@@ -182,6 +182,7 @@ public sealed class GalleryTransfer(DownloadRecord record, bool sortIntoCategori
         Record.VideoStep = null;
         Changed?.Invoke(Record);
         if (GalleryDl.Asset == null) { Fail(GalleryDl.NotAvailable); return; }
+        if (Network.StrictDnsBlocks("the gallery engine", proxy ?? new ProxySettings()) is { } why) { Fail(why); return; }
         if (!GalleryDl.EnsureInstalled(step => { Record.VideoStep = step; Changed?.Invoke(Record); })) { Fail(GalleryDl.Missing); return; }
         Record.VideoStep = null;
         var folder = FileCategories.TargetFolder(Record.Folder, "picture.jpg", sortIntoCategories, Record.Url);

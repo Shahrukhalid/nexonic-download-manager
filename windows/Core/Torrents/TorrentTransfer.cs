@@ -81,7 +81,7 @@ public sealed record TorrentPeer(string Address, int Port, string Client, double
 public static class TorrentRuntime
 {
     public static string? Unavailable(AppSettings settings) => !settings.TorrentsEnabled ? "Turn on torrents first."
-        : settings.Network.DnsOverHttps.Length > 0 ? "Torrents do not yet support the configured DNS over HTTPS resolver."
+        : settings.Network.EncryptedDns ? "Torrents cannot use encrypted DNS: trackers and peers would be looked up with the system's DNS. Turn encrypted DNS off to use torrents."
         : !File.Exists(NativeTorrentSession.BundledLibrary) ? "The bundled native torrent engine is missing. Reinstall the complete application." : null;
 
     /// <summary>The proxy torrents use: none, the HTTP or SOCKS5 proxy from settings, or the system's web proxy.</summary>

@@ -508,6 +508,11 @@ public static partial class Dialogs
         var connection = Tab("Connection");
         var limit = Box(connection, "Speed limit for all downloads in KB/s (0 = none)", s.SpeedLimitKBps.ToString());
         var activeLimit = Box(connection, "While I use the computer, limit downloads to KB/s (0 = off)", s.ActiveSpeedLimitKBps.ToString());
+        connection.Children.Add(new TextBlock { Text = "Speed limits by time of day (one rule per line)", Margin = new Thickness(0, 10, 0, 2) });
+        var schedule = new TextBox { Text = s.SpeedScheduleText ?? "", AcceptsReturn = true, MinHeight = 48 };
+        connection.Children.Add(schedule);
+        Hint(connection, "days start-end KB/s, for example Mon-Fri 09:00-17:00 300 or Daily 23:00-07:00 0 (0 = no limit). The first rule that " +
+                         "applies replaces the speed limit above; days can be Daily, Weekdays, Weekends, Mon-Fri or Sat,Sun.");
         Hint(connection, "Full speed again after a minute without keyboard or mouse input.");
         var capMB = Box(connection, "Download limit: at most this many MB (0 = no limit)", s.DataCapMB.ToString());
         var capHours = Box(connection, "… every this many hours", s.DataCapHours.ToString());
@@ -536,6 +541,12 @@ public static partial class Dialogs
         var readTimeout = Box(connection, "Reconnect a part that receives nothing for (seconds)", net.ReadTimeoutSeconds.ToString());
         var doh = Box(connection, "DNS over HTTPS server (empty = the system's DNS)", net.DnsOverHttps);
         Hint(connection, "For example " + string.Join(" or ", NetworkOptions.DohServers) + ". Not used through a proxy.");
+        var dot = Box(connection, "DNS over TLS server (address#certificate name; used instead of DNS over HTTPS)", net.DnsOverTls ?? "");
+        Hint(connection, "For example 1.1.1.1#cloudflare-dns.com, 9.9.9.9#dns.quad9.net or 8.8.8.8#dns.google. Not used through a proxy.");
+        var strictDns = Tick(connection, "Strict: never use the system's DNS", net.StrictDns);
+        Hint(connection, "With strict mode, a name that encrypted DNS cannot find is not looked up any other way, and the video engine, the " +
+                         "gallery engine and torrents only run through a proxy (they look names up themselves). Give the DNS over HTTPS server " +
+                         "by its address (https://1.1.1.1/dns-query).");
         connection.Children.Add(new TextBlock { Text = "Internet addresses", Margin = new Thickness(0, 10, 0, 2) });
         var ipVersions = new[] { "any", "ipv4", "ipv6" };
         var ipVersion = new ComboBox { ItemsSource = new[] { "IPv4 and IPv6 (IPv4 first)", "IPv4 only", "IPv6 only" }, SelectedIndex = Math.Max(0, Array.IndexOf(ipVersions, net.IpVersion)), MinWidth = 220 };
@@ -556,7 +567,7 @@ public static partial class Dialogs
         {
             checkResult.Text = "Checking…";
             var keep = Network.Options;
-            Network.Options = new NetworkOptions { ConnectTimeoutSeconds = Ui.Number(connectTimeout.Text, 30), DnsOverHttps = doh.Text ?? "", BindAdapter = adapterNames[Math.Max(0, adapter.SelectedIndex)] }.Clamped();
+            Network.Options = new NetworkOptions { ConnectTimeoutSeconds = Ui.Number(connectTimeout.Text, 30), DnsOverHttps = doh.Text ?? "", DnsOverTls = dot.Text ?? "", BindAdapter = adapterNames[Math.Max(0, adapter.SelectedIndex)] }.Clamped();
             try
             {
                 var proxy = new ProxySettings { Mode = (ProxyMode)Math.Max(0, mode.SelectedIndex), Host = (host.Text ?? "").Trim(), Port = Ui.Number(port.Text, 8080), Username = (puser.Text ?? "").Trim(), Password = ppass.Text ?? "" };
@@ -783,6 +794,8 @@ public static partial class Dialogs
             s.BringToFrontOnBrowserDownload = toFront.IsChecked == true;
             s.SpeedLimitKBps = Ui.Number(limit.Text);
             s.ActiveSpeedLimitKBps = Ui.Number(activeLimit.Text);
+            if (SpeedSchedule.Parse(schedule.Text).Problem is { } scheduleProblem) { error.Text = scheduleProblem; return; }
+            s.SpeedScheduleText = schedule.Text ?? "";
             s.DataCapMB = Math.Max(0, Ui.Number(capMB.Text));
             s.DataCapHours = Math.Clamp(Ui.Number(capHours.Text, 24), 1, 24 * 31);
             s.RememberLastFolder = rememberFolder.IsChecked == true;
@@ -800,7 +813,7 @@ public static partial class Dialogs
             s.MarkDownloads = mark.IsChecked == true;
             s.ScanEnabled = scan.IsChecked == true;
             s.ScanCommand = (scanCmd.Text ?? "").Trim();
-            if (!string.IsNullOrWhiteSpace(doh.Text) && !NetworkOptions.DnsOverHttpsUrlOk(doh.Text)) { error.Text = "The DNS over HTTPS server must be an https:// address."; return; }
+            if (NetworkOptions.DnsProblem(doh.Text, dot.Text, strictDns.IsChecked == true) is { } dnsProblem) { error.Text = dnsProblem; return; }
             if (Adapters.BlocklistProblem(blocklist.Text) is { } blockProblem) { error.Text = blockProblem; return; }
             if ((EnginePaths.Problem(ytdlpPath.Text, "yt-dlp") ?? EnginePaths.Problem(ffmpegPath.Text, "FFmpeg")) is { } toolProblem) { error.Text = toolProblem; return; }
             var (customList, categoryProblem) = CustomCategory.ParseLines(categoryText.Text);
@@ -818,7 +831,7 @@ public static partial class Dialogs
             s.Network = new NetworkOptions
             {
                 MinSegmentKB = Ui.Number(minSeg.Text, 512), Retries = Ui.Number(retries.Text, 6),
-                ConnectTimeoutSeconds = Ui.Number(connectTimeout.Text, 30), ReadTimeoutSeconds = Ui.Number(readTimeout.Text, 60), DnsOverHttps = doh.Text ?? "",
+                ConnectTimeoutSeconds = Ui.Number(connectTimeout.Text, 30), ReadTimeoutSeconds = Ui.Number(readTimeout.Text, 60), DnsOverHttps = doh.Text ?? "", DnsOverTls = dot.Text ?? "", StrictDns = strictDns.IsChecked == true,
                 BindAdapter = adapterNames[Math.Max(0, adapter.SelectedIndex)], TorrentBlocklist = (blocklist.Text ?? ""),
                 IpVersion = ipVersions[Math.Max(0, ipVersion.SelectedIndex)],
             }.Clamped();

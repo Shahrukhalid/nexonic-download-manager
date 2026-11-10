@@ -435,7 +435,7 @@ public static class SiteVideoTools
         const string releases = "https://github.com/yt-dlp/yt-dlp/releases";
         var asset = System.Runtime.InteropServices.RuntimeInformation.OSArchitecture == System.Runtime.InteropServices.Architecture.Arm64
             ? "yt-dlp_linux_aarch64" : "yt-dlp_linux";
-        using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
+        using var http = Network.Client(TimeSpan.FromMinutes(10));
         var sums = await http.GetStringAsync($"{releases}/latest/download/SHA2-256SUMS");
         var want = ChecksumFor(asset, sums) ?? throw new InvalidOperationException("The engine's checksum list has no " + asset);
         var bytes = await http.GetByteArrayAsync($"{releases}/latest/download/{asset}");
@@ -619,7 +619,7 @@ public static class SiteVideoTools
     static async Task UpdateAsync(string current)
     {
         const string releases = "https://github.com/yt-dlp/yt-dlp/releases";
-        using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+        using var http = Network.Client(TimeSpan.FromMinutes(5));
         using var head = await http.SendAsync(new HttpRequestMessage(HttpMethod.Head, releases + "/latest"));
         var tag = head.RequestMessage?.RequestUri?.Segments.LastOrDefault()?.Trim('/') ?? "";
         if (tag.Split('.').Length < 3 || !tag.All(c => char.IsDigit(c) || c == '.') || !Newer(tag, current)) return;
@@ -715,6 +715,7 @@ public sealed class SiteVideoTransfer : IDownloader
         Record.SiteVideo = true;
         Record.VideoStep = null;
         Notify(true);
+        if (Network.StrictDnsBlocks("the video engine", proxy ?? new ProxySettings()) is { } why) { Fail(why); return; }
         if (!SiteVideoTools.EnsureInstalled(step => { Record.VideoStep = step; Notify(true); })) { Fail(SiteVideoTools.Missing); return; }
         Record.VideoStep = null;
         var folder = FileCategories.TargetFolder(Record.Folder, Record.AudioOnly == true ? "audio.m4a" : "video.mp4", sortIntoCategories, Record.Url);

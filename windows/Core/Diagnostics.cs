@@ -25,7 +25,8 @@ public static class NetworkDiagnostics
             return steps;
         }
         var o = Network.Options;
-        var doh = NetworkOptions.DnsOverHttpsUrlOk(o.DnsOverHttps) ? o.DnsOverHttps.Trim() : null;
+        // Encrypted DNS (over TLS or HTTPS) is used when set; Network.Resolve picks which.
+        var doh = o.EncryptedDns ? o.DnsOverHttps.Trim() : null;
         var direct = proxy.Mode == ProxyMode.None;
         steps.Add(new Step("Settings", true, Describe(o, proxy, doh), 0));
 
@@ -37,13 +38,21 @@ public static class NetworkDiagnostics
             addresses = IPAddress.TryParse(uri.Host, out var literal) ? new[] { literal }
                 : await Network.Resolve(uri.Host, doh, o.IpVersion, ct);
             steps.Add(new Step("Name lookup", addresses.Length > 0,
-                addresses.Length > 0 ? $"{uri.Host} → {string.Join(", ", addresses.Take(4))}{(doh != null ? $" (via {new Uri(doh).Host})" : "")}"
+                addresses.Length > 0 ? $"{uri.Host} → {string.Join(", ", addresses.Take(4))}{(doh != null ? $" (via {DnsName(o)})" : "")}"
                     : $"{uri.Host} has no address", watch.ElapsedMilliseconds));
         }
         catch (Exception e) when (e is not OperationCanceledException || !ct.IsCancellationRequested)
         {
             steps.Add(new Step("Name lookup", false, $"{uri.Host}: {Message(e)}", watch.ElapsedMilliseconds));
             if (direct) return steps;
+        }
+
+        // Where the server is (offline database; nothing about the server is sent anywhere for this).
+        if (addresses.Length > 0)
+        {
+            var country = await GeoIp.CountryAsync(addresses[0], ct);
+            if (country != null)
+                steps.Add(new Step("Server location", true, $"{GeoIp.Flag(country)} {CountryName(country)} ({addresses[0]}) · {GeoIp.Attribution}", 0));
         }
 
         // 2. Connection to the server (direct connections only; through a proxy the HTTP step shows the result).
@@ -102,7 +111,8 @@ public static class NetworkDiagnostics
                 (res.RequestMessage?.RequestUri is { } final && final != uri ? $", redirected to {final.Host}" : "") +
                 (res.Content.Headers.ContentType?.MediaType is { } type ? $", {type}" : "") +
                 (size is long s ? $", {FormatSize(s)}" : ", size not given") +
-                (res.Headers.Server.Count > 0 ? $", server {res.Headers.Server}" : "");
+                (res.Headers.Server.Count > 0 ? $", server {res.Headers.Server}" : "") +
+                $", HTTP/{(res.Version.Major >= 2 ? res.Version.Major.ToString() : res.Version.ToString(2))}";
             steps.Add(new Step("Server answer", ok, detail, watch.ElapsedMilliseconds));
             if (ok)
                 steps.Add(code == 206
@@ -110,6 +120,7 @@ public static class NetworkDiagnostics
                     : new Step("Resuming and parts", false, "The server sends only the whole file: downloads cannot resume and use one connection.", 0));
             else if (code is 401 or 403)
                 steps.Add(new Step("Hint", false, "The site needs a login or cookies; start the download from the browser so the extension can pass them on.", 0));
+            if (ok) steps.Add(await SpeedAsync(http, uri, ct));
         }
         catch (Exception e) when (e is not OperationCanceledException || !ct.IsCancellationRequested)
         {
@@ -125,10 +136,52 @@ public static class NetworkDiagnostics
     static string Describe(NetworkOptions o, ProxySettings p, string? doh) => string.Join(", ", new[]
     {
         p.Mode switch { ProxyMode.None => "no proxy", ProxyMode.System => "system proxy", ProxyMode.Socks => $"SOCKS5 proxy {p.Host}:{p.Port}", ProxyMode.Pac => $"proxy script {p.Host}", _ => $"HTTP proxy {p.Host}:{p.Port}" },
-        doh != null ? $"DNS over HTTPS ({new Uri(doh).Host})" : "system DNS",
+        doh != null ? DnsName(o) + (o.StrictDns ? ", strict" : "") : "system DNS",
         o.IpVersion switch { "ipv4" => "IPv4 only", "ipv6" => "IPv6 only", _ => "IPv4 and IPv6" },
         o.BindAdapter.Length > 0 ? $"adapter {o.BindAdapter}" : "any adapter",
     });
+
+    static string CountryName(string code)
+    {
+        try { return new System.Globalization.RegionInfo(code).EnglishName; }
+        catch (ArgumentException) { return code; }
+    }
+
+    /// <summary>A real speed sample: up to 8 MB or 6 seconds of the file, like the start of a download.</summary>
+    static async Task<Step> SpeedAsync(HttpClient http, Uri uri, CancellationToken ct)
+    {
+        var watch = Stopwatch.StartNew();
+        long got = 0;
+        try
+        {
+            using var limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            limit.CancelAfter(TimeSpan.FromSeconds(6));
+            using var res = await Network.SendAsync(http, uri, u =>
+            {
+                var req = new HttpRequestMessage(HttpMethod.Get, u);
+                req.Headers.Range = new RangeHeaderValue(0, 8 * 1024 * 1024 - 1);
+                return req;
+            }, HttpCompletionOption.ResponseHeadersRead, limit.Token);
+            await using var body = await res.Content.ReadAsStreamAsync(limit.Token);
+            var buffer = new byte[64 * 1024];
+            try
+            {
+                int n;
+                while (got < 8 * 1024 * 1024 && (n = await body.ReadAsync(buffer, limit.Token)) > 0) got += n;
+            }
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested) { }  // the time is up: measure what came
+        }
+        catch (Exception e) when (e is HttpRequestException or IOException || e is OperationCanceledException && !ct.IsCancellationRequested)
+        {
+            if (got == 0) return new Step("Speed", false, Message(e), watch.ElapsedMilliseconds);
+        }
+        var seconds = Math.Max(0.001, watch.Elapsed.TotalSeconds);
+        return new Step("Speed", got > 0, got > 0 ? $"{FormatSize((long)(got / seconds))}/s on one connection ({FormatSize(got)} in {seconds:0.0} s)"
+            : "No data arrived", watch.ElapsedMilliseconds);
+    }
+
+    static string DnsName(NetworkOptions o) => DnsOverTls.ParseServer(o.DnsOverTls) is { } t ? $"DNS over TLS ({t.TlsName})"
+        : NetworkOptions.DnsOverHttpsUrlOk(o.DnsOverHttps) ? $"DNS over HTTPS ({new Uri(o.DnsOverHttps.Trim()).Host})" : "system DNS";
 
     static string Protocol(SslProtocols p) => p switch { SslProtocols.Tls13 => "TLS 1.3", SslProtocols.Tls12 => "TLS 1.2", _ => p.ToString() };
 
