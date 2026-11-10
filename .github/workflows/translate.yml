@@ -43,7 +43,7 @@ jobs:
         run: |
           pip install --index-url https://download.pytorch.org/whl/cpu torch==2.5.1
           pip install accelerate==1.1.1
-          pip install ctranslate2==4.8.5 transformers==4.46.3 sentencepiece==0.2.0 protobuf==5.28.3
+          pip install ctranslate2==4.8.5 transformers==4.57.6 sentencepiece==0.2.0 protobuf==5.28.3
           python -c "import ctranslate2; print('CTranslate2', ctranslate2.__version__)"
           ct2-transformers-converter --model "$MODEL_ID" --quantization int8 --low_cpu_mem_usage --output_dir ~/madlad
           python -c "from transformers import AutoTokenizer; AutoTokenizer.from_pretrained('$MODEL_ID').save_pretrained('$HOME/madlad')"
@@ -71,7 +71,7 @@ jobs:
         env:
           LANGS: ${{ inputs.languages }}
         run: |
-          pip install ctranslate2==4.8.5 transformers==4.46.3 sentencepiece==0.2.0 protobuf==5.28.3
+          pip install ctranslate2==4.8.5 transformers==4.57.6 sentencepiece==0.2.0 protobuf==5.28.3
           python -c "import ctranslate2; print('CTranslate2', ctranslate2.__version__)"
           python scripts/translate/translate.py translate --langs "$LANGS" --shard "${{ matrix.shard }}/12" --model ~/madlad --out cache
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7

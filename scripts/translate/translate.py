@@ -125,8 +125,8 @@ def good(english, translated):
 def translate(langs, model_dir, out, batch=24):
     import ctranslate2
     from transformers import AutoTokenizer
-    tok = AutoTokenizer.from_pretrained(model_dir)
-    tr = ctranslate2.Translator(model_dir, device="cpu", compute_type="int8", inter_threads=1, intra_threads=0)
+    tok = AutoTokenizer.from_pretrained(str(model_dir))
+    tr = ctranslate2.Translator(str(model_dir), device="cpu", compute_type="int8", inter_threads=1, intra_threads=0)
     texts = sorted(set(t for app in sources().values() for t in app))
     out.mkdir(parents=True, exist_ok=True)
     for code in langs:
