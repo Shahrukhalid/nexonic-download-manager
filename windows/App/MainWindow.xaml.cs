@@ -429,8 +429,8 @@ public partial class MainWindow : Window
     {
         var d = new Microsoft.Win32.OpenFileDialog { Title = "Open Metalink File", Filter = "Metalink (*.meta4;*.metalink)|*.meta4;*.metalink" };
         if (d.ShowDialog(this) != true) return;
-        var info = new FileInfo(d.FileName);
-        var n = info.Length <= 4_000_000 ? manager.AddMetalink(File.ReadAllText(d.FileName), new AddOptions { QueueId = CurrentQueue }) : 0;
+        var info = new System.IO.FileInfo(d.FileName);
+        var n = info.Length <= 4_000_000 ? manager.AddMetalink(System.IO.File.ReadAllText(d.FileName), new AddOptions { QueueId = CurrentQueue }) : 0;
         if (n == 0) MessageBox.Show(this, "This file has no downloads in it, or it is not a Metalink file.", "Open Metalink File", MessageBoxButton.OK, MessageBoxImage.Information);
     }
     void OnSettings(object s, RoutedEventArgs e) { Dialogs.Options(this, manager); BuildSidebar(); }
