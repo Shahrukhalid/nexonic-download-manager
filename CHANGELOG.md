@@ -1,3 +1,33 @@
+## 0.26.0
+
+- **Smaller downloads:** the video engine is no longer in the installers. The app downloads its official release the
+  first time you save a video (checked against its published SHA-256 list) and keeps it current. The Linux download went
+  from 204 MB to 78 MB.
+- **Download limit** (all apps): at most N MB every H hours. When it is reached, downloads stop and continue by
+  themselves when the next period starts (useful on mobile data or capped connections).
+- **Proxy scripts (PAC)** on Windows, Linux and Mac: a script from a web address or a file decides the proxy for each
+  address. On Windows and Linux it runs in the bundled script engine with no file, program or module access.
+- **Link Grabber** (Windows, Linux and Mac): paste text with links or a web page address; links are grouped into
+  packages (the parts of a split archive together), each in its own folder, and unpacked when all of it is done. On
+  Android and iPhone, Add finds the links in any pasted text.
+- **Whole galleries** (Windows, Linux and Mac): save every picture of a gallery or profile on sites like Reddit, Pixiv,
+  DeviantArt and Imgur. The gallery engine is downloaded the first time it is used.
+  Galleries that need you signed in work too: the site's cookies and your login are passed to it privately, never on
+  the command line.
+- **List columns:** Finished, Folder and Can Resume, shown or hidden from View → Columns (on Mac, right-click a column
+  title). The Add windows start in the folder you used last time.
+- **Appearance:** Light, Dark or the same as the system, now also on Windows, Mac, Android and iPhone.
+- **Unpacking:** split archives wait until every part is downloaded; on Mac, .7z, .rar and .tar unpack too.
+- **Queues:** drag downloads onto a queue in the sidebar to move them; Start/Stop All Queues and Open Downloads Folder
+  in the tray and menu bar; Windows can wake the computer from sleep to start a queue.
+- **Command line:** `ndm` accepts IDM-style switches (`/d`, `/p`, `/f`, `/a`), and `ndm list --json` prints the list
+  for scripts (no cookies or passwords).
+- **Crash reports** are saved on your device (never sent anywhere); Help → Crash Reports opens them.
+- **Check Server…** in a download's menu checks the link step by step; **several QR codes** when the selected links
+  don't fit in one; **portable mode** with a `portable.txt` file next to the app.
+- **110 languages** on every app. 15 are reviewed; the others are machine translations, marked as such.
+- Dates in the list follow your region. The browser helper's server mode, phone pairing and Docker image were removed.
+
 ## 0.25.0
 
 - **Remote management (Windows and Linux, off by default):** Options → Remote, then Pair a Phone. The phone's camera opens
