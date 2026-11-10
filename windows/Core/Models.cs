@@ -233,6 +233,8 @@ public sealed class AppSettings
     public int ActiveSpeedLimitKBps { get; set; }
     /// <summary>Speed limits by time of day, one rule per line (see <see cref="SpeedSchedule"/>).</summary>
     public string SpeedScheduleText { get; set; } = "";
+    /// <summary>A download that repeats one you have: "ask" (default), "skip" or "again" (saved under a new name).</summary>
+    public string DuplicateAction { get; set; } = "ask";
     /// <summary>Language code ("ur", "de"…); empty = the system's language.</summary>
     public string Language { get; set; } = "";
     public bool ShowCompleteDialog { get; set; } = true;

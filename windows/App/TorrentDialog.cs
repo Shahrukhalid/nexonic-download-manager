@@ -160,6 +160,30 @@ public static partial class Dialogs
             }
             catch (Exception e) { Say(e.Message, true); }
         }
+        if (DebridTorrents.Unsupported(Debrid.Settings) == null)
+            f.AddButton("Download with Debrid", async () =>
+            {
+                // The debrid service fetches the torrent; the files come here over HTTP (this computer joins no swarm).
+                var magnet = input.Text.Trim();
+                var destination = folder.Text.Trim();
+                if (!System.IO.Path.IsPathFullyQualified(destination)) { Say("Choose an absolute destination folder.", true); return; }
+                Say("Sending the magnet link to " + DebridSettings.Title(Debrid.Settings.Service) + "…");
+                try
+                {
+                    using var http = new System.Net.Http.HttpClient(Network.Handler(manager.Settings.Proxy)) { Timeout = TimeSpan.FromSeconds(60) };
+                    var list = await DebridTorrents.ResolveAsync(Debrid.Settings, magnet, http, t => Say(t), cancel.Token);
+                    // Several files keep the torrent's name as their folder.
+                    var dn = System.Web.HttpUtility.ParseQueryString(magnet.Length > 8 ? magnet[8..] : "")["dn"];
+                    var target = list.Count > 1 && FileNames.Sanitize(dn ?? "") is { Length: > 0 } sub ? System.IO.Path.Combine(destination, sub) : destination;
+                    foreach (var file in list)
+                        manager.Add(new DownloadJob(file.Url, file.Name), new AddOptions { Folder = target, QueueId = ((DownloadQueue)queue.SelectedItem).Id, Start = true });
+                    f.Close();
+                }
+                catch (Exception e) when (e is InvalidOperationException or System.Net.Http.HttpRequestException or TaskCanceledException)
+                {
+                    if (!cancel.IsCancellationRequested) Say(e.Message, true);
+                }
+            });
         f.AddButton("Cancel", f.Close, isCancel: true);
         f.AddButton("Download Later", () => Add(false));
         f.AddButton("Start Download", () => Add(true), isDefault: true);

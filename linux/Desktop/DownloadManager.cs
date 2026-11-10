@@ -22,7 +22,8 @@ public sealed class AddOptions
     public string? Package { get; set; }   // Link Grabber package name
     public bool Unpack { get; set; }       // unpack the package's archives when all of it is done
     public bool Gallery { get; set; }
-    public string Mirrors { get; set; } = "";  // more addresses of the same file, one per line      // the whole gallery with the gallery engine
+    public string Mirrors { get; set; } = "";  // more addresses of the same file, one per line
+    public bool SkipDuplicates { get; set; }   // leave out links that repeat a download you have (see Duplicates)      // the whole gallery with the gallery engine
 }
 
 /// <summary>
@@ -122,6 +123,11 @@ public sealed partial class DownloadManager
         return n;
     }
 
+    /// <summary>True when this link repeats a download you have (see <see cref="Duplicates"/>).</summary>
+    public bool IsDuplicate(string url, string? fileName, string? folder) =>
+        Duplicates.Find(Rows.Select(r => r.Record), url, fileName ?? FileNames.FromUrl(url),
+            FileCategories.TargetFolder(folder ?? Settings.Folder, fileName ?? FileNames.FromUrl(url), Settings.SortIntoCategoryFolders, url)).Kind != Duplicates.Kind.None;
+
     public int AddLinks(string text, AddOptions? o = null)
     {
         o ??= new AddOptions();
@@ -141,6 +147,7 @@ public sealed partial class DownloadManager
         {
             var job = new DownloadJob(line, lines.Count == 1 && !string.IsNullOrWhiteSpace(o.FileName) ? o.FileName : null);
             if (lines.Count == 1) job = job with { InfoJson = o.InfoJson, MaxHeight = o.MaxHeight };
+            if (o.SkipDuplicates && job.IsValid && IsDuplicate(job.Url, job.FileName, o.Folder)) continue;
             if (job.IsValid) { Add(job, o); n++; }
         }
         return n;

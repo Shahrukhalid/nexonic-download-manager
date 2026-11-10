@@ -100,8 +100,17 @@ public static partial class Dialogs
             }
             if ((sum.Text ?? "").Trim().Length > 0 && Checksum.Parse(sum.Text!) == null) { error.Text = "The checksum is not a valid value."; return; }
             m.RememberFolder(folder.Text);
+            // Links that repeat a download you have: ask, skip or download again (under a new name), as set in Options.
+            var target = (folder.Text ?? "").Trim().Length > 0 ? folder.Text!.Trim() : m.Settings.Folder;
+            var repeats = CurlCommand.Looks(input) ? new List<string>() : Links.Split(input).Where(l => m.IsDuplicate(l, null, target)).ToList();
+            var skipRepeats = m.Settings.DuplicateAction == "skip";
+            if (repeats.Count > 0 && m.Settings.DuplicateAction == "ask")
+                skipRepeats = !await Ui.Confirm(f.Window, "Already downloaded",
+                    $"{repeats.Count} of these links repeat downloads you have:\n{string.Join("\n", repeats.Take(5))}\n\nDownload them again? They are saved under a new name; nothing is overwritten.",
+                    "Download Again", "Skip Them");
             var n = m.AddLinks(text.Text ?? "", new AddOptions
             {
+                SkipDuplicates = skipRepeats,
                 Folder = (folder.Text ?? "").Trim().Length > 0 ? folder.Text!.Trim() : m.Settings.Folder,
                 FileName = (name.Text ?? "").Trim(),
                 QueueId = Form.QueueId(queue),
@@ -119,7 +128,8 @@ public static partial class Dialogs
             });
             if (n == 0)
             {
-                error.Text = CurlCommand.Looks(text.Text) && CurlCommand.Parse(text.Text!).Problem is { } why ? why : "Paste at least one http or https link.";
+                error.Text = CurlCommand.Looks(text.Text) && CurlCommand.Parse(text.Text!).Problem is { } why ? why
+                    : repeats.Count > 0 && skipRepeats ? "All of these links are downloads you have already." : "Paste at least one http or https link.";
                 return;
             }
             f.Close();
@@ -464,6 +474,10 @@ public static partial class Dialogs
         void Heading(StackPanel p, string text) => p.Children.Add(new TextBlock { Text = text, FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 16, 0, 0) });
 
         var general = Tab("General");
+        general.Children.Add(new TextBlock { Text = "When a link repeats a download I have", Margin = new Thickness(0, 4, 0, 2) });
+        var dupChoices = new[] { "ask", "skip", "again" };
+        var dupAction = new ComboBox { ItemsSource = new[] { "Ask me", "Skip it", "Download again under a new name" }, SelectedIndex = Math.Max(0, Array.IndexOf(dupChoices, s.DuplicateAction)) };
+        general.Children.Add(dupAction);
         var autoConn = Tick(general, "Choose the number of connections automatically (recommended)", s.AutoConnections);
         var autoMax = Box(general, "Most connections in automatic mode (1-256)", s.AutoMaxConnections.ToString());
         var conn = Box(general, "Connections per download when not automatic (1-256)", s.Connections.ToString());
@@ -776,6 +790,7 @@ public static partial class Dialogs
             { error.Text = "Enter the proxy script's web address (http:// or https://) or the full path of the file."; return; }
             s.Connections = Math.Clamp(Ui.Number(conn.Text, 8), 1, Limits.MaxConnections);
             s.AutoConnections = autoConn.IsChecked == true;
+            s.DuplicateAction = dupChoices[Math.Max(0, dupAction.SelectedIndex)];
             s.AutoMaxConnections = Math.Clamp(Ui.Number(autoMax.Text, 32), 1, Limits.MaxConnections);
             s.MaxActive = Math.Clamp(Ui.Number(active.Text, 3), 1, 10);
             s.Folder = (folder.Text ?? "").Trim().Length > 0 ? folder.Text!.Trim() : s.Folder;

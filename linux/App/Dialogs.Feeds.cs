@@ -62,12 +62,41 @@ public static partial class Dialogs
         var name = f.Text("Name (optional)", feed.Name);
         var include = f.Text("Download items whose title has all of these words (empty = every item)", feed.Include);
         var exclude = f.Text("Skip items whose title has any of these words", feed.Exclude);
+        var quality = f.Text("Qualities, best first (for example 2160p 1080p 720p; empty = any)", feed.Quality);
+        var minSize = f.Text("Smallest size in MB (0 = no limit)", feed.MinSizeMB.ToString());
+        var maxSize = f.Text("Largest size in MB (0 = no limit)", feed.MaxSizeMB.ToString());
+        var episodes = f.Check("Download each episode once (S01E02, 1x02 or a date), in the best quality offered", feed.OneOfEachEpisode);
         var folder = f.Folder(feed.Folder.Length > 0 ? feed.Folder : m.Settings.Folder);
         var interval = f.Text("Check every (minutes, 15 or more)", feed.IntervalMinutes.ToString());
         var skip = f.Check("Only download items that appear after the feed is added", feed.SkipExisting);
         var on = f.Check("Check this feed", feed.Enabled);
         var error = f.Error();
+        var preview = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 12 };
+        f.Body.Children.Add(preview);
+        FeedSubscription Draft() => new()
+        {
+            Url = (url.Text ?? "").Trim(), Include = (include.Text ?? "").Trim(), Exclude = (exclude.Text ?? "").Trim(),
+            Quality = (quality.Text ?? "").Trim(), MinSizeMB = Math.Max(0, Ui.Number(minSize.Text, 0)), MaxSizeMB = Math.Max(0, Ui.Number(maxSize.Text, 0)),
+            OneOfEachEpisode = episodes.IsChecked == true, Episodes = feed.Episodes.ToList(),
+        };
         var saved = false;
+        f.AddButton("Preview", async () =>
+        {
+            if ((Nexonic.Core.Feeds.RuleProblem(include.Text ?? "") ?? Nexonic.Core.Feeds.RuleProblem(exclude.Text ?? "")) is { } bad) { error.Text = bad; return; }
+            preview.Text = "Reading the feed…";
+            try
+            {
+                using var http = new System.Net.Http.HttpClient(Network.Handler(m.Settings.Proxy)) { Timeout = TimeSpan.FromSeconds(30) };
+                var result = await Nexonic.Core.Feeds.PreviewAsync(Draft(), http);
+                var take = result.Count(x => x.Decision == Nexonic.Core.Feeds.Decision.Download);
+                preview.Text = $"{take} of {result.Count} items would be downloaded now:\n" + string.Join("\n", result.Take(12).Select(x =>
+                    (x.Decision == Nexonic.Core.Feeds.Decision.Download ? "✓ " : "– ") + x.Item.Title + "  ·  " + Nexonic.Core.Feeds.Explain(x.Decision)));
+            }
+            catch (Exception e) when (e is System.Net.Http.HttpRequestException or InvalidOperationException or System.Xml.XmlException or System.IO.InvalidDataException or TaskCanceledException)
+            {
+                preview.Text = "The feed could not be read: " + e.Message;
+            }
+        });
         f.AddButton("Cancel", f.Close, isCancel: true);
         f.AddButton("Save", () =>
         {
@@ -79,6 +108,11 @@ public static partial class Dialogs
             feed.Name = (name.Text ?? "").Trim();
             feed.Include = (include.Text ?? "").Trim();
             feed.Exclude = (exclude.Text ?? "").Trim();
+            var draft = Draft();
+            feed.Quality = draft.Quality;
+            feed.MinSizeMB = draft.MinSizeMB;
+            feed.MaxSizeMB = draft.MaxSizeMB;
+            feed.OneOfEachEpisode = draft.OneOfEachEpisode;
             var dir = (folder.Text ?? "").Trim();
             feed.Folder = dir == m.Settings.Folder ? "" : dir;
             feed.IntervalMinutes = Math.Clamp(Ui.Number(interval.Text, 30), 15, 1440);
