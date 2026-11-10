@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -146,6 +147,20 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
                 singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
             )
+            var schedule by remember { mutableStateOf(s.speedSchedule) }
+            val scheduleProblem = remember(schedule) { com.nexonic.downloadmanager.core.SpeedSchedule.parse(schedule).problem }
+            OutlinedTextField(
+                value = schedule,
+                onValueChange = { v ->
+                    schedule = v
+                    if (com.nexonic.downloadmanager.core.SpeedSchedule.parse(v).problem == null) { s.speedSchedule = v; Downloads.applySpeedLimit() }
+                },
+                label = { Text(tr("Speed schedule (one rule per line)")) },
+                placeholder = { Text("Mon-Fri 09:00-17:00 300") },
+                isError = scheduleProblem != null,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
+            )
+            Hint(scheduleProblem ?: "Days, start-end time and KB/s (0 = no limit), for example weekends 23:00-07:00 0. The first rule that applies wins; at other times the speed limit above applies.")
             Toggle("Wi-Fi only", "Wait for Wi-Fi or another unmetered network before downloading.", wifiOnly) {
                 wifiOnly = it; s.wifiOnly = it; Downloads.pump()
             }

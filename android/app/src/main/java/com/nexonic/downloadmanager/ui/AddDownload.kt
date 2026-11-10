@@ -114,6 +114,11 @@ fun AddDownloadSheet(given: Offer?, text: String?, onDone: (String?) -> Unit) {
         l.distinct()
     }
     val single = links.singleOrNull()
+    // A link that is already in the list (or was downloaded before) is pointed out; adding it again saves a new copy.
+    val repeat = remember(links) {
+        val list = Downloads.items.value
+        links.mapNotNull { u -> list.firstOrNull { com.nexonic.downloadmanager.core.Duplicates.same(it.url, u) } }
+    }
 
     // Ask the server for the name and size of a single link.
     LaunchedEffect(single, user, password) {
@@ -220,6 +225,15 @@ fun AddDownloadSheet(given: Offer?, text: String?, onDone: (String?) -> Unit) {
                 }
             } else {
                 Text(given.url, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+            if (repeat.isNotEmpty()) {
+                val r = repeat.first()
+                Text(
+                    if (links.size > 1) tr("Some of these links are already in the list:") + " ${repeat.size}"
+                    else if (r.status == com.nexonic.downloadmanager.data.Status.COMPLETE) tr("This file was downloaded before:") + " ${r.fileName}"
+                    else tr("This link is already in the list:") + " ${r.fileName}",
+                    color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.bodySmall,
+                )
             }
             curl?.problem?.let { Text(tr(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
             curl?.request?.ignored?.takeIf { it.isNotEmpty() }?.let {

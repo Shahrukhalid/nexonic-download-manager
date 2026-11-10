@@ -14,6 +14,7 @@ import com.nexonic.downloadmanager.video.VideoJob
 import com.nexonic.downloadmanager.video.VideoEngine
 import com.nexonic.downloadmanager.core.Links
 import com.nexonic.downloadmanager.core.SpeedLimiter
+import com.nexonic.downloadmanager.core.SpeedSchedule
 import com.nexonic.downloadmanager.core.Transfer
 import com.nexonic.downloadmanager.core.TransferListener
 import com.nexonic.downloadmanager.core.TransferState
@@ -76,7 +77,8 @@ object Downloads {
         store = ListStore(app)
         secrets = SecretStore(app)
         settings = Settings(app)
-        limiter.bytesPerSecond = settings.speedLimitKB * 1024
+        applySpeedLimit()
+        main.postDelayed(object : Runnable { override fun run() { applySpeedLimit(); main.postDelayed(this, 30_000) } }, 30_000)
         cap = settings.dataCap
         Vpn.init(app, settings.vpnOnly)
         // Downloads that were running when the app stopped continue.
@@ -312,7 +314,13 @@ object Downloads {
 
     fun setSpeedLimit(kb: Long) {
         settings.speedLimitKB = kb
-        limiter.bytesPerSecond = kb * 1024
+        applySpeedLimit()
+    }
+
+    /** The speed schedule's limit when one of its rules applies now, else the normal limit. */
+    fun applySpeedLimit() {
+        val scheduled = SpeedSchedule.parse(settings.speedSchedule).rules.let { SpeedSchedule.limitAt(it, java.time.LocalDateTime.now()) }
+        limiter.bytesPerSecond = (scheduled?.toLong() ?: settings.speedLimitKB) * 1024
     }
 
     private val _waitingForVpn = MutableStateFlow(false)
