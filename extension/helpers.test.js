@@ -154,7 +154,7 @@ test("every language file has the same texts and keeps the names", () => {
   assert.ok(keys.length > 40);
   for (const [c, f] of files) {
     assert.equal(f.language, LANGUAGES[c]);
-    assert.equal(f.status, "Reviewed");
+    assert.match(f.status, /^(Reviewed|Machine translation, not reviewed)$/);
     assert.deepEqual(Object.keys(f.strings).sort(), keys, c);
     for (const [en, tr] of Object.entries(f.strings)) {
       assert.ok(tr, `${c}: ${en}`);

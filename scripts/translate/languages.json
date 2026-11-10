@@ -1,0 +1,995 @@
+{
+ "comment": "Interface languages for every app. model = the MADLAD-400 language tag; apple = the .lproj name; chrome = the browser stores' _locales name (null = the stores don't list the language). reviewed = checked by a person; the rest are machine translations.",
+ "languages": [
+  {
+   "code": "en",
+   "model": "en",
+   "name": "English",
+   "rtl": false,
+   "apple": "en",
+   "chrome": "en",
+   "reviewed": true
+  },
+  {
+   "code": "ar",
+   "model": "ar",
+   "name": "العربية",
+   "rtl": true,
+   "apple": "ar",
+   "chrome": "ar",
+   "reviewed": true
+  },
+  {
+   "code": "de",
+   "model": "de",
+   "name": "Deutsch",
+   "rtl": false,
+   "apple": "de",
+   "chrome": "de",
+   "reviewed": true
+  },
+  {
+   "code": "es",
+   "model": "es",
+   "name": "Español",
+   "rtl": false,
+   "apple": "es",
+   "chrome": "es",
+   "reviewed": true
+  },
+  {
+   "code": "fr",
+   "model": "fr",
+   "name": "Français",
+   "rtl": false,
+   "apple": "fr",
+   "chrome": "fr",
+   "reviewed": true
+  },
+  {
+   "code": "hi",
+   "model": "hi",
+   "name": "हिन्दी",
+   "rtl": false,
+   "apple": "hi",
+   "chrome": "hi",
+   "reviewed": true
+  },
+  {
+   "code": "id",
+   "model": "id",
+   "name": "Bahasa Indonesia",
+   "rtl": false,
+   "apple": "id",
+   "chrome": "id",
+   "reviewed": true
+  },
+  {
+   "code": "ja",
+   "model": "ja",
+   "name": "日本語",
+   "rtl": false,
+   "apple": "ja",
+   "chrome": "ja",
+   "reviewed": true
+  },
+  {
+   "code": "ko",
+   "model": "ko",
+   "name": "한국어",
+   "rtl": false,
+   "apple": "ko",
+   "chrome": "ko",
+   "reviewed": true
+  },
+  {
+   "code": "pt",
+   "model": "pt",
+   "name": "Português",
+   "rtl": false,
+   "apple": "pt",
+   "chrome": "pt_BR",
+   "reviewed": true
+  },
+  {
+   "code": "ru",
+   "model": "ru",
+   "name": "Русский",
+   "rtl": false,
+   "apple": "ru",
+   "chrome": "ru",
+   "reviewed": true
+  },
+  {
+   "code": "tr",
+   "model": "tr",
+   "name": "Türkçe",
+   "rtl": false,
+   "apple": "tr",
+   "chrome": "tr",
+   "reviewed": true
+  },
+  {
+   "code": "ur",
+   "model": "ur",
+   "name": "اردو",
+   "rtl": true,
+   "apple": "ur",
+   "chrome": null,
+   "reviewed": true
+  },
+  {
+   "code": "zh-cn",
+   "model": "zh",
+   "name": "简体中文",
+   "rtl": false,
+   "apple": "zh-Hans",
+   "chrome": "zh_CN",
+   "reviewed": true
+  },
+  {
+   "code": "zh-tw",
+   "model": "zh_Hant",
+   "name": "繁體中文",
+   "rtl": false,
+   "apple": "zh-Hant",
+   "chrome": "zh_TW",
+   "reviewed": true
+  },
+  {
+   "code": "af",
+   "model": "af",
+   "name": "Afrikaans",
+   "rtl": false,
+   "apple": "af",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "am",
+   "model": "am",
+   "name": "አማርኛ",
+   "rtl": false,
+   "apple": "am",
+   "chrome": "am",
+   "reviewed": false
+  },
+  {
+   "code": "as",
+   "model": "as",
+   "name": "অসমীয়া",
+   "rtl": false,
+   "apple": "as",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "az",
+   "model": "az",
+   "name": "Azərbaycan",
+   "rtl": false,
+   "apple": "az",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "be",
+   "model": "be",
+   "name": "Беларуская",
+   "rtl": false,
+   "apple": "be",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "bg",
+   "model": "bg",
+   "name": "Български",
+   "rtl": false,
+   "apple": "bg",
+   "chrome": "bg",
+   "reviewed": false
+  },
+  {
+   "code": "bn",
+   "model": "bn",
+   "name": "বাংলা",
+   "rtl": false,
+   "apple": "bn",
+   "chrome": "bn",
+   "reviewed": false
+  },
+  {
+   "code": "bs",
+   "model": "bs",
+   "name": "Bosanski",
+   "rtl": false,
+   "apple": "bs",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "ca",
+   "model": "ca",
+   "name": "Català",
+   "rtl": false,
+   "apple": "ca",
+   "chrome": "ca",
+   "reviewed": false
+  },
+  {
+   "code": "ceb",
+   "model": "ceb",
+   "name": "Cebuano",
+   "rtl": false,
+   "apple": "ceb",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "ckb",
+   "model": "ckb",
+   "name": "کوردیی ناوەندی",
+   "rtl": true,
+   "apple": "ckb",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "cs",
+   "model": "cs",
+   "name": "Čeština",
+   "rtl": false,
+   "apple": "cs",
+   "chrome": "cs",
+   "reviewed": false
+  },
+  {
+   "code": "cy",
+   "model": "cy",
+   "name": "Cymraeg",
+   "rtl": false,
+   "apple": "cy",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "da",
+   "model": "da",
+   "name": "Dansk",
+   "rtl": false,
+   "apple": "da",
+   "chrome": "da",
+   "reviewed": false
+  },
+  {
+   "code": "el",
+   "model": "el",
+   "name": "Ελληνικά",
+   "rtl": false,
+   "apple": "el",
+   "chrome": "el",
+   "reviewed": false
+  },
+  {
+   "code": "eo",
+   "model": "eo",
+   "name": "Esperanto",
+   "rtl": false,
+   "apple": "eo",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "et",
+   "model": "et",
+   "name": "Eesti",
+   "rtl": false,
+   "apple": "et",
+   "chrome": "et",
+   "reviewed": false
+  },
+  {
+   "code": "eu",
+   "model": "eu",
+   "name": "Euskara",
+   "rtl": false,
+   "apple": "eu",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "fa",
+   "model": "fa",
+   "name": "فارسی",
+   "rtl": true,
+   "apple": "fa",
+   "chrome": "fa",
+   "reviewed": false
+  },
+  {
+   "code": "fi",
+   "model": "fi",
+   "name": "Suomi",
+   "rtl": false,
+   "apple": "fi",
+   "chrome": "fi",
+   "reviewed": false
+  },
+  {
+   "code": "fil",
+   "model": "fil",
+   "name": "Filipino",
+   "rtl": false,
+   "apple": "fil",
+   "chrome": "fil",
+   "reviewed": false
+  },
+  {
+   "code": "fy",
+   "model": "fy",
+   "name": "Frysk",
+   "rtl": false,
+   "apple": "fy",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "ga",
+   "model": "ga",
+   "name": "Gaeilge",
+   "rtl": false,
+   "apple": "ga",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "gd",
+   "model": "gd",
+   "name": "Gàidhlig",
+   "rtl": false,
+   "apple": "gd",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "gl",
+   "model": "gl",
+   "name": "Galego",
+   "rtl": false,
+   "apple": "gl",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "gu",
+   "model": "gu",
+   "name": "ગુજરાતી",
+   "rtl": false,
+   "apple": "gu",
+   "chrome": "gu",
+   "reviewed": false
+  },
+  {
+   "code": "ha",
+   "model": "ha",
+   "name": "Hausa",
+   "rtl": false,
+   "apple": "ha",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "haw",
+   "model": "haw",
+   "name": "ʻŌlelo Hawaiʻi",
+   "rtl": false,
+   "apple": "haw",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "he",
+   "model": "iw",
+   "name": "עברית",
+   "rtl": true,
+   "apple": "he",
+   "chrome": "he",
+   "reviewed": false
+  },
+  {
+   "code": "hmn",
+   "model": "hmn",
+   "name": "Hmoob",
+   "rtl": false,
+   "apple": "hmn",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "hr",
+   "model": "hr",
+   "name": "Hrvatski",
+   "rtl": false,
+   "apple": "hr",
+   "chrome": "hr",
+   "reviewed": false
+  },
+  {
+   "code": "ht",
+   "model": "ht",
+   "name": "Kreyòl ayisyen",
+   "rtl": false,
+   "apple": "ht",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "hu",
+   "model": "hu",
+   "name": "Magyar",
+   "rtl": false,
+   "apple": "hu",
+   "chrome": "hu",
+   "reviewed": false
+  },
+  {
+   "code": "hy",
+   "model": "hy",
+   "name": "Հայերեն",
+   "rtl": false,
+   "apple": "hy",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "ig",
+   "model": "ig",
+   "name": "Igbo",
+   "rtl": false,
+   "apple": "ig",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "is",
+   "model": "is",
+   "name": "Íslenska",
+   "rtl": false,
+   "apple": "is",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "it",
+   "model": "it",
+   "name": "Italiano",
+   "rtl": false,
+   "apple": "it",
+   "chrome": "it",
+   "reviewed": false
+  },
+  {
+   "code": "jv",
+   "model": "jv",
+   "name": "Basa Jawa",
+   "rtl": false,
+   "apple": "jv",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "ka",
+   "model": "ka",
+   "name": "ქართული",
+   "rtl": false,
+   "apple": "ka",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "kk",
+   "model": "kk",
+   "name": "Қазақ тілі",
+   "rtl": false,
+   "apple": "kk",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "km",
+   "model": "km",
+   "name": "ខ្មែរ",
+   "rtl": false,
+   "apple": "km",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "kn",
+   "model": "kn",
+   "name": "ಕನ್ನಡ",
+   "rtl": false,
+   "apple": "kn",
+   "chrome": "kn",
+   "reviewed": false
+  },
+  {
+   "code": "ku",
+   "model": "ku",
+   "name": "Kurdî",
+   "rtl": false,
+   "apple": "ku",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "ky",
+   "model": "ky",
+   "name": "Кыргызча",
+   "rtl": false,
+   "apple": "ky",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "la",
+   "model": "la",
+   "name": "Latina",
+   "rtl": false,
+   "apple": "la",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "lb",
+   "model": "lb",
+   "name": "Lëtzebuergesch",
+   "rtl": false,
+   "apple": "lb",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "lo",
+   "model": "lo",
+   "name": "ລາວ",
+   "rtl": false,
+   "apple": "lo",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "lt",
+   "model": "lt",
+   "name": "Lietuvių",
+   "rtl": false,
+   "apple": "lt",
+   "chrome": "lt",
+   "reviewed": false
+  },
+  {
+   "code": "lv",
+   "model": "lv",
+   "name": "Latviešu",
+   "rtl": false,
+   "apple": "lv",
+   "chrome": "lv",
+   "reviewed": false
+  },
+  {
+   "code": "mg",
+   "model": "mg",
+   "name": "Malagasy",
+   "rtl": false,
+   "apple": "mg",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "mi",
+   "model": "mi",
+   "name": "Te Reo Māori",
+   "rtl": false,
+   "apple": "mi",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "mk",
+   "model": "mk",
+   "name": "Македонски",
+   "rtl": false,
+   "apple": "mk",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "ml",
+   "model": "ml",
+   "name": "മലയാളം",
+   "rtl": false,
+   "apple": "ml",
+   "chrome": "ml",
+   "reviewed": false
+  },
+  {
+   "code": "mn",
+   "model": "mn",
+   "name": "Монгол",
+   "rtl": false,
+   "apple": "mn",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "mr",
+   "model": "mr",
+   "name": "मराठी",
+   "rtl": false,
+   "apple": "mr",
+   "chrome": "mr",
+   "reviewed": false
+  },
+  {
+   "code": "ms",
+   "model": "ms",
+   "name": "Bahasa Melayu",
+   "rtl": false,
+   "apple": "ms",
+   "chrome": "ms",
+   "reviewed": false
+  },
+  {
+   "code": "mt",
+   "model": "mt",
+   "name": "Malti",
+   "rtl": false,
+   "apple": "mt",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "my",
+   "model": "my",
+   "name": "မြန်မာ",
+   "rtl": false,
+   "apple": "my",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "nb",
+   "model": "no",
+   "name": "Norsk bokmål",
+   "rtl": false,
+   "apple": "nb",
+   "chrome": "no",
+   "reviewed": false
+  },
+  {
+   "code": "ne",
+   "model": "ne",
+   "name": "नेपाली",
+   "rtl": false,
+   "apple": "ne",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "nl",
+   "model": "nl",
+   "name": "Nederlands",
+   "rtl": false,
+   "apple": "nl",
+   "chrome": "nl",
+   "reviewed": false
+  },
+  {
+   "code": "ny",
+   "model": "ny",
+   "name": "Chichewa",
+   "rtl": false,
+   "apple": "ny",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "or",
+   "model": "or",
+   "name": "ଓଡ଼ିଆ",
+   "rtl": false,
+   "apple": "or",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "pa",
+   "model": "pa",
+   "name": "ਪੰਜਾਬੀ",
+   "rtl": false,
+   "apple": "pa",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "pl",
+   "model": "pl",
+   "name": "Polski",
+   "rtl": false,
+   "apple": "pl",
+   "chrome": "pl",
+   "reviewed": false
+  },
+  {
+   "code": "ps",
+   "model": "ps",
+   "name": "پښتو",
+   "rtl": true,
+   "apple": "ps",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "ro",
+   "model": "ro",
+   "name": "Română",
+   "rtl": false,
+   "apple": "ro",
+   "chrome": "ro",
+   "reviewed": false
+  },
+  {
+   "code": "rw",
+   "model": "rw",
+   "name": "Kinyarwanda",
+   "rtl": false,
+   "apple": "rw",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "sd",
+   "model": "sd",
+   "name": "سنڌي",
+   "rtl": true,
+   "apple": "sd",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "si",
+   "model": "si",
+   "name": "සිංහල",
+   "rtl": false,
+   "apple": "si",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "sk",
+   "model": "sk",
+   "name": "Slovenčina",
+   "rtl": false,
+   "apple": "sk",
+   "chrome": "sk",
+   "reviewed": false
+  },
+  {
+   "code": "sl",
+   "model": "sl",
+   "name": "Slovenščina",
+   "rtl": false,
+   "apple": "sl",
+   "chrome": "sl",
+   "reviewed": false
+  },
+  {
+   "code": "sm",
+   "model": "sm",
+   "name": "Gagana Samoa",
+   "rtl": false,
+   "apple": "sm",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "sn",
+   "model": "sn",
+   "name": "chiShona",
+   "rtl": false,
+   "apple": "sn",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "so",
+   "model": "so",
+   "name": "Soomaali",
+   "rtl": false,
+   "apple": "so",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "sq",
+   "model": "sq",
+   "name": "Shqip",
+   "rtl": false,
+   "apple": "sq",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "sr",
+   "model": "sr",
+   "name": "Српски",
+   "rtl": false,
+   "apple": "sr",
+   "chrome": "sr",
+   "reviewed": false
+  },
+  {
+   "code": "st",
+   "model": "st",
+   "name": "Sesotho",
+   "rtl": false,
+   "apple": "st",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "su",
+   "model": "su",
+   "name": "Basa Sunda",
+   "rtl": false,
+   "apple": "su",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "sv",
+   "model": "sv",
+   "name": "Svenska",
+   "rtl": false,
+   "apple": "sv",
+   "chrome": "sv",
+   "reviewed": false
+  },
+  {
+   "code": "sw",
+   "model": "sw",
+   "name": "Kiswahili",
+   "rtl": false,
+   "apple": "sw",
+   "chrome": "sw",
+   "reviewed": false
+  },
+  {
+   "code": "ta",
+   "model": "ta",
+   "name": "தமிழ்",
+   "rtl": false,
+   "apple": "ta",
+   "chrome": "ta",
+   "reviewed": false
+  },
+  {
+   "code": "te",
+   "model": "te",
+   "name": "తెలుగు",
+   "rtl": false,
+   "apple": "te",
+   "chrome": "te",
+   "reviewed": false
+  },
+  {
+   "code": "tg",
+   "model": "tg",
+   "name": "Тоҷикӣ",
+   "rtl": false,
+   "apple": "tg",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "th",
+   "model": "th",
+   "name": "ไทย",
+   "rtl": false,
+   "apple": "th",
+   "chrome": "th",
+   "reviewed": false
+  },
+  {
+   "code": "tk",
+   "model": "tk",
+   "name": "Türkmen",
+   "rtl": false,
+   "apple": "tk",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "tt",
+   "model": "tt",
+   "name": "Татарча",
+   "rtl": false,
+   "apple": "tt",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "ug",
+   "model": "ug",
+   "name": "ئۇيغۇرچە",
+   "rtl": true,
+   "apple": "ug",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "uk",
+   "model": "uk",
+   "name": "Українська",
+   "rtl": false,
+   "apple": "uk",
+   "chrome": "uk",
+   "reviewed": false
+  },
+  {
+   "code": "uz",
+   "model": "uz",
+   "name": "Oʻzbek",
+   "rtl": false,
+   "apple": "uz",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "vi",
+   "model": "vi",
+   "name": "Tiếng Việt",
+   "rtl": false,
+   "apple": "vi",
+   "chrome": "vi",
+   "reviewed": false
+  },
+  {
+   "code": "xh",
+   "model": "xh",
+   "name": "isiXhosa",
+   "rtl": false,
+   "apple": "xh",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "yi",
+   "model": "yi",
+   "name": "ייִדיש",
+   "rtl": true,
+   "apple": "yi",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "yo",
+   "model": "yo",
+   "name": "Yorùbá",
+   "rtl": false,
+   "apple": "yo",
+   "chrome": null,
+   "reviewed": false
+  },
+  {
+   "code": "zu",
+   "model": "zu",
+   "name": "isiZulu",
+   "rtl": false,
+   "apple": "zu",
+   "chrome": null,
+   "reviewed": false
+  }
+ ]
+}

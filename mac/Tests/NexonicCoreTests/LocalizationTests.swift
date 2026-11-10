@@ -16,12 +16,17 @@ final class LocalizationTests: XCTestCase {
         let english = try table("en")
         XCTAssertGreaterThan(english.count, 100)
         for (key, value) in english { XCTAssertEqual(key, value) }
-        for code in ["ar", "de", "es", "fr", "hi", "id", "ja", "ko", "pt", "ru", "tr", "ur", "zh-Hans", "zh-Hant"] {
+        let reviewed: Set<String> = ["ar", "de", "es", "fr", "hi", "id", "ja", "ko", "pt", "ru", "tr", "ur", "zh-Hans", "zh-Hant"]
+        let codes = try FileManager.default.contentsOfDirectory(atPath: root.path)
+            .filter { $0.hasSuffix(".lproj") && $0 != "en.lproj" }.map { String($0.dropLast(6)) }
+        XCTAssertTrue(reviewed.isSubset(of: Set(codes)))
+        XCTAssertGreaterThan(codes.count, 100)
+        for code in codes {
             let other = try table(code)
             XCTAssertEqual(Set(other.keys), Set(english.keys), code)
             XCTAssertTrue(other.values.allSatisfy { !$0.isEmpty }, code)
             let text = try String(contentsOf: root.appendingPathComponent("\(code).lproj/Localizable.strings"), encoding: .utf8)
-            XCTAssertTrue(text.hasPrefix("/* Reviewed */"), code)
+            XCTAssertTrue(text.hasPrefix(reviewed.contains(code) ? "/* Reviewed */" : "/* Machine translation, not reviewed */"), code)
             XCTAssertTrue(other["Install ndm Command…"]?.contains("ndm") ?? false, code)
         }
     }

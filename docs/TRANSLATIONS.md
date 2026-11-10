@@ -57,7 +57,20 @@ Corrections are welcome as pull requests.
 
 ## Adding a language
 
-Copy the English file on each platform, fill in the values (status `Reviewed` once checked), and add the code to `L.Languages`
-(`windows/Core/Localization.cs`), `Translations.languages` (Android), `locales_config.xml`, `CFBundleLocalizations`
-(`packaging/Info.plist`, `ios/App/Info.plist`), `AppLanguage.all` (Mac and iPhone settings) and `LANGUAGES`
-(`extension/helpers.js`).
+All languages are listed once in `scripts/translate/languages.json` (code, own name, right to left, the `.lproj` name and
+the browser stores' locale). Add a line there, then run
+
+    python3 scripts/translate/translate.py apply
+
+It writes every app's language files (missing texts stay in English) and the language lists in the code
+(`L.Languages`, `Translations.languages`, `locales_config.xml`, `CFBundleLocalizations`, `AppLanguage.all` and the
+extension's `LANGUAGES`).
+
+## Machine translations
+
+The **Translations** workflow (Actions tab → Translations → Run workflow) translates every text a language is missing with
+the open-source MADLAD-400 model (google/madlad400-3b-mt, Apache-2.0) on GitHub's runners and pushes the result to the
+branch `i18n/machine-translations` for a pull request. Reviewed translations are never replaced. App names, links, file
+types, shortcuts and placeholders are kept as they are; a text whose translation loses one of them stays in English.
+Machine-translated languages have the status `Machine translation, not reviewed`; change it to `Reviewed` once a person
+has checked the file.
