@@ -6,14 +6,126 @@ package com.nexonic.downloadmanager.core
  * Anything without a translation stays in English.
  */
 object Translations {
-    val languages = listOf("ar", "de", "es", "fr", "hi", "id", "ja", "ko", "pt", "ru", "tr", "ur", "zh-cn", "zh-tw")
+    // BEGIN LANGUAGES (written by scripts/translate/translate.py apply)
+    val languages = listOf("ar", "de", "es", "fr", "hi", "id", "ja", "ko", "pt", "ru", "tr", "ur", "zh-cn", "zh-tw", "af", "am", "as", "az", "be", "bg", "bn", "bs", "ca", "ceb", "ckb", "cs", "cy", "da", "el", "eo", "et", "eu", "fa", "fi", "fil", "fy", "ga", "gd", "gl", "gu", "ha", "haw", "he", "hmn", "hr", "ht", "hu", "hy", "ig", "is", "it", "jv", "ka", "kk", "km", "kn", "ku", "ky", "la", "lb", "lo", "lt", "lv", "mg", "mi", "mk", "ml", "mn", "mr", "ms", "mt", "my", "nb", "ne", "nl", "ny", "or", "pa", "pl", "ps", "ro", "rw", "sd", "si", "sk", "sl", "sm", "sn", "so", "sq", "sr", "st", "su", "sv", "sw", "ta", "te", "tg", "th", "tk", "tt", "ug", "uk", "uz", "vi", "xh", "yi", "yo", "zu")
 
     /** Each language's own name, for the picker. */
     val names = mapOf(
-        "en" to "English", "ar" to "العربية", "de" to "Deutsch", "es" to "Español", "fr" to "Français", "hi" to "हिन्दी",
-        "id" to "Bahasa Indonesia", "ja" to "日本語", "ko" to "한국어", "pt" to "Português", "ru" to "Русский",
-        "tr" to "Türkçe", "ur" to "اردو", "zh-cn" to "简体中文", "zh-tw" to "繁體中文",
+        "en" to "English",
+        "ar" to "العربية",
+        "de" to "Deutsch",
+        "es" to "Español",
+        "fr" to "Français",
+        "hi" to "हिन्दी",
+        "id" to "Bahasa Indonesia",
+        "ja" to "日本語",
+        "ko" to "한국어",
+        "pt" to "Português",
+        "ru" to "Русский",
+        "tr" to "Türkçe",
+        "ur" to "اردو",
+        "zh-cn" to "简体中文",
+        "zh-tw" to "繁體中文",
+        "af" to "Afrikaans",
+        "am" to "አማርኛ",
+        "as" to "অসমীয়া",
+        "az" to "Azərbaycan",
+        "be" to "Беларуская",
+        "bg" to "Български",
+        "bn" to "বাংলা",
+        "bs" to "Bosanski",
+        "ca" to "Català",
+        "ceb" to "Cebuano",
+        "ckb" to "کوردیی ناوەندی",
+        "cs" to "Čeština",
+        "cy" to "Cymraeg",
+        "da" to "Dansk",
+        "el" to "Ελληνικά",
+        "eo" to "Esperanto",
+        "et" to "Eesti",
+        "eu" to "Euskara",
+        "fa" to "فارسی",
+        "fi" to "Suomi",
+        "fil" to "Filipino",
+        "fy" to "Frysk",
+        "ga" to "Gaeilge",
+        "gd" to "Gàidhlig",
+        "gl" to "Galego",
+        "gu" to "ગુજરાતી",
+        "ha" to "Hausa",
+        "haw" to "ʻŌlelo Hawaiʻi",
+        "he" to "עברית",
+        "hmn" to "Hmoob",
+        "hr" to "Hrvatski",
+        "ht" to "Kreyòl ayisyen",
+        "hu" to "Magyar",
+        "hy" to "Հայերեն",
+        "ig" to "Igbo",
+        "is" to "Íslenska",
+        "it" to "Italiano",
+        "jv" to "Basa Jawa",
+        "ka" to "ქართული",
+        "kk" to "Қазақ тілі",
+        "km" to "ខ្មែរ",
+        "kn" to "ಕನ್ನಡ",
+        "ku" to "Kurdî",
+        "ky" to "Кыргызча",
+        "la" to "Latina",
+        "lb" to "Lëtzebuergesch",
+        "lo" to "ລາວ",
+        "lt" to "Lietuvių",
+        "lv" to "Latviešu",
+        "mg" to "Malagasy",
+        "mi" to "Te Reo Māori",
+        "mk" to "Македонски",
+        "ml" to "മലയാളം",
+        "mn" to "Монгол",
+        "mr" to "मराठी",
+        "ms" to "Bahasa Melayu",
+        "mt" to "Malti",
+        "my" to "မြန်မာ",
+        "nb" to "Norsk bokmål",
+        "ne" to "नेपाली",
+        "nl" to "Nederlands",
+        "ny" to "Chichewa",
+        "or" to "ଓଡ଼ିଆ",
+        "pa" to "ਪੰਜਾਬੀ",
+        "pl" to "Polski",
+        "ps" to "پښتو",
+        "ro" to "Română",
+        "rw" to "Kinyarwanda",
+        "sd" to "سنڌي",
+        "si" to "සිංහල",
+        "sk" to "Slovenčina",
+        "sl" to "Slovenščina",
+        "sm" to "Gagana Samoa",
+        "sn" to "chiShona",
+        "so" to "Soomaali",
+        "sq" to "Shqip",
+        "sr" to "Српски",
+        "st" to "Sesotho",
+        "su" to "Basa Sunda",
+        "sv" to "Svenska",
+        "sw" to "Kiswahili",
+        "ta" to "தமிழ்",
+        "te" to "తెలుగు",
+        "tg" to "Тоҷикӣ",
+        "th" to "ไทย",
+        "tk" to "Türkmen",
+        "tt" to "Татарча",
+        "ug" to "ئۇيغۇرچە",
+        "uk" to "Українська",
+        "uz" to "Oʻzbek",
+        "vi" to "Tiếng Việt",
+        "xh" to "isiXhosa",
+        "yi" to "ייִדיש",
+        "yo" to "Yorùbá",
+        "zu" to "isiZulu",
     )
+
+    /** Languages written right to left. */
+    val rightToLeft = setOf("ar", "ur", "ckb", "fa", "he", "ps", "sd", "ug", "yi")
+    // END LANGUAGES
 
     /** A system tag ("zh-Hant-TW", "in-ID", "pt_BR") to a file code ("zh-tw", "id", "pt"). */
     fun normalize(tag: String): String {
@@ -22,12 +134,16 @@ object Translations {
         return when (lang) {
             "zh" -> if (listOf("hant", "-tw", "-hk", "-mo").any { t.contains(it) }) "zh-tw" else "zh-cn"
             "in" -> "id"
+            "iw" -> "he"
+            "ji" -> "yi"
+            "tl" -> "fil"
+            "no", "nn" -> "nb"
             else -> lang
         }
     }
 
     /** The Android locale tag for a file code. */
-    fun tag(code: String): String = when (code) { "zh-cn" -> "zh-CN"; "zh-tw" -> "zh-TW"; "id" -> "in"; else -> code }
+    fun tag(code: String): String = when (code) { "zh-cn" -> "zh-CN"; "zh-tw" -> "zh-TW"; "id" -> "in"; "he" -> "iw"; else -> code }
 
     @Volatile var strings: Map<String, String> = emptyMap()
     @Volatile var code = "en"

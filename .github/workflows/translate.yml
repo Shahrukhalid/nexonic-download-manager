@@ -1,0 +1,103 @@
+name: Translations
+
+# Machine-translates the apps' texts into every language in scripts/translate/languages.json with MADLAD-400
+# (google/madlad400-3b-mt, Apache-2.0) and pushes the result to the branch i18n/machine-translations.
+# Reviewed translations are kept; only missing texts are added. Run it from the Actions tab.
+on:
+  workflow_dispatch:
+    inputs:
+      languages:
+        description: "Language codes (comma separated), or all"
+        default: all
+
+permissions:
+  contents: read
+
+concurrency:
+  group: translations
+  cancel-in-progress: false
+
+env:
+  MODEL_ID: google/madlad400-3b-mt
+  MODEL_KEY: madlad400-3b-mt-ct2-int8-v1
+
+jobs:
+  model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: cache
+        with:
+          path: ~/madlad
+          key: ${{ env.MODEL_KEY }}
+      - name: Make room for the model
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          python-version: "3.12"
+      - name: Convert the model for CTranslate2 (int8)
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          pip install --index-url https://download.pytorch.org/whl/cpu torch==2.5.1
+          pip install ctranslate2==4.5.0 transformers==4.46.3 sentencepiece==0.2.0 protobuf==5.28.3
+          ct2-transformers-converter --model "$MODEL_ID" --quantization int8 --low_cpu_mem_usage --output_dir ~/madlad
+          python -c "from transformers import AutoTokenizer; AutoTokenizer.from_pretrained('$MODEL_ID').save_pretrained('$HOME/madlad')"
+          rm -rf ~/.cache/huggingface
+
+  translate:
+    needs: model
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/madlad
+          key: ${{ env.MODEL_KEY }}
+          fail-on-cache-miss: true
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: "3.12"
+      - name: Translate
+        env:
+          LANGS: ${{ inputs.languages }}
+        run: |
+          pip install ctranslate2==4.5.0 transformers==4.46.3 sentencepiece==0.2.0 protobuf==5.28.3
+          python scripts/translate/translate.py translate --langs "$LANGS" --shard "${{ matrix.shard }}/12" --model ~/madlad --out cache
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: translations-${{ matrix.shard }}
+          path: cache/
+          if-no-files-found: ignore
+
+  apply:
+    needs: translate
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          pattern: translations-*
+          path: cache
+          merge-multiple: true
+      - name: Write every app's language files
+        run: python3 scripts/translate/translate.py apply --cache cache
+      - name: Push to i18n/machine-translations
+        run: |
+          git config user.name "Shahrukh Khalid"
+          git config user.email "90670731+Shahrukhalid@users.noreply.github.com"
+          git checkout -B i18n/machine-translations
+          git add -A windows/Core/Locales android/app/src/main/assets/locales android/app/src/main/res/xml packaging extension ios/App/Info.plist
+          git diff --cached --quiet && { echo "Nothing new to translate."; exit 0; }
+          git commit -q -m "Machine translations (MADLAD-400) for the languages in scripts/translate/languages.json"
+          git push -f origin i18n/machine-translations

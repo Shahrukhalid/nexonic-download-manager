@@ -187,6 +187,20 @@
     "This QR code has no download link.": "Dieser QR-Code enthält keinen Download-Link.",
     "Torrent blocklist: an https:// address (empty = none)": "Torrent-Sperrliste: eine https://-Adresse (leer = keine)",
     "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.": "Torrents verbinden sich nie mit den Adressen in dieser Liste. P2P-, DAT- und CIDR-Listen funktionieren, auch als .gz. Eine Adresse wird einmal am Tag neu heruntergeladen.",
-    "The blocklist address must start with https://": "Die Adresse der Sperrliste muss mit https:// beginnen"
+    "The blocklist address must start with https://": "Die Adresse der Sperrliste muss mit https:// beginnen",
+    "Appearance": "Appearance",
+    "Same as the phone": "Same as the phone",
+    "Light": "Light",
+    "Dark": "Dark",
+    "Download limit (MB, empty = none)": "Download limit (MB, empty = none)",
+    "every hours": "every hours",
+    "When the amount is reached, downloads stop and continue by themselves when the next period starts. Useful on mobile data plans.": "When the amount is reached, downloads stop and continue by themselves when the next period starts. Useful on mobile data plans.",
+    "Download limit reached": "Download limit reached",
+    "Crash reports": "Crash reports",
+    "When the app stops because of an error, a report is saved on this phone. It is never sent anywhere; share it with a bug report if you like.": "When the app stops because of an error, a report is saved on this phone. It is never sent anywhere; share it with a bug report if you like.",
+    "Share the latest crash report": "Share the latest crash report",
+    "Share crash report": "Share crash report",
+    "No crash reports.": "No crash reports.",
+    "Can resume": "Can resume"
   }
 }

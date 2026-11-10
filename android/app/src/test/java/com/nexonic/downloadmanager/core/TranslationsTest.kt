@@ -19,7 +19,7 @@ class TranslationsTest {
             val (status, strings) = Translations.parse(File(dir, "$code.json").readText())
             assertEquals(code, english, strings.keys)
             assertTrue(code, strings.values.all { it.isNotEmpty() })
-            assertEquals(code, "Reviewed", status)
+            assertTrue(code, status == "Reviewed" || status == "Machine translation, not reviewed")
             assertTrue(code, strings.getValue("Downloads/Nexonic on this phone").contains("Downloads/Nexonic"))
         }
     }

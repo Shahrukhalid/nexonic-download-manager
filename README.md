@@ -158,9 +158,10 @@ without any warning. On macOS 13–14 you can also right-click the app → **Ope
 - **An IDM-style toolbar** on Mac, Windows and Linux with large buttons and their names, and menus for every command.
 - **Updates inside the app:** a new version shows up when you open the app, with what's new and Update Now, Remind
   Me Later or Skip This Version.
-- **15 languages** on every app and in the browser extension: English, Arabic, Chinese (Simplified and Traditional),
-  French, German, Hindi, Indonesian, Japanese, Korean, Portuguese, Russian, Spanish, Turkish and Urdu. Pick one in
-  Settings (Options on Windows and Linux).
+- **110 languages** on every app and in the browser extension. 15 are checked by people (English, Arabic, Chinese
+  Simplified and Traditional, French, German, Hindi, Indonesian, Japanese, Korean, Portuguese, Russian, Spanish, Turkish
+  and Urdu); the others are machine translations, open to corrections (see [docs/TRANSLATIONS.md](docs/TRANSLATIONS.md)).
+  Pick one in Settings (Options on Windows and Linux).
 - **Same app on Mac, Windows and Linux**, light and dark mode, no account, no tracking.
 - **Android app** with the same download and video engines: videos from YouTube, Facebook, Instagram, TikTok and
   1,000+ sites with quality choices, up to 32 connections, pause and resume, queues, scheduler, Wi-Fi only,

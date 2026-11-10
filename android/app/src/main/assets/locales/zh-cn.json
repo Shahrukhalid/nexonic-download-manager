@@ -187,6 +187,20 @@
     "This QR code has no download link.": "此二维码中没有下载链接。",
     "Torrent blocklist: an https:// address (empty = none)": "种子屏蔽列表：https:// 地址（留空 = 无）",
     "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.": "种子永远不会连接此列表中的地址。支持 P2P、DAT 和 CIDR 列表，也支持 .gz。地址每天重新下载一次。",
-    "The blocklist address must start with https://": "屏蔽列表地址必须以 https:// 开头"
+    "The blocklist address must start with https://": "屏蔽列表地址必须以 https:// 开头",
+    "Appearance": "Appearance",
+    "Same as the phone": "Same as the phone",
+    "Light": "Light",
+    "Dark": "Dark",
+    "Download limit (MB, empty = none)": "Download limit (MB, empty = none)",
+    "every hours": "every hours",
+    "When the amount is reached, downloads stop and continue by themselves when the next period starts. Useful on mobile data plans.": "When the amount is reached, downloads stop and continue by themselves when the next period starts. Useful on mobile data plans.",
+    "Download limit reached": "Download limit reached",
+    "Crash reports": "Crash reports",
+    "When the app stops because of an error, a report is saved on this phone. It is never sent anywhere; share it with a bug report if you like.": "When the app stops because of an error, a report is saved on this phone. It is never sent anywhere; share it with a bug report if you like.",
+    "Share the latest crash report": "Share the latest crash report",
+    "Share crash report": "Share crash report",
+    "No crash reports.": "No crash reports.",
+    "Can resume": "Can resume"
   }
 }
