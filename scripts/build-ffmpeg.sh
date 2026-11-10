@@ -4,6 +4,8 @@
 #   scripts/build-ffmpeg.sh windows  OUT_DIR   # 64-bit .exe, cross-built on Linux with mingw-w64
 #   scripts/build-ffmpeg.sh linux    OUT_DIR   # this Linux machine's processor, linked statically (runs on any distribution)
 #   scripts/build-ffmpeg.sh native   OUT_DIR   # this machine (for testing)
+#   scripts/build-ffmpeg.sh android-arm64|android-arm|android-x64 OUT_DIR   # with the Android NDK; writes libffmpeg.so and
+#     libffprobe.so (Android runs programs only from the app's library folder, so they are named and packed as libraries)
 set -euo pipefail
 TARGET="$1"
 OUT="$(mkdir -p "$2" && cd "$2" && pwd)"
@@ -19,6 +21,10 @@ COMMON=(
   --enable-muxer=mp4,mov,ipod,matroska,webm,mp3,adts,ogg,opus
   --enable-parser=h264,hevc,aac,aac_latm,mpegaudio,ac3,av1,vp8,vp9,opus,vorbis
   --enable-decoder=h264,hevc,aac,aac_latm,mp3,ac3,eac3,opus,vorbis,vp8,vp9
+  # Chapters, tags and subtitles go into the file (yt-dlp's --embed-chapters reads an ffmetadata file; --embed-subs
+  # turns WebVTT/SRT/ASS into mov_text for .mp4 and copies them into .mkv/.webm). Text formats only: a few hundred KB.
+  --enable-demuxer=ffmetadata,webvtt,srt,ass --enable-muxer=ffmetadata,webvtt,srt,ass
+  --enable-decoder=webvtt,subrip,ass,ssa,movtext --enable-encoder=movtext,webvtt,subrip,ass,ssa
   --enable-bsf=aac_adtstoasc,h264_mp4toannexb,hevc_mp4toannexb,extract_extradata,dump_extradata,vp9_superframe,av1_frame_merge
 )
 
@@ -48,11 +54,27 @@ case "$TARGET" in
     cp "$WORK/linux/ffmpeg" "$WORK/linux/ffprobe" "$OUT/"
     strip "$OUT/ffmpeg" "$OUT/ffprobe" 2>/dev/null || true
     ;;
+  android-arm64|android-arm|android-x64)
+    ndk="${ANDROID_NDK_HOME:-${ANDROID_NDK_ROOT:-${ANDROID_NDK_LATEST_HOME:-}}}"
+    tc="$(ls -d "$ndk"/toolchains/llvm/prebuilt/*/bin 2>/dev/null | head -1)"
+    [ -x "$tc/llvm-ar" ] || { echo "The Android NDK is required (ANDROID_NDK_HOME)" >&2; exit 1; }
+    case "$TARGET" in
+      android-arm64) cc=aarch64-linux-android29-clang; arch=(--arch=aarch64) ;;
+      android-arm)   cc=armv7a-linux-androideabi29-clang; arch=(--arch=arm --cpu=armv7-a --disable-asm) ;;
+      android-x64)   cc=x86_64-linux-android29-clang; arch=(--arch=x86_64 --disable-x86asm) ;;
+    esac
+    # Linked against the system C library only (no other shared libraries), as a position-independent program.
+    build android "${arch[@]}" --enable-cross-compile --target-os=android --cc="$tc/$cc" --cxx="$tc/$cc++" \
+      --nm="$tc/llvm-nm" --ar="$tc/llvm-ar" --ranlib="$tc/llvm-ranlib" --strip="$tc/llvm-strip" --enable-pic \
+      --extra-ldflags="-pie -Wl,-z,max-page-size=16384"
+    "$tc/llvm-strip" --strip-all -o "$OUT/libffmpeg.so" "$WORK/android/ffmpeg"
+    "$tc/llvm-strip" --strip-all -o "$OUT/libffprobe.so" "$WORK/android/ffprobe"
+    ;;
   native)
     build native --disable-x86asm
     cp "$WORK/native/ffmpeg" "$WORK/native/ffprobe" "$OUT/"
     ;;
-  *) echo "usage: $0 mac|windows|linux|native OUT_DIR" >&2; exit 2 ;;
+  *) echo "usage: $0 mac|windows|linux|native|android-arm64|android-arm|android-x64 OUT_DIR" >&2; exit 2 ;;
 esac
 
 cat > "$OUT/NOTICE-video-tools-1.txt" <<TXT

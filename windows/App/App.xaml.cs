@@ -11,7 +11,7 @@ public partial class App : Application
     const string PipeName = "nexonic-download-manager";
     Mutex? single;
     MainWindow? window;
-    System.Windows.Forms.NotifyIcon? tray;
+    TrayIcon? tray;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -53,44 +53,39 @@ public partial class App : Application
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ApplicationIdle, new Action(manager.CollectTorrents));
         manager.ProgressRequested += row => DownloadWindows.ShowProgress(manager, row);
         manager.ShowRequested += ShowWindow;
-        tray = new System.Windows.Forms.NotifyIcon
-        {
-            Icon = System.Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath!),
-            Text = "Nexonic Download Manager",
-            Visible = true,
-        };
-        tray.DoubleClick += (_, _) => ShowWindow();
-        var menu = new System.Windows.Forms.ContextMenuStrip();
-        menu.Items.Add(L.T("Show Downloads"), null, (_, _) => ShowWindow());
-        menu.Items.Add(L.T("Add URL…"), null, (_, _) => window!.ShowAdd(Dialogs.ClipboardLink()));
-        menu.Items.Add(L.T("Stop All"), null, (_, _) => manager.PauseAll());
-        menu.Items.Add(L.T("Resume All"), null, (_, _) => manager.ResumeAll());
-        menu.Items.Add(SpeedLimitMenu(manager));
-        menu.Items.Add(L.T("Start All Queues"), null, (_, _) => { foreach (var q in manager.Queues.Where(q => !q.IsMain).ToList()) manager.StartQueue(q.Id); });
-        menu.Items.Add(L.T("Stop All Queues"), null, (_, _) => { foreach (var q in manager.Queues.Where(q => !q.IsMain).ToList()) manager.StopQueue(q.Id); });
-        menu.Items.Add(L.T("Open Downloads Folder"), null, (_, _) =>
+        tray = new TrayIcon("Nexonic Download Manager");
+        tray.DoubleClick += ShowWindow;
+        var menu = tray.Menu.Items;
+        menu.Add(TrayIcon.Item(L.T("Show Downloads"), ShowWindow));
+        menu.Add(TrayIcon.Item(L.T("Add URL…"), () => { ShowWindow(); window!.ShowAdd(Dialogs.ClipboardLink()); }));
+        menu.Add(TrayIcon.Item(L.T("Stop All"), manager.PauseAll));
+        menu.Add(TrayIcon.Item(L.T("Resume All"), manager.ResumeAll));
+        menu.Add(SpeedLimitMenu(manager));
+        menu.Add(TrayIcon.Item(L.T("Start All Queues"), () => { foreach (var q in manager.Queues.Where(q => !q.IsMain).ToList()) manager.StartQueue(q.Id); }));
+        menu.Add(TrayIcon.Item(L.T("Stop All Queues"), () => { foreach (var q in manager.Queues.Where(q => !q.IsMain).ToList()) manager.StopQueue(q.Id); }));
+        menu.Add(TrayIcon.Item(L.T("Open Downloads Folder"), () =>
         {
             var dir = manager.Settings.Folder;
             if (System.IO.Directory.Exists(dir)) System.Diagnostics.Process.Start("explorer.exe", $"\"{dir}\"");
-        });
-        var watchClip = new System.Windows.Forms.ToolStripMenuItem(L.T("Watch Copied Links")) { Checked = manager.Settings.MonitorClipboard, CheckOnClick = true };
-        watchClip.Click += (_, _) => { manager.Settings.MonitorClipboard = watchClip.Checked; manager.ApplySettings(manager.Settings); };
-        menu.Opening += (_, _) => watchClip.Checked = manager.Settings.MonitorClipboard;
-        menu.Items.Add(watchClip);
-        menu.Items.Add(L.T("Quit"), null, (_, _) => Quit(manager));
-        tray.ContextMenuStrip = menu;
+        }));
+        var watchClip = new System.Windows.Controls.MenuItem { Header = L.T("Watch Copied Links"), IsCheckable = true, IsChecked = manager.Settings.MonitorClipboard };
+        watchClip.Click += (_, _) => { manager.Settings.MonitorClipboard = watchClip.IsChecked; manager.ApplySettings(manager.Settings); };
+        tray.Menu.Opened += (_, _) => watchClip.IsChecked = manager.Settings.MonitorClipboard;
+        menu.Add(watchClip);
+        menu.Add(new System.Windows.Controls.Separator());
+        menu.Add(TrayIcon.Item(L.T("Quit"), () => Quit(manager)));
         manager.Notify += (title, body) =>
         {
-            if (manager.Settings.Notifications) tray.ShowBalloonTip(3000, title, body, System.Windows.Forms.ToolTipIcon.Info);
+            if (manager.Settings.Notifications) tray.Balloon(title, body);
         };
         manager.Finished += r =>
         {
             if (manager.Settings.Notifications)
-                tray.ShowBalloonTip(3000, "Download finished", r.FileName + (r.ChecksumResult is { } c ? " – " + c : ""), System.Windows.Forms.ToolTipIcon.Info);
+                tray.Balloon("Download finished", r.FileName + (r.ChecksumResult is { } c ? " – " + c : ""));
             if (manager.Settings.ShowCompleteDialog) Dialogs.Complete(manager, r);
             foreach (var archive in LinkGrabber.ToUnpack(r, manager.Rows.Select(x => x.Record), manager.Settings.ExtractZips)) Unzip(archive, text =>
             {
-                if (manager.Settings.Notifications) tray.ShowBalloonTip(3000, "Unzipped", text, System.Windows.Forms.ToolTipIcon.Info);
+                if (manager.Settings.Notifications) tray.Balloon("Unzipped", text);
             });
         };
         manager.ClipboardLink += link => window.ShowAdd(link);
@@ -144,20 +139,20 @@ public partial class App : Application
     }
 
     /// <summary>Tray quick setting: the speed limit for all downloads, from off to 10 MB/s.</summary>
-    static System.Windows.Forms.ToolStripMenuItem SpeedLimitMenu(DownloadManager manager)
+    static System.Windows.Controls.MenuItem SpeedLimitMenu(DownloadManager manager)
     {
-        var item = new System.Windows.Forms.ToolStripMenuItem(L.T("Speed Limit"));
+        var item = new System.Windows.Controls.MenuItem { Header = L.T("Speed Limit") };
         foreach (var kb in SpeedLimits.Presets)
         {
-            var choice = new System.Windows.Forms.ToolStripMenuItem(kb <= 0 ? L.T("No Limit") : SpeedLimits.Title(kb));
+            var choice = new System.Windows.Controls.MenuItem { Header = kb <= 0 ? L.T("No Limit") : SpeedLimits.Title(kb), IsCheckable = true };
             choice.Click += (_, _) => { var s = manager.Settings; s.SpeedLimitKBps = kb; manager.ApplySettings(s); };
-            item.DropDownItems.Add(choice);
+            item.Items.Add(choice);
         }
-        item.DropDownOpening += (_, _) =>
+        item.SubmenuOpened += (_, _) =>
         {
             var current = manager.Settings.SpeedLimitKBps;
             for (var i = 0; i < SpeedLimits.Presets.Length; i++)
-                ((System.Windows.Forms.ToolStripMenuItem)item.DropDownItems[i]).Checked = SpeedLimits.Presets[i] == current;
+                ((System.Windows.Controls.MenuItem)item.Items[i]).IsChecked = SpeedLimits.Presets[i] == current;
         };
         return item;
     }
@@ -166,7 +161,7 @@ public partial class App : Application
     {
         manager.Save();
         if (window != null) WindowPlace.Save(window);
-        if (tray != null) tray.Visible = false;
+        tray?.Dispose();
         Shutdown();
     }
 

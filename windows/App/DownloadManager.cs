@@ -57,6 +57,7 @@ public sealed partial class DownloadManager
     bool capHolding;
 
     [DllImport("user32.dll")] static extern uint GetClipboardSequenceNumber();
+    [DllImport("powrprof.dll")] static extern bool SetSuspendState(bool hibernate, bool force, bool disableWakeEvents);
 
     public DownloadManager()
     {
@@ -597,7 +598,7 @@ public sealed partial class DownloadManager
                 break;
             case Nexonic.Core.AfterQueue.Sleep:
                 Notify?.Invoke("Queue finished", $"{q.Name} is done. The computer will sleep now.");
-                System.Windows.Forms.Application.SetSuspendState(System.Windows.Forms.PowerState.Suspend, false, false);
+                SetSuspendState(false, false, false);  // sleep (not hibernate)
                 break;
             case Nexonic.Core.AfterQueue.ShutDown:
                 Save();

@@ -9,7 +9,6 @@ import com.nexonic.downloadmanager.core.VideoChoice
 import com.nexonic.downloadmanager.core.VideoPages
 import com.nexonic.downloadmanager.core.Playlists
 import com.nexonic.downloadmanager.core.VideoSubtitles
-import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import java.io.File
@@ -41,7 +40,8 @@ object VideoEngine {
             if (ready) return
             try {
                 YoutubeDL.getInstance().init(app)
-                FFmpeg.getInstance().init(app)
+                // Versions up to 0.27 unpacked a large FFmpeg here; the app now runs its own from the library folder.
+                File(app.noBackupFilesDir, "youtubedl-android/packages/ffmpeg").takeIf { it.exists() }?.deleteRecursively()
             } catch (e: Throwable) {
                 Log.e(TAG, "video engine start failed", e)
                 throw VideoException(VideoPages.engineError(e.javaClass.simpleName, e.message))

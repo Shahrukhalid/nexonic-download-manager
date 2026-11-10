@@ -100,7 +100,8 @@ dependencies {
     // Video engine: yt-dlp (with Python) and ffmpeg, the same engine as the Mac and Windows apps.
     val youtubedlAndroid = "0.18.1"
     implementation("io.github.junkfood02.youtubedl-android:library:$youtubedlAndroid")
-    implementation("io.github.junkfood02.youtubedl-android:ffmpeg:$youtubedlAndroid")
+    // FFmpeg is not taken from youtubedl-android (a 78 MB general-purpose build): scripts/build-ffmpeg.sh builds a
+    // re-packing-only one into src/main/jniLibs as libffmpeg.so and libffprobe.so, where the library looks for it.
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     testImplementation("junit:junit:4.13.2")
