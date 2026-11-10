@@ -12,6 +12,8 @@
   Android and iPhone, Add finds the links in any pasted text.
 - **Whole galleries** (Windows, Linux and Mac): save every picture of a gallery or profile on sites like Reddit, Pixiv,
   DeviantArt and Imgur. The gallery engine is downloaded the first time it is used.
+  Galleries that need you signed in work too: the site's cookies and your login are passed to it privately, never on
+  the command line.
 - **List columns:** Finished, Folder and Can Resume, shown or hidden from View → Columns (on Mac, right-click a column
   title). The Add windows start in the folder you used last time.
 - **Appearance:** Light, Dark or the same as the system, now also on Windows, Mac, Android and iPhone.
