@@ -1,3 +1,16 @@
+## 0.27.0
+
+- **Remote management is back** (Windows, Linux, server): manage downloads from a phone or another device on your
+  network. Off until you turn it on in Options → Remote; a phone pairs by scanning a QR code, and every request needs the
+  pairing key (wrong keys are slowed down, other sites' pages are refused). Use it on trusted networks only.
+- **Headless server and Docker:** `nexonic-server` runs the download manager without a window, for a NAS or a home
+  server; the Docker image wraps it. See docs/SERVER.md.
+- **Custom categories on every app** (Windows, Linux, Mac, Android): give a category an icon and sites
+  (`📚 Books: epub pdf > Books`, `Releases: zip @ github.com/*/releases > Releases`). Sites include their subdomains and
+  `*` matches anything; a category with sites and no types takes every file from those sites. Categories are checked in
+  your order, so reordering and renaming is editing the lines. On Windows and Linux they also appear in the sidebar with
+  their counts.
+
 ## 0.26.0
 
 - **Smaller downloads:** the video engine is no longer in the installers. The app downloads its official release the

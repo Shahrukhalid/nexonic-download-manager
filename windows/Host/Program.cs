@@ -2,7 +2,7 @@ using System.Diagnostics;
 using Nexonic.Core;
 
 // Browser helper (native messaging) and the ndm command line: both hand downloads to the app through the inbox.
-const string Version = "0.26.0";
+const string Version = "0.27.0";
 
 // Optional MCP server for assistant apps: `ndm --mcp` (see docs/API.md). Adding goes through the inbox like `ndm`.
 if (args is ["--mcp"])
