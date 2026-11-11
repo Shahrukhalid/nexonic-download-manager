@@ -124,7 +124,7 @@ object VideoEngine {
      * yt-dlp keeps its .part files, so a paused download continues where it stopped.
      */
     fun download(id: String, url: String, choice: VideoChoice, dir: File, rateKB: Long, userAgent: String?, referer: String?,
-                 subtitles: Boolean = false, progress: (Float, Long, Long?, Long?) -> Unit): File {
+                 subtitles: Boolean = false, audioFormat: String = "original", progress: (Float, Long, Long?, Long?) -> Unit): File {
         ensure()
         dir.mkdirs()
         val req = base(resolve(url), userAgent, referer).apply {
@@ -136,6 +136,12 @@ object VideoEngine {
             addOption("--embed-metadata")
             addOption("--embed-chapters")
             if (!choice.audioOnly && subtitles) VideoSubtitles.arguments().forEach { addOption(it) }
+            // Sound only: convert to MP3, Opus or FLAC when chosen in Settings (the bundled FFmpeg does it).
+            if (choice.audioOnly && audioFormat in setOf("mp3", "opus", "flac")) {
+                addOption("-x")
+                addOption("--audio-format", audioFormat)
+                if (audioFormat == "mp3") addOption("--audio-quality", "0")
+            }
             if (rateKB > 0) addOption("--limit-rate", "${rateKB}K")
         }
         try {
@@ -237,7 +243,8 @@ class VideoJob(
         Thread({
             try {
                 val file = VideoEngine.download(id.toString(), url, choice, dir, rateKB, userAgent, referer,
-                    com.nexonic.downloadmanager.data.Downloads.settings.videoSubtitles) { p, eta, total, speed ->
+                    com.nexonic.downloadmanager.data.Downloads.settings.videoSubtitles,
+                    com.nexonic.downloadmanager.data.Downloads.settings.audioFormat) { p, eta, total, speed ->
                     if (!stopped.get()) onProgress(p, eta, total, speed)
                 }
                 if (!stopped.get()) onDone(file)

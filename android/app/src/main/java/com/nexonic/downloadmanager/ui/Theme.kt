@@ -41,13 +41,42 @@ fun NexonicTheme(content: @Composable () -> Unit) {
             surface = Color(scheme.surface), primaryContainer = Color(scheme.accent).copy(alpha = 0.15f).compositeOver(Color.White),
             onPrimaryContainer = Color.Black)
     }
-    MaterialTheme(colorScheme = colors, content = content)
+    MaterialTheme(colorScheme = colors, typography = typography(Appearance.font, Appearance.textScale), content = content)
+}
+
+/** The chosen font family and text size applied to every text style of the app. */
+private fun typography(font: String, scale: Int): androidx.compose.material3.Typography {
+    val base = androidx.compose.material3.Typography()
+    val family = when (font) {
+        "sans" -> androidx.compose.ui.text.font.FontFamily.SansSerif
+        "serif" -> androidx.compose.ui.text.font.FontFamily.Serif
+        "mono" -> androidx.compose.ui.text.font.FontFamily.Monospace
+        else -> null
+    }
+    if (family == null && scale == 100) return base
+    val f = scale.coerceIn(85, 150) / 100f
+    fun androidx.compose.ui.text.TextStyle.adjust() = copy(
+        fontFamily = family ?: fontFamily,
+        fontSize = fontSize * f,
+        lineHeight = if (lineHeight.isSp) lineHeight * f else lineHeight,
+    )
+    return base.copy(
+        displayLarge = base.displayLarge.adjust(), displayMedium = base.displayMedium.adjust(), displaySmall = base.displaySmall.adjust(),
+        headlineLarge = base.headlineLarge.adjust(), headlineMedium = base.headlineMedium.adjust(), headlineSmall = base.headlineSmall.adjust(),
+        titleLarge = base.titleLarge.adjust(), titleMedium = base.titleMedium.adjust(), titleSmall = base.titleSmall.adjust(),
+        bodyLarge = base.bodyLarge.adjust(), bodyMedium = base.bodyMedium.adjust(), bodySmall = base.bodySmall.adjust(),
+        labelLarge = base.labelLarge.adjust(), labelMedium = base.labelMedium.adjust(), labelSmall = base.labelSmall.adjust(),
+    )
 }
 
 /** Settings → Appearance: the same as the phone, light or dark, and a colour scheme (changes right away). */
 object Appearance {
     var choice by androidx.compose.runtime.mutableStateOf("system")
     var scheme by androidx.compose.runtime.mutableStateOf("")
+    var font by androidx.compose.runtime.mutableStateOf("system")
+    var textScale by androidx.compose.runtime.mutableStateOf(100)
+    /** Changes when the size, speed or date units change, so the list is drawn again. */
+    var units by androidx.compose.runtime.mutableStateOf(0)
 }
 
 fun categoryColor(c: FileCategory): Color = when (c) {
@@ -57,5 +86,6 @@ fun categoryColor(c: FileCategory): Color = when (c) {
     FileCategory.DOCUMENTS -> Color(0xFF2563EB)
     FileCategory.PROGRAMS -> Color(0xFF059669)
     FileCategory.IMAGES -> Color(0xFF0891B2)
+    FileCategory.MODELS -> Color(0xFF9333EA)
     FileCategory.OTHER -> Color(0xFF64748B)
 }

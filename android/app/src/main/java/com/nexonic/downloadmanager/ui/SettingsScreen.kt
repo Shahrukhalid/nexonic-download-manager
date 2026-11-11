@@ -140,6 +140,26 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
                     Text(tr(title), Modifier.clickable(onClick = pick).padding(end = 12.dp))
                 }
             }
+            var font by remember { mutableStateOf(s.appFont) }
+            Choices("Font", listOf("system" to "Same as the phone", "sans" to "Sans serif", "serif" to "Serif", "mono" to "Monospace"), font) {
+                font = it; s.appFont = it; Appearance.font = it
+            }
+            var textScale by remember { mutableStateOf(s.textScale.toString()) }
+            Choices("Text size", listOf("85", "100", "115", "130", "150").map { it to "$it%" }, textScale) {
+                textScale = it; s.textScale = it.toInt(); Appearance.textScale = it.toInt()
+            }
+            var sizeUnits by remember { mutableStateOf(s.sizeUnits) }
+            Choices("Sizes", listOf("binary" to "KB, MB (1 KB = 1024 bytes)", "iec" to "KiB, MiB", "decimal" to "KB, MB (1 KB = 1000 bytes)"), sizeUnits) {
+                sizeUnits = it; s.sizeUnits = it; s.applyFormats(); Appearance.units++
+            }
+            var speedUnits by remember { mutableStateOf(s.speedUnits) }
+            Choices("Speeds", listOf("bytes" to "MB/s", "bits" to "Mbit/s"), speedUnits) {
+                speedUnits = it; s.speedUnits = it; s.applyFormats(); Appearance.units++
+            }
+            var dateStyle by remember { mutableStateOf(s.dateStyle) }
+            Choices("Dates", listOf("absolute" to "Date and time", "relative" to "How long ago (5 min ago)"), dateStyle) {
+                dateStyle = it; s.dateStyle = it; s.applyFormats(); Appearance.units++
+            }
 
             Section("Debrid service (optional)")
             var debrid by remember { mutableStateOf(s.debridService) }
@@ -245,28 +265,28 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
                 if (available && !isDefault) askRole.launch(roles!!.createRequestRoleIntent(android.app.role.RoleManager.ROLE_BROWSER))
                 else runCatching { context.startActivity(Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)) }
             }) { Text(tr(if (isDefault) "Change the default browser" else "Make Nexonic the default browser")) }
-            var categoriesText by remember { mutableStateOf(com.nexonic.downloadmanager.core.CustomCategory.toLines(s.customCategories)) }
-            var categoriesProblem by remember { mutableStateOf<String?>(null) }
-            OutlinedTextField(
-                value = categoriesText,
-                onValueChange = { categoriesText = it; categoriesProblem = null },
-                label = { Text(tr("Your categories")) },
-                isError = categoriesProblem != null,
-                supportingText = {
-                    Text(categoriesProblem ?: tr("One per line, checked in order: [icon] Name: types @ sites > folder. Sites limit a category to files from those addresses (example.com includes its subdomains; * matches anything). The folder is inside Downloads/Nexonic. Example: 📚 Comics: cbz cbr > Comics"))
-                },
-                minLines = 3,
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            )
-            TextButton(onClick = {
-                val (list, problem) = com.nexonic.downloadmanager.core.CustomCategory.parse(categoriesText)
-                categoriesProblem = problem
-                if (problem == null) {
-                    s.customCategories = list
-                    categoriesText = com.nexonic.downloadmanager.core.CustomCategory.toLines(list)
-                }
-            }) { Text(tr("Save Categories")) }
+            CategoryList()
             Toggle("Save subtitles with videos", "Subtitles in your phone's language and English, inside the video file.", subtitles) { subtitles = it; s.videoSubtitles = it }
+            var audioFormat by remember { mutableStateOf(s.audioFormat) }
+            Choices("Sound-only downloads", listOf("original" to "Original format", "mp3" to "MP3", "opus" to "Opus", "flac" to "FLAC"), audioFormat) {
+                audioFormat = it; s.audioFormat = it
+            }
+            Hint("Converting uses the built-in FFmpeg. MP3 uses the best variable quality; FLAC keeps every detail of the sound the site sends.")
+            var manualActive by remember { mutableStateOf(s.maxManualActive.toString()) }
+            Choices("Downloads I resume myself, beside the queue", listOf("0" to "Off", "1" to "1", "2" to "2", "3" to "3"), manualActive) {
+                manualActive = it; s.maxManualActive = it.toInt()
+            }
+            Hint("Off: a resumed download waits for its turn like the others.")
+            var removeMissing by remember { mutableStateOf(s.removeMissingOnStart) }
+            Toggle("Remove missing files from the list", "When the app starts, finished downloads whose file was deleted or moved leave the list.", removeMissing) {
+                removeMissing = it; s.removeMissingOnStart = it
+            }
+            TextButton(onClick = {
+                Thread {
+                    val n = Downloads.removeMissing()
+                    android.os.Handler(android.os.Looper.getMainLooper()).post { message(tr("Removed %d from the list. Files on the phone are not touched.").format(n)) }
+                }.start()
+            }) { Text(tr("Remove Missing Files Now")) }
             Text(tr("Save to"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp))
             Hint(if (treeName.isEmpty()) "Downloads/Nexonic on this phone" else treeName)
             Row {
@@ -280,6 +300,51 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
             Section("Notifications")
             Toggle("When a download finishes", "A notification you can tap to open the file.", notifyDone) { notifyDone = it; s.notifyFinished = it }
             Toggle("When a download fails", "Says what went wrong.", notifyFail) { notifyFail = it; s.notifyFailed = it }
+            var soundDone by remember { mutableStateOf(s.soundFinished) }
+            var soundFail by remember { mutableStateOf(s.soundFailed) }
+            var pickingFor by remember { mutableStateOf("") }
+            val pickSound = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) { r ->
+                if (r.resultCode != android.app.Activity.RESULT_OK) return@rememberLauncherForActivityResult
+                @Suppress("DEPRECATION")
+                val uri = r.data?.getParcelableExtra<Uri>(android.media.RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+                val value = uri?.toString() ?: "none"
+                if (pickingFor == "done") { soundDone = value; s.soundFinished = value } else { soundFail = value; s.soundFailed = value }
+            }
+            fun soundName(v: String): String = when (v) {
+                "" -> tr("Phone's default")
+                "none" -> tr("Silent")
+                else -> runCatching { android.media.RingtoneManager.getRingtone(context, Uri.parse(v))?.getTitle(context) }.getOrNull() ?: tr("Chosen sound")
+            }
+            fun choose(forWhat: String, current: String) {
+                pickingFor = forWhat
+                val i = Intent(android.media.RingtoneManager.ACTION_RINGTONE_PICKER)
+                    .putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_TYPE, android.media.RingtoneManager.TYPE_NOTIFICATION)
+                    .putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true)
+                    .putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                    .putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_EXISTING_URI,
+                        when (current) { "" -> android.provider.Settings.System.DEFAULT_NOTIFICATION_URI; "none" -> null; else -> Uri.parse(current) })
+                runCatching { pickSound.launch(i) }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(tr("Sound when finished: ") + soundName(soundDone), Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                TextButton(onClick = { choose("done", soundDone) }) { Text(tr("Change")) }
+                if (soundDone.isNotEmpty()) TextButton(onClick = { soundDone = ""; s.soundFinished = "" }) { Text(tr("Default")) }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(tr("Sound when failed: ") + soundName(soundFail), Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                TextButton(onClick = { choose("fail", soundFail) }) { Text(tr("Change")) }
+                if (soundFail.isNotEmpty()) TextButton(onClick = { soundFail = ""; s.soundFailed = "" }) { Text(tr("Default")) }
+            }
+            var vibrate by remember { mutableStateOf(s.notifyVibrate) }
+            Toggle("Vibrate", "With the finished and failed notifications.", vibrate) { vibrate = it; s.notifyVibrate = it }
+            var quietHours by remember { mutableStateOf(s.quietHours) }
+            OutlinedTextField(
+                value = quietHours,
+                onValueChange = { quietHours = it; if (it.isBlank() || com.nexonic.downloadmanager.core.QuietHours.parse(it) != null) s.quietHours = it },
+                label = { Text(tr("Quiet hours, no sound (for example 22:00-07:00)")) },
+                isError = quietHours.isNotBlank() && com.nexonic.downloadmanager.core.QuietHours.parse(quietHours) == null,
+                singleLine = true, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            )
             Hint("While downloads run, Android shows one quiet notification with their progress and Pause all; it can't be turned off while the app downloads in the background.")
             TextButton(onClick = {
                 runCatching { context.startActivity(Intent(SystemSettings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(SystemSettings.EXTRA_APP_PACKAGE, context.packageName)) }
@@ -412,8 +477,20 @@ private fun Section(title: String) {
     HorizontalDivider(Modifier.padding(top = 6.dp, bottom = 10.dp))
 }
 
+/** A titled row of choices (radio buttons) that scrolls sideways when it does not fit. */
 @Composable
-private fun Hint(text: String) {
+private fun Choices(title: String, options: List<Pair<String, String>>, selected: String, onPick: (String) -> Unit) {
+    Text(tr(title), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp))
+    Row(Modifier.horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
+        options.forEach { (code, label) ->
+            androidx.compose.material3.RadioButton(selected = selected == code, onClick = { onPick(code) })
+            Text(tr(label), Modifier.clickable { onPick(code) }.padding(end = 12.dp))
+        }
+    }
+}
+
+@Composable
+internal fun Hint(text: String) {
     Text(tr(text), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 

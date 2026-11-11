@@ -78,6 +78,7 @@ object Downloads {
         store = ListStore(app)
         secrets = SecretStore(app)
         settings = Settings(app)
+        settings.applyFormats()
         applySpeedLimit()
         main.postDelayed(object : Runnable { override fun run() { applySpeedLimit(); main.postDelayed(this, 30_000) } }, 30_000)
         cap = settings.dataCap
@@ -88,6 +89,7 @@ object Downloads {
         // Downloads that were running when the app stopped continue.
         _items.value = store.load().map { if (it.status == Status.DOWNLOADING) it.copy(status = Status.QUEUED, speed = 0) else it.copy(speed = 0) }
         if (_items.value.any { it.status == Status.QUEUED }) main.post { pump() }
+        if (settings.removeMissingOnStart) Thread({ removeMissing() }, "nexonic-missing").start()
         // Waiting for Wi-Fi: start as soon as an unmetered network is back.
         runCatching {
             app.getSystemService(ConnectivityManager::class.java)?.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
@@ -249,7 +251,36 @@ object Downloads {
 
     fun resume(id: Long) {
         update(id) { if (it.status == Status.COMPLETE || it.status == Status.DOWNLOADING) it else it.copy(status = Status.QUEUED, error = null) }
+        if (settings.maxManualActive > 0) synchronized(this) { manual.add(id) }
         pump()
+    }
+
+    /** Downloads resumed by hand while Settings gives them their own slots beside the queue. */
+    private val manual = mutableSetOf<Long>()
+
+    /** True when a finished download's file was deleted or moved outside the app. */
+    fun isMissing(item: DownloadItem): Boolean {
+        if (item.status != Status.COMPLETE) return false
+        item.contentUri?.let { uri ->
+            return try {
+                app.contentResolver.openFileDescriptor(android.net.Uri.parse(uri), "r")?.close()
+                false
+            } catch (e: java.io.FileNotFoundException) {
+                true
+            } catch (e: Exception) {
+                false  // no permission or the storage provider is gone: not proof that the file was deleted
+            }
+        }
+        return item.savedPath?.let { !File(it).exists() } ?: false
+    }
+
+    /** Removes finished downloads whose file is gone from the list (the files themselves are not touched). */
+    fun removeMissing(): Int {
+        val gone = _items.value.filter { isMissing(it) }.map { it.id }.toSet()
+        if (gone.isEmpty()) return 0
+        synchronized(this) { _items.value = _items.value.filterNot { it.id in gone } }
+        store.save(_items.value)
+        return gone.size
     }
 
     fun pause(id: Long) {
@@ -372,11 +403,19 @@ object Downloads {
             return
         }
         _waitingForWifi.value = false
-        var room = settings.maxActive - transfers.size
-        for (item in queued.sortedBy { it.addedAt }) {
+        val byHand = synchronized(this) { manual.retainAll { id -> _items.value.any { it.id == id && it.status in setOf(Status.QUEUED, Status.DOWNLOADING) } }; manual.toSet() }
+        var room = settings.maxActive - transfers.keys.count { it !in byHand }
+        for (item in queued.filter { it.id !in byHand }.sortedBy { it.addedAt }) {
             if (room <= 0) break
             startTransfer(item)
             room--
+        }
+        // Resumed by hand: their own slots (Settings → Downloads), so they start without waiting for the queue.
+        var free = settings.maxManualActive - transfers.keys.count { it in byHand }
+        for (item in queued.filter { it.id in byHand }.sortedBy { it.addedAt }) {
+            if (free <= 0) break
+            startTransfer(item)
+            free--
         }
         if (transfers.isNotEmpty()) DownloadService.start(app)
     }

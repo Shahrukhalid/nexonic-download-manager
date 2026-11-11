@@ -84,6 +84,7 @@ fun AddDownloadSheet(given: Offer?, text: String?, onDone: (String?) -> Unit) {
     val context = LocalContext.current
     var input by remember { mutableStateOf(given?.url ?: text.orEmpty()) }
     var batch by remember { mutableStateOf(false) }
+    var keepOnly by remember { mutableStateOf("") }
     var name by remember { mutableStateOf(given?.fileName.orEmpty()) }
     var nameEdited by remember { mutableStateOf(false) }
     var probe by remember { mutableStateOf<ProbeResult?>(null) }
@@ -105,10 +106,11 @@ fun AddDownloadSheet(given: Offer?, text: String?, onDone: (String?) -> Unit) {
         curl?.request?.let { c -> if (c.username != null) { user = c.username; password = c.password.orEmpty() } }
     }
 
-    val links: List<String> = remember(input, batch, curl) {
+    val links: List<String> = remember(input, batch, curl, keepOnly) {
         if (curl != null) return@remember listOfNotNull(curl.request?.url)
         // Any pasted text works: when it is not just links, the links in it are found (Link Grabber).
-        val l = if (batch) Links.split(input).flatMap { BatchPattern.expand(it, 2000) }.filter { Links.isWebLink(it) }
+        val l = if (batch) com.nexonic.downloadmanager.core.LinkFilter.apply(
+                Links.split(input).flatMap { BatchPattern.expand(it, 2000) }.filter { Links.isWebLink(it) }, keepOnly)
             else Links.split(input).takeIf { s -> s.all { Links.isWebLink(it) || it.startsWith("magnet:", true) } }
                 ?: com.nexonic.downloadmanager.core.LinkGrabber.find(input)
         l.distinct()
@@ -219,10 +221,15 @@ fun AddDownloadSheet(given: Offer?, text: String?, onDone: (String?) -> Unit) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(tr("Batch pattern"), style = MaterialTheme.typography.bodyMedium)
-                        Text(tr("file[01-50].jpg makes 50 links"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(tr("file[01-50].jpg makes 50 links; {jpg,png} tries each"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Switch(checked = batch, onCheckedChange = { batch = it })
                 }
+                if (batch) OutlinedTextField(
+                    value = keepOnly, onValueChange = { keepOnly = it }, singleLine = true, modifier = Modifier.fillMaxWidth(),
+                    label = { Text(tr("Keep only (optional)")) },
+                    supportingText = { Text(tr("* and ? are wildcards; ! leaves links out. Example: *.jpg !*thumb*") + " · ${links.size}") },
+                )
             } else {
                 Text(given.url, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
