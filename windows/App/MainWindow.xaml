@@ -260,6 +260,9 @@
             <DataGridTextColumn x:Name="FinishedColumn" Header="Finished" Binding="{Binding Finished}" Width="120" SortMemberPath="Record.Finished" />
             <DataGridTextColumn x:Name="FolderColumn" Header="Folder" Binding="{Binding SaveFolder}" Width="180" />
             <DataGridTextColumn x:Name="ResumeColumn" Header="Can Resume" Binding="{Binding CanResume}" Width="85" />
+            <DataGridTextColumn x:Name="PeersColumn" Header="Seeds/Peers" Binding="{Binding Peers}" Width="85" />
+            <DataGridTextColumn x:Name="RatioColumn" Header="Share Ratio" Binding="{Binding Ratio}" Width="80" SortMemberPath="Record.Torrent.Ratio" />
+            <DataGridTextColumn x:Name="UploadedColumn" Header="Uploaded" Binding="{Binding Uploaded}" Width="85" SortMemberPath="Record.Torrent.Uploaded" />
           </DataGrid.Columns>
         </DataGrid>
         <StackPanel x:Name="Empty" Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed" MaxWidth="400">

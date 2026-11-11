@@ -62,13 +62,17 @@ public sealed partial class DownloadManager
     {
         this.post = post;
         var first = !File.Exists(AppPaths.Settings);
+        DataMoveProblem = DataLocation.ApplyPending(AppPaths.Default);
         Settings = Load<AppSettings>(AppPaths.Settings) ?? new AppSettings();
+        Settings.Upgrade();
         if (first) LinuxDefaults(Settings);
         foreach (var q in Load<List<DownloadQueue>>(AppPaths.Queues) ?? new()) Queues.Add(q);
         if (!Queues.Any(q => q.IsMain)) Queues.Insert(0, DownloadQueue.Main());
         foreach (var r in Load<List<DownloadRecord>>(AppPaths.Downloads) ?? new())
         {
             if (r.IsActive) r.Status = DownloadStatus.Queued;
+            r.Manual = null;
+            if (Settings.RemoveMissingOnStart && MissingFiles.IsMissing(r)) continue; // its file was deleted or moved
             Rows.Add(new Row(r, QueueName));
         }
         // Lists and settings saved by 0.6.1 hold cookies and passwords in plain text: encrypt them now.
@@ -78,6 +82,8 @@ public sealed partial class DownloadManager
         Network.Options = Settings.Network.Clamped();
         Debrid.Settings = Settings.Debrid;
         FileCategories.Custom = CustomCategory.Clean(Settings.CustomCategories);
+        Units.Apply(Settings);
+        AudioConversion.Format = Settings.AudioFormat;
         EnginePaths.YtDlp = Settings.YtDlpPath?.Trim() ?? "";
         EnginePaths.FFmpeg = Settings.FFmpegPath?.Trim() ?? "";
         // The app reads the inbox once its windows are ready (CollectInbox), so browser links get the download window.
@@ -103,6 +109,9 @@ public sealed partial class DownloadManager
         Network.Options = s.Network.Clamped();
         Debrid.Settings = s.Debrid;
         FileCategories.Custom = CustomCategory.Clean(s.CustomCategories);
+        Units.Apply(s);
+        AudioConversion.Format = s.AudioFormat;
+        foreach (var r in Rows) r.Refresh(); // sizes, speeds and dates in the chosen units
         EnginePaths.YtDlp = s.YtDlpPath?.Trim() ?? "";
         EnginePaths.FFmpeg = s.FFmpegPath?.Trim() ?? "";
         Write(AppPaths.Settings, s);
@@ -352,6 +361,7 @@ public sealed partial class DownloadManager
     {
         if (transfers.Remove(row.Record.Id, out var t)) t.Pause();
         else if (row.Record.Status == DownloadStatus.Queued) row.Record.Status = DownloadStatus.Paused;
+        row.Record.Manual = null;
         row.Refresh();
         Schedule();
     }
@@ -363,7 +373,9 @@ public sealed partial class DownloadManager
             row.Record.Status = DownloadStatus.Queued;
             row.Record.Error = null;
         }
-        if (Queues.FirstOrDefault(q => q.Id == row.Record.Queue) is { Running: false } queue) queue.Running = true;
+        // With separate slots for downloads resumed by hand, this one starts in those without starting its whole queue.
+        if (Settings.MaxManualActive > 0) row.Record.Manual = true;
+        else if (Queues.FirstOrDefault(q => q.Id == row.Record.Queue) is { Running: false } queue) queue.Running = true;
         row.Refresh();
         Schedule();
     }
@@ -401,6 +413,17 @@ public sealed partial class DownloadManager
 
     public void PauseAll() { foreach (var r in Rows.ToList()) if (r.Record.IsActive || r.Record.Status == DownloadStatus.Queued) Pause(r); }
     public void ResumeAll() { foreach (var r in Rows.ToList()) if (r.Record.Status is DownloadStatus.Paused or DownloadStatus.Failed) Resume(r); }
+    /// <summary>Removes finished downloads whose file was deleted or moved outside the app; returns how many.</summary>
+    public int RemoveMissing()
+    {
+        var gone = Rows.Where(r => MissingFiles.IsMissing(r.Record)).ToList();
+        foreach (var r in gone) Rows.Remove(r);
+        if (gone.Count > 0) Save();
+        return gone.Count;
+    }
+
+    public string? DataMoveProblem { get; }
+
     public void ClearFinished() { foreach (var r in Rows.Where(r => r.Record.Status == DownloadStatus.Finished).ToList()) Remove(r); }
 
     /// <summary>Continues from a new address (or waits for one from the browser), keeping what is downloaded.</summary>
@@ -627,25 +650,37 @@ public sealed partial class DownloadManager
         foreach (var q in Queues.Where(q => q.Running).ToList())
         {
             var limit = q.IsMain ? Settings.MaxActive : q.MaxActive;
-            var slots = Math.Max(1, limit) - transfers.Values.Count(t => t.Record.Queue == q.Id && t.Record.Status != DownloadStatus.Seeding);
-            foreach (var row in Rows.Reverse().Where(r => r.Record.Queue == q.Id && r.Record.Status == DownloadStatus.Queued).ToList())
+            var slots = Math.Max(1, limit) - transfers.Values.Count(t => t.Record.Queue == q.Id && t.Record.Status != DownloadStatus.Seeding && t.Record.Manual != true);
+            foreach (var row in Rows.Reverse().Where(r => r.Record.Queue == q.Id && r.Record.Status == DownloadStatus.Queued && r.Record.Manual != true).ToList())
             {
                 if (slots-- <= 0) break;
-                var profile = HostProfiles.Match(Settings.HostProfiles, row.Record.Url);
-                var proxy = profile?.Proxy ?? Settings.Proxy;
-                // Auto (the default) grows up to its maximum while it helps; a number set in Options or for the site is used as is.
-                var auto = Settings.AutoConnections && profile?.MaxConnections == null;
-                var connections = Math.Clamp(auto ? Settings.AutoMaxConnections : profile?.MaxConnections ?? Settings.Connections, 1, Limits.MaxConnections);
-                var context = new DownloadContext(connections, limiter, Settings.SortIntoCategoryFolders, proxy,
-                    TransferOptions.From(Network.Options, profile), Settings.TorrentsEnabled, Settings.SpeedLimitKBps,
-                    Settings.TorrentPortForwarding, Settings.TorrentEncryption, auto);
-                var t = new DownloadProviders().Create(row.Record, context);
-                transfers[row.Record.Id] = t;
-                row.Record.Status = DownloadStatus.Probing;
-                t.Changed += rec => post(() => Changed(row, rec, t));
-                _ = t.StartAsync();
+                StartTransfer(row);
             }
         }
+        // Downloads resumed by hand: their own slots, whether or not their queue runs.
+        var manual = Settings.MaxManualActive - transfers.Values.Count(t => t.Record.Manual == true && t.Record.Status != DownloadStatus.Seeding);
+        foreach (var row in Rows.Reverse().Where(r => r.Record.Manual == true && r.Record.Status == DownloadStatus.Queued).ToList())
+        {
+            if (manual-- <= 0) break;
+            StartTransfer(row);
+        }
+    }
+
+    void StartTransfer(Row row)
+    {
+        var profile = HostProfiles.Match(Settings.HostProfiles, row.Record.Url);
+        var proxy = profile?.Proxy ?? Settings.Proxy;
+        // Auto (the default) grows up to its maximum while it helps; a number set in Options or for the site is used as is.
+        var auto = Settings.AutoConnections && profile?.MaxConnections == null;
+        var connections = Math.Clamp(auto ? Settings.AutoMaxConnections : profile?.MaxConnections ?? Settings.Connections, 1, Limits.MaxConnections);
+        var context = new DownloadContext(connections, limiter, Settings.SortIntoCategoryFolders, proxy,
+            TransferOptions.From(Network.Options, profile), Settings.TorrentsEnabled, Settings.SpeedLimitKBps,
+            Settings.TorrentPortForwarding, Settings.TorrentEncryption, auto);
+        var t = new DownloadProviders().Create(row.Record, context);
+        transfers[row.Record.Id] = t;
+        row.Record.Status = DownloadStatus.Probing;
+        t.Changed += rec => post(() => Changed(row, rec, t));
+        _ = t.StartAsync();
     }
 
     void Changed(Row row, DownloadRecord rec, IDownloader t)
@@ -661,6 +696,7 @@ public sealed partial class DownloadManager
         }
         if (rec.Status is not (DownloadStatus.Finished or DownloadStatus.Failed or DownloadStatus.Paused)) return;
         transfers.Remove(rec.Id);
+        rec.Manual = null;
         if (rec.Status == DownloadStatus.Finished && rec.Torrent == null) AfterDownload(rec);
         if (rec.Status == DownloadStatus.Failed) { Notify?.Invoke("Download failed", $"{rec.FileName}: {rec.Error}"); PlaySound(Sounds.Event.Failed); }
         Save();
@@ -841,7 +877,7 @@ public sealed class Row : System.ComponentModel.INotifyPropertyChanged
     public string Name => Record.FileName;
     public string Size => Record.Size is long s ? Bytes(s) : "–";
     public double Percent => Record.Progress * 100;
-    public string Speed => Record.IsActive && SpeedBytes > 0 ? Bytes((long)SpeedBytes) + "/s" : "";
+    public string Speed => Record.IsActive && SpeedBytes > 0 ? Units.Speed(SpeedBytes) : "";
     public string TimeLeft => Record.IsActive ? TimeLeftText.Of(Record.Size, Record.Received, SpeedBytes) : "";
     /// <summary>Video sites and streams take a few seconds to look up the best quality before the first byte arrives.</summary>
     public bool PreparingVideo => Record.IsActive && (Record.SiteVideo == true || Record.IsStream == true) && Record.Received == 0;
@@ -852,7 +888,7 @@ public sealed class Row : System.ComponentModel.INotifyPropertyChanged
         DownloadStatus.Downloading => Record.Gallery == true ? $"{Record.StreamDone ?? 0} {L.T("files")}" : $"{Percent:0}%",
         DownloadStatus.Seeding => "Seeding",
         DownloadStatus.Paused => L.T(Record.AwaitingRefresh == true ? "Waiting for link" : "Stopped"),
-        DownloadStatus.Finished => L.T(Record.ChecksumResult?.Contains("not") == true ? "Checksum failed" : "Complete"),
+        DownloadStatus.Finished => L.T(Record.ChecksumResult?.Contains("not") == true ? "Checksum failed" : MissingFiles.IsMissing(Record) ? "File missing" : "Complete"),
         _ => L.T(Record.IsCanceled ? "Canceled" : "Error"),
     };
     public string Queue => queueName(Record.Queue);
@@ -869,6 +905,9 @@ public sealed class Row : System.ComponentModel.INotifyPropertyChanged
     public string Finished => ListColumns.When(Record.Finished);
     public string SaveFolder => ListColumns.Folder(Record);
     public string CanResume => L.T(ListColumns.Resume(Record));
+    public string Peers => ListColumns.Peers(Record);
+    public string Ratio => ListColumns.Ratio(Record);
+    public string Uploaded => ListColumns.Uploaded(Record);
     public string Category => Record.Category.ToString();
 
     public void Tick()
@@ -882,14 +921,7 @@ public sealed class Row : System.ComponentModel.INotifyPropertyChanged
 
     public void Refresh() => PropertyChanged?.Invoke(this, new(""));
 
-    public static string Bytes(long n)
-    {
-        string[] u = { "B", "KB", "MB", "GB", "TB" };
-        double v = n;
-        var i = 0;
-        while (v >= 1024 && i < u.Length - 1) { v /= 1024; i++; }
-        return $"{v:0.#} {u[i]}";
-    }
+    public static string Bytes(long n) => Units.Size(n);
 }
 
 /// <summary>The app's colours (Nexonic blue and the status colours).</summary>

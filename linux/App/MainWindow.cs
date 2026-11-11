@@ -454,7 +454,8 @@ public sealed class MainWindow : Window
     {
         ("File Name", "name", "*"), ("Size", "size", "90"), ("Progress", "progress", "120"), ("Speed", "speed", "96"), ("Time Left", "left", "84"),
         ("Status", "status", "140"), ("Queue", "queue", "110"), ("Added", "added", "150"), ("Finished", "finished", "150"),
-        ("Folder", "folder", "180"), ("Can Resume", "resume", "96"),
+        ("Folder", "folder", "180"), ("Can Resume", "resume", "96"), ("Seeds/Peers", "peers", "90"), ("Share Ratio", "ratio", "86"),
+        ("Uploaded", "uploaded", "90"),
     };
 
     /// <summary>Columns turned off under View → Columns (they get no width).</summary>
@@ -611,6 +612,9 @@ public sealed class MainWindow : Window
         var finished = Cell(8);
         var folder = Cell(9);
         var resume = Cell(10);
+        var peers = Cell(11);
+        var ratio = Cell(12);
+        var uploaded = Cell(13);
         foreach (var c in g.Children)
             if (Array.IndexOf(Display, Grid.GetColumn(c)) is var i && i > 0 && HiddenColumns.Contains(Headers[i].Key)) c.IsVisible = false;
         string lastName = "";
@@ -639,6 +643,9 @@ public sealed class MainWindow : Window
             finished.Text = row.Finished;
             folder.Text = row.SaveFolder;
             resume.Text = row.CanResume;
+            peers.Text = row.Peers;
+            ratio.Text = row.Ratio;
+            uploaded.Text = row.Uploaded;
         }
         Update();
         void Changed(object? s, System.ComponentModel.PropertyChangedEventArgs e) => Update();
@@ -738,6 +745,9 @@ public sealed class MainWindow : Window
             "finished" => r => r.Record.Finished ?? DateTime.MinValue,
             "folder" => r => r.SaveFolder,
             "resume" => r => r.CanResume,
+            "peers" => r => r.Record.Torrent?.Peers ?? -1,
+            "ratio" => r => r.Record.Torrent?.Ratio ?? -1,
+            "uploaded" => r => r.Record.Torrent?.Uploaded ?? -1,
             _ => r => r.Record.Added,
         };
         var sorted = (sortDescending ? rows.OrderByDescending(by) : rows.OrderBy(by)).ToList();
@@ -758,7 +768,7 @@ public sealed class MainWindow : Window
         var queued = manager.Rows.Count(r => r.Record.Status == DownloadStatus.Queued);
         var speed = manager.Rows.Where(r => r.Record.IsActive).Sum(r => r.SpeedBytes);
         var selected = Selected;
-        statusLeft.Text = $"{active} downloading   ·   {queued} queued" + (speed > 0 ? $"   ·   {Row.Bytes((long)speed)}/s" : "")
+        statusLeft.Text = $"{active} downloading   ·   {queued} queued" + (speed > 0 ? $"   ·   {Units.Speed(speed)}" : "")
             + (selected.Count > 1 ? $"   ·   {selected.Count} selected, {Row.Bytes(selected.Sum(r => r.Record.Size ?? 0))}" : "");
         statusRight.Text = (manager.Settings.SpeedLimitKBps > 0 ? $"Limit {manager.Settings.SpeedLimitKBps} KB/s   ·   " : "")
                            + $"{manager.Queues.Count(q => q.Running)} of {manager.Queues.Count} queues running";

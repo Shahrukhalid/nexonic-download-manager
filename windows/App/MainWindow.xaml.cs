@@ -176,7 +176,7 @@ public partial class MainWindow : Window
         var queued = manager.Rows.Count(r => r.Record.Status == DownloadStatus.Queued);
         var speed = manager.Rows.Where(r => r.Record.IsActive).Sum(r => r.SpeedBytes);
         var selected = Selected;
-        StatusLeft.Text = $"{active} downloading   ·   {queued} queued" + (speed > 0 ? $"   ·   {Row.Bytes((long)speed)}/s" : "")
+        StatusLeft.Text = $"{active} downloading   ·   {queued} queued" + (speed > 0 ? $"   ·   {Units.Speed(speed)}" : "")
             + (selected.Count > 1 ? $"   ·   {selected.Count} selected, {Row.Bytes(selected.Sum(r => r.Record.Size ?? 0))}" : "");
         StatusRight.Text = (manager.Settings.SpeedLimitKBps > 0 ? $"Limit {manager.Settings.SpeedLimitKBps} KB/s   ·   " : "")
                            + $"{manager.Queues.Count(q => q.Running)} of {manager.Queues.Count} queues running";
@@ -313,6 +313,7 @@ public partial class MainWindow : Window
         var columns = new Dictionary<string, DataGridColumn>
         {
             ["queue"] = QueueColumn, ["added"] = AddedColumn, ["finished"] = FinishedColumn, ["folder"] = FolderColumn, ["resume"] = ResumeColumn,
+            ["peers"] = PeersColumn, ["ratio"] = RatioColumn, ["uploaded"] = UploadedColumn,
         };
         void Apply()
         {
