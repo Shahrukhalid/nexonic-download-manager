@@ -184,27 +184,61 @@ class NexonicXProfileIE(InfoExtractor):
 
     def _real_extract(self, url):
         user = self._match_id(url)
+        tweets = []
         try:
             html = self._download_webpage(f'https://syndication.twitter.com/srv/timeline-profile/screen-name/{user}', user,
-                                          'Reading the public timeline')
-        except ExtractorError as e:
-            if isinstance(e.cause, HTTPError) and e.cause.status in (401, 403, 429):
-                raise ExtractorError(N + 'X did not show this profile to a visitor who is not signed in right now. '
-                                     'Nexonic does not sign in, so it cannot list it.', expected=True)
-            raise
-        data = self._search_json(r'<script[^>]+id="__NEXT_DATA__"[^>]*>', html, 'timeline', user, default={})
-        tweets = traverse_obj(data, ('props', 'pageProps', 'timeline', 'entries', ..., 'content', 'tweet'))
-        if not tweets:
+                                          'Reading the public timeline', fatal=False)
+            if html:
+                data = self._search_json(r'<script[^>]+id="__NEXT_DATA__"[^>]*>', html, 'timeline', user, default={})
+                tweets = traverse_obj(data, ('props', 'pageProps', 'timeline', 'entries', ..., 'content', 'tweet')) or []
+        except Exception:
+            pass
+
+        def entries():
+            if tweets:
+                for t in tweets:
+                    media = traverse_obj(t, ('extended_entities', 'media', ...)) or traverse_obj(t, ('entities', 'media', ...)) or []
+                    if any(m.get('type') in ('video', 'animated_gif') for m in media):
+                        tid = t.get('id_str')
+                        yield {'_type': 'url', 'ie_key': 'Twitter', 'id': tid, 'url': f'https://x.com/{user}/status/{tid}',
+                               'title': _title(t.get('full_text') or t.get('text'), f'X video {tid}')}
+            else:
+                seen_ids = set()
+                cursor = None
+                for page in range(1, 10):
+                    endpoint = f'https://api.fxtwitter.com/2/profile/{user}/media'
+                    if cursor:
+                        endpoint += f'?cursor={cursor}'
+                    try:
+                        api_data = self._download_json(endpoint, user, f'Reading public media page {page}', fatal=False)
+                        if not api_data or not api_data.get('results'):
+                            break
+                        for post in api_data.get('results', []):
+                            pid = post.get('id')
+                            if not pid or pid in seen_ids:
+                                continue
+                            seen_ids.add(pid)
+                            media = post.get('media', {})
+                            videos = media.get('videos') or [m for m in media.get('all', []) if m.get('type') in ('video', 'gif')]
+                            if videos:
+                                text = post.get('text') or ''
+                                yield {'_type': 'url', 'ie_key': 'Twitter', 'id': str(pid), 'url': f'https://x.com/{user}/status/{pid}',
+                                       'title': _title(text, f'X video {pid}')}
+                        cursor = traverse_obj(api_data, ('cursor', 'bottom'))
+                        if not cursor:
+                            break
+                    except Exception:
+                        break
+
+        gen = entries()
+        first = next(gen, None)
+        if not first:
             raise ExtractorError(N + 'X did not show any posts of this profile to a visitor who is not signed in. '
                                  'Nexonic does not sign in, so it cannot list them.', expected=True)
 
-        def entries():
-            for t in tweets:
-                media = traverse_obj(t, ('extended_entities', 'media', ...)) or traverse_obj(t, ('entities', 'media', ...)) or []
-                if any(m.get('type') in ('video', 'animated_gif') for m in media):
-                    tid = t.get('id_str')
-                    yield {'_type': 'url', 'ie_key': 'Twitter', 'id': tid, 'url': f'https://x.com/{user}/status/{tid}',
-                           'title': _title(t.get('full_text') or t.get('text'), f'X video {tid}')}
+        def all_entries():
+            yield first
+            yield from gen
 
         self.report_warning(N + 'X shows visitors who are not signed in only the latest posts of a profile.')
-        return self.playlist_result(entries(), user, user)
+        return self.playlist_result(all_entries(), user, user)

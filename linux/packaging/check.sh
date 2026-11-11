@@ -76,9 +76,12 @@ APPIMAGE_EXTRACT_AND_RUN=1 "$AI" --host help | grep -q "ndm batch" || fail "the 
 echo "== .deb"
 DEB="$(ls "$OUT"/nexonic-download-manager_*.deb)"
 dpkg-deb --info "$DEB"
-# .NET 10 comes from the distribution (Ubuntu 24.04+) or, on older Ubuntu, from the .NET backports archive.
+# .NET 10 comes from the distribution (Ubuntu 24.04+) or, on older Ubuntu, from the .NET backports archive or Microsoft packages.
 if ! apt-cache show dotnet-runtime-10.0 >/dev/null 2>&1; then
-  sudo add-apt-repository -y ppa:dotnet/backports >/dev/null && sudo apt-get update -qq >/dev/null
+  sudo add-apt-repository -y ppa:dotnet/backports >/dev/null 2>&1 || true
+  curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -o /tmp/packages-microsoft-prod.deb 2>/dev/null && \
+    sudo dpkg -i /tmp/packages-microsoft-prod.deb >/dev/null 2>&1 && rm -f /tmp/packages-microsoft-prod.deb || true
+  sudo apt-get update -qq >/dev/null || true
 fi
 sudo apt-get install -y -qq "$DEB" >/dev/null
 ndm help | grep -q "ndm batch" || fail "ndm after installing the .deb"
