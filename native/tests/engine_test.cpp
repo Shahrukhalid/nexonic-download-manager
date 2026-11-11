@@ -47,7 +47,7 @@ std::string hash(fs::path const& p) {
 }
 int main() {
     auto base=fs::canonical(fs::temp_directory_path())/fs::path("nexonic-torrent-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    auto torrent_name = std::string(u8"Legal-\u8a66\u9a13");
+    auto torrent_name = std::string(u8"Legal-試験");
     auto seed_tree = base/"seed"/fs::u8path(torrent_name);
     try {
         fs::create_directories(seed_tree);
@@ -61,7 +61,12 @@ int main() {
         seed.call({{"action","add"},{"id","seed"},{"preview",false},{"metainfo",meta},{"destination",(base/"seed").u8string()},{"seed",true},{"ratio_limit",0},{"upload_limit",0}});
         seed.call({{"action","resume"},{"id","seed"}});
         auto seeding=until(seed,"seed",[](json const& x){return x["state"]=="seeding";});
-        int port=seed.call({{"action","list"}}).at("listen_port");
+        // libtorrent opens its listen socket asynchronously, so the port can still be 0 right after seeding starts.
+        int port=0;
+        for (auto end=std::chrono::steady_clock::now()+15s; port<=0 && std::chrono::steady_clock::now()<end;) {
+            port=seed.call({{"action","list"}}).value("listen_port",0);
+            if (port<=0) std::this_thread::sleep_for(100ms);
+        }
         require(port>0,"No peer port");
         auto context=std::make_unique<Context>(base/"download-state");
         auto preview=context->call({{"action","add"},{"id","preview"},{"preview",true},{"metainfo",meta}});
