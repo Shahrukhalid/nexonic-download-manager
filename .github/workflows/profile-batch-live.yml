@@ -8,14 +8,16 @@ on:
         description: Public profile, channel or playlist links (space separated)
         required: true
         default: >-
+          https://www.instagram.com/nasa/
+          https://www.instagram.com/natgeo/reels/
+          https://www.facebook.com/NASA/videos
+          https://www.tiktok.com/@nasa
+          https://x.com/NASA
+          https://www.reddit.com/r/videos/
           https://www.youtube.com/@NASA
           https://vimeo.com/channels/staffpicks
-          https://soundcloud.com/nasa
           https://www.dailymotion.com/france24
-          https://archive.org/details/prelinger
-          https://www.reddit.com/r/videos/
-          https://www.tiktok.com/@nasa
-          https://www.instagram.com/nasa/
+          https://soundcloud.com/nasa
 permissions:
   contents: read
 jobs:

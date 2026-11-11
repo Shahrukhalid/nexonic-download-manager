@@ -85,9 +85,18 @@ public static class ProfileBatch
             "--playlist-end", (start + max - 1).ToString(CultureInfo.InvariantCulture),
         };
         if (quickJs != null) a.AddRange(new[] { "--js-runtimes", $"quickjs:{quickJs}" });
+        if (EnginePlugins.Folder() is { } plugins) a.AddRange(new[] { "--plugin-dirs", plugins });
         a.Add("--");
         a.Add(Playlists.Normalize(url));
         return a;
+    }
+
+    /// <summary>What a site's lister said about the list itself (for example that visitors see only the latest posts).</summary>
+    public static string Note(string errors)
+    {
+        var notes = errors.Split('\n').Select(l => l.Trim()).Where(l => l.StartsWith("WARNING:") && l.Contains(EnginePlugins.Marker))
+            .Select(l => l[(l.IndexOf(EnginePlugins.Marker, StringComparison.Ordinal) + EnginePlugins.Marker.Length)..].Trim()).Distinct();
+        return string.Join(" ", notes);
     }
 
     /// <summary>One printed line → an entry and the profile's title (when the site gives one). Null for anything else.</summary>
@@ -206,6 +215,8 @@ public static class ProfileBatch
         public string Owner { get; set; } = "";
         public List<BatchEntry> Entries { get; set; } = new();
         public bool Complete { get; set; }
+        /// <summary>A limit the site puts on what visitors see, shown with the result (not saved).</summary>
+        [System.Text.Json.Serialization.JsonIgnore] public string Note { get; set; } = "";
     }
 
     static string ScanPath(string url) => Path.Combine(AppPaths.Parts, "profile-scans",
@@ -278,6 +289,7 @@ public static class ProfileBatch
             throw new InvalidOperationException(p.ExitCode != 0 || err.Contains("ERROR") ? SiteVideo.Error(err) : L.T("No videos were found at this link"));
         }
         scan.Complete = true;
+        scan.Note = Note(err);
         ForgetScan(url);
         return scan;
     }
@@ -303,5 +315,40 @@ public static class SavedProfiles
             System.IO.File.Move(File + ".tmp", File, true);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+    }
+}
+
+/// <summary>
+/// The profile listers Nexonic adds to the video engine (engine/nexonic, a plugin for sites whose own lister needs an
+/// account or stopped working). They only read what the site shows to visitors who are not signed in. The file is
+/// written next to the video tools when missing or changed, and handed to the engine with --plugin-dirs.
+/// </summary>
+public static class EnginePlugins
+{
+    /// <summary>Messages from the listers start with this, so the app shows them as they are.</summary>
+    public const string Marker = "Nexonic:";
+    static string? folder;
+
+    public static string? Folder()
+    {
+        if (folder != null) return folder;
+        try
+        {
+            using var s = typeof(EnginePlugins).Assembly.GetManifestResourceStream("nexonic_profiles.py");
+            if (s == null) return null;
+            using var ms = new MemoryStream();
+            s.CopyTo(ms);
+            var bytes = ms.ToArray();
+            var root = Path.Combine(SiteVideoTools.Folder, "plugins");
+            var file = Path.Combine(root, "nexonic", "yt_dlp_plugins", "extractor", "nexonic_profiles.py");
+            if (!File.Exists(file) || !File.ReadAllBytes(file).AsSpan().SequenceEqual(bytes))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+                File.WriteAllBytes(file, bytes);
+            }
+            return folder = root;
+        }
+        catch (IOException) { return null; }
+        catch (UnauthorizedAccessException) { return null; }
     }
 }

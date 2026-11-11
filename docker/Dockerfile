@@ -7,6 +7,7 @@ WORKDIR /src
 COPY VERSION ./
 COPY windows/Directory.Build.props windows/
 COPY windows/Core windows/Core
+COPY engine engine
 COPY linux/Directory.Build.props linux/
 COPY linux/Desktop linux/Desktop
 COPY linux/Server linux/Server

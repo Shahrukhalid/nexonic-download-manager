@@ -53,6 +53,13 @@ object ProfileBatch {
         "--socket-timeout" to "30",
     )
 
+    /** Messages from Nexonic's profile listers start with this, so the app shows them as they are. */
+    const val MARKER = "Nexonic:"
+
+    /** What a site's lister said about the list itself (warnings that start with [MARKER]). */
+    fun note(errors: String?): String = errors.orEmpty().lines().map { it.trim() }
+        .filter { it.startsWith("WARNING:") && MARKER in it }.map { it.substringAfter(MARKER).trim() }.distinct().joinToString(" ")
+
     fun parseLine(line: String): Pair<BatchEntry, String?>? {
         val t = line.trim()
         if (!t.startsWith("{")) return null

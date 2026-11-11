@@ -100,7 +100,15 @@ public static class SiteVideo
         var line = text.Split('\n').LastOrDefault(l => l.Contains("ERROR:")) ?? "";
         var msg = line.Split("ERROR:").Last().Trim();
         msg = Regex.Replace(msg, @"^\[[^\]]+\] [^:]+: ", "");
+        if (msg.StartsWith(EnginePlugins.Marker)) return msg[EnginePlugins.Marker.Length..].Trim();  // already written for people
+        // The engine's advice to report bugs on its own site and to update it is not for the app's users (the app updates it).
+        msg = Regex.Replace(msg, @";?\s*please report this issue on.*$", "", RegexOptions.IgnoreCase | RegexOptions.Singleline).Trim();
+        msg = Regex.Replace(msg, @"\s*\(caused by .*$", "", RegexOptions.Singleline).Trim();
         if (msg.Length == 0) return "The video could not be downloaded";
+        if (msg.Contains("Unable to extract", StringComparison.OrdinalIgnoreCase))
+            return "This site changed its pages, so they can't be read right now. Nexonic updates its video engine automatically; try again later";
+        if (msg.Contains("Unable to connect to proxy", StringComparison.OrdinalIgnoreCase) || msg.Contains("Unable to download", StringComparison.OrdinalIgnoreCase) && msg.Contains("Errno", StringComparison.OrdinalIgnoreCase))
+            return "The site could not be reached. Check the connection (and the proxy, if one is set) and try again";
         if (msg.Contains("DRM", StringComparison.OrdinalIgnoreCase)) return "This video is copy-protected and can't be saved";
         if (msg.Contains("anti-bot", StringComparison.OrdinalIgnoreCase) || msg.Contains("Cloudflare", StringComparison.OrdinalIgnoreCase))
             return "This site checks that a real browser is visiting, so the app can't open the page by itself. Play the video in your browser, then click Download this video: the browser hands the video over with your session";

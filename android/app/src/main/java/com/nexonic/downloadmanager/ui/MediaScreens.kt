@@ -162,6 +162,7 @@ fun ProfileBatchSheet(link: String, onDismiss: () -> Unit, message: (String) -> 
                     take.isEmpty() -> status = (if (name.isEmpty()) "" else "$name: ") + counts.copy(queued = 0).text
                     else -> download(url, take, counts)
                 }
+                com.nexonic.downloadmanager.video.VideoEngine.lastNote.takeIf { it.isNotEmpty() }?.let { status += "\n" + it }
             }.onFailure {
                 status = if (it is com.yausername.youtubedl_android.YoutubeDL.CanceledException) tr("Stopped. The videos found so far are kept; Find videos continues from there.")
                 else it.message ?: tr("The list of videos could not be read.")

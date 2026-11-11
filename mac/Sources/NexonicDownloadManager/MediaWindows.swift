@@ -251,6 +251,7 @@ struct ProfileBatchView: View {
                     } else {
                         download(take, counts)
                     }
+                    if let note = s.note, !note.isEmpty { status += "\n" + note }  // what the site doesn't show visitors
                 }
             }
         }

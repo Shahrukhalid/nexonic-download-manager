@@ -72,6 +72,7 @@ public enum ProfileBatch {
                  "--extractor-retries", "3", "--retry-sleep", "extractor:exp=2:30", "--print", fields,
                  "--playlist-start", String(start), "--playlist-end", String(start + max - 1)]
         if let quickJS { a += ["--js-runtimes", "quickjs:\(quickJS)"] }
+        if let plugins = EnginePlugins.folder { a += ["--plugin-dirs", plugins] }
         return a + ["--", Playlists.normalize(link)]
     }
 
@@ -187,6 +188,19 @@ public enum ProfileBatch {
         public var owner = ""
         public var entries: [BatchEntry] = []
         public var complete = false
+        /// A limit the site puts on what visitors see, shown with the result.
+        public var note: String?
+    }
+
+    /// What a site's lister said about the list itself (for example that visitors see only the latest posts).
+    public static func note(_ errors: String) -> String {
+        var seen: [String] = []
+        for line in errors.split(whereSeparator: \.isNewline) where line.hasPrefix("WARNING:") {
+            guard let r = line.range(of: EnginePlugins.marker) else { continue }
+            let text = line[r.upperBound...].trimmingCharacters(in: .whitespaces)
+            if !seen.contains(text) { seen.append(text) }
+        }
+        return seen.joined(separator: " ")
     }
 
     static func scanFile(_ url: String) -> URL {
@@ -256,9 +270,32 @@ public enum ProfileBatch {
             throw ProfileBatchError(p.terminationStatus != 0 || errors.contains("ERROR") ? SiteVideo.error(errors) : "No videos were found at this link")
         }
         scan.complete = true
+        scan.note = note((try? String(contentsOf: errorFile, encoding: .utf8)) ?? "")
         forgetScan(link)
         return scan
     }
+}
+
+/// The profile listers Nexonic adds to the video engine (engine/nexonic in the app's resources): they only read what a
+/// site shows visitors who are not signed in. Handed to the engine with --plugin-dirs.
+public enum EnginePlugins {
+    /// Messages from the listers start with this, so the app shows them as they are.
+    public static let marker = "Nexonic:"
+    /// Copied out of the signed app (the engine writes compiled files next to plugins) when missing or changed.
+    public static let folder: String? = {
+        let rel = "nexonic/yt_dlp_plugins/extractor/nexonic_profiles.py"
+        guard let source = Bundle.main.resourceURL?.appendingPathComponent("engine-plugins/" + rel),
+              let bytes = try? Data(contentsOf: source) else { return nil }
+        let root = SiteVideoTools.folder.appendingPathComponent("plugins", isDirectory: true)
+        let file = root.appendingPathComponent(rel)
+        if (try? Data(contentsOf: file)) != bytes {
+            do {
+                try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+                try bytes.write(to: file, options: .atomic)
+            } catch { return nil }
+        }
+        return root.path
+    }()
 }
 
 public struct ProfileBatchError: LocalizedError {

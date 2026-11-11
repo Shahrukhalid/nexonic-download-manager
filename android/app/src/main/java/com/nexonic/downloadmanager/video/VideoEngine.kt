@@ -206,9 +206,13 @@ object VideoEngine {
         val req = YoutubeDLRequest(Playlists.normalize(url)).apply {
             com.nexonic.downloadmanager.data.Vpn.sourceAddress()?.let { addOption("--source-address", it) }
             com.nexonic.downloadmanager.core.ProfileBatch.options(start, max).forEach { (k, v) -> if (v == null) addOption(k) else addOption(k, v) }
+            plugins()?.let { addOption("--plugin-dirs", it) }
         }
+        lastNote = ""
         return try {
-            YoutubeDL.getInstance().execute(req, stopId, false) { _, _, l -> l.lineSequence().forEach(line) }.out
+            val r = YoutubeDL.getInstance().execute(req, stopId, false) { _, _, l -> l.lineSequence().forEach(line) }
+            lastNote = com.nexonic.downloadmanager.core.ProfileBatch.note(r.err)
+            r.out
         } catch (e: YoutubeDL.CanceledException) {
             throw e
         } catch (e: Exception) {
@@ -219,6 +223,23 @@ object VideoEngine {
             throw VideoException(VideoPages.engineError(e.javaClass.simpleName, e.message))
         }
     }
+
+    /** What the last profile scan's site said about the list (for example that visitors see only the latest posts). */
+    @Volatile var lastNote = ""
+        private set
+
+    /**
+     * The profile listers Nexonic adds to the video engine (engine/nexonic, shipped as an app asset): they only read what
+     * a site shows visitors who are not signed in. Copied to the app's files when missing or changed.
+     */
+    private fun plugins(): String? = runCatching {
+        val rel = "nexonic/yt_dlp_plugins/extractor/nexonic_profiles.py"
+        val bytes = app.assets.open(rel).use { it.readBytes() }
+        val root = java.io.File(app.filesDir, "engine-plugins")
+        val file = java.io.File(root, rel)
+        if (!file.exists() || !file.readBytes().contentEquals(bytes)) { file.parentFile?.mkdirs(); file.writeBytes(bytes) }
+        root.absolutePath
+    }.getOrNull()
 
     /** Short share links (facebook.com/share/…, fb.watch) point to the real video page: follow them first. */
     private fun resolve(url: String): String {

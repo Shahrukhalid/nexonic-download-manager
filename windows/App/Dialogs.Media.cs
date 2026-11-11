@@ -122,6 +122,7 @@ public static partial class Dialogs
                 }
                 else if (take.Count == 0) status.Text = (scan.Owner.Length > 0 ? scan.Owner + ": " : "") + (counts with { Queued = 0 }).Text;
                 else Download(take, counts);
+                if (scan.Note.Length > 0) status.Text += "\n" + scan.Note;  // what the site doesn't show visitors
             }
             catch (OperationCanceledException) { status.Text = L.T("Stopped. The videos found so far are kept; Find Videos continues from there."); }
             catch (Exception e) { if (!token.IsCancellationRequested) status.Text = e.Message; }

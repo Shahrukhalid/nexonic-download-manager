@@ -78,6 +78,25 @@ public class ProfileBatchTests
     }
 
     [Fact]
+    public void NexonicListersAreHandedToTheEngineAndTheirMessagesShownAsWritten()
+    {
+        var a = ProfileBatch.Arguments("https://www.instagram.com/someone/", null);
+        var dir = a[a.IndexOf("--plugin-dirs") + 1];
+        Assert.True(File.Exists(Path.Combine(dir, "nexonic", "yt_dlp_plugins", "extractor", "nexonic_profiles.py")));
+        Assert.Equal("https://www.instagram.com/someone/", a[^1]);
+        Assert.Equal("This Instagram profile is private. Only its approved followers can see its videos.",
+            SiteVideo.Error("ERROR: [instagram:profile] someone: Nexonic: This Instagram profile is private. Only its approved followers can see its videos."));
+        Assert.Equal("Instagram shows only the latest 12.", ProfileBatch.Note(
+            "[instagram:profile] x: Reading\nWARNING: [instagram:profile] x: Nexonic: Instagram shows only the latest 12.\nWARNING: other"));
+        var raw = "ERROR: [instagram:user] alexvkino: Unable to extract data; please report this issue on  https://github.com/yt-dlp/yt-dlp/issues?q= , "
+            + "filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U";
+        var shown = SiteVideo.Error(raw);
+        Assert.False(shown.Contains("github"));
+        Assert.False(shown.Contains("-U"));
+        Assert.StartsWith("This site changed its pages", shown);
+    }
+
+    [Fact]
     public void SavedProfilesAreDueOnTheirSchedule()
     {
         var p = new SavedProfile { CheckHours = 6 };

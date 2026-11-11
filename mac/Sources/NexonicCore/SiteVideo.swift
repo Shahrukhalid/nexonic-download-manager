@@ -98,7 +98,19 @@ public enum SiteVideo {
         let line = text.split(whereSeparator: \.isNewline).last { $0.contains("ERROR:") }.map(String.init) ?? ""
         var msg = line.components(separatedBy: "ERROR:").last?.trimmingCharacters(in: .whitespaces) ?? ""
         if let r = msg.range(of: #"^\[[^\]]+\] [^:]+: "#, options: .regularExpression) { msg.removeSubrange(r) }
+        if msg.hasPrefix(EnginePlugins.marker) { return msg.dropFirst(EnginePlugins.marker.count).trimmingCharacters(in: .whitespaces) }
+        // The engine's advice to report bugs on its own site and to update it is not for the app's users (the app updates it).
+        for pattern in [#";?\s*please report this issue on.*$"#, #"\s*\(caused by .*$"#] {
+            if let r = msg.range(of: pattern, options: [.regularExpression, .caseInsensitive]) { msg.removeSubrange(r) }
+        }
+        msg = msg.trimmingCharacters(in: .whitespaces)
         if msg.isEmpty { return "The video could not be downloaded" }
+        if msg.localizedCaseInsensitiveContains("Unable to extract") {
+            return "This site changed its pages, so they can't be read right now. Nexonic updates its video engine automatically; try again later"
+        }
+        if msg.localizedCaseInsensitiveContains("Unable to connect to proxy") || (msg.localizedCaseInsensitiveContains("Unable to download") && msg.contains("Errno")) {
+            return "The site could not be reached. Check the connection (and the proxy, if one is set) and try again"
+        }
         if msg.localizedCaseInsensitiveContains("DRM") { return "This video is copy-protected and can't be saved" }
         if msg.localizedCaseInsensitiveContains("anti-bot") || msg.localizedCaseInsensitiveContains("Cloudflare") {
             return "This site checks that a real browser is visiting, so the app can't open the page by itself. Play the video in your browser, then click Download this video: the browser hands the video over with your session"

@@ -16,5 +16,6 @@
     <EmbeddedResource Include="Locales\*.json" LogicalName="locale.%(Filename).json" />
     <!-- The page phones open for remote management (Options → Remote). -->
     <EmbeddedResource Include="Remote\remote.html" LogicalName="remote.html" />
+    <EmbeddedResource Include="..\..\engine\nexonic\yt_dlp_plugins\extractor\nexonic_profiles.py" LogicalName="nexonic_profiles.py" />
   </ItemGroup>
 </Project>

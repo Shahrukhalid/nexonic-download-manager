@@ -152,8 +152,14 @@ object VideoPages {
     fun friendlyError(raw: String?): String {
         val line = raw.orEmpty().lines().map { it.trim() }.lastOrNull { it.startsWith("ERROR:") }?.removePrefix("ERROR:")?.trim()
             ?: raw.orEmpty().lines().lastOrNull { it.isNotBlank() }?.trim().orEmpty()
-        val l = line.lowercase()
+        val marker = ProfileBatch.MARKER
+        if (marker in line) return line.substringAfter(marker).trim()  // Nexonic's own listers: already written for people
+        val clean = line.replace(Regex(";?\\s*please report this issue on.*$", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("\\s*\\(caused by .*$"), "").trim()
+        val l = clean.lowercase()
         return when {
+            "unable to extract" in l -> "This site changed its pages, so they can't be read right now. Nexonic updates its video engine automatically; try again later."
+            "unable to connect to proxy" in l -> "The site could not be reached. Check the connection (and the proxy, if one is set) and try again."
             "unsupported url" in l -> "No video found on this page."
             "anti-bot" in l || "cloudflare" in l ->
                 "This site checks that a real browser is visiting. Open the page in the app's Browser tab, play the video, then download it there."
@@ -163,7 +169,7 @@ object VideoPages {
             "not available" in l || "unavailable" in l -> "This video is not available."
             "unable to download webpage" in l || "network" in l || "timed out" in l -> "Could not reach the site. Check the connection and try again."
             line.isEmpty() -> "The video could not be read."
-            else -> line.take(200).replace(Regex("yt[-_]?dlp", RegexOption.IGNORE_CASE), "the video engine")
+            else -> clean.take(200).replace(Regex("yt[-_]?dlp", RegexOption.IGNORE_CASE), "the video engine")
         }
     }
 }

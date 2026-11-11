@@ -20,8 +20,8 @@ foreach (var url in urls)
         var scan = ProfileBatch.Discover(url, null, 40);
         var (take, counts) = ProfileBatch.Choose(scan.Entries, new BatchFilter { Max = 40 }, _ => false);
         var unique = scan.Entries.Select(e => ProfileBatch.Key(e.Url)).Distinct().Count();
-        report.Add($"| {url} | {counts.Discovered} | {counts.Inaccessible} | kept {kept}, total {scan.Entries.Count}, unique {unique} | {(scan.Owner.Length > 0 ? scan.Owner : "ok")} |");
-        if (take.FirstOrDefault(e => e.Kind == "video") is { } first) samples.Add(first.Url);
+        report.Add($"| {url} | {counts.Discovered} | {counts.Inaccessible} | kept {kept}, total {scan.Entries.Count}, unique {unique} | {((scan.Owner.Length > 0 ? scan.Owner : "ok") + (scan.Note.Length > 0 ? " — " + scan.Note : "")).Replace('|', '/')} |");
+        if (take.FirstOrDefault(e => e.Kind != "live") is { } first) samples.Add(first.Url);
     }
     catch (Exception e) { failures++; report.Add($"| {url} | – | – | – | {e.Message.Replace('|', '/').Split('\n')[0]} |"); }
 }

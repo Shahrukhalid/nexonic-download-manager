@@ -8,6 +8,8 @@ plugins {
 val releaseBuild = gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }
 
 android {
+    // Nexonic's profile listers for the video engine (engine/nexonic), shared with the desktop apps.
+    sourceSets["main"].assets.srcDir("../../engine")
     namespace = "com.nexonic.downloadmanager"
     compileSdk = 35
 
