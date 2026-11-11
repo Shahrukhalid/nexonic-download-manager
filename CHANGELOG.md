@@ -1,18 +1,3 @@
-## Unreleased
-
-- **Torrents through AllDebrid** (Add Torrent → Download with debrid): the magnet is uploaded to your AllDebrid account,
-  the app waits until it is ready and then downloads its files over HTTP, like Real-Debrid and Premiumize.
-- **Linux: move list columns.** Right-click a column title for Move Column Left, Move Column Right and Reset Column
-  Order; the order is kept after a restart (the file name stays first).
-- **Mac: RSS feeds** (File → RSS Feeds…) with the same rules as Windows and Linux: words or a /regular expression/,
-  words to skip, size limits, preferred qualities and one download per episode. Torrents open in the Torrents window.
-- **Mac: debrid account** (Settings → Connection, optional, off by default): Real-Debrid, AllDebrid or Premiumize for
-  the sites you list. The key is kept in a private file, never in the settings or a backup.
-- **Mac: colour schemes** (Settings → General): Ocean, Forest, Midnight and High Contrast set light or dark and the
-  accent colour.
-- **Android: RSS feeds** (RSS button on the Downloads screen), **debrid account** and **colour schemes** (Settings), with
-  the same rules; the debrid key is kept encrypted with the app's other secrets.
-
 ## 0.28.0
 
 What this release was measured on: faster verified downloads, lower resource use, a more reliable app and smaller

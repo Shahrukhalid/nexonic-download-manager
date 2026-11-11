@@ -113,22 +113,14 @@ private fun FeedEditor(feed: FeedSubscription, onDone: (FeedSubscription?, Boole
         title = { Text(tr(if (isNew) "Add Feed" else "Edit Feed")) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
-                @Composable fun Field(value: String, label: String, number: Boolean = false, set: (String) -> Unit) =
-                    OutlinedTextField(value, { set(it.take(2000)) }, label = { Text(tr(label)) }, singleLine = true,
-                        keyboardOptions = if (number) KeyboardOptions(keyboardType = KeyboardType.Number) else KeyboardOptions.Default,
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp))
-                Field(url, "Feed address (RSS or Atom)") { url = it }
-                Field(name, "Name (optional)") { name = it }
-                Field(include, "Download items whose title has all of these words (empty = every item)") { include = it }
-                Field(exclude, "Skip items whose title has any of these words") { exclude = it }
-                Field(quality, "Preferred qualities, best first (e.g. 1080p 720p)") { quality = it }
-                Field(minSize, "Smallest file in MB (empty = any)", number = true) { minSize = it.filter(Char::isDigit) }
-                Field(maxSize, "Largest file in MB (empty = any)", number = true) { maxSize = it.filter(Char::isDigit) }
-                Field(interval, "Check every (minutes, 15 or more)", number = true) { interval = it.filter(Char::isDigit) }
-                @Composable fun Tick(label: String, value: Boolean, set: (Boolean) -> Unit) =
-                    Row(Modifier.fillMaxWidth().clickable { set(!value) }, verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(value, set); Text(tr(label), style = MaterialTheme.typography.bodyMedium)
-                    }
+                Field(url, "Feed address (RSS or Atom)", false) { url = it }
+                Field(name, "Name (optional)", false) { name = it }
+                Field(include, "Download items whose title has all of these words (empty = every item)", false) { include = it }
+                Field(exclude, "Skip items whose title has any of these words", false) { exclude = it }
+                Field(quality, "Preferred qualities, best first (e.g. 1080p 720p)", false) { quality = it }
+                Field(minSize, "Smallest file in MB (empty = any)", true) { minSize = it.filter(Char::isDigit) }
+                Field(maxSize, "Largest file in MB (empty = any)", true) { maxSize = it.filter(Char::isDigit) }
+                Field(interval, "Check every (minutes, 15 or more)", true) { interval = it.filter(Char::isDigit) }
                 Tick("Only one download per episode", oneEach) { oneEach = it }
                 Tick("Only download items that appear after the feed is added", skip) { skip = it }
                 Tick("Check this feed", on) { on = it }
@@ -161,4 +153,19 @@ private fun FeedEditor(feed: FeedSubscription, onDone: (FeedSubscription?, Boole
             }
         },
     )
+}
+
+@Composable
+private fun Field(value: String, label: String, number: Boolean, set: (String) -> Unit) {
+    OutlinedTextField(value, { set(it.take(2000)) }, label = { Text(tr(label)) }, singleLine = true,
+        keyboardOptions = if (number) KeyboardOptions(keyboardType = KeyboardType.Number) else KeyboardOptions.Default,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp))
+}
+
+@Composable
+private fun Tick(label: String, value: Boolean, set: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth().clickable { set(!value) }, verticalAlignment = Alignment.CenterVertically) {
+        Checkbox(value, set)
+        Text(tr(label), style = MaterialTheme.typography.bodyMedium)
+    }
 }
