@@ -64,8 +64,9 @@ jobs:
           mkdir -p /tmp/site && pushd /tmp/site
           ffmpeg -loglevel error -f lavfi -i testsrc=size=640x360:rate=25 -f lavfi -i sine=frequency=440 -t 4 -map 0:v -map 1:a \
             -c:v libx264 -c:a aac -f dash -adaptation_sets "id=0,streams=v id=1,streams=a" dash.mpd
-          python3 -m http.server 8777 >/dev/null 2>&1 &
-          sleep 1
+          python3 -m http.server 8777 --bind 127.0.0.1 >/dev/null 2>&1 &
+          # Wait until the local server answers (a busy runner can take a few seconds to start it).
+          for i in $(seq 1 30); do curl -sf -o /dev/null http://127.0.0.1:8777/dash.mpd && break; sleep 1; done
           M="$GITHUB_WORKSPACE/build/Nexonic Download Manager.app/Contents/MacOS"
           "$GITHUB_WORKSPACE/.tools-cache/mac/yt-dlp-engine/yt-dlp_macos" --ignore-config --ffmpeg-location "$M" -f "bv*+ba/b" --merge-output-format "mp4/mkv" -P /tmp/out \
             -o "test.%(ext)s" http://127.0.0.1:8777/dash.mpd

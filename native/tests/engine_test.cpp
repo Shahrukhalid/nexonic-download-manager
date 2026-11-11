@@ -55,19 +55,26 @@ int main() {
             std::ofstream out(seed_tree/name,std::ios::binary); for(int i=0;i<size;++i) out.put(char(i%251));
         }
         {
-        Context seed(base/"seed-state");
-        auto created=seed.call({{"action","create_torrent"},{"path",seed_tree.u8string()}});
-        auto meta=created.at("metainfo");
-        seed.call({{"action","add"},{"id","seed"},{"preview",false},{"metainfo",meta},{"destination",(base/"seed").u8string()},{"seed",true},{"ratio_limit",0},{"upload_limit",0}});
-        seed.call({{"action","resume"},{"id","seed"}});
-        auto seeding=until(seed,"seed",[](json const& x){return x["state"]=="seeding";});
-        // libtorrent opens its listen socket asynchronously, so the port can still be 0 right after seeding starts.
-        int port=0;
-        for (auto end=std::chrono::steady_clock::now()+15s; port<=0 && std::chrono::steady_clock::now()<end;) {
-            port=seed.call({{"action","list"}}).value("listen_port",0);
-            if (port<=0) std::this_thread::sleep_for(100ms);
+        // libtorrent opens its listen socket asynchronously, so the port can still be 0 right after seeding starts. On a
+        // busy CI machine the socket now and then never opens; a fresh seeder session then gets a new one.
+        std::unique_ptr<Context> seeder; json meta, seeding; int port=0; std::string listen_error;
+        for (int attempt=0; attempt<3 && port<=0; ++attempt) {
+            seeder.reset();
+            seeder=std::make_unique<Context>(base/("seed-state-"+std::to_string(attempt)));
+            auto& seed=*seeder;
+            auto created=seed.call({{"action","create_torrent"},{"path",seed_tree.u8string()}});
+            meta=created.at("metainfo");
+            seed.call({{"action","add"},{"id","seed"},{"preview",false},{"metainfo",meta},{"destination",(base/"seed").u8string()},{"seed",true},{"ratio_limit",0},{"upload_limit",0}});
+            seed.call({{"action","resume"},{"id","seed"}});
+            seeding=until(seed,"seed",[](json const& x){return x["state"]=="seeding";});
+            for (auto end=std::chrono::steady_clock::now()+10s; port<=0 && std::chrono::steady_clock::now()<end;) {
+                auto listed=seed.call({{"action","list"}});
+                port=listed.value("listen_port",0); listen_error=listed.value("listen_error",std::string());
+                if (port<=0) std::this_thread::sleep_for(100ms);
+            }
+            if (port<=0) std::cerr<<"Seeder had no listen port (attempt "<<attempt+1<<")"<<(listen_error.empty()?"":": "+listen_error)<<"\n";
         }
-        require(port>0,"No peer port");
+        require(port>0,"No peer port"+(listen_error.empty()?std::string():": "+listen_error));
         auto context=std::make_unique<Context>(base/"download-state");
         auto preview=context->call({{"action","add"},{"id","preview"},{"preview",true},{"metainfo",meta}});
         require(!preview.at("payload_complete").get<bool>(),"Metadata was incorrectly completed as content");
@@ -133,7 +140,7 @@ int main() {
         }
         context->call({{"action","add"},{"id","../escape"},{"preview",true},{"metainfo",meta}},false);
         std::cout<<"PASS native libtorrent "<<ndm_torrent_version()<<": metadata, magnet, real peer transfer, pause/restart, file priorities, trackers, piece recheck, adapter binding, blocklist and SHA-256 "<<expected<<"\n";
-        context.reset();
+        context.reset(); seeder.reset();
         } // All native contexts release files before cleanup.
         fs::remove_all(base);
         return 0;

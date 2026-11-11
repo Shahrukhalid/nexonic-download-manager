@@ -40,7 +40,14 @@ try
         destination = Path.GetDirectoryName(source), seed = true, ratio_limit = 0, upload_limit = 0 });
     seed.Invoke(new { action = "resume", id = "seed" });
     var seedStatus = await Wait(seed, "seed", s => s.GetProperty("state").GetString() == "seeding");
-    var port = seed.Invoke(new { action = "list" }).GetProperty("listen_port").GetInt32();
+    // The listen socket opens shortly after seeding starts: wait for its port (0 until then).
+    var port = 0;
+    for (var tries = 0; port <= 0 && tries < 150; tries++)
+    {
+        port = seed.Invoke(new { action = "list" }).GetProperty("listen_port").GetInt32();
+        if (port <= 0) await Task.Delay(100);
+    }
+    Require(port > 0, "No peer port");
     // connect_peer is a one-shot hint (no DHT or trackers here): repeat it each second until a peer is attached.
     var ticks = 0;
     bool Hint(NativeTorrentSession engine, string id, JsonElement s)
