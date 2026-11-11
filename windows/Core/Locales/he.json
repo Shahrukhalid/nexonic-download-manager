@@ -185,6 +185,10 @@
     "Previous": "קודם",
     "Next": "הבא",
     "Getting the gallery engine (only the first time)…": "מקבל את מנוע הגלריה (רק בפעם הראשונה)…",
-    "Getting the video engine (only the first time)…": "קבל את מנוע הוידאו (רק בפעם הראשונה)…"
+    "Getting the video engine (only the first time)…": "קבל את מנוע הוידאו (רק בפעם הראשונה)…",
+    "Categories": "Categories",
+    "Move Column Left": "Move Column Left",
+    "Move Column Right": "Move Column Right",
+    "Reset Column Order": "Reset Column Order"
   }
 }

@@ -185,6 +185,10 @@
     "Previous": "Precedente",
     "Next": "Avanti",
     "Getting the gallery engine (only the first time)…": "Ottenere il motore della galleria (solo la prima volta)…",
-    "Getting the video engine (only the first time)…": "Ottenere il motore video (solo la prima volta)…"
+    "Getting the video engine (only the first time)…": "Ottenere il motore video (solo la prima volta)…",
+    "Categories": "Categories",
+    "Move Column Left": "Move Column Left",
+    "Move Column Right": "Move Column Right",
+    "Reset Column Order": "Reset Column Order"
   }
 }

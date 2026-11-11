@@ -185,6 +185,10 @@
     "Previous": "Előző",
     "Next": "Következő",
     "Getting the gallery engine (only the first time)…": "A galériamotor beszerzése (csak az első alkalommal)…",
-    "Getting the video engine (only the first time)…": "A videómotor beszerzése (csak az első alkalommal)…"
+    "Getting the video engine (only the first time)…": "A videómotor beszerzése (csak az első alkalommal)…",
+    "Categories": "Categories",
+    "Move Column Left": "Move Column Left",
+    "Move Column Right": "Move Column Right",
+    "Reset Column Order": "Reset Column Order"
   }
 }

@@ -185,6 +185,10 @@
     "Previous": "পূৰ্ববৰ্তী",
     "Next": "পৰবৰ্তী (_N)",
     "Getting the gallery engine (only the first time)…": "গেলেৰি ইঞ্জিন প্ৰাপ্ত কৰা হৈছে (প্ৰথমবাৰৰ বাবে)…",
-    "Getting the video engine (only the first time)…": "ভিডিঅ' ইঞ্জিন প্ৰাপ্ত কৰা হৈছে (প্ৰথমবাৰৰ বাবে)…"
+    "Getting the video engine (only the first time)…": "ভিডিঅ' ইঞ্জিন প্ৰাপ্ত কৰা হৈছে (প্ৰথমবাৰৰ বাবে)…",
+    "Categories": "Categories",
+    "Move Column Left": "Move Column Left",
+    "Move Column Right": "Move Column Right",
+    "Reset Column Order": "Reset Column Order"
   }
 }

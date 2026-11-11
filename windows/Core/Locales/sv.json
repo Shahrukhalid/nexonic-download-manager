@@ -185,6 +185,10 @@
     "Previous": "Föregående",
     "Next": "Nästa",
     "Getting the gallery engine (only the first time)…": "Skaffa gallerimotorn (endast första gången)…",
-    "Getting the video engine (only the first time)…": "Skaffa videomotorn (endast första gången)…"
+    "Getting the video engine (only the first time)…": "Skaffa videomotorn (endast första gången)…",
+    "Categories": "Categories",
+    "Move Column Left": "Move Column Left",
+    "Move Column Right": "Move Column Right",
+    "Reset Column Order": "Reset Column Order"
   }
 }
