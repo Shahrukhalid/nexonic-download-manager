@@ -21,6 +21,16 @@ final class MainActions: ObservableObject {
 }
 
 /// One toolbar button in the style of IDM: a large coloured icon with its name underneath.
+/// The whole tile takes clicks, not only the icon and its caption (a plain button inside a scroll view on macOS only
+/// reacts where something is drawn).
+struct TileButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .contentShape(Rectangle())
+            .opacity(configuration.isPressed ? 0.6 : 1)
+    }
+}
+
 struct ToolbarTile: View {
     let title: String
     let symbol: String
@@ -47,10 +57,9 @@ struct ToolbarTile: View {
             .padding(.horizontal, 6)
             .padding(.vertical, 5)
             .frame(minWidth: 58)
-            .background(RoundedRectangle(cornerRadius: 7).fill(hovering && enabled ? Color.primary.opacity(0.08) : .clear))
-            .contentShape(Rectangle())
+            .background(RoundedRectangle(cornerRadius: 7).fill(hovering && enabled ? Color.primary.opacity(0.08) : Color.primary.opacity(0.001)))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TileButtonStyle())
         .disabled(!enabled)
         .onHover { hovering = $0 }
         .help(help.isEmpty ? title : help)
