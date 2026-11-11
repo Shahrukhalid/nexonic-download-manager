@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Geen video gevonden. Speel de video een paar seconden af en klik nogmaals.",
     "live": "live",
     "best quality": "De beste kwaliteit",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "De hoek van de knop",
+    "Top right": "Rechts bovenaan",
+    "Top left": "Boven links",
+    "Bottom right": "Onderaan rechts",
+    "Bottom left": "Links onderaan",
+    "Button size": "De grootte van de knop",
+    "Small": "Klein",
+    "Normal": "Normaal",
+    "Large": "Groot",
+    "Button colour": "Kleur van de knop",
+    "Show the button's text (off = arrow only)": "Toon de tekst van de knop (uit = alleen pijl)"
   }
 }

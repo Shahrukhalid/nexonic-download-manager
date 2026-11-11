@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "ยังไม่พบวิดีโอ โปรดเล่นวิดีโอสักสองสามวินาที แล้วคลิกอีกครั้ง",
     "live": "ระดับ",
     "best quality": "คุณภาพดีที่สุด",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "มุมปุ่ม",
+    "Top right": "ด้านบนขวา",
+    "Top left": "ด้านบนซ้าย",
+    "Bottom right": "ด้านล่างขวา",
+    "Bottom left": "ด้านล่างซ้าย",
+    "Button size": "ขนาดปุ่ม",
+    "Small": "ขนาดเล็ก",
+    "Normal": "ปกติ",
+    "Large": "ขนาดใหญ่",
+    "Button colour": "สีปุ่ม",
+    "Show the button's text (off = arrow only)": "แสดงข้อความของปุ่ม (ปิด = ลูกศรเท่านั้น)"
   }
 }

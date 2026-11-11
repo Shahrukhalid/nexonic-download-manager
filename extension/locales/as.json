@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "এতিয়াও কোনো ভিডিঅ' পোৱা নাযায় । কিছু ছেকেণ্ডৰ বাবে ভিডিঅ' চলাওক, তাৰ পিছত পুনৰ ক্লিক কৰক ।",
     "live": "স্তৰ",
     "best quality": "সৰ্বোত্তম মান",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "বুটামৰ কোণ",
+    "Top right": "ওপৰত সোঁফালে",
+    "Top left": "ওপৰত বাওঁফালে",
+    "Bottom right": "তলৰ সোঁফালে",
+    "Bottom left": "তলৰ বাওঁফাল",
+    "Button size": "বুটামৰ আকাৰ",
+    "Small": "সৰু",
+    "Normal": "স্বাভাবিক",
+    "Large": "ডাঙৰ",
+    "Button colour": "বুটামৰ ৰং",
+    "Show the button's text (off = arrow only)": "বুটামৰ লিপি দেখুৱাওক (অসক্ৰিয় = কেৱল কাঁড়চিহ্ন)"
   }
 }

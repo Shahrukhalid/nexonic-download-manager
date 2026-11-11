@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Heniz hiç bir wideo tapylmady. Birnäçe sekunt üçin wideo çal, soňra ýene bas.",
     "live": "dereje",
     "best quality": "iň gowy hilli",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
+    "Button corner": "Butun köşgi",
+    "Top right": "Sag üste",
+    "Top left": "Üst Sol",
+    "Bottom right": "Aşak Sag",
+    "Bottom left": "Asty Sol",
     "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Small": "Kiçi/beýiklik",
+    "Normal": "Kadaly",
+    "Large": "Beýik",
+    "Button colour": "Butun renki",
+    "Show the button's text (off = arrow only)": "Batnanyň metinini görkez (ýak = diňe ok)"
   }
 }

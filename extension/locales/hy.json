@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Դեռևս տեսահոլովակ չի հայտնաբերվել։ Ներբեռնեք տեսահոլովակը մի քանի վայրկյան, ապա կրկին սեղմեք։",
     "live": "մակարդակ",
     "best quality": "լավագույն որակը",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Կապիկի անկյուն",
+    "Top right": "Տեղաշարժվել ներքև",
+    "Top left": "Տեղաշարժվել ներքև",
+    "Bottom right": "Ներքևի աջ",
+    "Bottom left": "Ներքևի ձախ",
+    "Button size": "Կապիկի չափը",
+    "Small": "Փոքր",
+    "Normal": "Նորմալ",
+    "Large": "Մեծ",
+    "Button colour": "Կապիկի գույնը",
+    "Show the button's text (off = arrow only)": "Ցույց տալ կոճակի տեքստը (անջատված = միայն սլաք)"
   }
 }

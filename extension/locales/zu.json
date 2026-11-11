@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Akukho videyo etholakalayo. Dlala ivideyo imizuzwana embalwa, bese uchofoza futhi.",
     "live": "isigaba",
     "best quality": "ikhwalithi engcono kakhulu",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Isikhundla senkinobho",
+    "Top right": "Phezulu kwesokudla",
+    "Top left": "Phezulu kwesobunxele",
+    "Bottom right": "Engezansi kwesokudla",
+    "Bottom left": "Engezansi kwesobunxele",
+    "Button size": "Ubukhulu benkinobho",
+    "Small": "Encane",
+    "Normal": "Okujwayelekile",
+    "Large": "Okukhulu",
+    "Button colour": "Umbala wenkinobho",
+    "Show the button's text (off = arrow only)": "Tshengisa umbhalo wenkinobho (off = i-arrow kuphela)"
   }
 }

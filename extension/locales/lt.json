@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Kol kas vaizdo įrašo nerasta. Keletą sekundžių paleiskite vaizdo įrašą, tada spustelėkite dar kartą.",
     "live": "lygis",
     "best quality": "Geriausios kokybės",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Mygtuko kampas",
+    "Top right": "Viršuje dešinėje",
+    "Top left": "Viršuje kairėje",
+    "Bottom right": "Apačioje dešinėje",
+    "Bottom left": "Apačioje kairėje",
+    "Button size": "Mygtuko dydis",
+    "Small": "Mažas",
+    "Normal": "Normalus",
+    "Large": "Didelis",
+    "Button colour": "Mygtuko spalva",
+    "Show the button's text (off = arrow only)": "Rodyti mygtuko tekstą (išjungta = tik rodyklė)"
   }
 }

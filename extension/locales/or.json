@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "କୌଣସି ଭିଡିଓ ମିଳିଲା ନାହିଁ। କିଛି ସେକଣ୍ଡ ପାଇଁ ଭିଡିଓକୁ ଚାଲନ୍ତୁ, ତା'ପରେ ପୁଣିଥରେ କ୍ଲିକ କରନ୍ତୁ।",
     "live": "ସ୍ତର",
     "best quality": "ଶ୍ରେଷ୍ଠ ଗୁଣବତ୍ତା",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "ବଟନ କୋଣ",
+    "Top right": "ଉପର ଡାହାଣ",
+    "Top left": "ଉପର ବାମ",
+    "Bottom right": "ତଳ ଡାହାଣ",
+    "Bottom left": "ତଳ ବାମ",
+    "Button size": "ବଟନ ଆକାର",
+    "Small": "ଛୋଟ",
+    "Normal": "ସାମାନ୍ୟ",
+    "Large": "ବଡ଼",
+    "Button colour": "ବଟନ ରଙ୍ଗ",
+    "Show the button's text (off = arrow only)": "ବଟନ ପାଠ୍ୟକୁ ଦର୍ଶାନ୍ତୁ (ନିଷ୍କ୍ରିୟ = କେବଳ ତୀର)"
   }
 }

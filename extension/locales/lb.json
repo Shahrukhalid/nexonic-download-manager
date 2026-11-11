@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Et gouf nach kee Video fonnt. Spillt de Video fir e puer Sekonnen of, da klickt nach eng Kéier.",
     "live": "Niveau",
     "best quality": "bescht Qualitéit",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
+    "Button corner": "Knäppchen Eck",
+    "Top right": "Rechts uewen",
+    "Top left": "Lénks uewen",
+    "Bottom right": "Unten riets",
+    "Bottom left": "Unten lénks",
+    "Button size": "Knäppchengréisst",
+    "Small": "Kleng",
     "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Large": "Grouss",
+    "Button colour": "Knäppchenfaarf",
+    "Show the button's text (off = arrow only)": "Den Text vun der Knäppche weisen (aus = just Pfeil)"
   }
 }

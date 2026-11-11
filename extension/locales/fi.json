@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Toista video muutaman sekunnin ajan ja klikkaa sitten uudelleen, jotta voit toistaa sen uudelleen.",
     "live": "elävä",
     "best quality": "Parasta laatua",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Painikkeen kulma",
+    "Top right": "Oikeassa yläkulmassa",
+    "Top left": "Ylä vasen",
+    "Bottom right": "Oikeassa alakulmassa",
+    "Bottom left": "Alareunassa vasemmalla",
+    "Button size": "Painikkeen koko",
+    "Small": "Pieni",
+    "Normal": "Normaali",
+    "Large": "Suuri",
+    "Button colour": "Painikkeen väri musta",
+    "Show the button's text (off = arrow only)": "Näytä painikkeen teksti (off = vain nuoli)"
   }
 }

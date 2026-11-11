@@ -55,15 +55,15 @@
     "live": "live",
     "best quality": "yepamusoro mhando",
     "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
+    "Top right": "Kumusoro kuruboshwe",
+    "Top left": "Kumusoro kuruboshwe",
+    "Bottom right": "Pasi pekurudyi",
+    "Bottom left": "Pasi pechidzitiro",
     "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
+    "Small": "Chidiki",
+    "Normal": "Yakajairika",
     "Large": "Large",
-    "Button colour": "Button colour",
+    "Button colour": "Button color",
     "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

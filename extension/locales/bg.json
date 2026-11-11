@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Възпроизведете видеоклипа за няколко секунди, след което кликнете отново върху бутона за възпроизвеждане.",
     "live": "ниво",
     "best quality": "Най-доброто качество",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Ъгъл на бутона",
+    "Top right": "Горе вдясно",
+    "Top left": "Горе вляво",
+    "Bottom right": "Долу вдясно",
+    "Bottom left": "Долу вляво",
+    "Button size": "Размер на бутона",
+    "Small": "Малък",
+    "Normal": "Нормален",
+    "Large": "Голяма",
+    "Button colour": "Цвят на бутона",
+    "Show the button's text (off = arrow only)": "Показване на текста на бутона (изкл. = само стрелка)"
   }
 }

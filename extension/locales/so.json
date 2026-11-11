@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Ma jiro video weli la helay. Play video dhowr ilbiriqsi, ka dibna guji mar kale.",
     "live": "heerka",
     "best quality": "tayada ugu fiican",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Qaybta badhanka",
+    "Top right": "Midig sare",
+    "Top left": "Midig sare",
+    "Bottom right": "Midig hoose",
+    "Bottom left": "Midig hoose",
+    "Button size": "Miisaanka badhanka",
+    "Small": "yar",
+    "Normal": "caadiga ah",
+    "Large": "wayn",
+    "Button colour": "Midabka badhanka",
+    "Show the button's text (off = arrow only)": "Muuji qoraalka badhanka (off = arrow kaliya)"
   }
 }

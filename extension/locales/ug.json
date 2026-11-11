@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "تېخى سىن تېپىلمىدى. سىننى بىر نەچچە سېكۇنت قويۇپ، ئاندىن قايتا چېكىڭ.",
     "live": "دەرىجىلەر",
     "best quality": "ئەڭ ياخشى سۈپەت",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "تۇتقۇچنىڭ چوققىسى",
+    "Top right": "ئوڭ يۇقىرى",
+    "Top left": "سول ئۈستىدىكى",
+    "Bottom right": "ئوڭ تۆۋەن",
+    "Bottom left": "سول تۆۋەن",
+    "Button size": "چېكىش چوڭلۇقى",
+    "Small": "كىچىك",
+    "Normal": "ئاددىي",
+    "Large": "چوڭ",
+    "Button colour": "تۇتقۇچ رەڭگى",
+    "Show the button's text (off = arrow only)": "تۇتقۇچنىڭ تېكىستىنى كۆرسىتىدۇ (ئىغلاملاشتۇرۇلغاندا = پەقەت ئوقچىلار)"
   }
 }

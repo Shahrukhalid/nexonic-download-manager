@@ -5,7 +5,7 @@
 "Add" = "Shto";
 "Add Download" = "Shto Shkarkimin";
 "Add Site…" = "Add Site…";
-"Add URL" = "Add URL";
+"Add URL" = "URL";
 "Add downloads from this site stopped" = "Shto shkarkime nga ky site";
 "Add one or more links" = "Shto një ose më shumë lidhje";
 "Added" = "Shto";
@@ -372,7 +372,7 @@
 "Download items whose title has all of these words (empty = every item)" = "Shkarko elementet titulli i të cilëve përmban të gjitha këto fjalë (bosh = çdo element)";
 "Skip items whose title has any of these words" = "Shko mbi elementet që titulli i tyre përmban ndonjë nga këto fjalë";
 "Preferred qualities, best first (e.g. 1080p 720p)" = "Cilësitë e preferuara, më të mirat së pari (p.sh. 1080p 720p)";
-"Smallest file: %lld MB" = "Smallest file: %lld MB";
+"Smallest file: %lld MB" = "File më i vogël: %lld MB";
 "Largest file: %lld MB (0 = any)" = "File më i madh: %lld MB (0 = çdo)";
 "Only one download per episode" = "Vetëm një shkarkim për episod";
 "Folder (empty = the usual folder)" = "Kartela (bosh = kartela e zakonshme)";

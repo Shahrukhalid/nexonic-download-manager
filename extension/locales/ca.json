@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Encara no s' ha trobat cap vídeo. Reproduïu el vídeo durant uns segons i torneu a fer- hi clic.",
     "live": "nivell",
     "best quality": "millor qualitat",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
+    "Button corner": "Cantó del botó",
+    "Top right": "Dalt a la dreta",
+    "Top left": "Superior esquerra",
+    "Bottom right": "Inferior dreta",
+    "Bottom left": "Inferior esquerra",
+    "Button size": "Mida del botó",
+    "Small": "Petit",
     "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Large": "Gran",
+    "Button colour": "Color del botó",
+    "Show the button's text (off = arrow only)": "Mostra el text del botó (desactivat = només fletxa)"
   }
 }

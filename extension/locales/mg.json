@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Tsy misy lahatsary mbola hita. Mandefa ilay lahatsary mandritra ny segondra vitsy, dia tsindrio indray.",
     "live": "ambaratonga",
     "best quality": "kalitao tsara indrindra",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Faritry ny tsindry",
+    "Top right": "Ambony havanana",
+    "Top left": "Ambony havia",
+    "Bottom right": "Ambany havanana",
+    "Bottom left": "Ambany havia",
+    "Button size": "Haben'ny tsindry",
+    "Small": "Kely",
+    "Normal": "_Normal",
+    "Large": "Lehibe",
+    "Button colour": "Lokon'ny tsindry",
+    "Show the button's text (off = arrow only)": "Asehoy ny lahabolana ao amin'ilay tsindry (tsy ekena = andry fotsiny)"
   }
 }

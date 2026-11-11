@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Tsis tau pom cov yeeb yaj kiab li. Play the video for a few seconds, then click again.",
     "live": "live",
     "best quality": "zoo tshaj plaws zoo",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Npaum",
+    "Top right": "Saum sab laug",
+    "Top left": "Saum sab laug",
+    "Bottom right": "Hauv qab sab laug",
+    "Bottom left": "Hauv qab sab laug",
+    "Button size": "Qhov loj ntawm lub khawm",
+    "Small": "Me me",
+    "Normal": "Ncauj",
+    "Large": "Loj",
+    "Button colour": "Cov khawm xim",
+    "Show the button's text (off = arrow only)": "Qhia cov ntawv ntawm lub khawm (off = tsuas yog tus arrow)"
   }
 }

@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Níor aimsíodh aon fhíseán fós. Seinn an físeán ar feadh cúpla soicind, ansin cliceáil arís.",
     "live": "leibhéal",
     "best quality": "An caighdeán is fearr",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Cúinne an Chnaipí",
+    "Top right": "Barr ar dheis",
+    "Top left": "Barr ar Chlé",
+    "Bottom right": "Bun ar dheis",
+    "Bottom left": "Bun ar Chlé",
+    "Button size": "Méid na gCnaipí",
+    "Small": "Beag",
+    "Normal": "Gnáth",
+    "Large": "Móra",
+    "Button colour": "Dath na gcnaipí",
+    "Show the button's text (off = arrow only)": "Taispeáin téacs an chnaipe (míchumasaithe = arrow amháin)"
   }
 }

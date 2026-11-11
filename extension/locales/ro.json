@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Redă clipul video timp de câteva secunde, apoi fă clic din nou pe butonul Redare.",
     "live": "live",
     "best quality": "Cea mai bună calitate",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
+    "Button corner": "Colț de buton",
+    "Top right": "Dreapta sus",
+    "Top left": "Stânga sus",
+    "Bottom right": "Dreapta jos",
+    "Bottom left": "Stânga jos",
+    "Button size": "Dimensiunea butonului",
+    "Small": "Mic",
     "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Large": "Mare",
+    "Button colour": "Culoarea butonului",
+    "Show the button's text (off = arrow only)": "Arată textul butonului (off = doar săgeată)"
   }
 }

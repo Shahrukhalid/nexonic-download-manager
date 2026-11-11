@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "وڊيو اڃان تائين نه مليو. وڊيو کي ڪجھه سيڪنڊن لاءِ ورجاءِ، پوءِ ٻيهر ڪلڪ ڪريو.",
     "live": "سطح",
     "best quality": "بهترين معيار",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "بٽڻ جي ڪنڊ",
+    "Top right": "مٿين ساڄي",
+    "Top left": "مٿين کٻي",
+    "Bottom right": "هيٺيون ساڄو",
+    "Bottom left": "هيٺيون کٻي",
+    "Button size": "بٽڻ جو سائز",
+    "Small": "ننڍو",
+    "Normal": "عام",
+    "Large": "وڏا",
+    "Button colour": "بٽڻ جو رنگ",
+    "Show the button's text (off = arrow only)": "بٽڻ جو متن ڏيکار (بند = صرف ڪنارو)"
   }
 }

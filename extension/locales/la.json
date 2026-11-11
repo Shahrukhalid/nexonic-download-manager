@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Videum non iam repertum est. Videum per paucas secundas ludere, postea denuo cliccare.",
     "live": "Live",
     "best quality": "optima qualitatis",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Pagina interretialis",
+    "Top right": "Dexter superior",
+    "Top left": "Superior Sinistro",
+    "Bottom right": "Inferior dextera",
+    "Bottom left": "Inferior sinistra",
+    "Button size": "Magnitudo bottonis",
+    "Small": "Minus",
+    "Normal": "Normalis",
+    "Large": "Magnitudo",
+    "Button colour": "Color bonum",
+    "Show the button's text (off = arrow only)": "Textum botonialis mostrare (off = sagitta solum)"
   }
 }

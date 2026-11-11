@@ -184,7 +184,7 @@
     "Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one.": "מחכה ל VPN. לכבות \"VPN רק\" בהגדרות כדי להוריד ללא אחד.",
     "Scan QR code": "סריקת קוד QR",
     "Point the camera at a QR code from Nexonic on your computer, or any download link.": "כיוון את המצלמה לקוד QR מ- Nexonic במחשב שלך, או כל קישור הורדה.",
-    "This QR code has no download link.": "This QR code has no download link.",
+    "This QR code has no download link.": "לקוד QR הזה אין קישור הורדה.",
     "Torrent blocklist: an https:// address (empty = none)": "Torrent blocklist: an https:// address (empty = none)",
     "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.": "טורנטים לעולם לא יתחברו לכתובת ברשימה זו. רשימת P2P, DAT ו- CIDR עובדת, גם כ-.gz. כתובת אחת מועברת שוב פעם ביום.",
     "The blocklist address must start with https://": "כתובת רשימת הבלילה חייבת להתחיל ב- https://",

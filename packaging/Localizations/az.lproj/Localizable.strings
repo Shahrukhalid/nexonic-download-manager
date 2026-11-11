@@ -320,7 +320,7 @@
 "At most this many MB (0 = no limit)" = "Ən çox bu qədər MB (0 = məhdudiyyət yoxdur)";
 "When the amount is reached, downloads stop and continue by themselves when the next period starts." = "Bu məbləğə çatdıqda, yükləmələr dayanır və növbəti dövr başlayanda öz-özünə davam edir.";
 "When the amount is reached, downloads stop and continue when the next period starts. Counted while Nexonic is open." = "Bu məbləğə çatdıqda, endirmə dayanır və növbəti dövr başlayanda davam edir. Nexonic açıq olduqda hesablanır.";
-"Automatic configuration script (PAC)" = "Automatic configuration script (PAC)";
+"Automatic configuration script (PAC)" = "Avtomatik quruluş yazığı (PAC)";
 "Script address or file" = "Skriptin ünvanı ya da faylı";
 "Start the Add window in the folder I used last time" = "Ən son istifadə etdiyim qovluqda Əlavə et pəncərəsini başlat";
 "Link Grabber" = "Körpünü Yüklə";

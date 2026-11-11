@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Walang video na natagpuan pa. I-play ang video ng ilang segundo, pagkatapos ay i-click muli.",
     "live": "buhay",
     "best quality": "pinakamahusay na kalidad",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
+    "Button corner": "Sulok ng pindutan",
+    "Top right": "Sa kanan sa itaas",
+    "Top left": "Sa itaas na kaliwa",
+    "Bottom right": "Sa ibaba kanan",
+    "Bottom left": "Ibabang kaliwa",
+    "Button size": "Laki ng pindutan",
+    "Small": "Maliit",
     "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Large": "Malaki",
+    "Button colour": "Kulay ng pindutan",
+    "Show the button's text (off = arrow only)": "Ipakita ang teksto ng pindutan (off = arrow lamang)"
   }
 }

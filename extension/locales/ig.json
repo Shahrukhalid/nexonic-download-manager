@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Enweghị vidio achọpụtara. Pịa vidio maka sekọnd ole na ole, wee pịa ọzọ.",
     "live": "_Léèbụ̀",
     "best quality": "Ogo kacha mma",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Okpuru bọtịn",
+    "Top right": "Akaekpe elu",
+    "Top left": "Akaekpe elu",
+    "Bottom right": "Akaekpe ala",
+    "Bottom left": "Akaekpe ala",
+    "Button size": "Ụhara bọtịn",
+    "Small": "_Nkebi",
+    "Normal": "Nhazi ụhara",
+    "Large": "Nsọ",
+    "Button colour": "Ụcha bọtịn",
+    "Show the button's text (off = arrow only)": "Gosi ngwe bọtịn ahụ (ọbụla = aịkọn)"
   }
 }

@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Videoklips vēl nav atrasts. Atskaņojiet videoklipu dažas sekundes un pēc tam vēlreiz noklikšķiniet.",
     "live": "līmenis",
     "best quality": "Vislabākā kvalitāte",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Pogas stūris",
+    "Top right": "Augšā pa labi",
+    "Top left": "Augšā pa kreisi",
+    "Bottom right": "Apakšā pa labi",
+    "Bottom left": "Apakšā pa kreisi",
+    "Button size": "Pogas izmērs",
+    "Small": "Mazs",
+    "Normal": "Normāls",
+    "Large": "Liels",
+    "Button colour": "Pogas krāsa",
+    "Show the button's text (off = arrow only)": "Rādīt pogas tekstu (izslēgts = tikai bultiņa)"
   }
 }

@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Akukho vidiyo ifunyenweyo. Dlala ividiyo imizuzwana embalwa, emva koko cofa kwakhona.",
     "live": "inqanaba",
     "best quality": "umgangatho olungileyo",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Iqhosha le-Corner",
+    "Top right": "Phezulu ekunene",
+    "Top left": "Phezulu Ekhohlo",
+    "Bottom right": "Ezantsi Ekunene",
+    "Bottom left": "Ezantsi Ekhohlo",
+    "Button size": "Ubungakanani beqhosha",
+    "Small": "Encinci",
+    "Normal": "Eqhelekileyo",
+    "Large": "Enkulu",
+    "Button colour": "Umbala weqhosha",
+    "Show the button's text (off = arrow only)": "Bonisa umbhalo weqhosha (ukhubazekile = isalathisi kuphela)"
   }
 }

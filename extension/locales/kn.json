@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "ಯಾವುದೆ ವೀಡಿಯೊ ಪತ್ತೆಯಾಗಿಲ್ಲ. ಕೆಲವು ಸೆಕೆಂಡುಗಳ ಕಾಲ ವೀಡಿಯೊವನ್ನು ಚಲಾಯಿಸಿ, ನಂತರ ಮತ್ತೆ ಕ್ಲಿಕ್ ಮಾಡಿ.",
     "live": "ಮಟ್ಟ",
     "best quality": "ಉತ್ತಮ ಗುಣಮಟ್ಟ",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "ಗುಂಡಿ ಕೋನ",
+    "Top right": "ಮೇಲಿನ ಬಲಭಾಗ",
+    "Top left": "ಮೇಲಿನ ಎಡಭಾಗ",
+    "Bottom right": "ಕೆಳಗಿನ ಬಲಭಾಗ",
+    "Bottom left": "ಕೆಳಗಿನ ಎಡಭಾಗ",
+    "Button size": "ಗುಂಡಿ ಗಾತ್ರ",
+    "Small": "ಸಣ್ಣ",
+    "Normal": "ಸಾಮಾನ್ಯ",
+    "Large": "ದೊಡ್ಡದು",
+    "Button colour": "ಗುಂಡಿ ಬಣ್ಣ",
+    "Show the button's text (off = arrow only)": "ಗುಂಡಿ ಪಠ್ಯವನ್ನು ತೋರಿಸು (ಅಶಕ್ತಗೊಳಿಸು = ಕೇವಲ ಬಾಣಗಳು)"
   }
 }

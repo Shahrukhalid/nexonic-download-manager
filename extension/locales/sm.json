@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "E leʻi maua se vitio. Taʻalo le vitio mo ni nai sekone, ona kiliki lea.",
     "live": "Atinaʻe",
     "best quality": "lelei tele",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Le pito o le kiona",
+    "Top right": "i le taumatau pito i luga",
+    "Top left": "i le taumatau pito i luga",
+    "Bottom right": "i lalo taumatau",
+    "Bottom left": "i lalo taumatau",
+    "Button size": "Tamaʻi kiliki",
+    "Small": "Laiti",
+    "Normal": "Faʻamau",
+    "Large": "Tele",
+    "Button colour": "Le lanu o le kiona",
+    "Show the button's text (off = arrow only)": "Faʻaalia le faʻamatalaga o le ki (faʻatapulaʻaina = saʻo)"
   }
 }

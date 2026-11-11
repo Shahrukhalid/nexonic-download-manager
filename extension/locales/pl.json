@@ -55,15 +55,15 @@
     "live": "Życie",
     "best quality": "Najlepsza jakość",
     "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
+    "Top right": "W prawym górnym rogu",
+    "Top left": "Na górze po lewej",
+    "Bottom right": "Dolna prawa",
+    "Bottom left": "Na dole po lewej",
+    "Button size": "Rozmiar przycisku",
     "Small": "Small",
     "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Large": "Duży",
+    "Button colour": "Kolor przycisku",
+    "Show the button's text (off = arrow only)": "Pokaż tekst przycisku (off = tylko strzałka)"
   }
 }

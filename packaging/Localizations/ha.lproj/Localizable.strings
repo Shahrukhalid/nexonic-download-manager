@@ -12,7 +12,7 @@
 "Advanced" = "QDialogButtonBox";
 "After Download" = "QFileDialog";
 "All" = "@ action";
-"All types" = "All types";
+"All types" = "@ action";
 "Allow Notifications" = "QDialogButtonBox";
 "Backup" = "@ action";
 "Batch" = "@ action";

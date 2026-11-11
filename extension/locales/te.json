@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "వీడియో ఇంకా దొరకలేదు. వీడియోను కొన్ని సెకనుల కొరకు ప్లే చేయుము, తరువాత మళ్ళీ నొక్కుము.",
     "live": "స్థాయి",
     "best quality": "ఉత్తమ నాణ్యత",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "బటన్ మూల",
+    "Top right": "పై కుడి",
+    "Top left": "పై ఎడమ",
+    "Bottom right": "క్రింది కుడి",
+    "Bottom left": "క్రింది ఎడమ",
+    "Button size": "బటన్ పరిమాణం",
+    "Small": "చిన్న",
+    "Normal": "సాదారణ",
+    "Large": "పెద్ద",
+    "Button colour": "బటన్ రంగు",
+    "Show the button's text (off = arrow only)": "బటన్ వచనమును చూపుము (ఆఫ్ = బాణము మాత్రమే)"
   }
 }

@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Még nem található videó. Játssza le a videót néhány másodpercig, majd kattintson ismét.",
     "live": "élő",
     "best quality": "A legjobb minőség",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "A gomb sarka",
+    "Top right": "Jobb felső sarok",
+    "Top left": "Bal felső sarok",
+    "Bottom right": "Jobb alsó sarok",
+    "Bottom left": "Bal alsó sarok",
+    "Button size": "A gomb mérete",
+    "Small": "Kicsi",
+    "Normal": "Normál",
+    "Large": "Nagy",
+    "Button colour": "A gomb színe",
+    "Show the button's text (off = arrow only)": "A gomb szövegének megjelenítése (kikapcsolva = csak nyíl)"
   }
 }

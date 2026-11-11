@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": ".تر اوسه کومه ويډيو ونه موندل شوه. د څو سېکېنډونو لپاره ويډيو غږول، بيا بيا کېکاږﺉ",
     "live": "کچ",
     "best quality": "غوره کیفیت",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "تڼۍ څنډه",
+    "Top right": "ښي پاس",
+    "Top left": "پاس کيڼ",
+    "Bottom right": "لاندې ښي",
+    "Bottom left": "لاندې کيڼ",
+    "Button size": "تڼۍ کچ",
+    "Small": "کوچنی",
+    "Normal": "نورمال",
+    "Large": "لوی",
+    "Button colour": "د تڼۍ رنګ",
+    "Show the button's text (off = arrow only)": "د تڼۍ ليکنه ښودل (بې کاره = يوازې غشي)"
   }
 }

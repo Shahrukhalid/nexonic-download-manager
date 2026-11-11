@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Ingen video funnet ennå. Spill av videoen i noen sekunder, og klikk deretter på nytt.",
     "live": "nivå",
     "best quality": "Den beste kvalitet",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
+    "Button corner": "Knapphjørne",
+    "Top right": "Oppe til høyre",
+    "Top left": "Oppe til venstre",
+    "Bottom right": "Nederst til høyre",
+    "Bottom left": "Nederst til venstre",
+    "Button size": "Knappstørrelse",
+    "Small": "Liten",
     "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Large": "Stor",
+    "Button colour": "Knappfarge",
+    "Show the button's text (off = arrow only)": "Vis knappens tekst (av = bare pil)"
   }
 }

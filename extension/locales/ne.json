@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "अहिलेसम्म कुनै भिडियो फेला परेन । केही सेकेन्डका लागि भिडियो प्ले गर्नुहोस्, त्यसपछि फेरि क्लिक गर्नुहोस् ।",
     "live": "तह",
     "best quality": "उत्तम गुणस्तर",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "बटन कुना",
+    "Top right": "माथिल्लो दायाँ",
+    "Top left": "माथिल्लो बायाँ",
+    "Bottom right": "तल दायाँ",
+    "Bottom left": "तल बायाँ",
+    "Button size": "बटन साइज",
+    "Small": "सानो",
+    "Normal": "सामान्य",
+    "Large": "ठूलो",
+    "Button colour": "बटन रङ",
+    "Show the button's text (off = arrow only)": "बटनको पाठ देखाउनुहोस् ( बन्द = बाँण मात्र)"
   }
 }

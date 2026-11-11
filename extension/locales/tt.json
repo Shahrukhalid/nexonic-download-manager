@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Әле видео табылмады. Видеоны берничә секунд уйнап торыгыз, аннары яңадан басыгыз.",
     "live": "дәрәҗә",
     "best quality": "иң яхшы сыйфат",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Кнопка почмагы",
+    "Top right": "Югары уңда",
+    "Top left": "Югары сулда",
+    "Bottom right": "Оң түбән",
+    "Bottom left": "Төп",
+    "Button size": "Кнопка зурлыгы",
+    "Small": "Кече",
+    "Normal": "Гадәти",
+    "Large": "Зур",
+    "Button colour": "Тугым төсе",
+    "Show the button's text (off = arrow only)": "Тугымның мәтінен күрсәтү (ябылса = төймә генә күрсәтелә)"
   }
 }

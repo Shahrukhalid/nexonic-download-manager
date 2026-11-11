@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Ҳозирча видео топилмади. Видеони бир неча сонияга қўйиб, яна босинг.",
     "live": "даража",
     "best quality": "энг яхши сифат",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Тугма бурчаги",
+    "Top right": "Ўнг юқори",
+    "Top left": "Олд чап",
+    "Bottom right": "Олд ўнг",
+    "Bottom left": "Олд чап",
+    "Button size": "Тугма ҳажми",
+    "Small": "Кичик",
+    "Normal": "Оддий",
+    "Large": "Катта",
+    "Button colour": "Тугма ранги",
+    "Show the button's text (off = arrow only)": "Бутон матнини кўрсатиш (очиқ = фақат ўқ)"
   }
 }
