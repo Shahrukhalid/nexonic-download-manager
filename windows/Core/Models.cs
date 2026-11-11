@@ -86,6 +86,8 @@ public sealed class DownloadRecord
         ? (StreamTotal is > 0 ? Math.Min(1, (double)(StreamDone ?? 0) / StreamTotal.Value) : 0)
         : Size is > 0 ? Math.Min(1, (double)Received / Size.Value) : 0;
     public FileCategory Category => FileCategories.Of(FileName);
+    /// <summary>Started or resumed by hand while separate slots for those are on (Options → Connection); cleared when it stops.</summary>
+    public bool? Manual { get; set; }
     public bool IsActive => Status is DownloadStatus.Probing or DownloadStatus.Downloading or DownloadStatus.Seeding;
     public string Queue => QueueId ?? DownloadQueue.MainId;
 }
@@ -278,6 +280,28 @@ public sealed class AppSettings
     public string Theme { get; set; } = "light";
     /// <summary>List columns the user turned off (View → Columns).</summary>
     public List<string> HiddenListColumns { get; set; } = new(ListColumns.HiddenByDefault);
+    // Added in 0.29.0
+    /// <summary>How sizes, speeds and dates are written, see <see cref="Units"/>.</summary>
+    public string SizeUnits { get; set; } = "binary";
+    public string SpeedUnits { get; set; } = "bytes";
+    public string DateStyle { get; set; } = "absolute";
+    /// <summary>Sound-only video downloads: "original" (no conversion, the default), "mp3", "opus" or "flac" (needs FFmpeg).</summary>
+    public string AudioFormat { get; set; } = "original";
+    /// <summary>Downloads you start or resume yourself run in their own slots, up to this many at once, beside the queue's
+    /// limit (0 = they wait for a queue slot like before).</summary>
+    public int MaxManualActive { get; set; }
+    /// <summary>Remove finished downloads whose file was deleted or moved outside the app from the list at start-up.</summary>
+    public bool RemoveMissingOnStart { get; set; }
+    /// <summary>Set once the torrent columns added in 0.29.0 were hidden for settings saved before them.</summary>
+    public bool TorrentColumnsAdded { get; set; }
+
+    /// <summary>Brings settings saved by an earlier version up to date (new list columns start hidden).</summary>
+    public void Upgrade()
+    {
+        if (TorrentColumnsAdded) return;
+        foreach (var key in new[] { "peers", "ratio", "uploaded" }) if (!HiddenListColumns.Contains(key)) HiddenListColumns.Add(key);
+        TorrentColumnsAdded = true;
+    }
 
     /// <summary>The folder the Add windows start in.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
@@ -297,8 +321,10 @@ public static class AppPaths
     /// <summary>Portable mode: a file named "portable.txt" next to the program keeps settings and the list in a "Data"
     /// folder beside it (for a USB stick), instead of the user's profile.</summary>
     public static bool Portable => File.Exists(Path.Combine(AppContext.BaseDirectory, "portable.txt"));
-    public static string Support => Portable ? Path.Combine(AppContext.BaseDirectory, "Data")
+    /// <summary>The usual place; it also holds the pointer to a folder the user chose (Options → Advanced).</summary>
+    public static string Default => Portable ? Path.Combine(AppContext.BaseDirectory, "Data")
         : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Nexonic Download Manager");
+    public static string Support => DataLocation.Current(Default);
     public static string Inbox => Path.Combine(Support, "Inbox");
     public static string Parts => Path.Combine(Support, "Parts");
     public static string Downloads => Path.Combine(Support, "downloads.json");

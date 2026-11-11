@@ -62,7 +62,8 @@ public static class FileNames
     }
 }
 
-public enum FileCategory { Compressed, Documents, Music, Video, Programs, Images, Other }
+/// <summary>Models = AI model files (added in 0.29.0, after Other so saved values keep their meaning).</summary>
+public enum FileCategory { Compressed, Documents, Music, Video, Programs, Images, Other, Models }
 
 public static class FileCategories
 {
@@ -71,12 +72,13 @@ public static class FileCategories
 
     static readonly Dictionary<FileCategory, string[]> Map = new()
     {
-        [FileCategory.Compressed] = new[] { "zip", "rar", "7z", "gz", "tgz", "bz2", "xz", "tar", "zst" },
-        [FileCategory.Documents] = new[] { "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "rtf", "epub", "csv", "odt" },
-        [FileCategory.Music] = new[] { "mp3", "m4a", "aac", "flac", "wav", "ogg", "opus" },
-        [FileCategory.Video] = new[] { "mp4", "mkv", "mov", "avi", "webm", "m4v", "wmv", "flv", "ts" },
-        [FileCategory.Programs] = new[] { "exe", "msi", "dmg", "pkg", "deb", "rpm", "apk", "iso", "img", "appx", "msix" },
-        [FileCategory.Images] = new[] { "jpg", "jpeg", "png", "gif", "webp", "heic", "svg", "tiff", "bmp" },
+        [FileCategory.Compressed] = new[] { "zip", "rar", "7z", "gz", "tgz", "bz2", "xz", "tar", "zst", "zipx", "lz", "lzma", "lz4", "z", "cab", "arj", "tbz", "tbz2", "txz", "tzst", "br", "cpio", "sit", "sitx", "ace" },
+        [FileCategory.Documents] = new[] { "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "rtf", "epub", "csv", "odt", "ods", "odp", "md", "xps", "djvu", "mobi", "azw3", "cbz", "cbr", "pages", "key", "numbers", "dwg", "dxf", "dwf", "step", "stp", "iges", "igs", "stl", "3mf", "obj", "fbx", "blend", "skp", "f3d", "ifc", "sldprt", "sldasm", "ipt", "iam", "3ds", "dae", "glb", "gltf" },
+        [FileCategory.Music] = new[] { "mp3", "m4a", "aac", "flac", "wav", "ogg", "opus", "aiff", "alac", "wma", "mka", "ape", "dsf" },
+        [FileCategory.Video] = new[] { "mp4", "mkv", "mov", "avi", "webm", "m4v", "wmv", "flv", "ts", "3gp", "mts", "m2ts", "mpg", "mpeg", "vob", "ogv" },
+        [FileCategory.Programs] = new[] { "exe", "msi", "dmg", "pkg", "deb", "rpm", "apk", "iso", "img", "appx", "msix", "msixbundle", "appimage", "snap", "flatpak", "xapk", "apks", "app" },
+        [FileCategory.Images] = new[] { "jpg", "jpeg", "png", "gif", "webp", "heic", "heif", "avif", "jxl", "svg", "tiff", "tif", "bmp", "psd", "raw", "cr2", "cr3", "nef", "nrw", "arw", "srf", "sr2", "dng", "orf", "rw2", "raf", "pef", "srw", "x3f", "3fr", "erf", "kdc", "mrw", "iiq" },
+        [FileCategory.Models] = new[] { "safetensors", "gguf", "ggml", "onnx", "ckpt", "pt", "pth", "tflite", "mlmodel", "h5", "keras" },
     };
 
     /// <summary>The user's own categories (Options → Categories), checked before the built-in ones. Set by the app.</summary>

@@ -335,6 +335,7 @@ public static class SiteVideo
         if (ffmpeg != null) a.AddRange(new[] { "--ffmpeg-location", Path.GetDirectoryName(ffmpeg)! }); // folder: ffmpeg and ffprobe
         a.AddRange(Format(audioOnly, maxHeight));
         if (ffmpeg != null) a.AddRange(MediaDetails);
+        if (ffmpeg != null && audioOnly) a.AddRange(AudioConversion.Arguments(AudioConversion.Format));
         if (ffmpeg != null && !audioOnly && VideoSubtitles.Enabled) a.AddRange(VideoSubtitles.Arguments());
         if (!string.IsNullOrEmpty(referrer)) a.AddRange(new[] { "--referer", referrer });
         if (!string.IsNullOrEmpty(userAgent)) a.AddRange(new[] { "--user-agent", userAgent });

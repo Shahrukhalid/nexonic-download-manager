@@ -5,12 +5,12 @@ namespace Nexonic.Core;
 
 /// <summary>
 /// Expands download patterns such as https://example.com/file[001-100].jpg, photo[a-z].png or part[0-90:10].bin
-/// (from–to, optional step). Several ranges multiply. Brackets that are not ranges stay as they are.
+/// (from–to, optional step) or a list such as {jpg,png,webp}. Several ranges multiply. Brackets that are not ranges stay as they are.
 /// </summary>
 public static class BatchPattern
 {
     public const int Limit = 10_000;
-    static readonly Regex Range = new(@"\[(?:(\d+)-(\d+)(?::(\d+))?|([a-zA-Z])-([a-zA-Z]))\]", RegexOptions.Compiled);
+    static readonly Regex Range = new(@"\[(?:(\d+)-(\d+)(?::(\d+))?|([a-zA-Z])-([a-zA-Z]))\]|\{([^{}]*,[^{}]*)\}", RegexOptions.Compiled);
 
     public static long Count(string pattern) => Parts(pattern).Aggregate(1L, (n, p) => n > int.MaxValue ? n : n * p.Count);
 
@@ -47,6 +47,7 @@ public static class BatchPattern
                 }
                 parts.Add(values);
             }
+            else if (m.Groups[6].Success) parts.Add(m.Groups[6].Value.Split(',').Select(v => v.Trim()).ToList());
             else
             {
                 char a = m.Groups[4].Value[0], b = m.Groups[5].Value[0];
