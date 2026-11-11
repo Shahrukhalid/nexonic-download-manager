@@ -17,6 +17,7 @@ import com.nexonic.downloadmanager.core.Net
 import com.nexonic.downloadmanager.core.SpeedLimiter
 import com.nexonic.downloadmanager.core.SpeedSchedule
 import com.nexonic.downloadmanager.core.Transfer
+import com.nexonic.downloadmanager.core.tr
 import com.nexonic.downloadmanager.core.TransferListener
 import com.nexonic.downloadmanager.core.TransferState
 import com.nexonic.downloadmanager.service.DownloadService
@@ -85,7 +86,7 @@ object Downloads {
         Vpn.init(app, settings.vpnOnly)
         feeds = com.nexonic.downloadmanager.core.Feeds.fromJson(settings.feeds)
         // RSS feeds that are due are checked every minute while the app runs.
-        main.post(object : Runnable { override fun run() { checkFeeds(); main.postDelayed(this, 60_000) } })
+        main.post(object : Runnable { override fun run() { checkFeeds(); checkProfiles(); main.postDelayed(this, 60_000) } })
         // Downloads that were running when the app stopped continue.
         _items.value = store.load().map { if (it.status == Status.DOWNLOADING) it.copy(status = Status.QUEUED, speed = 0) else it.copy(speed = 0) }
         if (_items.value.any { it.status == Status.QUEUED }) main.post { pump() }
@@ -253,6 +254,86 @@ object Downloads {
         update(id) { if (it.status == Status.COMPLETE || it.status == Status.DOWNLOADING) it else it.copy(status = Status.QUEUED, error = null) }
         if (settings.maxManualActive > 0) synchronized(this) { manual.add(id) }
         pump()
+    }
+
+    // ---- Profile Batch ----
+
+    /** A scan's progress, kept so an interrupted scan continues after the videos it already found. */
+    private fun scanFile(url: String) = File(app.filesDir, "profile-scans/" + Integer.toHexString(com.nexonic.downloadmanager.core.ProfileBatch.key(url).hashCode()) + ".json")
+
+    /**
+     * Lists the videos at [url] (no login, no cookies), continuing an interrupted scan unless [fresh]. Runs on the calling
+     * (background) thread; [count] gets the number found so far. Returns the videos and the profile's name.
+     */
+    fun discover(url: String, max: Int, fresh: Boolean, stopId: String, count: (Int) -> Unit): Pair<List<com.nexonic.downloadmanager.core.BatchEntry>, String> {
+        val pb = com.nexonic.downloadmanager.core.ProfileBatch
+        val file = scanFile(url)
+        val earlier = if (fresh) emptyList() else runCatching {
+            val o = org.json.JSONObject(file.readText()); val a = o.getJSONArray("entries")
+            (0 until a.length()).map { pb.entryFrom(a.getJSONObject(it)) } to o.optString("owner")
+        }.getOrNull()?.let { it.first to it.second } ?: (emptyList<com.nexonic.downloadmanager.core.BatchEntry>() to "")
+        val entries = earlier.first.toMutableList(); var owner = earlier.second
+        fun save() = runCatching {
+            file.parentFile?.mkdirs()
+            file.writeText(org.json.JSONObject().put("owner", owner).put("entries", org.json.JSONArray(entries.map(pb::entryJson))).toString())
+        }
+        count(entries.size)
+        if (entries.size < max) {
+            var seenLines = 0
+            val out = try {
+                com.nexonic.downloadmanager.video.VideoEngine.discover(url, entries.size + 1, max - entries.size, stopId) { l ->
+                    if (l.trimStart().startsWith("{")) { seenLines++; if (seenLines % 10 == 0) count(entries.size + seenLines) }
+                }
+            } catch (e: Exception) {
+                if (e is com.yausername.youtubedl_android.YoutubeDL.CanceledException) save()
+                throw e
+            }
+            for (l in out.lineSequence()) pb.parseLine(l)?.let { (e, o) -> entries += e; if (owner.isEmpty() && o != null) owner = o }
+        }
+        file.delete()
+        if (entries.isEmpty()) throw java.io.IOException(tr("No videos were found at this link"))
+        return entries to owner
+    }
+
+    fun alreadyDownloaded(url: String): Boolean {
+        val k = com.nexonic.downloadmanager.core.ProfileBatch.key(url)
+        return _items.value.any { com.nexonic.downloadmanager.core.ProfileBatch.key(it.url) == k }
+    }
+
+    /** Adds the chosen videos in [quality]; they start now unless [start] is off (then they wait under Download later). */
+    fun queueBatch(take: List<com.nexonic.downloadmanager.core.BatchEntry>, quality: String, start: Boolean): Int {
+        val q = com.nexonic.downloadmanager.core.ProfileBatch.quality(quality)
+        val choice = VideoChoice(q.title, q.selector, q.ext, null, audioOnly = q.audio)
+        for (e in take) add(NewDownload(url = e.url, fileName = (if (e.title.isBlank() || e.title == e.url) "Video" else e.title) + "." + q.ext, video = choice), start)
+        return take.size
+    }
+
+    var profiles: List<com.nexonic.downloadmanager.core.SavedProfile>
+        get() = com.nexonic.downloadmanager.core.ProfileBatch.profilesFrom(settings.savedProfiles)
+        set(v) { settings.savedProfiles = com.nexonic.downloadmanager.core.ProfileBatch.profilesToJson(v) }
+    @Volatile private var checkingProfiles = false
+
+    /** Saved profiles that are due are listed again; their new videos are added and start. */
+    fun checkProfiles() {
+        if (!::app.isInitialized || checkingProfiles) return
+        val due = profiles.filter { it.due() }
+        if (due.isEmpty()) return
+        checkingProfiles = true
+        Thread({
+            try {
+                for (p in due) {
+                    val result = runCatching { discover(p.url, p.filter.max, true, "profile-" + p.id) {} }
+                    val now = System.currentTimeMillis()
+                    val updated = result.fold({ (entries, owner) ->
+                        val pb = com.nexonic.downloadmanager.core.ProfileBatch
+                        val (take, counts) = pb.choose(entries, p.filter, ::alreadyDownloaded, p.seen)
+                        main.post { queueBatch(take, p.quality, true) }
+                        p.copy(title = p.title.ifEmpty { owner }, lastChecked = now, lastResult = counts.text, seen = p.seen + entries.map { pb.key(it.url) })
+                    }, { p.copy(lastChecked = now, lastResult = it.message ?: "") })
+                    profiles = profiles.map { if (it.id == p.id) updated else it }
+                }
+            } finally { checkingProfiles = false }
+        }, "nexonic-profiles").start()
     }
 
     /** Downloads resumed by hand while Settings gives them their own slots beside the queue. */

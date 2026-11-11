@@ -197,6 +197,29 @@ object VideoEngine {
         return r
     }
 
+    /**
+     * Profile Batch: lists the videos at [url] without any login or cookies (the site's pages are followed by the engine),
+     * from video number [start]. [line] gets each printed entry as it comes. Throws [VideoException] with a readable reason.
+     */
+    fun discover(url: String, start: Int, max: Int, stopId: String, line: (String) -> Unit): String {
+        ensure()
+        val req = YoutubeDLRequest(Playlists.normalize(url)).apply {
+            com.nexonic.downloadmanager.data.Vpn.sourceAddress()?.let { addOption("--source-address", it) }
+            com.nexonic.downloadmanager.core.ProfileBatch.options(start, max).forEach { (k, v) -> if (v == null) addOption(k) else addOption(k, v) }
+        }
+        return try {
+            YoutubeDL.getInstance().execute(req, stopId) { _, _, l -> l.lineSequence().forEach(line) }.out
+        } catch (e: YoutubeDL.CanceledException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "profile scan failed", e)
+            throw VideoException(VideoPages.friendlyError(e.message))
+        } catch (e: Throwable) {
+            Log.e(TAG, "profile scan failed", e)
+            throw VideoException(VideoPages.engineError(e.javaClass.simpleName, e.message))
+        }
+    }
+
     /** Short share links (facebook.com/share/…, fb.watch) point to the real video page: follow them first. */
     private fun resolve(url: String): String {
         if (!VideoPages.isShareLink(url)) return url

@@ -11,6 +11,9 @@ import android.util.Size
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -64,6 +67,7 @@ import com.nexonic.downloadmanager.core.FileCategory
 import com.nexonic.downloadmanager.core.Playlists
 import com.nexonic.downloadmanager.core.tr
 import com.nexonic.downloadmanager.data.DownloadItem
+import com.nexonic.downloadmanager.data.Downloads
 import com.nexonic.downloadmanager.video.VideoEngine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -73,65 +77,147 @@ import java.util.Date
 
 /** Lists a playlist's or channel's videos; the chosen ones open in the Add window ([onAdd] gets one link per line). */
 @Composable
-fun PlaylistSheet(link: String, onAdd: (String) -> Unit, onDismiss: () -> Unit) {
+private fun ChoiceRow(title: String, options: List<Pair<String, String>>, selected: String, pick: (String) -> Unit) {
+    Text(tr(title), style = MaterialTheme.typography.bodyMedium)
+    Row(Modifier.horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
+        options.forEach { (k, label) -> FilterChip(selected = selected == k, onClick = { pick(k) }, label = { Text(tr(label)) }, modifier = Modifier.padding(end = 6.dp)) }
+    }
+}
+
+/**
+ * Profile Batch: one link to a profile, channel, playlist or page → every video open to everyone there (no login, no cookies),
+ * following the site's pages, filtered, without repeats, downloaded in the chosen quality.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProfileBatchSheet(link: String, onDismiss: () -> Unit, message: (String) -> Unit) {
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
+    val pb = com.nexonic.downloadmanager.core.ProfileBatch
     var input by remember { mutableStateOf(link) }
-    var reading by remember { mutableStateOf(false) }
+    var quality by remember { mutableStateOf("best") }
+    var mode by remember { mutableStateOf("all") }
+    var autoStart by remember { mutableStateOf(true) }
+    var keywords by remember { mutableStateOf("") }
+    var minMinutes by remember { mutableStateOf("") }
+    var maxMinutes by remember { mutableStateOf("") }
+    var fromDay by remember { mutableStateOf("") }
+    var toDay by remember { mutableStateOf("") }
+    var kind by remember { mutableStateOf("all") }
+    var maxCount by remember { mutableStateOf(pb.DEFAULT_MAX.toString()) }
+    var every by remember { mutableStateOf("0") }
+    var showFilters by remember { mutableStateOf(false) }
+    var busy by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf("") }
-    var entries by remember { mutableStateOf(listOf<Playlists.Entry>()) }
+    var found by remember { mutableStateOf(listOf<com.nexonic.downloadmanager.core.BatchEntry>()) }
+    var owner by remember { mutableStateOf("") }
+    var preview by remember { mutableStateOf(listOf<com.nexonic.downloadmanager.core.BatchEntry>()) }
     var chosen by remember { mutableStateOf(setOf<String>()) }
+    val stopId = remember { "scan-" + System.nanoTime() }
+    var exportFormat by remember { mutableStateOf("txt") }
+    val context = LocalContext.current
+    val saveFile = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.CreateDocument("*/*")) { uri ->
+        uri ?: return@rememberLauncherForActivityResult
+        runCatching { context.contentResolver.openOutputStream(uri)?.use { it.write(pb.export(found, exportFormat).toByteArray()) } }
+            .onSuccess { message(tr("Saved")) }.onFailure { message(it.message ?: tr("Could not save")) }
+    }
+    val dayFormat = remember { java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).apply { timeZone = java.util.TimeZone.getTimeZone("UTC"); isLenient = false } }
+    fun filter() = com.nexonic.downloadmanager.core.BatchFilter(
+        from = runCatching { dayFormat.parse(fromDay.trim())?.time }.getOrNull(), to = runCatching { dayFormat.parse(toDay.trim())?.time }.getOrNull(),
+        keywords = keywords, minSeconds = minMinutes.toIntOrNull()?.times(60), maxSeconds = maxMinutes.toIntOrNull()?.times(60), kind = kind,
+        max = (maxCount.toIntOrNull() ?: pb.DEFAULT_MAX).coerceIn(1, pb.LIMIT))
 
-    fun read() {
+    fun saved(url: String) = Downloads.profiles.firstOrNull { pb.key(it.url) == pb.key(url) }
+
+    fun download(url: String, take: List<com.nexonic.downloadmanager.core.BatchEntry>, counts: com.nexonic.downloadmanager.core.BatchCounts) {
+        val added = Downloads.queueBatch(take, quality, autoStart)
+        status = (if (owner.isEmpty()) "" else "$owner: ") + counts.copy(queued = added).text
+        val hours = every.toInt()
+        val old = saved(url)
+        if (old != null || hours > 0 || mode == "new") {
+            val p = (old ?: com.nexonic.downloadmanager.core.SavedProfile(java.util.UUID.randomUUID().toString(), url, owner, quality, filter(), hours))
+                .copy(title = owner, quality = quality, filter = filter(), checkHours = hours, lastChecked = System.currentTimeMillis(), lastResult = status,
+                    seen = (old?.seen ?: emptySet()) + found.map { pb.key(it.url) })
+            Downloads.profiles = Downloads.profiles.filter { it.id != p.id } + p
+        }
+        preview = emptyList()
+    }
+
+    fun find() {
         val url = input.trim()
         if (!url.startsWith("http://", true) && !url.startsWith("https://", true)) { status = tr("Paste a web link (http or https)."); return }
-        reading = true
-        status = tr("Reading the list of videos… (large channels can take a minute)")
+        busy = true; preview = emptyList()
+        status = tr("Looking for videos… (large profiles can take a few minutes)")
+        val f = filter()
         scope.launch {
-            val r = withContext(Dispatchers.IO) { runCatching { VideoEngine.readPlaylist(url) } }
-            reading = false
-            r.onSuccess { p ->
-                entries = p.entries
-                chosen = p.entries.map { it.url }.toSet()
-                val count = if (p.entries.size == 1) "1 video" else "${p.entries.size} videos"
-                status = (if (p.title.isEmpty()) "" else p.title + ": ") + count +
-                    if (p.entries.size >= Playlists.MAX_ENTRIES) " (the first ${Playlists.MAX_ENTRIES})" else ""
-            }.onFailure { status = it.message ?: tr("The list of videos could not be read.") }
+            val r = withContext(Dispatchers.IO) {
+                runCatching { Downloads.discover(url, f.max, false, stopId) { n -> if (n > 0) scope.launch { status = tr("%d found so far…").format(n) } } }
+            }
+            busy = false
+            r.onSuccess { (entries, name) ->
+                found = entries; owner = name
+                val (take, counts) = pb.choose(entries, f, Downloads::alreadyDownloaded, if (mode == "new") saved(url)?.seen else null)
+                when {
+                    mode == "preview" -> { preview = take; chosen = take.map { it.url }.toSet(); status = (if (name.isEmpty()) "" else "$name: ") + counts.copy(queued = 0).text }
+                    take.isEmpty() -> status = (if (name.isEmpty()) "" else "$name: ") + counts.copy(queued = 0).text
+                    else -> download(url, take, counts)
+                }
+            }.onFailure {
+                status = if (it is com.yausername.youtubedl_android.YoutubeDL.CanceledException) tr("Stopped. The videos found so far are kept; Find videos continues from there.")
+                else it.message ?: tr("The list of videos could not be read.")
+            }
         }
     }
-    LaunchedEffect(Unit) { if (input.isNotBlank()) read() }
+    LaunchedEffect(Unit) { if (input.isNotBlank()) find() }
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheet) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp).navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(tr("Add playlist or channel"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-            Text(tr("Paste a playlist or channel link (YouTube, Vimeo, SoundCloud, Bandcamp and other video sites), then choose its videos."),
+        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp).navigationBarsPadding().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(tr("Profile Batch"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+            Text(tr("Paste one link to a profile, channel, playlist or page. Nexonic finds every video that is open to everyone (no login needed), skips the ones you already have and downloads the rest."),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            OutlinedTextField(input, { input = it }, label = { Text(tr("Playlist or channel link")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(input, { input = it }, label = { Text(tr("Link")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            ChoiceRow("Quality", pb.qualities.map { it.key to it.title }, quality) { quality = it }
+            ChoiceRow("Download", listOf("all" to "All I don't have", "new" to "Only new", "preview" to "Preview and choose"), mode) { mode = it }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = { read() }, enabled = !reading) { Text(tr("Read videos")) }
-                if (entries.isNotEmpty()) TextButton(onClick = {
-                    chosen = if (chosen.size == entries.size) emptySet() else entries.map { it.url }.toSet()
-                }) { Text(tr(if (chosen.size == entries.size) "Deselect all" else "Select all")) }
+                Checkbox(autoStart, { autoStart = it }); Text(tr("Start downloading straight away"), Modifier.clickable { autoStart = !autoStart })
             }
-            if (reading) LinearProgressIndicator(Modifier.fillMaxWidth())
+            ChoiceRow("Look for new videos", listOf("0" to "Never", "1" to "Every hour", "6" to "Every 6 hours", "24" to "Every day", "168" to "Every week"), every) { every = it }
+            TextButton(onClick = { showFilters = !showFilters }) { Text(tr(if (showFilters) "Hide filters" else "Filters")) }
+            if (showFilters) {
+                OutlinedTextField(keywords, { keywords = it }, label = { Text(tr("Title contains (words; !word leaves it out)")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                Row {
+                    OutlinedTextField(fromDay, { fromDay = it }, label = { Text(tr("From (YYYY-MM-DD)")) }, singleLine = true, modifier = Modifier.weight(1f).padding(end = 6.dp))
+                    OutlinedTextField(toDay, { toDay = it }, label = { Text(tr("To (YYYY-MM-DD)")) }, singleLine = true, modifier = Modifier.weight(1f))
+                }
+                Row {
+                    OutlinedTextField(minMinutes, { minMinutes = it }, label = { Text(tr("Shortest (min)")) }, singleLine = true, modifier = Modifier.weight(1f).padding(end = 6.dp))
+                    OutlinedTextField(maxMinutes, { maxMinutes = it }, label = { Text(tr("Longest (min)")) }, singleLine = true, modifier = Modifier.weight(1f).padding(end = 6.dp))
+                    OutlinedTextField(maxCount, { maxCount = it }, label = { Text(tr("At most")) }, singleLine = true, modifier = Modifier.weight(1f))
+                }
+                ChoiceRow("Type", listOf("all" to "Everything", "videos" to "Videos", "shorts" to "Shorts and reels", "live" to "Live streams"), kind) { kind = it }
+                Text(tr("A site that doesn't say when a video was published or how long it is: those videos are kept."), style = MaterialTheme.typography.bodySmall)
+            }
+            if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             if (status.isNotEmpty()) Text(status, style = MaterialTheme.typography.bodySmall)
-            if (entries.isNotEmpty()) LazyColumn(Modifier.fillMaxWidth().heightIn(max = 380.dp)) {
-                items(entries, key = { it.url }) { e ->
-                    Row(Modifier.fillMaxWidth().clickable { chosen = if (e.url in chosen) chosen - e.url else chosen + e.url },
-                        verticalAlignment = Alignment.CenterVertically) {
+            if (preview.isNotEmpty()) LazyColumn(Modifier.fillMaxWidth().heightIn(max = 320.dp)) {
+                items(preview, key = { it.url }) { e ->
+                    Row(Modifier.fillMaxWidth().clickable { chosen = if (e.url in chosen) chosen - e.url else chosen + e.url }, verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(e.url in chosen, { on -> chosen = if (on) chosen + e.url else chosen - e.url })
                         Text(e.title, Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        e.duration?.takeIf { it > 0 }?.let {
-                            Text(Playlists.duration(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                        e.duration?.takeIf { it > 0 }?.let { Text(Playlists.duration(it), style = MaterialTheme.typography.bodySmall) }
                     }
                 }
             }
-            Row(Modifier.fillMaxWidth().padding(bottom = 16.dp), horizontalArrangement = Arrangement.End) {
-                TextButton(onClick = onDismiss) { Text(tr("Cancel")) }
-                Button(onClick = { onAdd(entries.filter { it.url in chosen }.joinToString("\n") { it.url }) }, enabled = chosen.isNotEmpty()) {
-                    Text(if (chosen.size == 1) tr("Add 1 video") else "${tr("Add videos")} (${chosen.size})")
+            Row(Modifier.fillMaxWidth().padding(bottom = 16.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                if (found.isNotEmpty()) listOf("txt", "csv", "json").forEach { f ->
+                    TextButton(onClick = { exportFormat = f; saveFile.launch((owner.ifEmpty { "videos" }) + "." + f) }) { Text(f.uppercase()) }
                 }
+                if (busy) TextButton(onClick = { VideoEngine.cancel(stopId) }) { Text(tr("Stop")) }
+                if (preview.isNotEmpty()) Button(onClick = {
+                    val take = preview.filter { it.url in chosen }
+                    download(input.trim(), take, com.nexonic.downloadmanager.core.BatchCounts(found.size, take.size, 0, found.size - take.size, 0))
+                }, enabled = chosen.isNotEmpty()) { Text(tr("Download selected")) }
+                else Button(onClick = { find() }, enabled = !busy) { Text(tr("Find videos")) }
             }
         }
     }

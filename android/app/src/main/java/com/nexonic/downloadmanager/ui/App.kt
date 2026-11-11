@@ -96,7 +96,7 @@ fun App(ui: UiState, browser: Browser) {
         else if (t != null && !t.contains('\n') && Playlists.isPlaylist(t)) { ui.addText = null; ui.addPlaylist = t }
     }
     ui.addPlaylist?.let { link ->
-        PlaylistSheet(link, onAdd = { links -> ui.addPlaylist = null; ui.addText = links }, onDismiss = { ui.addPlaylist = null })
+        ProfileBatchSheet(link, onDismiss = { ui.addPlaylist = null }) { ui.message = it }
     }
     if (ui.showLibrary) MediaLibrarySheet(items, onDismiss = { ui.showLibrary = false }) { ui.message = it }
     if (ui.showFeeds) FeedsSheet(onDismiss = { ui.showFeeds = false })
