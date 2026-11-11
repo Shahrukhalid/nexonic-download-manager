@@ -268,14 +268,17 @@ object Downloads {
     fun discover(url: String, max: Int, fresh: Boolean, stopId: String, count: (Int) -> Unit): Pair<List<com.nexonic.downloadmanager.core.BatchEntry>, String> {
         val pb = com.nexonic.downloadmanager.core.ProfileBatch
         val file = scanFile(url)
-        val earlier = if (fresh) emptyList() else runCatching {
-            val o = org.json.JSONObject(file.readText()); val a = o.getJSONArray("entries")
-            (0 until a.length()).map { pb.entryFrom(a.getJSONObject(it)) } to o.optString("owner")
-        }.getOrNull()?.let { it.first to it.second } ?: (emptyList<com.nexonic.downloadmanager.core.BatchEntry>() to "")
-        val entries = earlier.first.toMutableList(); var owner = earlier.second
+        val entries = mutableListOf<com.nexonic.downloadmanager.core.BatchEntry>()
+        var owner = ""
+        if (!fresh) runCatching {
+            val o = org.json.JSONObject(file.readText())
+            val a = o.getJSONArray("entries")
+            for (i in 0 until a.length()) entries += pb.entryFrom(a.getJSONObject(i))
+            owner = o.optString("owner")
+        }
         fun save() = runCatching {
             file.parentFile?.mkdirs()
-            file.writeText(org.json.JSONObject().put("owner", owner).put("entries", org.json.JSONArray(entries.map(pb::entryJson))).toString())
+            file.writeText(org.json.JSONObject().put("owner", owner).put("entries", org.json.JSONArray(entries.map { pb.entryJson(it) })).toString())
         }
         count(entries.size)
         if (entries.size < max) {

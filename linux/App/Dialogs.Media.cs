@@ -11,6 +11,11 @@ using Nexonic.Linux;
 
 namespace Nexonic.App;
 
+/// <summary>Profile Batch and the Media Library, the same as the Windows app's.</summary>
+public static partial class Dialogs
+{
+    // ---- Profile Batch ----
+
     /// <summary>
     /// Profile Batch: one link to a profile, channel, playlist or page; every video found there that anyone can open without an
     /// account is listed (following the site's pages), filtered, and downloaded into a queue of its own in the chosen quality.

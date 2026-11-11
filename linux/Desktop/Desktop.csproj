@@ -7,8 +7,6 @@
     <DefineConstants>$(DefineConstants);NEXONIC_LINUX</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <!-- Profile Batch: the same manager code as on Windows. -->
-    <Compile Include="..\..\windows\App\DownloadManager.Profiles.cs" Link="DownloadManager.Profiles.cs" />
     <ProjectReference Include="..\..\windows\Core\Core.csproj" />
   </ItemGroup>
 </Project>

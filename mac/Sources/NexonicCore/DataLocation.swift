@@ -51,10 +51,16 @@ public enum DataLocation {
         var copied: [URL] = []
         // Paths inside the data folder, relative to it (the pointer and the request stay in the usual folder).
         let base = from.path
-        let files = (fm.enumerator(at: from, includingPropertiesForKeys: [.isRegularFileKey])?.compactMap { $0 as? URL } ?? [])
-            .map { $0.resolvingSymlinksInPath() }
-            .filter { (try? $0.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true && $0.path.hasPrefix(base + "/") }
-            .filter { ![pointerName, pendingName].contains(String($0.path.dropFirst(base.count + 1))) }
+        var files: [URL] = []
+        if let walker = fm.enumerator(at: from, includingPropertiesForKeys: [.isRegularFileKey]) {
+            for case let item as URL in walker {
+                let f = item.resolvingSymlinksInPath()
+                let isFile = (try? f.resourceValues(forKeys: [.isRegularFileKey]))?.isRegularFile ?? false
+                guard isFile, f.path.hasPrefix(base + "/") else { continue }
+                let rel = String(f.path.dropFirst(base.count + 1))
+                if rel != pointerName && rel != pendingName { files.append(f) }
+            }
+        }
         do {
             try fm.createDirectory(at: to, withIntermediateDirectories: true)
             for f in files {
@@ -76,13 +82,20 @@ public enum DataLocation {
         else { try? to.path.write(to: usual.appendingPathComponent(pointerName), atomically: true, encoding: .utf8) }
         for f in files { try? fm.removeItem(at: f) }
         // Then the folders left empty, deepest first; a chosen data folder goes too, the usual one stays (it keeps the pointer).
-        let dirs = (fm.enumerator(at: from, includingPropertiesForKeys: nil)?.compactMap { ($0 as? URL)?.resolvingSymlinksInPath() } ?? [])
-            .filter { var d: ObjCBool = false; return fm.fileExists(atPath: $0.path, isDirectory: &d) && d.boolValue }
-            .sorted { $0.path.count > $1.path.count }
-        for d in dirs where ((try? fm.contentsOfDirectory(atPath: d.path)) ?? ["x"]).filter({ $0 != ".DS_Store" }).isEmpty { try? fm.removeItem(at: d) }
-        if clean(from) != clean(usual.resolvingSymlinksInPath()), ((try? fm.contentsOfDirectory(atPath: from.path)) ?? ["x"]).filter({ $0 != ".DS_Store" }).isEmpty {
-            try? fm.removeItem(at: from)
+        var dirs: [URL] = []
+        if let walker = fm.enumerator(at: from, includingPropertiesForKeys: nil) {
+            for case let item as URL in walker {
+                var isDir: ObjCBool = false
+                if fm.fileExists(atPath: item.path, isDirectory: &isDir), isDir.boolValue { dirs.append(item.resolvingSymlinksInPath()) }
+            }
         }
+        dirs.sort { $0.path.count > $1.path.count }
+        func empty(_ u: URL) -> Bool {
+            let names: [String] = (try? fm.contentsOfDirectory(atPath: u.path)) ?? ["x"]
+            return names.allSatisfy { $0 == ".DS_Store" }
+        }
+        for d in dirs where empty(d) { try? fm.removeItem(at: d) }
+        if clean(from) != clean(usual.resolvingSymlinksInPath()) && empty(from) { try? fm.removeItem(at: from) }
         return nil
     }
 }

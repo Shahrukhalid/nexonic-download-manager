@@ -208,7 +208,7 @@ object VideoEngine {
             com.nexonic.downloadmanager.core.ProfileBatch.options(start, max).forEach { (k, v) -> if (v == null) addOption(k) else addOption(k, v) }
         }
         return try {
-            YoutubeDL.getInstance().execute(req, stopId) { _, _, l -> l.lineSequence().forEach(line) }.out
+            YoutubeDL.getInstance().execute(req, stopId, false) { _, _, l -> l.lineSequence().forEach(line) }.out
         } catch (e: YoutubeDL.CanceledException) {
             throw e
         } catch (e: Exception) {

@@ -89,11 +89,16 @@ public enum ProfileBatch {
         else if let d = s("upload_date"), d.count == 8 {
             let f = DateFormatter(); f.dateFormat = "yyyyMMdd"; f.locale = Locale(identifier: "en_US_POSIX"); date = f.date(from: d)
         }
-        let live = ["is_live", "was_live", "is_upcoming"].contains(s("live_status") ?? "") || (o["was_live"] as? Bool) == true
-        let kind = live ? "live" : (u.lowercased().contains("/shorts/") || u.lowercased().contains("/reel/")) ? "shorts" : "video"
-        let title = s("title") ?? s("fulltitle") ?? u
-        let available = !["private", "premium_only", "subscriber_only", "needs_auth"].contains(s("availability") ?? "")
-            && !title.hasPrefix("[Private video]") && !title.hasPrefix("[Deleted video]")
+        let liveStatus: String = s("live_status") ?? ""
+        let wasLive: Bool = (o["was_live"] as? Bool) ?? false
+        let lower = u.lowercased()
+        var kind = "video"
+        if ["is_live", "was_live", "is_upcoming"].contains(liveStatus) || wasLive { kind = "live" }
+        else if lower.contains("/shorts/") || lower.contains("/reel/") { kind = "shorts" }
+        let title: String = s("title") ?? s("fulltitle") ?? u
+        let availability: String = s("availability") ?? ""
+        var available = !["private", "premium_only", "subscriber_only", "needs_auth"].contains(availability)
+        if title.hasPrefix("[Private video]") || title.hasPrefix("[Deleted video]") { available = false }
         return (BatchEntry(url: u, title: title, duration: n("duration"), date: date, kind: kind, available: available),
                 s("playlist_title") ?? s("playlist_uploader") ?? s("channel") ?? s("uploader"))
     }
@@ -116,7 +121,8 @@ public enum ProfileBatch {
             if let min = f.minSeconds, s < Double(min) { return false }
             if let max = f.maxSeconds, s > Double(max) { return false }
         }
-        if f.kind == "videos" && e.kind != "video" || ["shorts", "live"].contains(f.kind) && e.kind != f.kind { return false }
+        if f.kind == "videos" && e.kind != "video" { return false }
+        if (f.kind == "shorts" || f.kind == "live") && e.kind != f.kind { return false }
         let words = f.keywords.split(separator: " ").map(String.init)
         let include = words.filter { !$0.hasPrefix("!") }
         let exclude = words.filter { $0.hasPrefix("!") && $0.count > 1 }.map { String($0.dropFirst()) }
@@ -151,13 +157,21 @@ public enum ProfileBatch {
         switch format {
         case "csv":
             func c(_ v: String) -> String { v.contains(where: { ",\"\n\r".contains($0) }) ? "\"" + v.replacingOccurrences(of: "\"", with: "\"\"") + "\"" : v }
-            return "url,title,date,duration_seconds,type,accessible\r\n" + entries.map {
-                [c($0.url), c($0.title), $0.date.map(df.string) ?? "", $0.duration.map { String(Int($0)) } ?? "", $0.kind, $0.available ? "yes" : "no"].joined(separator: ",") + "\r\n"
-            }.joined()
+            var out = "url,title,date,duration_seconds,type,accessible\r\n"
+            for e in entries {
+                let date: String = e.date.map { df.string(from: $0) } ?? ""
+                let seconds: String = e.duration.map { String(Int($0)) } ?? ""
+                let fields: [String] = [c(e.url), c(e.title), date, seconds, e.kind, e.available ? "yes" : "no"]
+                out += fields.joined(separator: ",") + "\r\n"
+            }
+            return out
         case "json":
-            let list: [[String: Any]] = entries.map {
-                ["url": $0.url, "title": $0.title, "date": $0.date.map(df.string) ?? NSNull(), "duration_seconds": $0.duration ?? NSNull(),
-                 "type": $0.kind, "accessible": $0.available]
+            var list: [[String: Any]] = []
+            for e in entries {
+                var item: [String: Any] = ["url": e.url, "title": e.title, "type": e.kind, "accessible": e.available]
+                item["date"] = e.date.map { df.string(from: $0) as Any } ?? NSNull()
+                item["duration_seconds"] = e.duration.map { $0 as Any } ?? NSNull()
+                list.append(item)
             }
             let data = (try? JSONSerialization.data(withJSONObject: list, options: [.prettyPrinted, .withoutEscapingSlashes, .sortedKeys])) ?? Data("[]".utf8)
             return String(decoding: data, as: UTF8.self)

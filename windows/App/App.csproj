@@ -8,6 +8,10 @@
     <ApplicationIcon>app.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <!-- Profile Batch: the same manager code as on Linux. -->
+    <Compile Include="..\..\linux\Desktop\DownloadManager.Profiles.cs" Link="DownloadManager.Profiles.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <Resource Include="app.ico" />
   </ItemGroup>
   <ItemGroup>
