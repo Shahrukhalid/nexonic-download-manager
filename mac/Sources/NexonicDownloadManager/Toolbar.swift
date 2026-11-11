@@ -70,6 +70,7 @@ struct MainToolbar: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 2) {
                 ToolbarTile(title: "Add URL", symbol: "plus.circle.fill", color: .green, help: "Add one or more links (⌘N)") { perform(.addURL) }
+                ToolbarTile(title: "Profile Batch", symbol: "rectangle.stack.badge.play", color: .red, help: "Every video of a profile, channel, playlist or page (⇧⌘L)") { MediaWindows.showPlaylist() }
                 ToolbarTile(title: "Torrent", symbol: "arrow.down.circle.dotted", color: .indigo, help: "Add a .torrent file, torrent link or magnet") { perform(.addTorrent) }
                 separator
                 ToolbarTile(title: "Resume", symbol: "play.circle.fill", color: .blue, enabled: hasSelection, help: "Resume the selected downloads") { perform(.resume) }
@@ -136,7 +137,7 @@ struct MainMenus: Commands {
             Button("Site Grabber…") { MainActions.shared.send(.grabber) }.keyboardShortcut("g", modifiers: [.command, .shift])
             Button("Link Grabber…") { MainActions.shared.send(.linkGrabber) }.keyboardShortcut("k", modifiers: [.command, .shift])
             Button("RSS Feeds…") { MainActions.shared.send(.feeds) }
-            Button("Add Playlist or Channel…") { MediaWindows.showPlaylist() }.keyboardShortcut("l", modifiers: [.command, .shift])
+            Button("Profile Batch (profile, channel or playlist)…") { MediaWindows.showPlaylist() }.keyboardShortcut("l", modifiers: [.command, .shift])
         }
         CommandMenu("Downloads") {
             Button("Resume") { MainActions.shared.send(.resume) }.keyboardShortcut("r")

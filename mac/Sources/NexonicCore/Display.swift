@@ -91,7 +91,7 @@ public enum LinkFilter {
 public enum AudioConversion {
     public static let key = "audioFormat"
     public static let formats = ["original", "mp3", "opus", "flac"]
-    public static var current: String { UserDefaults.standard.string(forKey: key).flatMap { formats.contains($0) ? $0 : nil } ?? "original" }
+    public static var current: String { EnginePaths.defaults.string(forKey: key).flatMap { formats.contains($0) ? $0 : nil } ?? "original" }
     public static func arguments(_ format: String) -> [String] {
         switch format {
         case "mp3": return ["-x", "--audio-format", "mp3", "--audio-quality", "0"]
@@ -105,8 +105,13 @@ public enum AudioConversion {
 /// The user's own yt-dlp and FFmpeg programs (Settings → Video tools); empty = the ones the app ships and keeps current.
 public enum EnginePaths {
     public static let ytdlpKey = "customYtDlp", ffmpegKey = "customFFmpeg"
+    static let appID = "com.nexonic.downloadmanager"
+    /// The app's preferences, also when read by the browser helper (a separate program with preferences of its own).
+    static var defaults: UserDefaults {
+        Bundle.main.bundleIdentifier == appID ? .standard : (UserDefaults(suiteName: appID) ?? .standard)
+    }
     static func usable(_ key: String) -> String? {
-        let p = (UserDefaults.standard.string(forKey: key) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let p = (defaults.string(forKey: key) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         return !p.isEmpty && FileManager.default.isExecutableFile(atPath: p) ? p : nil
     }
     public static var ytdlp: String? { usable(ytdlpKey) }

@@ -11,16 +11,12 @@ enum MediaWindows {
     /// Lists a playlist's or channel's videos; the chosen ones open in the Add window.
     @MainActor static func showPlaylist(_ link: String = "") {
         if let w = playlist { w.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true); return }
-        let start = link.isEmpty ? (NSPasteboard.general.string(forType: .string).flatMap { Playlists.isPlaylist($0) ? $0 : nil } ?? "") : link
-        let w = NSWindow(contentViewController: NSHostingController(rootView: PlaylistView(link: start) { links in
-            playlist?.close()
-            DownloadManager.showMainWindow?()
-            DownloadManager.shared.addRequest = AddRequest(links: links)
-        }))
-        w.title = "Add Playlist or Channel"
+        let start = link.isEmpty ? (NSPasteboard.general.string(forType: .string).flatMap { DownloadJob(url: $0.trimmingCharacters(in: .whitespacesAndNewlines)).validURL != nil ? $0 : nil } ?? "") : link
+        let w = NSWindow(contentViewController: NSHostingController(rootView: ProfileBatchView(link: start).environmentObject(DownloadManager.shared)))
+        w.title = String(localized: "Profile Batch")
         w.styleMask = [.titled, .closable, .resizable]
         w.isReleasedWhenClosed = false
-        w.setContentSize(NSSize(width: 620, height: 520))
+        w.setContentSize(NSSize(width: 680, height: 640))
         w.center()
         playlist = w
         NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: w, queue: .main) { _ in
@@ -86,82 +82,186 @@ struct MediaError: LocalizedError {
     init(_ message: String) { self.message = message }
 }
 
-private struct PlaylistView: View {
+/// Profile Batch: one link → every video open to everyone there (no login), filtered, downloaded in its own queue.
+struct ProfileBatchView: View {
+    @EnvironmentObject var manager: DownloadManager
     @State var link: String
-    let add: (String) -> Void
+
+    init(link: String) { _link = State(initialValue: link) }
+
+    @State private var quality = "best"
+    @State private var mode = 0  // 0 all, 1 new only, 2 preview
+    @State private var autoStart = true
+    @State private var ownFolder = true
+    @State private var parallel = 2
+    @State private var useFrom = false
+    @State private var useTo = false
+    @State private var from = Date().addingTimeInterval(-30 * 86400)
+    @State private var to = Date()
+    @State private var keywords = ""
+    @State private var minMinutes = ""
+    @State private var maxMinutes = ""
+    @State private var kind = "all"
+    @State private var maxCount = ProfileBatch.defaultMax
+    @State private var checkHours = 0
     @State private var status = ""
     @State private var busy = false
-    @State private var title = ""
-    @State private var entries: [Playlists.Entry] = []
+    @State private var stopRequested = false
+    @State private var scan: ProfileBatch.Scan?
+    @State private var preview: [BatchEntry] = []
     @State private var chosen: Set<String> = []
+
+    var filter: BatchFilter {
+        var f = BatchFilter()
+        f.from = useFrom ? from : nil; f.to = useTo ? to : nil; f.keywords = keywords; f.kind = kind
+        f.minSeconds = Int(minMinutes).map { $0 * 60 }; f.maxSeconds = Int(maxMinutes).map { $0 * 60 }
+        f.max = max(1, min(maxCount, ProfileBatch.limit))
+        return f
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Paste a playlist or channel link (YouTube, Vimeo, SoundCloud, Bandcamp and other video sites). Nexonic lists its videos (up to \(Playlists.maxEntries)); choose the ones you want and they open in the Add window.")
+            Text("Paste one link to a profile, channel, playlist, gallery or page on any site the video engine supports. Nexonic finds every video that is open to everyone (no login needed), skips the ones you already have and downloads the rest in their own queue.")
                 .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            HStack {
-                TextField("Playlist or channel link", text: $link).textFieldStyle(.roundedBorder).onSubmit(read)
-                Button("Read Videos", action: read).disabled(busy)
+            TextField("Link", text: $link).textFieldStyle(.roundedBorder).onSubmit(find)
+            Form {
+                Picker("Quality", selection: $quality) {
+                    ForEach(ProfileBatch.qualities.map { $0.key }, id: \.self) { k in
+                        Text(LocalizedStringKey(ProfileBatch.qualities.first { $0.key == k }?.title ?? k)).tag(k)
+                    }
+                }
+                Picker("Download", selection: $mode) {
+                    Text("All videos I don't have yet").tag(0)
+                    Text("Only new videos (not seen on this profile before)").tag(1)
+                    Text("Let me preview and choose").tag(2)
+                }
+                Toggle("Start downloading straight away", isOn: $autoStart)
+                LabeledContent("Save to") {
+                    HStack {
+                        Text(manager.settings.startFolder.path).lineLimit(1).truncationMode(.middle)
+                        Toggle("A folder for each profile", isOn: $ownFolder)
+                    }
+                }
+                Stepper("Downloads at the same time: \(parallel)", value: $parallel, in: 1...6)
+                DisclosureGroup("Filters") {
+                    HStack { Toggle("Published on or after", isOn: $useFrom); DatePicker("", selection: $from, displayedComponents: .date).labelsHidden().disabled(!useFrom) }
+                    HStack { Toggle("Published on or before", isOn: $useTo); DatePicker("", selection: $to, displayedComponents: .date).labelsHidden().disabled(!useTo) }
+                    TextField("Title contains (words; !word leaves it out)", text: $keywords)
+                    HStack { TextField("Shortest (minutes)", text: $minMinutes); TextField("Longest (minutes)", text: $maxMinutes) }
+                    Picker("Type", selection: $kind) {
+                        Text("Everything").tag("all"); Text("Videos (no shorts or live streams)").tag("videos")
+                        Text("Shorts and reels").tag("shorts"); Text("Live streams").tag("live")
+                    }
+                    Stepper("At most \(maxCount) videos", value: $maxCount, in: 10...ProfileBatch.limit, step: 50)
+                    Text("A site that doesn't say when a video was published or how long it is: those videos are kept.").font(.caption).foregroundStyle(.secondary)
+                }
+                Picker("Look for new videos", selection: $checkHours) {
+                    Text("Never (only now)").tag(0); Text("Every hour").tag(1); Text("Every 6 hours").tag(6); Text("Every day").tag(24); Text("Every week").tag(168)
+                }
             }
+            .formStyle(.grouped)
             if busy { ProgressView().controlSize(.small) }
-            if !status.isEmpty { Text(status).font(.callout).foregroundStyle(.secondary) }
-            if !entries.isEmpty {
-                Toggle("All videos", isOn: Binding(get: { chosen.count == entries.count },
-                                                   set: { on in chosen = on ? Set(entries.map(\.url)) : [] }))
-                List(entries, id: \.url) { e in
-                    Toggle(isOn: Binding(get: { chosen.contains(e.url) },
-                                         set: { on in if on { chosen.insert(e.url) } else { chosen.remove(e.url) } })) {
+            if !status.isEmpty { Text(status).font(.callout).foregroundStyle(.secondary).textSelection(.enabled) }
+            if !preview.isEmpty {
+                List(preview) { e in
+                    Toggle(isOn: Binding(get: { chosen.contains(e.url) }, set: { if $0 { chosen.insert(e.url) } else { chosen.remove(e.url) } })) {
                         HStack {
                             Text(e.title).lineLimit(1)
                             Spacer()
-                            if let d = e.duration, d > 0 { Text(duration(d)).foregroundStyle(.secondary).monospacedDigit() }
+                            if let d = e.date { Text(d, style: .date).foregroundStyle(.secondary) }
                         }
-                    }
-                    .help(e.url)
-                }
-            } else {
-                Spacer()
+                    }.help(e.url)
+                }.frame(minHeight: 160)
             }
             HStack {
+                Menu("Export") {
+                    Button("Text (one link per line)") { export("txt") }
+                    Button("CSV") { export("csv") }
+                    Button("JSON") { export("json") }
+                }.disabled(scan == nil).fixedSize()
                 Spacer()
-                Button(chosen.count == 1 ? "Add 1 Video" : "Add \(chosen.count) Videos") {
-                    add(entries.filter { chosen.contains($0.url) }.map(\.url).joined(separator: "\n"))
+                Button("Stop") { stopRequested = true }.disabled(!busy)
+                if !preview.isEmpty {
+                    Button("Download Selected") { download(preview.filter { chosen.contains($0.url) }, nil) }.keyboardShortcut(.defaultAction)
+                } else {
+                    Button("Find Videos", action: find).keyboardShortcut(.defaultAction).disabled(busy)
                 }
-                .keyboardShortcut(.defaultAction)
-                .disabled(chosen.isEmpty)
             }
         }
         .padding(16)
-        .frame(minWidth: 520, minHeight: 420)
-        .onAppear { if !link.isEmpty { read() } }
+        .frame(minWidth: 600, minHeight: 560)
+        .onAppear { if !link.isEmpty { find() } }
     }
 
-    private func duration(_ s: Double) -> String {
-        let t = Int(s)
-        return t >= 3600 ? String(format: "%d:%02d:%02d", t / 3600, t / 60 % 60, t % 60) : String(format: "%d:%02d", t / 60, t % 60)
+    private func target(_ s: ProfileBatch.Scan) -> URL {
+        ownFolder ? ProfileBatch.folder(base: manager.settings.startFolder, owner: s.owner, url: s.url) : manager.settings.startFolder
     }
 
-    private func read() {
+    private func download(_ take: [BatchEntry], _ counts: BatchCounts?) {
+        guard let s = scan else { return }
+        var c = counts ?? ProfileBatch.choose(take, BatchFilter(), alreadyDownloaded: manager.alreadyDownloaded).counts
+        c.queued = manager.queueBatch(owner: s.owner, take, folder: target(s), quality: quality, maxActive: parallel, start: autoStart)
+        status = (s.owner.isEmpty ? "" : s.owner + ": ") + c.text
+        preview = []
+        let key = ProfileBatch.key(s.url)
+        var saved = manager.profiles.first { ProfileBatch.key($0.url) == key }
+        if saved == nil && (checkHours > 0 || mode == 1) { saved = SavedProfile(url: s.url) }
+        guard var p = saved else { return }
+        p.title = s.owner; p.folder = target(s).path; p.quality = quality; p.filter = filter; p.checkHours = checkHours
+        p.lastChecked = Date(); p.lastResult = status
+        var seen = Set(p.seen)
+        for e in s.entries where seen.insert(ProfileBatch.key(e.url)).inserted { p.seen.append(ProfileBatch.key(e.url)) }
+        if let i = manager.profiles.firstIndex(where: { $0.id == p.id }) { manager.profiles[i] = p } else { manager.profiles.append(p) }
+        manager.saveProfiles()
+    }
+
+    private func find() {
         let url = link.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard DownloadJob(url: url).validURL != nil else { status = "Paste a web link (http or https)."; return }
-        busy = true
-        status = "Reading the list of videos… (large channels can take a minute)"
-        let proxy = DownloadManager.shared.settings.proxy
-        DispatchQueue.global().async {
-            let result = Result { try MediaWindows.read(url, proxy: proxy) }
-            Task { @MainActor in
+        guard DownloadJob(url: url).validURL != nil else { status = String(localized: "Paste a web link (http or https)."); return }
+        busy = true; stopRequested = false; preview = []
+        let earlier = ProfileBatch.loadScan(url).map { $0.complete ? 0 : $0.entries.count } ?? 0
+        status = earlier > 0 ? String(format: String(localized: "Continuing an interrupted scan (%d found before)…"), earlier)
+            : String(localized: "Looking for videos… (large profiles can take a few minutes)")
+        let proxy = manager.settings.proxy, f = filter, stopFlag = { [self] in stopRequested }
+        DispatchQueue.global(qos: .userInitiated).async {
+            let result = Result {
+                try ProfileBatch.discover(url, proxy: proxy, max: f.max, stop: { DispatchQueue.main.sync { stopFlag() } }) { _, n in
+                    if n % 10 == 0 { DispatchQueue.main.async { status = String(format: String(localized: "%d found so far…"), n) } }
+                }
+            }
+            DispatchQueue.main.async {
                 busy = false
                 switch result {
-                case .success(let r):
-                    entries = r.entries
-                    chosen = Set(r.entries.map(\.url))
-                    let count = r.entries.count == 1 ? "1 video" : "\(r.entries.count) videos"
-                    status = (r.title.isEmpty ? "" : r.title + ": ") + count + (r.entries.count >= Playlists.maxEntries ? " (the first \(Playlists.maxEntries))" : "")
+                case .failure(let e) where e is CancellationError:
+                    status = String(localized: "Stopped. The videos found so far are kept; Find Videos continues from there.")
                 case .failure(let e):
-                    status = (e as? MediaError)?.message ?? e.localizedDescription
+                    status = e.localizedDescription
+                case .success(let s):
+                    scan = s
+                    var seen: Set<String>? = nil
+                    if mode == 1, let p = manager.profiles.first(where: { ProfileBatch.key($0.url) == ProfileBatch.key(url) }) { seen = Set(p.seen) }
+                    let (take, counts) = ProfileBatch.choose(s.entries, f, alreadyDownloaded: manager.alreadyDownloaded, seen: seen)
+                    if mode == 2 {
+                        preview = take; chosen = Set(take.map(\.url))
+                        var c = counts; c.queued = 0
+                        status = (s.owner.isEmpty ? "" : s.owner + ": ") + c.text
+                    } else if take.isEmpty {
+                        var c = counts; c.queued = 0
+                        status = (s.owner.isEmpty ? "" : s.owner + ": ") + c.text
+                    } else {
+                        download(take, counts)
+                    }
                 }
             }
         }
+    }
+
+    private func export(_ format: String) {
+        guard let s = scan else { return }
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = FileNames.sanitize(s.owner.isEmpty ? "videos" : s.owner) + "." + format
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        try? ProfileBatch.export(s.entries, format: format).write(to: url, atomically: true, encoding: .utf8)
     }
 }
 

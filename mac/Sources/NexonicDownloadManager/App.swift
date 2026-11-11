@@ -8,6 +8,7 @@ struct NexonicDownloadManagerApp: App {
     @StateObject private var manager = DownloadManager.shared
 
     init() {
+        if Portable.root() == nil { DataLocation.applyPending(AppPaths.usual) }  // before anything opens the data folder
         AppLanguage.start()
         CrashReports.install(version: AppLinks.version)
         HostInstaller.install()

@@ -134,11 +134,31 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
             var scheme by remember { mutableStateOf(s.colorScheme) }
             Text(tr("Colour scheme"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp))
             Row(Modifier.horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
-                (listOf("" to "None") + com.nexonic.downloadmanager.core.ColorSchemeChoice.builtIn.map { it.name to it.name }).forEach { (code, title) ->
+                val own = com.nexonic.downloadmanager.core.ColorSchemeChoice
+                val ownCode = if (own.custom(scheme) != null) scheme else own.customCode(false, "#2563EB", "#F6F8FC")
+                (listOf("" to "None") + own.builtIn.map { it.name to it.name } + listOf(ownCode to "My own")).forEach { (code, title) ->
                     val pick = { scheme = code; s.colorScheme = code; Appearance.scheme = code }
                     androidx.compose.material3.RadioButton(selected = scheme == code, onClick = pick)
                     Text(tr(title), Modifier.clickable(onClick = pick).padding(end = 12.dp))
                 }
+            }
+            com.nexonic.downloadmanager.core.ColorSchemeChoice.custom(scheme)?.let { mine ->
+                val parts = scheme.split(':')
+                var accentText by remember(scheme) { mutableStateOf(parts[2]) }
+                var backgroundText by remember(scheme) { mutableStateOf(parts[3]) }
+                fun save(dark: Boolean = mine.dark, accent: String = accentText, background: String = backgroundText) {
+                    val code = com.nexonic.downloadmanager.core.ColorSchemeChoice.customCode(dark, accent, background)
+                    if (com.nexonic.downloadmanager.core.ColorSchemeChoice.custom(code) != null) { scheme = code; s.colorScheme = code; Appearance.scheme = code }
+                }
+                Toggle("Dark", "Light or dark text and panels for your scheme.", mine.dark) { save(dark = it) }
+                Row {
+                    OutlinedTextField(accentText, { accentText = it; save(accent = it) }, Modifier.weight(1f).padding(end = 6.dp), singleLine = true,
+                        label = { Text(tr("Accent (#RRGGBB)")) }, isError = com.nexonic.downloadmanager.core.ColorSchemeChoice.rgb(accentText) == null)
+                    OutlinedTextField(backgroundText, { backgroundText = it; save(background = it) }, Modifier.weight(1f), singleLine = true,
+                        label = { Text(tr("Background (#RRGGBB)")) }, isError = com.nexonic.downloadmanager.core.ColorSchemeChoice.rgb(backgroundText) == null)
+                }
+                val ratio = com.nexonic.downloadmanager.core.ColorSchemeChoice.contrast(mine.accent, mine.background)
+                if (ratio < 3) Hint(tr("The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).").format(ratio))
             }
             var font by remember { mutableStateOf(s.appFont) }
             Choices("Font", listOf("system" to "Same as the phone", "sans" to "Sans serif", "serif" to "Serif", "mono" to "Monospace"), font) {

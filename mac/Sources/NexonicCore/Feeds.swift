@@ -246,7 +246,29 @@ public struct ColorSchemeChoice: Equatable, Sendable {
         .init(name: "High Contrast", dark: true, accent: "#FFD400", background: "#000000"),
     ]
 
-    public static func named(_ name: String) -> ColorSchemeChoice? { builtIn.first { $0.name == name } }
+    public static func named(_ name: String) -> ColorSchemeChoice? { builtIn.first { $0.name == name } ?? custom(name) }
+
+    /// The user's own scheme, saved as "custom:dark:#RRGGBB:#RRGGBB" (light or dark, accent, background).
+    public static func custom(_ code: String) -> ColorSchemeChoice? {
+        let p = code.split(separator: ":").map(String.init)
+        guard p.count == 4, p[0] == "custom", ["dark", "light"].contains(p[1]), rgb(p[2]) != nil, rgb(p[3]) != nil else { return nil }
+        return .init(name: code, dark: p[1] == "dark", accent: p[2].uppercased(), background: p[3].uppercased())
+    }
+
+    public static func customCode(dark: Bool, accent: String, background: String) -> String {
+        "custom:\(dark ? "dark" : "light"):\(accent.uppercased()):\(background.uppercased())"
+    }
+
+    /// WCAG contrast ratio of two colours (1 to 21); 3 or more keeps the accent readable on the background.
+    public static func contrast(_ a: String, _ b: String) -> Double? {
+        guard let x = rgb(a), let y = rgb(b) else { return nil }
+        func lum(_ c: (Double, Double, Double)) -> Double {
+            func ch(_ v: Double) -> Double { v <= 0.03928 ? v / 12.92 : pow((v + 0.055) / 1.055, 2.4) }
+            return 0.2126 * ch(c.0) + 0.7152 * ch(c.1) + 0.0722 * ch(c.2)
+        }
+        let l1 = lum(x), l2 = lum(y)
+        return (max(l1, l2) + 0.05) / (min(l1, l2) + 0.05)
+    }
 
     /// (r, g, b) in 0…1 from "#RRGGBB".
     public static func rgb(_ hex: String) -> (Double, Double, Double)? {

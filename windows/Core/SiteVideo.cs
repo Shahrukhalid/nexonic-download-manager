@@ -138,9 +138,14 @@ public static class SiteVideo
     /// Which picture and sound to fetch. Highest resolution and frame rate first (no higher than maxHeight when one was
     /// chosen); at equal quality prefer formats every player opens.
     /// </summary>
+    /// <summary>MaxHeight value for "Original": the best picture and sound the site has, in their own formats (no preference
+    /// for formats every player opens), kept in an MKV when they can't share an MP4.</summary>
+    public const int OriginalQuality = -1;
+
     public static string[] Format(bool audioOnly, int? maxHeight)
     {
         if (audioOnly) return new[] { "-f", "ba[ext=m4a]/ba/b" };
+        if (maxHeight == OriginalQuality) return new[] { "-f", "bv*+ba/b", "-S", "res,fps,hdr:12", "--merge-output-format", "mp4/mkv" };
         var res = maxHeight is int h && h > 0 ? $"res:{h}" : "res";
         return new[] { "-f", "bv*+ba/b", "-S", $"{res},fps,hdr:12,vcodec:avc,acodec:m4a", "--merge-output-format", "mp4/mkv" };
     }
@@ -216,7 +221,7 @@ public static class SiteVideo
 
     /// <summary>What a video download is set to save, for lists and windows.</summary>
     public static string ChoiceText(bool? audioOnly, int? maxHeight) =>
-        audioOnly == true ? "sound only" : maxHeight is int h && h > 0 ? $"up to {QualityName(h)}" : "best quality";
+        audioOnly == true ? "sound only" : maxHeight == OriginalQuality ? "original quality" : maxHeight is int h && h > 0 ? $"up to {QualityName(h)}" : "best quality";
 
     /// <summary>Title, file type and size from the JSON printed by InfoArguments.</summary>
     public static Info? ParseInfo(string json)

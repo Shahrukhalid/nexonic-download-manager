@@ -57,4 +57,15 @@ class FormatAndFilterTest {
         assertFalse(QuietHours.active("", 0))
         assertNull(QuietHours.parse("25:00-07:00"))
     }
+
+    @Test fun ownColourScheme() {
+        val code = ColorSchemeChoice.customCode(true, "#3aa0f2", "#0e1a24")
+        assertEquals("custom:dark:#3AA0F2:#0E1A24", code)
+        val s = ColorSchemeChoice.named(code)!!
+        assertTrue(s.dark)
+        assertEquals(0xFF3AA0F2, s.accent)
+        assertNull(ColorSchemeChoice.named("custom:dark:#zz:#000000"))
+        assertEquals(21.0, ColorSchemeChoice.contrast(0xFF000000, 0xFFFFFFFF), 0.01)
+        assertTrue(ColorSchemeChoice.contrast(0xFF777777, 0xFF808080) < 3)
+    }
 }

@@ -178,6 +178,8 @@ class Settings(context: Context) {
     var soundFinished: String get() = p.getString("soundFinished", "") ?: ""; set(v) = p.edit().putString("soundFinished", v).apply()
     var soundFailed: String get() = p.getString("soundFailed", "") ?: ""; set(v) = p.edit().putString("soundFailed", v).apply()
     var notifyVibrate: Boolean get() = p.getBoolean("notifyVibrate", true); set(v) = p.edit().putBoolean("notifyVibrate", v).apply()
+    /** Profile Batch: saved profiles (JSON) checked again for new videos while the app runs. */
+    var savedProfiles: String get() = p.getString("savedProfiles", "[]") ?: "[]"; set(v) = p.edit().putString("savedProfiles", v).apply()
     var quietHours: String get() = p.getString("quietHours", "") ?: ""; set(v) = p.edit().putString("quietHours", v.trim()).apply()
 
     fun applyFormats() {

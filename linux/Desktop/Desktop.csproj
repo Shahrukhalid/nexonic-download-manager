@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>Nexonic.Linux</AssemblyName>
     <RootNamespace>Nexonic.Linux</RootNamespace>
+    <DefineConstants>$(DefineConstants);NEXONIC_LINUX</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\windows\Core\Core.csproj" />

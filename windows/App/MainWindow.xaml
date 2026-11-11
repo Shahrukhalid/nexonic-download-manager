@@ -77,7 +77,7 @@
         <MenuItem Header="Site _Grabber…" InputGestureText="Ctrl+Shift+G" Click="OnGrabber" />
         <MenuItem Header="_Link Grabber…" InputGestureText="Ctrl+Shift+K" Click="OnLinkGrabber" />
         <MenuItem Header="Download _Images from Page…" InputGestureText="Ctrl+Shift+I" Click="OnGallery" />
-        <MenuItem Header="Add _Playlist or Channel…" InputGestureText="Ctrl+Shift+L" Click="OnPlaylist" />
+        <MenuItem Header="_Profile Batch (profile, channel or playlist)…" InputGestureText="Ctrl+Shift+L" Click="OnPlaylist" />
         <MenuItem Header="_RSS Feeds…" Click="OnFeeds" />
         <Separator />
         <MenuItem Header="_Options…" Click="OnSettings" />
@@ -127,6 +127,9 @@
         <WrapPanel x:Name="Toolbar">
         <Button Style="{StaticResource ToolButton}" Click="OnAdd" ToolTip="Add one or more links (Ctrl+N)">
           <StackPanel><TextBlock Style="{StaticResource Glyph}" Foreground="#2DA44E" Text="&#xE710;" /><TextBlock Style="{StaticResource Caption}" Text="Add URL" /></StackPanel>
+        </Button>
+        <Button Style="{StaticResource ToolButton}" Click="OnPlaylist" ToolTip="Profile Batch: every video of a profile, channel, playlist or page (Ctrl+Shift+L)">
+          <StackPanel><TextBlock Style="{StaticResource Glyph}" Foreground="#CF222E" Text="&#xE8B2;" /><TextBlock Style="{StaticResource Caption}" Text="Profile Batch" /></StackPanel>
         </Button>
         <Button Style="{StaticResource ToolButton}" Click="OnTorrents" ToolTip="Torrent Manager: add a .torrent file, torrent link or magnet">
           <StackPanel><TextBlock Style="{StaticResource Glyph}" Foreground="#6E40C9" Text="&#xE896;" /><TextBlock Style="{StaticResource Caption}" Text="Torrents" /></StackPanel>

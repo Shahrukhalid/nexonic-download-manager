@@ -1,0 +1,38 @@
+# Profile Batch against real public profiles, run by hand (Actions → Profile Batch live check). Uses the app's own code,
+# no login or cookies. Not a required check: sites change and may limit data-centre addresses.
+name: Profile Batch live check
+on:
+  workflow_dispatch:
+    inputs:
+      links:
+        description: Public profile, channel or playlist links (space separated)
+        required: true
+        default: >-
+          https://www.youtube.com/@NASA
+          https://vimeo.com/channels/staffpicks
+          https://soundcloud.com/nasa
+          https://www.dailymotion.com/france24
+          https://archive.org/details/prelinger
+          https://www.reddit.com/r/videos/
+          https://www.tiktok.com/@nasa
+          https://www.instagram.com/nasa/
+permissions:
+  contents: read
+jobs:
+  live:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: 10.0.x
+      - name: FFmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+      - name: Profile Batch on real profiles
+        env:
+          LINKS: ${{ inputs.links }}
+        run: |
+          # shellcheck disable=SC2086
+          dotnet run -c Release --project scripts/profile-batch-live -- $LINKS | tee report.md
+          cat report.md >> "$GITHUB_STEP_SUMMARY"

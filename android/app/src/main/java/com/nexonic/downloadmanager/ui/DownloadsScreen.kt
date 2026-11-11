@@ -30,6 +30,7 @@ import androidx.compose.material.icons.automirrored.outlined.PlaylistAdd
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.RssFeed
 import androidx.compose.material.icons.outlined.VideoLibrary
+import androidx.compose.material.icons.outlined.Subscriptions
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.Archive
@@ -180,7 +181,7 @@ fun DownloadsScreen(items: List<DownloadItem>, ui: UiState, onOpenBrowser: () ->
                                 .setPrompt(tr("Point the camera at a QR code from Nexonic on your computer, or any download link."))
                                 .setBeepEnabled(false).setOrientationLocked(false))
                         }) { Icon(Icons.Outlined.QrCodeScanner, tr("Scan QR code")) }
-                        IconButton(onClick = { ui.addPlaylist = "" }) { Icon(Icons.AutoMirrored.Outlined.PlaylistAdd, tr("Add playlist or channel")) }
+                        IconButton(onClick = { ui.addPlaylist = "" }) { Icon(Icons.Outlined.Subscriptions, tr("Profile Batch")) }
                         IconButton(onClick = { ui.showLibrary = true }) { Icon(Icons.Outlined.VideoLibrary, tr("Media library")) }
                         IconButton(onClick = { ui.showFeeds = true }) { Icon(Icons.Outlined.RssFeed, tr("RSS Feeds")) }
                         if (running > 0) IconButton(onClick = { Downloads.pauseAll() }) { Icon(Icons.Outlined.Pause, tr("Pause all")) }
