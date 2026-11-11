@@ -300,6 +300,7 @@ public enum SiteVideo {
         if let ffmpeg { a += ["--ffmpeg-location", (ffmpeg as NSString).deletingLastPathComponent] }  // folder: ffmpeg and ffprobe
         a += format(audioOnly: audioOnly, maxHeight: maxHeight)
         if ffmpeg != nil { a += mediaDetails }
+        if ffmpeg != nil, audioOnly { a += AudioConversion.arguments(AudioConversion.current) }
         if ffmpeg != nil, !audioOnly, UserDefaults.standard.bool(forKey: VideoSubtitles.key) { a += VideoSubtitles.arguments() }
         if let referrer, !referrer.isEmpty { a += ["--referer", referrer] }
         if let userAgent, !userAgent.isEmpty { a += ["--user-agent", userAgent] }
@@ -337,6 +338,7 @@ public enum SiteVideoTools {
 
     /// The newest engine ready to use; before the first unpack, the launcher next to the app (unpacks on its own).
     public static var ytdlp: URL {
+        if let own = EnginePaths.ytdlp { return URL(fileURLWithPath: own) }  // the user's own, never updated by the app
         if let best = engines().first { return best.dir.appendingPathComponent(engineName) }
         return bundled?.appendingPathComponent(engineName) ?? folder.appendingPathComponent(engineName)
     }

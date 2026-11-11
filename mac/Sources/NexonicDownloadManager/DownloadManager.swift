@@ -140,6 +140,7 @@ final class DownloadManager: ObservableObject {
         CategoryRules.list = loadedSettings.customCategories
         let blocklist = loadedSettings.network.torrentBlocklist
         Task.detached { await TorrentBlocklist.refresh(blocklist) }
+        if UserDefaults.standard.bool(forKey: MissingFiles.removeOnStartKey) { loadedItems.removeAll(where: MissingFiles.isMissing) }
         items = loadedItems
         var qs = Self.load([DownloadQueue].self, from: AppPaths.queues) ?? []
         if !qs.contains(where: \.isMain) { qs.insert(.main, at: 0) }
@@ -289,6 +290,11 @@ final class DownloadManager: ObservableObject {
         return record.id
     }
 
+    func addBatch(links: [String], options: AddOptions) -> Int {
+        add(links: links.joined(separator: "\n"), options: options)
+        return links.count
+    }
+
     func addBatch(_ pattern: String, options: AddOptions) throws -> Int {
         let links = try BatchPattern.expand(pattern)
         add(links: links.joined(separator: "\n"), options: options)
@@ -327,12 +333,14 @@ final class DownloadManager: ObservableObject {
     private var canceled = Set<UUID>()
 
     func pause(_ id: UUID) {
+        manual.remove(id)
         if let t = transfers[id] { t.pause() } else { update(id) { if $0.status != .finished { $0.status = .paused } } }
     }
 
     func resume(_ id: UUID) {
         canceled.remove(id)
         update(id) { if [.paused, .failed].contains($0.status) { $0.status = .queued; $0.error = nil } }
+        if UserDefaults.standard.integer(forKey: Self.manualKey) > 0 { manual.insert(id); schedule(); return }
         if let q = items.first(where: { $0.id == id })?.queue, let i = queues.firstIndex(where: { $0.id == q }), !queues[i].running {
             queues[i].running = true  // resuming a download starts its queue
         }
@@ -370,6 +378,14 @@ final class DownloadManager: ObservableObject {
 
     func pauseAll() { for i in items where i.status.isActive || i.status == .queued { pause(i.id) } }
     func resumeAll() { for i in items where i.status == .paused || i.status == .failed { resume(i.id) } }
+    /// Removes finished downloads whose file was deleted or moved outside the app; returns how many.
+    @discardableResult func removeMissing() -> Int {
+        let gone = items.filter(MissingFiles.isMissing).map(\.id)
+        items.removeAll { gone.contains($0.id) }
+        if !gone.isEmpty { persist() }
+        return gone.count
+    }
+
     func clearFinished() { for i in items where i.status == .finished { remove(i.id) } }
 
     func reveal(_ id: UUID) {
@@ -520,38 +536,52 @@ final class DownloadManager: ObservableObject {
         for q in queues where q.running {
             let limit = q.isMain ? settings.maxActive : q.maxActive
             var slots = max(1, limit) - items.filter { $0.queue == q.id && $0.status.isActive && $0.status != .seeding }.count
-            for item in items where item.queue == q.id && item.status == .queued && slots > 0 && transfers[item.id] == nil {
+            for item in items where item.queue == q.id && item.status == .queued && slots > 0 && transfers[item.id] == nil && !manual.contains(item.id) {
                 slots -= 1
-                let t: Downloader
-                let profile = HostProfiles.match(settings.hostProfiles, item.url)
-                let proxy = profile?.proxy ?? settings.proxy
-                let connections = max(1, min(256, profile?.maxConnections ?? settings.connections))
-                if item.gallery == true {
-                    t = GalleryTransfer(record: item, sortIntoCategories: settings.sortIntoCategoryFolders,
-                                        speedLimitKBps: settings.speedLimitKBps, proxy: proxy)
-                } else if item.torrent != nil {
-                    t = TorrentTransfer(record: item, settings: settings)
-                } else if item.siteVideo == true {
-                    t = SiteVideoTransfer(record: item, sortIntoCategories: settings.sortIntoCategoryFolders,
-                                          speedLimitKBps: settings.speedLimitKBps, proxy: proxy)
-                } else if item.isStream == true {
-                    t = StreamTransfer(record: item, connections: connections, limiter: limiter,
-                                       sortIntoCategories: settings.sortIntoCategoryFolders, proxy: proxy)
-                } else {
-                    t = Transfer(record: item, connections: connections, limiter: limiter,
-                                 sortIntoCategories: settings.sortIntoCategoryFolders, proxy: proxy,
-                                 options: {
-                                     var o = TransferOptions.from(settings.network, profile)
-                                     o.autoConnections = settings.autoConnections && profile?.maxConnections == nil  // a site's own number is kept
-                                     return o
-                                 }())
-                }
-                t.onChange = { [weak self] rec in Task { @MainActor in self?.changed(rec) } }
-                transfers[item.id] = t
-                update(item.id) { $0.status = .probing }
-                t.start()
+                startTransfer(item)
             }
         }
+        // Downloads resumed by hand: their own slots (Settings → Connection), whether or not their queue runs.
+        var free = UserDefaults.standard.integer(forKey: Self.manualKey) - items.filter { manual.contains($0.id) && $0.status.isActive && $0.status != .seeding }.count
+        for item in items where manual.contains(item.id) && item.status == .queued && free > 0 && transfers[item.id] == nil {
+            free -= 1
+            startTransfer(item)
+        }
+    }
+
+    /// Settings key: downloads resumed by hand that may run beside the queues (0 = they wait for a queue slot).
+    static let manualKey = "maxManualActive"
+    private var manual = Set<UUID>()
+
+    private func startTransfer(_ item: DownloadRecord) {
+        let t: Downloader
+        let profile = HostProfiles.match(settings.hostProfiles, item.url)
+        let proxy = profile?.proxy ?? settings.proxy
+        let connections = max(1, min(256, profile?.maxConnections ?? settings.connections))
+        if item.gallery == true {
+            t = GalleryTransfer(record: item, sortIntoCategories: settings.sortIntoCategoryFolders,
+                                speedLimitKBps: settings.speedLimitKBps, proxy: proxy)
+        } else if item.torrent != nil {
+            t = TorrentTransfer(record: item, settings: settings)
+        } else if item.siteVideo == true {
+            t = SiteVideoTransfer(record: item, sortIntoCategories: settings.sortIntoCategoryFolders,
+                                  speedLimitKBps: settings.speedLimitKBps, proxy: proxy)
+        } else if item.isStream == true {
+            t = StreamTransfer(record: item, connections: connections, limiter: limiter,
+                               sortIntoCategories: settings.sortIntoCategoryFolders, proxy: proxy)
+        } else {
+            t = Transfer(record: item, connections: connections, limiter: limiter,
+                         sortIntoCategories: settings.sortIntoCategoryFolders, proxy: proxy,
+                         options: {
+                             var o = TransferOptions.from(settings.network, profile)
+                             o.autoConnections = settings.autoConnections && profile?.maxConnections == nil  // a site's own number is kept
+                             return o
+                         }())
+        }
+        t.onChange = { [weak self] rec in Task { @MainActor in self?.changed(rec) } }
+        transfers[item.id] = t
+        update(item.id) { $0.status = .probing }
+        t.start()
     }
 
     private func changed(_ rec: DownloadRecord) {

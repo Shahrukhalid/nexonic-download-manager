@@ -63,6 +63,12 @@ enum Sheet: Identifiable {
 let brand = Color(red: 0.0, green: 0.56, blue: 0.62)
 
 struct ContentView: View {
+    @AppStorage(AppFont.nameKey) private var appFont = ""
+    @AppStorage(AppFont.sizeKey) private var appFontSize = 0.0
+    // Read here so the list is drawn again when the units or the date style change in Settings.
+    @AppStorage(Units.sizeKey) private var sizeUnits = "binary"
+    @AppStorage(Units.speedKey) private var speedUnits = "bytes"
+    @AppStorage(Units.dateKey) private var dateStyle = "absolute"
     @Environment(\.openWindow) private var openWindow
     @EnvironmentObject var manager: DownloadManager
     @State private var filter: SidebarFilter = .all
@@ -151,6 +157,7 @@ struct ContentView: View {
             .navigationTitle(filter.title(manager))
         }
         .tint(manager.accent)
+        .modifier(AppFont(name: appFont, size: appFontSize))
         .sheet(item: $sheet) { s in sheetView(s).environmentObject(manager) }
         .onChange(of: manager.addRequest?.id) { _ in
             if let r = manager.addRequest { sheet = .add(r) }
@@ -243,7 +250,7 @@ struct ContentView: View {
                 }
             }.width(120)
             TableColumn("Queue") { r in Text(manager.queueName(r.queue)).foregroundStyle(.secondary) }.width(90)
-            TableColumn("Added") { r in Text(r.added, style: .date).foregroundStyle(.secondary) }.width(90)
+            TableColumn("Added") { r in Text(Units.date(r.added)).foregroundStyle(.secondary) }.width(90)
         }
         .contextMenu(forSelectionType: UUID.self) { ids in
             rowMenu(ids)
@@ -480,8 +487,8 @@ struct StatusBar: View {
     return s
 }
 
-func bytes(_ n: Int64) -> String { ByteCountFormatter.string(fromByteCount: n, countStyle: .file) }
-func speed(_ bps: Double) -> String { bps > 0 ? "\(bytes(Int64(bps)))/s" : "" }
+func bytes(_ n: Int64) -> String { Units.size(n) }
+func speed(_ bps: Double) -> String { bps > 0 ? Units.speed(bps) : "" }
 
 /// Video sites and streams take a few seconds to look up the best quality before the first byte arrives.
 func isPreparingVideo(_ r: DownloadRecord) -> Bool {
@@ -496,7 +503,9 @@ func statusText(_ r: DownloadRecord) -> String {
     case .probing: return "Connecting…"
     case .downloading: return r.gallery == true ? "\(r.streamDone ?? 0) files" : "\(Int(r.progress * 100))%"
     case .paused: return r.awaitingRefresh == true ? "Waiting for link" : "Stopped"
-    case .finished: return r.checksumResult.map { $0.contains("not") ? "Checksum failed" : "Complete" } ?? "Complete"
+    case .finished:
+        if r.checksumResult?.contains("not") == true { return "Checksum failed" }
+        return MissingFiles.isMissing(r) ? "File missing" : "Complete"
     case .failed: return r.isCanceled ? "Canceled" : "Error"
     }
 }
@@ -608,6 +617,12 @@ struct DownloadTable<MenuContent: View>: View {
         TableColumn("Queue") { (r: DownloadRecord) in QueueCell(record: r) }.width(90).customizationID("queue")
         TableColumn("Added") { (r: DownloadRecord) in DateCell(date: r.added) }.width(90).customizationID("added")
         TableColumn("Finished") { (r: DownloadRecord) in DateCell(date: r.finished) }.width(90).customizationID("finished").defaultVisibility(.hidden)
+        TableColumn("Share Ratio") { (r: DownloadRecord) in
+            Text(r.torrent?.metadata.map { String(format: "%.2f", $0.ratio) } ?? "").foregroundStyle(.secondary).monospacedDigit()
+        }.width(80).customizationID("ratio").defaultVisibility(.hidden)
+        TableColumn("Uploaded") { (r: DownloadRecord) in
+            Text(r.torrent?.metadata.map { $0.uploaded > 0 ? bytes($0.uploaded) : "" } ?? "").foregroundStyle(.secondary)
+        }.width(80).customizationID("uploaded").defaultVisibility(.hidden)
         TableColumn("Folder") { (r: DownloadRecord) in FolderCell(record: r) }.width(160).customizationID("folder").defaultVisibility(.hidden)
         TableColumn("Can Resume") { (r: DownloadRecord) in Text(ListColumns.resume(r)).foregroundStyle(.secondary) }.width(80).customizationID("resume").defaultVisibility(.hidden)
     }
@@ -670,11 +685,26 @@ private struct QueueCell: View {
 private struct DateCell: View {
     let date: Date?
     var body: some View {
-        if let date { Text(date, style: .date).foregroundStyle(.secondary) } else { Text("") }
+        Text(Units.date(date)).foregroundStyle(.secondary)
     }
 }
 
 private struct FolderCell: View {
     let record: DownloadRecord
     var body: some View { Text(ListColumns.folder(record)).lineLimit(1).truncationMode(.middle).foregroundStyle(.secondary) }
+}
+
+/// The app's font (Settings → General): a family installed on the Mac and a size; empty = the system's.
+struct AppFont: ViewModifier {
+    static let nameKey = "appFont", sizeKey = "appFontSize"
+    let name: String
+    let size: Double
+    func body(content: Content) -> some View {
+        let points = size >= 9 && size <= 24 ? size : NSFont.systemFontSize
+        if name.isEmpty {
+            content.font(.system(size: points))
+        } else {
+            content.font(.custom(name, size: points))
+        }
+    }
 }

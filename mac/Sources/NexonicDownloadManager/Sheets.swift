@@ -278,29 +278,45 @@ struct BatchSheet: View {
     @Environment(\.dismiss) private var dismiss
     let queueID: String
     @State private var pattern = "https://example.com/photos/img[001-050].jpg"
+    @State private var filter = ""
+    @State private var links = ""
+    @State private var total = 0
     @State private var folder = URL(fileURLWithPath: NSHomeDirectory())
     @State private var queue = DownloadQueue.mainID
     @State private var message = ""
 
-    private var preview: (Int, String, String) {
-        let n = BatchPattern.count(pattern)
-        guard n <= BatchPattern.limit, let all = try? BatchPattern.expand(pattern) else { return (n, "", "") }
-        return (n, all.first ?? "", all.last ?? "")
+    /// The pattern's links that pass the filter, written into the editable list (which is what gets downloaded).
+    private func update() {
+        total = BatchPattern.count(pattern)
+        guard total <= BatchPattern.limit, let all = try? BatchPattern.expand(pattern) else { links = ""; return }
+        links = LinkFilter.apply(all, filter).joined(separator: "\n")
+    }
+
+    private var chosen: [String] {
+        var seen = Set<String>()
+        return links.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty && seen.insert($0).inserted }
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Batch Download").font(.title2.bold())
-            Text("Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. Several ranges multiply.")
+            Text("Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. A list in braces, {jpg,png}, tries each. Several ranges multiply.")
                 .foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             TextField("Pattern", text: $pattern).font(.body.monospaced()).textFieldStyle(.roundedBorder)
-            let p = preview
+            TextField("Keep only (optional)", text: $filter).textFieldStyle(.roundedBorder)
+            Text("Words find links that contain them; * and ? are wildcards; a leading ! leaves links out. Example: *.jpg !*thumb*")
+                .font(.caption).foregroundStyle(.secondary)
+            Text("Links to download (you can edit them)").font(.caption)
+            TextEditor(text: $links)
+                .font(.system(.body, design: .monospaced)).frame(height: 150)
+                .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.secondary.opacity(0.4)))
+                .accessibilityLabel("Links to download")
             Group {
-                if p.0 > BatchPattern.limit {
-                    Text("\(p.0) links – the limit is \(BatchPattern.limit)").foregroundStyle(.red)
+                if total > BatchPattern.limit {
+                    Text("\(total) links – the limit is \(BatchPattern.limit)").foregroundStyle(.red)
                 } else {
-                    Text("\(p.0) link\(p.0 == 1 ? "" : "s")")
-                    if p.0 > 1 { Text("First: \(p.1)\nLast: \(p.2)").foregroundStyle(.secondary).textSelection(.enabled) }
+                    let n = chosen.count
+                    Text(n == total ? "\(n) link\(n == 1 ? "" : "s")" : "\(n) of \(total) links")
                 }
             }
             .font(.caption)
@@ -314,24 +330,28 @@ struct BatchSheet: View {
             }
         }
         .padding(20)
-        .frame(width: 600)
+        .frame(width: 640)
         .onAppear {
             folder = manager.settings.startFolder
             queue = queueID
+            update()
         }
+        .onChange(of: pattern) { _ in update() }
+        .onChange(of: filter) { _ in update() }
     }
 
     private func add(_ start: Bool) {
+        let list = chosen
+        guard !list.isEmpty, list.count <= BatchPattern.limit else {
+            message = list.isEmpty ? "No links to download." : "Too many links. Make the ranges smaller."
+            return
+        }
         var o = DownloadManager.AddOptions()
         o.folder = folder
         o.queueID = queue
         o.start = start
-        do {
-            _ = try manager.addBatch(pattern, options: o)
-            dismiss()
-        } catch {
-            message = "Too many links. Make the ranges smaller."
-        }
+        _ = manager.addBatch(links: list, options: o)
+        dismiss()
     }
 }
 
