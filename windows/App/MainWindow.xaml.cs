@@ -264,7 +264,7 @@ public partial class MainWindow : Window
     {
         var queue = CurrentQueue;
         Bring();
-        Dialogs.Playlist(this, manager, link, links => Dispatcher.BeginInvoke(() => ShowAdd(links, queue)));
+        Dialogs.ProfileBatchWindow(this, manager, link);
     }
 
     /// <summary>Drag downloads from the list onto a queue in the sidebar to move them there.</summary>

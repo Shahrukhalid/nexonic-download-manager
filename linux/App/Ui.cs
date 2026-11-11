@@ -105,6 +105,8 @@ public static class Ui
         const string Ring = "M12,2 A10,10 0 1 1 11.99,2 Z M12,4 A8,8 0 1 0 12.01,4 Z ";
         public const string Add = "F1 M11,5 H13 V11 H19 V13 H13 V19 H11 V13 H5 V11 H11 Z";
         public const string Play = "F1 M8,5 L19,12 L8,19 Z";
+        /// <summary>Profile Batch: a stack of video frames with a play mark.</summary>
+        public const string Profiles = "F1 M3,7 H17 V19 H3 Z M5,9 V17 H15 V9 Z M8,10.5 L12.5,13 L8,15.5 Z M6,4 H20 V16 H18 V6 H6 Z";
         public const string Pause = "F1 M7,5 H10 V19 H7 Z M14,5 H17 V19 H14 Z";
         public const string StopAll = "F1 M6,6 H18 V18 H6 Z";
         public const string SelectAll = "F1 M4,4 H20 V20 H4 Z M6,6 V18 H18 V6 Z M7.5,12 L9,10.5 L11,12.5 L15.5,8 L17,9.5 L11,15.5 Z";

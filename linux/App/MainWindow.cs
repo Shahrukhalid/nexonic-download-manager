@@ -196,12 +196,11 @@ public sealed class MainWindow : Window
 
     void OpenLibrary() => Dialogs.MediaLibraryWindow(this, manager);
 
-    /// <summary>Playlists and channels: pick their videos first, then they open in the Add window.</summary>
+    /// <summary>Profile Batch: every video of a profile, channel, playlist or page, downloaded in its own queue.</summary>
     async Task OpenPlaylist(string link)
     {
-        var queue = CurrentQueue;
         Bring();
-        await Dialogs.Playlist(this, manager, link, links => ShowAdd(links, queue));
+        await Dialogs.ProfileBatchWindow(this, manager, link);
     }
 
     void OpenTorrents() => _ = Dialogs.TorrentManager(this, manager, CurrentQueue);
@@ -278,7 +277,7 @@ public sealed class MainWindow : Window
             Item("Site _Grabber…", OpenGrabber, "Ctrl+Shift+G"),
             Item("_Link Grabber…", () => _ = Dialogs.LinkGrabber(this, manager), "Ctrl+Shift+K"),
             Item("Download _Images from Page…", () => _ = Dialogs.Gallery(this, manager), "Ctrl+Shift+I"),
-            Item("Add _Playlist or Channel…", () => _ = OpenPlaylist(""), "Ctrl+Shift+L"),
+            Item("_Profile Batch (profile, channel or playlist)…", () => _ = OpenPlaylist(""), "Ctrl+Shift+L"),
             Item("_RSS Feeds…", () => _ = Dialogs.Feeds(this, manager, feeds, AddFeedItem)),
             Line(),
             Item("_Options…", () => _ = OpenOptions()),
@@ -368,6 +367,7 @@ public sealed class MainWindow : Window
         }
         void Gap() => toolbar.Children.Add(new Border { Width = 1, Height = 36, Background = Ui.Line, Margin = new Thickness(6, 0) });
         Tool(Ui.Icons.Add, "#2DA44E", "Add URL", "Add one or more links (Ctrl+N)", () => _ = OnAdd());
+        Tool(Ui.Icons.Profiles, "#CF222E", "Profile Batch", "Every video of a profile, channel, playlist or page (Ctrl+Shift+L)", () => _ = OpenPlaylist(""));
         Tool(Ui.Icons.Download, "#6E40C9", "Torrents", "Torrent Manager: add a .torrent file, torrent link or magnet (Ctrl+Shift+T)", OpenTorrents);
         Gap();
         resumeButton = Tool(Ui.Icons.Play, "#1F6FEB", "Resume", "Resume the selected downloads (Ctrl+R)", ResumeSelected);

@@ -773,6 +773,7 @@ public sealed partial class DownloadManager
             Save();
             if (Settings.DataCapMB > 0) dataCap.Save();
         }
+        if (ticks % 120 == 30) CheckProfiles();  // saved profiles, once a minute
     }
 
     /// <summary>Download limit: counts what arrived since the last tick; at the limit, downloads stop until the next period.</summary>

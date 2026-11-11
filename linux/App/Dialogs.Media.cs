@@ -11,81 +11,158 @@ using Nexonic.Linux;
 
 namespace Nexonic.App;
 
-/// <summary>Playlists and channels, and the Media Library (Milestone 8), the same as the Windows app's.</summary>
-public static partial class Dialogs
-{
-    // ---- Playlist or channel ----
-
-    /// <summary>Reads the videos of a playlist or channel, lets the user tick the ones to keep and opens the Add window with them.</summary>
-    public static async Task Playlist(Window owner, DownloadManager m, string link, Func<string, Task> add)
+    /// <summary>
+    /// Profile Batch: one link to a profile, channel, playlist or page; every video found there that anyone can open without an
+    /// account is listed (following the site's pages), filtered, and downloaded into a queue of its own in the chosen quality.
+    /// </summary>
+    public static async Task ProfileBatchWindow(Window owner, DownloadManager m, string link)
     {
-        var f = new Form(owner, "Add Playlist or Channel", 640);
-        f.Note("Paste a playlist or channel link (YouTube, Vimeo, SoundCloud, Bandcamp and other video sites). " +
-               $"Nexonic lists its videos (up to {Playlists.MaxEntries}); choose the ones you want and they open in the Add window.");
+        var f = new Form(owner, "Profile Batch", 680);
+        f.Note("Paste one link to a profile, channel, playlist, gallery or page on any site the video engine supports. Nexonic finds every video " +
+               "that is open to everyone (no login needed), skips the ones you already have and downloads the rest in their own queue.");
         var box = f.Text("Link", link.Length > 0 ? link : await Ui.ClipboardLink(owner));
+        var quality = f.Field("Quality", new ComboBox { ItemsSource = ProfileBatch.Qualities.Select(q => L.T(q.Title)).ToList(), SelectedIndex = 0, MinWidth = 260 });
+        var mode = f.Field("Download", new ComboBox { ItemsSource = new[] { L.T("All videos I don't have yet"), L.T("Only new videos (not seen on this profile before)"), L.T("Let me preview and choose") }, SelectedIndex = 0, MinWidth = 260 });
+        var autoStart = f.Check("Start downloading straight away", true);
+        var folder = f.Folder(m.Settings.StartFolder);
+        var own = f.Check("Put each profile in a folder of its own", true);
+        var parallel = f.Field("Downloads at the same time", new ComboBox { ItemsSource = new[] { "1", "2", "3", "4", "5", "6" }, SelectedIndex = 1 });
+        CalendarDatePicker? from = null, to = null; TextBox? words = null, minMin = null, maxMin = null, maxCount = null; ComboBox? kind = null, check = null;
+        f.Collapsed("Filters", () =>
+        {
+            from = f.Field("Published on or after", new CalendarDatePicker());
+            to = f.Field("Published on or before", new CalendarDatePicker());
+            words = f.Text("Title contains (words; !word leaves it out)", "");
+            minMin = f.Text("Shortest, in minutes (empty = any)", "");
+            maxMin = f.Text("Longest, in minutes (empty = any)", "");
+            kind = f.Field("Type", new ComboBox { ItemsSource = new[] { L.T("Everything"), L.T("Videos (no shorts or live streams)"), L.T("Shorts and reels"), L.T("Live streams") }, SelectedIndex = 0, MinWidth = 260 });
+            maxCount = f.Text($"At most this many videos (up to {ProfileBatch.Limit})", ProfileBatch.DefaultMax.ToString());
+            f.Note("A site that doesn't say when a video was published or how long it is: those videos are kept.");
+        });
+        f.Collapsed("Check this profile again", () =>
+        {
+            check = f.Field("Look for new videos", new ComboBox { ItemsSource = new[] { L.T("Never (only now)"), L.T("Every hour"), L.T("Every 6 hours"), L.T("Every day"), L.T("Every week") }, SelectedIndex = 0, MinWidth = 260 });
+            f.Note("Saved profiles are checked while Nexonic runs; new videos are downloaded in the same quality and folder.");
+        });
         var status = f.Note("");
         var busy = new ProgressBar { IsIndeterminate = true, Height = 4, IsVisible = false, Margin = new Thickness(0, 0, 0, 6) };
         f.Body.Children.Add(busy);
-        var all = new CheckBox { Content = "All videos", IsChecked = true, IsVisible = false, Margin = new Thickness(0, 0, 0, 4) };
-        f.Body.Children.Add(all);
         var rows = new StackPanel();
-        var scroll = new ScrollViewer { Content = rows, Height = 300, IsVisible = false };
+        var scroll = new ScrollViewer { Content = rows, Height = 240, IsVisible = false };
         f.Body.Children.Add(scroll);
-        var checks = new List<(CheckBox Box, Playlists.Entry Entry)>();
-        Button? addButton = null;
-        void Count()
-        {
-            var n = checks.Count(c => c.Box.IsChecked == true);
-            if (addButton != null) { addButton.Content = n == 1 ? "Add 1 Video" : $"Add {n} Videos"; addButton.IsEnabled = n > 0; }
-        }
-        all.Click += (_, _) => { foreach (var c in checks) c.Box.IsChecked = all.IsChecked == true; Count(); };
+        var checks = new List<(CheckBox Box, BatchEntry Entry)>();
+        ProfileBatch.Scan? scan = null;
         CancellationTokenSource? cancel = null;
+        Button? go = null, export = null;
+        int[] hours = { 0, 1, 6, 24, 168 };
+
+        BatchFilter Filter() => new()
+        {
+            From = from?.SelectedDate, To = to?.SelectedDate, Keywords = words?.Text ?? "",
+            MinSeconds = int.TryParse(minMin?.Text, out var a) && a > 0 ? a * 60 : null, MaxSeconds = int.TryParse(maxMin?.Text, out var b) && b > 0 ? b * 60 : null,
+            Kind = new[] { "all", "videos", "shorts", "live" }[Math.Max(0, kind?.SelectedIndex ?? 0)],
+            Max = int.TryParse(maxCount?.Text, out var c) && c > 0 ? Math.Min(c, ProfileBatch.Limit) : ProfileBatch.DefaultMax,
+        };
+        string QualityKey() => ProfileBatch.Qualities[Math.Max(0, quality.SelectedIndex)].Key;
+        string Base() => (folder.Text ?? "").Trim().Length > 0 ? folder.Text!.Trim() : m.Settings.Folder;
+        string Target() => own.IsChecked == true && scan != null ? ProfileBatch.FolderFor(Base(), scan.Owner, scan.Url) : Base();
+        SavedProfile? Saved(string url) => m.Profiles.FirstOrDefault(p => ProfileBatch.Key(p.Url) == ProfileBatch.Key(url));
+
+        void Download(List<BatchEntry> take, BatchCounts counts)
+        {
+            var url = scan!.Url;
+            var added = m.QueueBatch(scan.Owner, take, Target(), QualityKey(), parallel.SelectedIndex + 1, autoStart.IsChecked == true);
+            status.Text = (counts with { Queued = added }).Text;
+            var every = hours[Math.Max(0, check?.SelectedIndex ?? 0)];
+            var saved = Saved(url);
+            if (saved == null && (every > 0 || mode.SelectedIndex == 1)) m.Profiles.Add(saved = new SavedProfile { Url = url });
+            if (saved != null)
+            {
+                saved.Title = scan.Owner; saved.Folder = Target(); saved.Quality = QualityKey(); saved.Filter = Filter(); saved.CheckHours = every;
+                saved.LastChecked = DateTime.Now; saved.LastResult = status.Text;
+                foreach (var e in scan.Entries) if (!saved.Seen.Contains(ProfileBatch.Key(e.Url))) saved.Seen.Add(ProfileBatch.Key(e.Url));
+                m.SaveProfiles();
+            }
+        }
+
         async void Read()
         {
             var url = (box.Text ?? "").Trim();
-            if (!new DownloadJob(url).IsValid) { status.Text = "Paste a web link (http or https)."; return; }
+            if (!new DownloadJob(url).IsValid) { status.Text = L.T("Paste a web link (http or https)."); return; }
             cancel?.Cancel();
             cancel = new CancellationTokenSource();
             var token = cancel.Token;
+            var filter = Filter();
             busy.IsVisible = true;
-            status.Text = "Reading the list of videos… (large channels can take a minute)";
+            scroll.IsVisible = false;
+            if (export != null) export.IsEnabled = false;
+            var earlier = ProfileBatch.LoadScan(url) is { Complete: false } part ? part.Entries.Count : 0;
+            status.Text = earlier > 0 ? string.Format(L.T("Continuing an interrupted scan ({0} found before)…"), earlier) : L.T("Looking for videos… (large profiles can take a few minutes)");
+            var proxy = HostProfiles.Match(m.Settings.HostProfiles, url)?.Proxy ?? m.Settings.Proxy;
             try
             {
-                var r = await Task.Run(() => Playlists.Read(url, m.Settings.Proxy, token));
-                checks.Clear();
-                rows.Children.Clear();
-                foreach (var e in r.Entries)
+                scan = await Task.Run(() => ProfileBatch.Discover(url, proxy, filter.Max,
+                    (e, n) => { if (n % 10 == 0) Avalonia.Threading.Dispatcher.UIThread.Post(() => status.Text = string.Format(L.T("{0} found so far…"), n)); }, cancel: token));
+                var seen = mode.SelectedIndex == 1 && Saved(url) is { } p ? new HashSet<string>(p.Seen) : null;
+                var (take, counts) = ProfileBatch.Choose(scan.Entries, filter, m.AlreadyDownloaded, seen);
+                if (export != null) export.IsEnabled = true;
+                var prefix = scan.Owner.Length > 0 ? scan.Owner + ": " : "";
+                if (mode.SelectedIndex == 2)
                 {
-                    var c = new CheckBox { IsChecked = true, Content = e.Title + (e.Duration is double d && d > 0 ? $"   ({TimeSpan.FromSeconds(d):g})" : "") };
-                    ToolTip.SetTip(c, e.Url);
-                    c.Click += (_, _) => Count();
-                    checks.Add((c, e));
-                    rows.Children.Add(c);
+                    checks.Clear(); rows.Children.Clear();
+                    foreach (var e in take)
+                    {
+                        var c = new CheckBox { IsChecked = true,
+                            Content = e.Title + (e.Duration is double d && d > 0 ? $"   ({TimeSpan.FromSeconds(d):g})" : "") + (e.Date is { } dt ? $"   {dt:d}" : "") };
+                        ToolTip.SetTip(c, e.Url);
+                        checks.Add((c, e)); rows.Children.Add(c);
+                    }
+                    scroll.IsVisible = true;
+                    status.Text = prefix + (counts with { Queued = 0 }).Text;
+                    if (go != null) go.Content = L.T("Download Selected");
                 }
-                status.Text = (r.Title.Length > 0 ? r.Title + ": " : "") + (r.Entries.Count == 1 ? "1 video" : $"{r.Entries.Count} videos")
-                              + (r.Entries.Count >= Playlists.MaxEntries ? $" (the first {Playlists.MaxEntries})" : "");
-                scroll.IsVisible = all.IsVisible = true;
-                Count();
+                else if (take.Count == 0) status.Text = prefix + (counts with { Queued = 0 }).Text;
+                else Download(take, counts);
             }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException) { status.Text = L.T("Stopped. The videos found so far are kept; Find Videos continues from there."); }
             catch (Exception e) { if (!token.IsCancellationRequested) status.Text = e.Message; }
             finally { busy.IsVisible = false; }
         }
+
         f.Window.Closed += (_, _) => cancel?.Cancel();
-        f.AddButton("Cancel", f.Close, isCancel: true);
-        f.AddButton("Read Videos", Read);
-        string? chosen = null;
-        addButton = f.AddButton("Add Videos", () =>
+        f.AddButton("Close", f.Close, isCancel: true);
+        f.AddButton("Stop", () => cancel?.Cancel());
+        export = f.AddButton("Export…", async () =>
         {
-            var links = checks.Where(c => c.Box.IsChecked == true).Select(c => c.Entry.Url).ToList();
-            if (links.Count == 0) return;
-            chosen = string.Join("\n", links);
-            f.Close();
+            if (scan == null) return;
+            var file = await f.Window.StorageProvider.SaveFilePickerAsync(new Avalonia.Platform.Storage.FilePickerSaveOptions
+            {
+                Title = "Export Links", SuggestedFileName = FileNames.Sanitize(scan.Owner.Length > 0 ? scan.Owner : "videos") + ".txt",
+                FileTypeChoices = new[]
+                {
+                    new Avalonia.Platform.Storage.FilePickerFileType("Text") { Patterns = new[] { "*.txt" } },
+                    new Avalonia.Platform.Storage.FilePickerFileType("CSV") { Patterns = new[] { "*.csv" } },
+                    new Avalonia.Platform.Storage.FilePickerFileType("JSON") { Patterns = new[] { "*.json" } },
+                },
+            });
+            if (file?.TryGetLocalPath() is not { } path) return;
+            var ext = Path.GetExtension(path).TrimStart('.').ToLowerInvariant();
+            await File.WriteAllTextAsync(path, ProfileBatch.Export(scan.Entries, ext is "csv" or "json" ? ext : "txt"));
+        });
+        export.IsEnabled = false;
+        go = f.AddButton("Find Videos", () =>
+        {
+            if (mode.SelectedIndex == 2 && scan != null && checks.Count > 0)
+            {
+                var chosen = checks.Where(c => c.Box.IsChecked == true).Select(c => c.Entry).ToList();
+                var (take, counts) = ProfileBatch.Choose(chosen, new BatchFilter { Max = ProfileBatch.Limit }, m.AlreadyDownloaded);
+                Download(take, counts);
+                scroll.IsVisible = false; checks.Clear(); go!.Content = L.T("Find Videos");
+                return;
+            }
+            Read();
         }, isDefault: true);
-        addButton.IsEnabled = false;
-        if ((box.Text ?? "").Trim().Length > 0) f.Window.Opened += (_, _) => Read();
         await f.Show();
-        if (chosen != null) await add(chosen);
     }
 
     // ---- Media Library ----
