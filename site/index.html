@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nexonic Download Manager: free IDM alternative for Mac, Windows, Linux and Android</title>
-<meta name="description" content="Free, open-source download manager for Mac, Windows, Linux and Android. Up to 32 connections per file, pause and resume, scheduler and queues, browser extension, and video downloads up to 8K. No ads, no account.">
-<meta name="keywords" content="download manager, free download manager, IDM alternative, IDM for Mac, download accelerator, Mac download manager, Windows download manager, video downloader, browser extension, open source">
+<meta name="description" content="Free, open-source download manager for Mac, Windows, Linux and Android. Up to 256 adaptive connections per file, pause and resume, queues and scheduler, torrents, RSS feeds, browser extension and video downloads up to 8K. No ads, no account.">
+<meta name="keywords" content="download manager, free download manager, IDM alternative, IDM for Mac, IDM for Linux, download accelerator, torrent client, RSS downloader, Mac download manager, Windows download manager, video downloader, browser extension, open source">
 <link rel="canonical" href="https://shahrukhalid.github.io/nexonic-download-manager/">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="icon.png">
@@ -13,14 +13,14 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Nexonic Download Manager">
 <meta property="og:title" content="Nexonic Download Manager: free IDM alternative for Mac, Windows, Linux and Android">
-<meta property="og:description" content="Faster downloads with up to 32 connections, pause and resume, scheduler, browser integration and video downloads. Free and open source.">
+<meta property="og:description" content="Faster downloads with up to 256 adaptive connections, pause and resume, scheduler, browser integration and video downloads. Free and open source.">
 <meta property="og:url" content="https://shahrukhalid.github.io/nexonic-download-manager/">
 <meta property="og:image" content="https://shahrukhalid.github.io/nexonic-download-manager/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Nexonic Download Manager: free IDM alternative for Mac, Windows, Linux and Android">
-<meta name="twitter:description" content="Up to 32 connections per file, pause and resume, scheduler, browser extension and video downloads. Free and open source.">
+<meta name="twitter:description" content="Up to 256 adaptive connections per file, pause and resume, scheduler, browser extension and video downloads. Free and open source.">
 <meta name="twitter:image" content="https://shahrukhalid.github.io/nexonic-download-manager/og.png">
 <script type="application/ld+json">
 {
@@ -28,7 +28,7 @@
   "@type": "SoftwareApplication",
   "name": "Nexonic Download Manager",
   "applicationCategory": "UtilitiesApplication",
-  "operatingSystem": "macOS 13 or later, Windows 10, Windows 11, Android 10 or later",
+  "operatingSystem": "macOS 13 or later, Windows 10, Windows 11, Linux, Android 10 or later",
   "softwareVersion": "__VERSION__",
   "description": "Free, open-source download manager for Mac, Windows, Linux and Android with multi-connection downloads, pause and resume, scheduler, queues, browser integration and video downloads.",
   "url": "https://shahrukhalid.github.io/nexonic-download-manager/",
@@ -725,7 +725,11 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
     <h2>Recent releases</h2>
     <p class="sub">The full history is in the <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/CHANGELOG.md">changelog</a> and on the <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases">releases page</a>.</p>
     <div class="rel">
-      <article><h3>0.20.1 <small>Latest</small></h3><ul><li>Support the Project in the Help menu and the About window on every app.</li></ul></article>
+      <article><h3>0.28.0 <small>Latest</small></h3><ul><li>Adaptive connections up to 256 per file: a 120 MB test download went from 15.1 s to 6.0 s.</li><li>Mirrors and Metalink, cURL import and export, a speed schedule, RSS size, episode and quality rules, debrid torrents and Windows on Arm.</li><li>Smaller installers: Windows setup 55.8 → 47.7 MB, Android 60.3 → 30.0 MB.</li></ul></article>
+      <article><h3>0.27.0</h3><ul><li>Remote management from a phone, a headless server for a NAS or Docker, and custom categories on every app.</li></ul></article>
+      <article><h3>0.25.0 – 0.26.0</h3><ul><li>Pair a phone, Download Images from Page, a Link Grabber, a download limit and proxy scripts (PAC); the video engine is fetched on first use, so installers are smaller.</li></ul></article>
+      <article><h3>0.21.0 – 0.24.0</h3><ul><li>Keep downloads on your VPN with a kill switch, a torrent blocklist, RSS feeds, .7z/.rar/.tar unpacking, an optional debrid account and an Android QR scanner.</li></ul></article>
+      <article><h3>0.20.1</h3><ul><li>Support the Project in the Help menu and the About window on every app.</li></ul></article>
       <article><h3>0.20.0</h3><ul><li>15 languages on every platform and in the browser extension, now including Chinese (Simplified and Traditional), Japanese, Korean, Russian, Indonesian and Turkish.</li><li>Pick the language in each app's Settings; English stays the default.</li></ul></article>
       <article><h3>0.19.0 – 0.19.2</h3><ul><li>Big downloads finish instantly: one file is written directly, with no joining step at the end.</li><li>Add Torrent opens a torrent's files by itself on Windows and Linux; drop a .torrent file on the main window.</li><li>iPhone and iPad app for sideloading in every release.</li></ul></article>
       <article><h3>0.17.0</h3><ul><li>Android: add a playlist or channel and choose its videos; share a playlist link to Nexonic to open it.</li><li>Android: optional subtitles inside saved videos.</li><li>Media Library on Android, iPhone and iPad: finished videos and music with preview pictures; tap to play.</li></ul></article>
