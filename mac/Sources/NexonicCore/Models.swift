@@ -285,6 +285,10 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var lastFolder: String = ""
     /// "system", "light" or "dark".
     public var appearance: String = "system"
+    /// A colour scheme by name (ColorSchemes.builtIn), or "" for the system's look.
+    public var colorScheme: String = ""
+    /// Optional debrid account (off by default). Its key is kept in its own private file, not in the settings.
+    public var debrid = DebridSettings()
     /// The user's own categories, in the order they are checked (Settings → General).
     public var customCategories: [CustomCategory] = []
 
@@ -308,7 +312,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         case torrentsEnabled, connections, maxActive, speedLimitKBps, folder, sortIntoCategoryFolders = "categoryFolders", notifications, monitorClipboard,
              clipboardTypes, proxy, showCompleteDialog, playSound, markDownloads, scanEnabled, scanCommand,
              showDownloadDialog, showProgressWindow, bringToFrontOnBrowserDownload, checkForUpdates, skippedVersion, network, hostProfiles, torrentNetwork,
-             dataCapMB, dataCapHours, rememberLastFolder, lastFolder, appearance, customCategories, autoConnections, speedSchedule, duplicateAction
+             dataCapMB, dataCapHours, rememberLastFolder, lastFolder, appearance, customCategories, autoConnections, speedSchedule, duplicateAction, colorScheme, debrid
     }
 
     /// Missing keys keep their defaults, so settings from older versions still load.
@@ -347,6 +351,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         rememberLastFolder = try c.decodeIfPresent(Bool.self, forKey: .rememberLastFolder) ?? d.rememberLastFolder
         lastFolder = try c.decodeIfPresent(String.self, forKey: .lastFolder) ?? d.lastFolder
         appearance = try c.decodeIfPresent(String.self, forKey: .appearance) ?? d.appearance
+        colorScheme = try c.decodeIfPresent(String.self, forKey: .colorScheme) ?? d.colorScheme
+        debrid = (try? c.decodeIfPresent(DebridSettings.self, forKey: .debrid)) ?? d.debrid
         customCategories = CustomCategory.clean((try? c.decodeIfPresent([CustomCategory].self, forKey: .customCategories)) ?? [])
     }
 }

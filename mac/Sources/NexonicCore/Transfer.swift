@@ -22,6 +22,8 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
     private var attempts: [Int: Int] = [:]  // by segment id
     private var stopping = false
     private var probeTask: Int?
+    /// The direct link from the debrid service (asked for again on every start); the site's cookies are not sent to it.
+    private var debridURL: URL?
     private var lastNotify = Date.distantPast
     private var governor: ConnectionGovernor!
     private var refusals: [Int: TimeInterval?] = [:]  // tasks the server refused (429/503), by task identifier
@@ -110,19 +112,35 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
     // MARK: start / resume
 
     private func request(range: String?, ifRange: String? = nil) -> URLRequest {
-        var req = URLRequest(url: record.url)
+        var req = URLRequest(url: debridURL ?? record.url)
         req.setValue("identity", forHTTPHeaderField: "Accept-Encoding")
         if let range { req.setValue(range, forHTTPHeaderField: "Range") }
         // With If-Range the server sends the whole (new) file instead of a part of it if the file changed.
         if range != nil, let ifRange, !ifRange.isEmpty { req.setValue(ifRange, forHTTPHeaderField: "If-Range") }
         if let ref = record.referrer, !ref.isEmpty { req.setValue(ref, forHTTPHeaderField: "Referer") }
         if let ua = record.userAgent, !ua.isEmpty { req.setValue(ua, forHTTPHeaderField: "User-Agent") }
-        if let cookies = record.cookies, !cookies.isEmpty { req.setValue(cookies, forHTTPHeaderField: "Cookie") }
+        if debridURL == nil, let cookies = record.cookies, !cookies.isEmpty { req.setValue(cookies, forHTTPHeaderField: "Cookie") }
         return req
     }
 
-    private func begin() {
+    private func begin(resolved: Bool = false) {
         if let down = Adapters.problem() { return fail(down.errorDescription ?? "") }
+        // Debrid (Settings → Connection): a fresh direct link first, for the sites listed there only.
+        if !resolved, Debrid.applies(record.url) {
+            record.status = .probing
+            record.error = nil
+            notify(force: true)
+            let url = record.url, proxy = proxy
+            Task {
+                do {
+                    let direct = try await Debrid.resolve(url, proxy: proxy)
+                    self.queue.async { self.debridURL = direct; self.begin(resolved: true) }
+                } catch {
+                    self.queue.async { self.fail(error.localizedDescription) }
+                }
+            }
+            return
+        }
         stopping = false
         record.status = .probing
         record.error = nil

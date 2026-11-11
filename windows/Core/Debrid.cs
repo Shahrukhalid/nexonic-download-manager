@@ -102,6 +102,7 @@ public static class Debrid
 /// servers and the files are then downloaded over HTTP with all connections, so the computer itself joins no swarm.
 /// Real-Debrid: the magnet is added, all files selected, and the app waits (up to 10 minutes) until it is ready.
 /// Premiumize: torrents its servers already have (cached) are available at once.
+/// AllDebrid: the magnet is uploaded and the app waits (up to 10 minutes) until it is ready, then unlocks its files.
 /// </summary>
 public static class DebridTorrents
 {
@@ -111,7 +112,6 @@ public static class DebridTorrents
     {
         DebridService.None => "Choose a debrid service in Options → Debrid first.",
         _ when s.Key.Trim().Length == 0 => "Enter your debrid service's API key in Options → Debrid first.",
-        DebridService.AllDebrid => "Torrents through AllDebrid are not supported yet; Real-Debrid and Premiumize are.",
         _ => null,
     };
 
@@ -121,9 +121,12 @@ public static class DebridTorrents
         if (Unsupported(s) is { } why) throw new InvalidOperationException(why);
         if (!magnet.StartsWith("magnet:?", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("Debrid downloads need a magnet link.");
         var key = s.Key.Trim();
-        return s.Service == DebridService.RealDebrid
-            ? await RealDebridAsync(key, magnet, http, status, ct, apiBase ?? "https://api.real-debrid.com/rest/1.0", wait ?? TimeSpan.FromMinutes(10))
-            : await PremiumizeAsync(key, magnet, http, ct, apiBase ?? "https://www.premiumize.me/api");
+        return s.Service switch
+        {
+            DebridService.RealDebrid => await RealDebridAsync(key, magnet, http, status, ct, apiBase ?? "https://api.real-debrid.com/rest/1.0", wait ?? TimeSpan.FromMinutes(10)),
+            DebridService.AllDebrid => await AllDebridAsync(key, magnet, http, status, ct, apiBase ?? "https://api.alldebrid.com/v4", wait ?? TimeSpan.FromMinutes(10)),
+            _ => await PremiumizeAsync(key, magnet, http, ct, apiBase ?? "https://www.premiumize.me/api"),
+        };
     }
 
     static async Task<JsonNode?> Call(HttpClient http, HttpMethod method, string url, string? bearer, Dictionary<string, string>? form, CancellationToken ct)
@@ -179,6 +182,68 @@ public static class DebridTorrents
             if (DateTime.UtcNow > until)
                 throw new InvalidOperationException("Real-Debrid is still fetching the torrent; it stays in your account. Try again later.");
             status?.Invoke($"Real-Debrid: {state.Replace('_', ' ')} {info?["progress"]?.ToString() ?? "0"}%");
+            await Task.Delay(TimeSpan.FromSeconds(wait < TimeSpan.FromMinutes(1) ? 0.2 : 5), ct);
+        }
+    }
+
+    /// <summary>AllDebrid answers {"status":"error","error":{"message":…}} with HTTP 200, so the status is checked too.</summary>
+    static async Task<JsonNode?> AllDebridCall(HttpClient http, HttpMethod method, string url, string key, Dictionary<string, string>? form, CancellationToken ct)
+    {
+        var node = await Call(http, method, url + (url.Contains('?') ? "&" : "?") + "agent=nexonic", key, form, ct);
+        if (node?["status"]?.GetValue<string>() != "success")
+            throw new InvalidOperationException("AllDebrid refused: " + (node?["error"]?["message"]?.GetValue<string>() ?? node?["error"]?["code"]?.GetValue<string>() ?? "no answer"));
+        return node?["data"];
+    }
+
+    /// <summary>The download links of a ready magnet: AllDebrid lists them flat ("links") or as a folder tree ("files").</summary>
+    static IEnumerable<string> AllDebridLinks(JsonNode? magnet)
+    {
+        foreach (var l in magnet?["links"] as JsonArray ?? new()) if (l?["link"]?.GetValue<string>() is { } u && Web(u)) yield return u;
+        IEnumerable<string> Walk(JsonArray? entries)
+        {
+            foreach (var e in entries ?? new())
+            {
+                if (e?["l"]?.GetValue<string>() is { } u && Web(u)) yield return u;
+                foreach (var inner in Walk(e?["e"] as JsonArray)) yield return inner;
+            }
+        }
+        foreach (var u in Walk(magnet?["files"] as JsonArray)) yield return u;
+    }
+
+    static async Task<List<File>> AllDebridAsync(string key, string magnet, HttpClient http, Action<string>? status, CancellationToken ct, string api, TimeSpan wait)
+    {
+        var added = await AllDebridCall(http, HttpMethod.Post, $"{api}/magnet/upload", key, new() { ["magnets[]"] = magnet }, ct);
+        var first = added?["magnets"]?[0];
+        if (first?["error"]?["message"]?.GetValue<string>() is { } refused) throw new InvalidOperationException("AllDebrid refused: " + refused);
+        var id = first?["id"]?.ToString() ?? throw new InvalidOperationException("AllDebrid did not accept the magnet link.");
+        var until = DateTime.UtcNow + wait;
+        while (true)
+        {
+            var info = (await AllDebridCall(http, HttpMethod.Get, $"{api}/magnet/status?id={Uri.EscapeDataString(id)}", key, null, ct))?["magnets"];
+            if (info is JsonArray list) info = list.FirstOrDefault();
+            var code = info?["statusCode"]?.GetValue<int>() ?? -1;
+            if (code == 4)
+            {
+                var links = AllDebridLinks(info).ToList();
+                if (links.Count == 0)
+                {
+                    var files = await AllDebridCall(http, HttpMethod.Post, $"{api}/magnet/files", key, new() { ["id[]"] = id }, ct);
+                    links = AllDebridLinks(files?["magnets"]?[0]).ToList();
+                }
+                var result = new List<File>();
+                foreach (var link in links.Distinct())
+                {
+                    var u = await AllDebridCall(http, HttpMethod.Post, $"{api}/link/unlock", key, new() { ["link"] = link }, ct);
+                    var direct = u?["link"]?.GetValue<string>();
+                    if (!Web(direct)) continue;
+                    result.Add(new File(FileNames.Sanitize(u?["filename"]?.GetValue<string>() ?? FileNames.FromUrl(direct!)), direct!, u?["filesize"]?.GetValue<long>()));
+                }
+                return result.Count > 0 ? result : throw new InvalidOperationException("AllDebrid has the torrent but gave no files.");
+            }
+            if (code >= 5) throw new InvalidOperationException($"AllDebrid could not get the torrent ({info?["status"]?.GetValue<string>() ?? "error " + code}).");
+            if (DateTime.UtcNow > until)
+                throw new InvalidOperationException("AllDebrid is still fetching the torrent; it stays in your account. Try again later.");
+            status?.Invoke($"AllDebrid: {info?["status"]?.GetValue<string>() ?? "waiting"}");
             await Task.Delay(TimeSpan.FromSeconds(wait < TimeSpan.FromMinutes(1) ? 0.2 : 5), ct);
         }
     }

@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import com.nexonic.downloadmanager.core.FileCategory
 
 val Brand = Color(0xFF2563EB)
@@ -28,13 +29,25 @@ private val Dark = darkColorScheme(
 
 @Composable
 fun NexonicTheme(content: @Composable () -> Unit) {
-    val dark = when (Appearance.choice) { "light" -> false; "dark" -> true; else -> isSystemInDarkTheme() }
-    MaterialTheme(colorScheme = if (dark) Dark else Light, content = content)
+    val scheme = com.nexonic.downloadmanager.core.ColorSchemeChoice.named(Appearance.scheme)
+    val dark = scheme?.dark ?: when (Appearance.choice) { "light" -> false; "dark" -> true; else -> isSystemInDarkTheme() }
+    val colors = when {
+        scheme == null -> if (dark) Dark else Light
+        // A colour scheme: its accent, background and panels over the light or dark base.
+        dark -> Dark.copy(primary = Color(scheme.accent), onPrimary = Color.Black, background = Color(scheme.background),
+            surface = Color(scheme.surface), primaryContainer = Color(scheme.accent).copy(alpha = 0.25f).compositeOver(Color(scheme.surface)),
+            onPrimaryContainer = Color.White)
+        else -> Light.copy(primary = Color(scheme.accent), onPrimary = Color.White, background = Color(scheme.background),
+            surface = Color(scheme.surface), primaryContainer = Color(scheme.accent).copy(alpha = 0.15f).compositeOver(Color.White),
+            onPrimaryContainer = Color.Black)
+    }
+    MaterialTheme(colorScheme = colors, content = content)
 }
 
-/** Settings → Appearance: the same as the phone, light or dark (changes right away). */
+/** Settings → Appearance: the same as the phone, light or dark, and a colour scheme (changes right away). */
 object Appearance {
     var choice by androidx.compose.runtime.mutableStateOf("system")
+    var scheme by androidx.compose.runtime.mutableStateOf("")
 }
 
 fun categoryColor(c: FileCategory): Color = when (c) {

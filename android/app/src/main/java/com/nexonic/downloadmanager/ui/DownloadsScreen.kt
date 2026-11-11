@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.PlaylistAdd
+import androidx.compose.material.icons.outlined.RssFeed
 import androidx.compose.material.icons.outlined.VideoLibrary
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Apps
@@ -181,6 +182,7 @@ fun DownloadsScreen(items: List<DownloadItem>, ui: UiState, onOpenBrowser: () ->
                         }) { Icon(Icons.Outlined.QrCodeScanner, tr("Scan QR code")) }
                         IconButton(onClick = { ui.addPlaylist = "" }) { Icon(Icons.AutoMirrored.Outlined.PlaylistAdd, tr("Add playlist or channel")) }
                         IconButton(onClick = { ui.showLibrary = true }) { Icon(Icons.Outlined.VideoLibrary, tr("Media library")) }
+                        IconButton(onClick = { ui.showFeeds = true }) { Icon(Icons.Outlined.RssFeed, tr("RSS Feeds")) }
                         if (running > 0) IconButton(onClick = { Downloads.pauseAll() }) { Icon(Icons.Outlined.Pause, tr("Pause all")) }
                         else if (later > 0) IconButton(onClick = { Downloads.startAll() }) { Icon(Icons.Outlined.PlayArrow, tr("Start all")) }
                     },

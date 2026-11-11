@@ -135,6 +135,12 @@ class Settings(context: Context) {
         set(v) = p.edit().putLong("dataCapStart", v.periodStart).putLong("dataCapUsed", v.used).apply()
     /** "system", "light" or "dark". */
     var appearance: String get() = p.getString("appearance", "system") ?: "system"; set(v) = p.edit().putString("appearance", v).apply()
+    /** A colour scheme by name (ColorSchemeChoice.builtIn), or "" for the app's own colours. */
+    var colorScheme: String get() = p.getString("colorScheme", "") ?: ""; set(v) = p.edit().putString("colorScheme", v).apply()
+    var debridService: String get() = p.getString("debridService", "NONE") ?: "NONE"; set(v) = p.edit().putString("debridService", v).apply()
+    var debridHosts: String get() = p.getString("debridHosts", "") ?: ""; set(v) = p.edit().putString("debridHosts", v.trim()).apply()
+    /** RSS feeds and their rules, as JSON. */
+    var feeds: String get() = p.getString("feeds", "[]") ?: "[]"; set(v) = p.edit().putString("feeds", v).apply()
     var torrentBlocklist: String get() = p.getString("torrentBlocklist", "") ?: ""; set(v) = p.edit().putString("torrentBlocklist", v.trim()).apply()
     var vpnOnly: Boolean get() = p.getBoolean("vpnOnly", false); set(v) = p.edit().putBoolean("vpnOnly", v).apply()
     var askBeforeDownload: Boolean get() = p.getBoolean("ask", true); set(v) = p.edit().putBoolean("ask", v).apply()

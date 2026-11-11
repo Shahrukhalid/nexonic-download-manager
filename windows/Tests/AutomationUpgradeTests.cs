@@ -146,9 +146,40 @@ public class AutomationUpgradeTests
         var bad = new DebridSettings { Service = DebridService.RealDebrid, Key = "WRONG" };
         Assert.Contains("bad_token", await Record(() => DebridTorrents.ResolveAsync(bad, "magnet:?xt=urn:btih:abc", http, null, CancellationToken.None, $"http://127.0.0.1:{port}")));
         l.Stop();
-        Assert.Contains("AllDebrid", DebridTorrents.Unsupported(new DebridSettings { Service = DebridService.AllDebrid, Key = "k" }));
+        Assert.Null(DebridTorrents.Unsupported(new DebridSettings { Service = DebridService.AllDebrid, Key = "k" }));
         Assert.Contains("Choose", DebridTorrents.Unsupported(new DebridSettings()));
         Assert.Contains("magnet", await Record(() => DebridTorrents.ResolveAsync(pm, "https://x.test/a.torrent", http, null, CancellationToken.None)));
+    }
+
+    [Fact]
+    public async Task AllDebridTorrentBecomesDirectDownloads()
+    {
+        var polls = 0;
+        var (l, port) = FakeApi((first, body) => first switch
+        {
+            _ when first.StartsWith("POST /magnet/upload?agent=nexonic") && body.Contains("magnet") => (200, "{\"status\":\"success\",\"data\":{\"magnets\":[{\"id\":77}]}}"),
+            _ when first.StartsWith("GET /magnet/status?id=77&agent=nexonic") => Interlocked.Increment(ref polls) switch
+            {
+                1 => (200, "{\"status\":\"success\",\"data\":{\"magnets\":{\"id\":77,\"status\":\"Downloading\",\"statusCode\":1}}}"),
+                _ => (200, "{\"status\":\"success\",\"data\":{\"magnets\":{\"id\":77,\"status\":\"Ready\",\"statusCode\":4}}}"),
+            },
+            _ when first.StartsWith("POST /magnet/files") => (200, "{\"status\":\"success\",\"data\":{\"magnets\":[{\"id\":\"77\",\"files\":[{\"n\":\"Show\",\"e\":[{\"n\":\"one.mkv\",\"s\":100,\"l\":\"https://ad.test/f/1\"},{\"n\":\"two.srt\",\"s\":5,\"l\":\"https://ad.test/f/2\"}]}]}]}}"),
+            _ when first.StartsWith("POST /link/unlock") => (200, body.Contains("%2F1")
+                ? "{\"status\":\"success\",\"data\":{\"link\":\"https://cdn.test/one.mkv\",\"filename\":\"one.mkv\",\"filesize\":100}}"
+                : "{\"status\":\"success\",\"data\":{\"link\":\"https://cdn.test/two.srt\",\"filename\":\"../two.srt\",\"filesize\":5}}"),
+            _ => (200, "{\"status\":\"error\",\"error\":{\"code\":\"UNKNOWN\",\"message\":\"unknown\"}}"),
+        });
+        using var http = new HttpClient();
+        var s = new DebridSettings { Service = DebridService.AllDebrid, Key = "KEY" };
+        var seen = new List<string>();
+        var files = await DebridTorrents.ResolveAsync(s, "magnet:?xt=urn:btih:abc", http, seen.Add, CancellationToken.None, $"http://127.0.0.1:{port}", TimeSpan.FromSeconds(20));
+        Assert.Equal(2, files.Count);
+        Assert.Equal("one.mkv", files[0].Name);
+        Assert.False(files[1].Name.Contains('/'));
+        Assert.Equal("https://cdn.test/one.mkv", files[0].Url);
+        Assert.Contains(seen, x => x.Contains("Downloading"));
+        Assert.Contains("unknown", await Record(() => DebridTorrents.ResolveAsync(s, "magnet:?xt=urn:btih:zzz", http, null, CancellationToken.None, $"http://127.0.0.1:{port}/bad")));
+        l.Stop();
     }
 
     static async Task<string> Record(Func<Task> f)

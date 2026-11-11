@@ -37,6 +37,7 @@ class NexonicApp : Application() {
         }
         Downloads.init(this)
         com.nexonic.downloadmanager.ui.Appearance.choice = Downloads.settings.appearance
+        com.nexonic.downloadmanager.ui.Appearance.scheme = Downloads.settings.colorScheme
         Notifier.channels(this)
         Scheduler.apply(this)
         VideoEngine.init(this)
@@ -56,6 +57,7 @@ class UiState {
     /** A playlist or channel link to list in the Add Playlist window ("" opens it empty). */
     var addPlaylist by mutableStateOf<String?>(null)
     var showLibrary by mutableStateOf(false)
+    var showFeeds by mutableStateOf(false)
     var longPress by mutableStateOf<Pair<Offer, Boolean>?>(null)
     var detailId by mutableStateOf<Long?>(null)
     var message by mutableStateOf<String?>(null)

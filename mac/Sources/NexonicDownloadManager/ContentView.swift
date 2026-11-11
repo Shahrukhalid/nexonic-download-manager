@@ -41,12 +41,13 @@ extension FileCategory {
 }
 
 enum Sheet: Identifiable {
-    case add(AddRequest), batch, scheduler(String), grabber, linkGrabber, diagnostics(String), properties(UUID), refresh(UUID), torrent(String), torrentSettings(UUID)
+    case add(AddRequest), batch, feeds, scheduler(String), grabber, linkGrabber, diagnostics(String), properties(UUID), refresh(UUID), torrent(String), torrentSettings(UUID)
 
     var id: String {
         switch self {
         case .add(let r): return "add-\(r.id)"
         case .batch: return "batch"
+        case .feeds: return "feeds"
         case .scheduler: return "scheduler"
         case .grabber: return "grabber"
         case .linkGrabber: return "link-grabber"
@@ -149,7 +150,7 @@ struct ContentView: View {
             .searchable(text: $search, placement: .toolbar, prompt: "Search downloads")
             .navigationTitle(filter.title(manager))
         }
-        .tint(brand)
+        .tint(manager.accent)
         .sheet(item: $sheet) { s in sheetView(s).environmentObject(manager) }
         .onChange(of: manager.addRequest?.id) { _ in
             if let r = manager.addRequest { sheet = .add(r) }
@@ -276,6 +277,7 @@ struct ContentView: View {
         case .addURL: sheet = .add(AddRequest(links: clipboardLink(), queueID: currentQueue))
         case .addTorrent: sheet = .torrent(TorrentSource.isTorrent(clipboardLink()) ? clipboardLink() : "")
         case .batch: sheet = .batch
+        case .feeds: sheet = .feeds
         case .grabber: sheet = .grabber
         case .linkGrabber: sheet = .linkGrabber
         case .diagnostics: sheet = .diagnostics(selection.count == 1 ? manager.items.first { $0.id == selection.first }?.url.absoluteString ?? "" : "")
@@ -300,6 +302,7 @@ struct ContentView: View {
         switch s {
         case .add(let r): AddSheet(request: r, onClose: closeAdd)
         case .batch: BatchSheet(queueID: currentQueue)
+        case .feeds: FeedsSheet()
         case .scheduler(let q): SchedulerSheet(selected: q)
         case .grabber: GrabberSheet(queueID: currentQueue)
         case .linkGrabber: LinkGrabberSheet(queueID: currentQueue)

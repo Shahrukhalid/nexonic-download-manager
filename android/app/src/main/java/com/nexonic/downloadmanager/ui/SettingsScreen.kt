@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -130,6 +131,36 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
                     Text(tr(title), Modifier.clickable(onClick = pick).padding(end = 12.dp))
                 }
             }
+            var scheme by remember { mutableStateOf(s.colorScheme) }
+            Text(tr("Colour scheme"), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp))
+            Row(Modifier.horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
+                (listOf("" to "None") + com.nexonic.downloadmanager.core.ColorSchemeChoice.builtIn.map { it.name to it.name }).forEach { (code, title) ->
+                    val pick = { scheme = code; s.colorScheme = code; Appearance.scheme = code }
+                    androidx.compose.material3.RadioButton(selected = scheme == code, onClick = pick)
+                    Text(tr(title), Modifier.clickable(onClick = pick).padding(end = 12.dp))
+                }
+            }
+
+            Section("Debrid service (optional)")
+            var debrid by remember { mutableStateOf(s.debridService) }
+            Row(Modifier.horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
+                com.nexonic.downloadmanager.core.DebridService.entries.forEach { d ->
+                    val pick = { debrid = d.name; s.debridService = d.name }
+                    androidx.compose.material3.RadioButton(selected = debrid == d.name, onClick = pick)
+                    Text(tr(d.title), Modifier.clickable(onClick = pick).padding(end = 12.dp))
+                }
+            }
+            if (debrid != "NONE") {
+                var key by remember { mutableStateOf(Downloads.debridKey) }
+                OutlinedTextField(key, { key = it.take(500); Downloads.debridKey = key }, label = { Text(tr("Your API key for the service")) },
+                    singleLine = true, visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
+                var hosts by remember { mutableStateOf(s.debridHosts) }
+                OutlinedTextField(hosts, { hosts = it.take(2000); s.debridHosts = hosts },
+                    label = { Text(tr("Sites whose links go through it (comma separated, e.g. example-host.com)")) },
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
+            }
+            Hint("Off by default. Uses your own account; links from other sites are never sent to the service. The key is saved encrypted and never in backups.")
 
             Section("Downloads")
             var auto by remember { mutableStateOf(s.autoConnections) }

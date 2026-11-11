@@ -5,7 +5,7 @@ import SwiftUI
 /// Everything the toolbar and the menu bar can do in the main window. Menus post an action; the window performs it,
 /// so a menu command and its toolbar button always behave the same.
 enum MainAction: Equatable {
-    case addURL, addTorrent, batch, grabber, linkGrabber, diagnostics, scheduler
+    case addURL, addTorrent, batch, feeds, grabber, linkGrabber, diagnostics, scheduler
     case resume, stop, stopAll, resumeAll, delete, deleteCompleted, selectAll
     case startQueue, stopQueue, properties, showInFinder, open
 }
@@ -135,6 +135,7 @@ struct MainMenus: Commands {
             Button("Add Batch Download…") { MainActions.shared.send(.batch) }.keyboardShortcut("b", modifiers: [.command, .shift])
             Button("Site Grabber…") { MainActions.shared.send(.grabber) }.keyboardShortcut("g", modifiers: [.command, .shift])
             Button("Link Grabber…") { MainActions.shared.send(.linkGrabber) }.keyboardShortcut("k", modifiers: [.command, .shift])
+            Button("RSS Feeds…") { MainActions.shared.send(.feeds) }
             Button("Add Playlist or Channel…") { MediaWindows.showPlaylist() }.keyboardShortcut("l", modifiers: [.command, .shift])
         }
         CommandMenu("Downloads") {

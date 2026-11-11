@@ -99,6 +99,13 @@ fun App(ui: UiState, browser: Browser) {
         PlaylistSheet(link, onAdd = { links -> ui.addPlaylist = null; ui.addText = links }, onDismiss = { ui.addPlaylist = null })
     }
     if (ui.showLibrary) MediaLibrarySheet(items, onDismiss = { ui.showLibrary = false }) { ui.message = it }
+    if (ui.showFeeds) FeedsSheet(onDismiss = { ui.showFeeds = false })
+    // A torrent found in an RSS feed opens in the Add Torrent window.
+    val feedTorrent by Downloads.feedTorrent.collectAsState()
+    LaunchedEffect(feedTorrent) {
+        val t = feedTorrent ?: return@LaunchedEffect
+        if (ui.addTorrent == null) { ui.addTorrent = t; Downloads.feedTorrent.value = null }
+    }
     ui.addTorrent?.let { source ->
         TorrentSheet(source) { msg -> ui.addTorrent = null; if (msg != null) ui.message = msg }
     }
