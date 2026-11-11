@@ -1,7 +1,9 @@
 using Nexonic.Core;
 using Xunit;
 
-/// <summary>Custom categories: icons, site rules, order and the Options text.</summary>
+/// <summary>Custom categories: icons, site rules, order and the Options text. In the "Settings" collection: these tests
+/// change the shared list of custom categories, so they must not run at the same time as the others that do.</summary>
+[Collection("Settings")]
 public class CategoryRuleTests
 {
     [Fact]
