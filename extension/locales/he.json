@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "הסרטון הזה מוגן מפני העתקה על ידי האתר, כך שהוא לא יכול להיות נשמר.",
     "No video found yet. Play the video for a few seconds, then click again.": "אין סרטון עדיין. הפעל את הסרטון לכמה שניות, ואז לחץ שוב.",
     "live": "חי",
-    "best quality": "באיכות הטובה ביותר"
+    "best quality": "באיכות הטובה ביותר",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

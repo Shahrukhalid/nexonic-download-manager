@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "Αυτό το βίντεο προστατεύεται από αντιγραφή από τον ιστότοπο, επομένως δεν μπορεί να αποθηκευτεί.",
     "No video found yet. Play the video for a few seconds, then click again.": "Δεν βρέθηκε ακόμα βίντεο.Αναπαράγετε το βίντεο για λίγα δευτερόλεπτα και μετά κάντε ξανά κλικ.",
     "live": "ζωντανός",
-    "best quality": "Η καλύτερη ποιότητα"
+    "best quality": "Η καλύτερη ποιότητα",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

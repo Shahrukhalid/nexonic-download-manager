@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "Dëse Video ass vun der Websäit kopieschutzgeschützt, sou datt en net gespäichert ka ginn.",
     "No video found yet. Play the video for a few seconds, then click again.": "Et gouf nach kee Video fonnt. Spillt de Video fir e puer Sekonnen of, da klickt nach eng Kéier.",
     "live": "Niveau",
-    "best quality": "bescht Qualitéit"
+    "best quality": "bescht Qualitéit",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

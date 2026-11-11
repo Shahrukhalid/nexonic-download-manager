@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "এই ভিডিঅ'টো ছাইট দ্বাৰা কপি-প্ৰুফ কৰা হৈছে, গতিকে ইয়াক সংৰক্ষণ কৰিব নোৱাৰি।",
     "No video found yet. Play the video for a few seconds, then click again.": "এতিয়াও কোনো ভিডিঅ' পোৱা নাযায় । কিছু ছেকেণ্ডৰ বাবে ভিডিঅ' চলাওক, তাৰ পিছত পুনৰ ক্লিক কৰক ।",
     "live": "স্তৰ",
-    "best quality": "সৰ্বোত্তম মান"
+    "best quality": "সৰ্বোত্তম মান",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

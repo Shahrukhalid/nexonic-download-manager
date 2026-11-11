@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "该网站对此视频启用了防复制保护，因此无法保存。",
     "No video found yet. Play the video for a few seconds, then click again.": "尚未找到视频。请播放视频几秒钟，然后再次点击。",
     "live": "直播",
-    "best quality": "最佳画质"
+    "best quality": "最佳画质",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

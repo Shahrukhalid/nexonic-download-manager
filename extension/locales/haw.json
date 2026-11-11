@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "Hoʻopaʻa ʻia kēia wikiō e ka pūnaewele, no laila ʻaʻole hiki ke mālama ʻia.",
     "No video found yet. Play the video for a few seconds, then click again.": "ʻAʻohe wikiō i loaʻa. E pāʻani i ka wikiō no kekahi mau kekona, a laila kaomi hou.",
     "live": "papa",
-    "best quality": "maikaʻi loa"
+    "best quality": "maikaʻi loa",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

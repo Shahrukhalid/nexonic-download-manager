@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "Denne videoen er kopibeskyttet av nettstedet, så den kan ikke lagres.",
     "No video found yet. Play the video for a few seconds, then click again.": "Ingen video funnet ennå. Spill av videoen i noen sekunder, og klikk deretter på nytt.",
     "live": "nivå",
-    "best quality": "Den beste kvalitet"
+    "best quality": "Den beste kvalitet",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

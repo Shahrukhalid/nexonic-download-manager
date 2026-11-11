@@ -12,9 +12,26 @@
   });
 
   let enabled = true;
-  chrome.storage.sync.get({ videoButton: true }, (s) => (enabled = s.videoButton));
-  chrome.storage.onChanged.addListener((c) => {
+  // Where and how the button is drawn (extension menu → Settings): corner, size, colour, text or icon only.
+  let look = { corner: "top-right", size: "normal", color: "#008f9e", text: true };
+  const LOOK = { videoButtonCorner: "top-right", videoButtonSize: "normal", videoButtonColor: "#008f9e", videoButtonText: true };
+  function applyLook(s) {
+    look = {
+      corner: ["top-right", "top-left", "bottom-right", "bottom-left"].includes(s.videoButtonCorner) ? s.videoButtonCorner : "top-right",
+      size: ["small", "normal", "large"].includes(s.videoButtonSize) ? s.videoButtonSize : "normal",
+      color: /^#[0-9a-fA-F]{6}$/.test(s.videoButtonColor || "") ? s.videoButtonColor : "#008f9e",
+      text: s.videoButtonText !== false,
+    };
+    const font = { small: 11, normal: 12, large: 15 }[look.size];
+    const pad = { small: "4px 7px", normal: "6px 10px", large: "8px 14px" }[look.size];
+    button.style.cssText = `font-size:${font}px;padding:${pad};background:${look.color}`;
+    setLabel();
+  }
+  chrome.storage.sync.get({ videoButton: true, ...LOOK }, (s) => { enabled = s.videoButton; applyLook(s); });
+  chrome.storage.onChanged.addListener((c, area) => {
+    if (area !== "sync") return;
     if (c.videoButton) enabled = c.videoButton.newValue;
+    if (Object.keys(LOOK).some((k) => c[k])) chrome.storage.sync.get(LOOK, applyLook);
   });
 
   const host = document.createElement("div");
@@ -24,7 +41,7 @@
     <style>
       button{font:600 12px system-ui,sans-serif;color:#fff;background:#008f9e;border:0;border-radius:6px;padding:6px 10px;
         cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.35)}
-      button:hover{background:#00727e}
+      button:hover{filter:brightness(.85)}
       ul{list-style:none;margin:4px 0 0;padding:4px;background:#fff;color:#111;border-radius:6px;max-width:360px;
         box-shadow:0 2px 10px rgba(0,0,0,.35);font:12px system-ui,sans-serif}
       li{padding:5px 8px;border-radius:4px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -34,6 +51,13 @@
     <button type="button">Download this video</button>
     <ul hidden></ul>`;
   const button = root.querySelector("button");
+  let current = t("Download this video");
+  // Text, or only an arrow (the text stays as its tooltip and for screen readers).
+  function setLabel() {
+    button.textContent = look.text ? current : "\u2B07";
+    button.title = current;
+    button.setAttribute("aria-label", current);
+  }
   const list = root.querySelector("ul");
   let target = null;
   let hideTimer = 0;
@@ -47,9 +71,12 @@
     if (!target || !target.isConnected) return hide();
     const r = target.getBoundingClientRect();
     if (r.width < 160 || r.height < 40 || r.bottom < 0 || r.top > innerHeight) return hide();
-    host.style.top = `${Math.max(4, r.top + 8)}px`;
-    host.style.left = `${Math.min(innerWidth - 190, Math.max(4, r.right - 180))}px`;
     host.style.display = "block";
+    const w = button.offsetWidth || 180, h = button.offsetHeight || 28;
+    const left = look.corner.endsWith("left") ? r.left + 8 : r.right - w - 8;
+    const top = look.corner.startsWith("bottom") ? r.bottom - h - 8 : r.top + 8;
+    host.style.left = `${Math.min(innerWidth - w - 4, Math.max(4, left))}px`;
+    host.style.top = `${Math.min(innerHeight - h - 4, Math.max(4, top))}px`;
   }
 
   function hide() {
@@ -62,7 +89,8 @@
     if (!enabled) return;
     clearTimeout(hideTimer);
     target = el;
-    button.textContent = t(el.tagName === "AUDIO" ? "Download this audio" : "Download this video");
+    current = t(el.tagName === "AUDIO" ? "Download this audio" : "Download this video");
+    setLabel();
     if (!host.isConnected) document.documentElement.appendChild(host);
     place();
   }

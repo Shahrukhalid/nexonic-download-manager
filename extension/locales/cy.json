@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "Mae'r fideo hwn wedi ei amddiffyn rhag copïo gan y safle, felly ni ellir ei gadw.",
     "No video found yet. Play the video for a few seconds, then click again.": "Dim fideo wedi'i ganfod eto. Chwaraewch y fideo am ychydig eiliadau, yna cliciwch eto.",
     "live": "Lefel",
-    "best quality": "ansawdd gorau"
+    "best quality": "ansawdd gorau",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

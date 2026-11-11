@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "Bu video sayt tərəfindən nüsxə qorunması altındadır, buna görə də qeyd edilə bilməz.",
     "No video found yet. Play the video for a few seconds, then click again.": "Heç bir video tapıla bilmədi. Videonu bir neçə saniyə oynadın, sonra yenidən basın.",
     "live": "səviyyə",
-    "best quality": "ən yaxşı keyfiyyət"
+    "best quality": "ən yaxşı keyfiyyət",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

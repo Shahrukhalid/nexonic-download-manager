@@ -55,8 +55,28 @@ struct NexonicDownloadManagerApp: App {
 /// browser is added to the running app without opening or fronting a window unless the user wants that.
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    /// Settings key: keep Nexonic in the menu bar only (no Dock icon) while none of its windows are open.
+    static let menuBarOnlyKey = "menuBarOnly"
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         Updater.start()
+        let center = NotificationCenter.default
+        // A window coming up shows the Dock icon (and the app's menus); closing the last one hides it again when chosen.
+        center.addObserver(forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main) { _ in
+            Task { @MainActor in AppDelegate.updateDockIcon() }
+        }
+        center.addObserver(forName: NSWindow.willCloseNotification, object: nil, queue: .main) { note in
+            let closing = note.object as? NSWindow
+            Task { @MainActor in AppDelegate.updateDockIcon(closing: closing) }
+        }
+    }
+
+    /// Dock icon only while a window is open, when "menu bar only" is on; always otherwise.
+    @MainActor static func updateDockIcon(closing: NSWindow? = nil) {
+        let menuBarOnly = UserDefaults.standard.bool(forKey: menuBarOnlyKey)
+        let open = NSApp.windows.contains { $0 !== closing && $0.isVisible && $0.canBecomeMain && !($0 is NSPanel) }
+        let policy: NSApplication.ActivationPolicy = menuBarOnly && !open ? .accessory : .regular
+        if NSApp.activationPolicy() != policy { NSApp.setActivationPolicy(policy) }
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
@@ -137,7 +157,8 @@ struct MenuBarView: View {
 enum HostInstaller {
     static let browsers = [
         "Google/Chrome", "Google/Chrome Beta", "Google/Chrome Dev", "Google/Chrome Canary", "Chromium",
-        "BraveSoftware/Brave-Browser", "Microsoft Edge", "Vivaldi",
+        "BraveSoftware/Brave-Browser", "BraveSoftware/Brave-Browser-Beta", "Microsoft Edge", "Microsoft Edge Beta", "Microsoft Edge Dev",
+        "Vivaldi", "Arc/User Data", "com.operasoftware.Opera", "com.operasoftware.OperaGX", "Thorium",
     ]
 
     static func install() {

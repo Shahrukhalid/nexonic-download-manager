@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "ಈ ವೀಡಿಯೊವು ತಾಣದಿಂದ ಕಾಪಿ ರಕ್ಷಿತವಾಗಿದೆ, ಆದ್ದರಿಂದ ಅದನ್ನು ಉಳಿಸಲಾಗುವುದಿಲ್ಲ.",
     "No video found yet. Play the video for a few seconds, then click again.": "ಯಾವುದೆ ವೀಡಿಯೊ ಪತ್ತೆಯಾಗಿಲ್ಲ. ಕೆಲವು ಸೆಕೆಂಡುಗಳ ಕಾಲ ವೀಡಿಯೊವನ್ನು ಚಲಾಯಿಸಿ, ನಂತರ ಮತ್ತೆ ಕ್ಲಿಕ್ ಮಾಡಿ.",
     "live": "ಮಟ್ಟ",
-    "best quality": "ಉತ್ತಮ ಗುಣಮಟ್ಟ"
+    "best quality": "ಉತ್ತಮ ಗುಣಮಟ್ಟ",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

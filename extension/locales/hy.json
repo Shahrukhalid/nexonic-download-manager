@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "Այս տեսահոլովակը վավերագրի իրավունքով պաշտպանված է կայքի կողմից, այնպես որ այն չի կարող պահպանվել։",
     "No video found yet. Play the video for a few seconds, then click again.": "Դեռևս տեսահոլովակ չի հայտնաբերվել։ Ներբեռնեք տեսահոլովակը մի քանի վայրկյան, ապա կրկին սեղմեք։",
     "live": "մակարդակ",
-    "best quality": "լավագույն որակը"
+    "best quality": "լավագույն որակը",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

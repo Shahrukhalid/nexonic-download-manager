@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "Le site protège cette vidéo contre la copie, elle ne peut donc pas être enregistrée.",
     "No video found yet. Play the video for a few seconds, then click again.": "Aucune vidéo trouvée pour l’instant. Lisez-la quelques secondes, puis cliquez à nouveau.",
     "live": "en direct",
-    "best quality": "meilleure qualité"
+    "best quality": "meilleure qualité",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

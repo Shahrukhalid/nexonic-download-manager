@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "ഈ വീഡിയോ സൈറ്റില്‍ നിന്നും പകര്‍ത്തല്‍ സുരക്ഷിതമാണ്, അതിനാല്‍ അത് സൂക്ഷിക്കാന്‍ കഴിയില്ല.",
     "No video found yet. Play the video for a few seconds, then click again.": "വീഡിയോ ഇതുവരെ കണ്ടുപിടിക്കപ്പെട്ടിട്ടില്ല. വീഡിയോ കുറച്ച് സെക്കന്‍ഡുകള്‍ക്കായി പ്ലേ ചെയ്യുക, എന്നിട്ട് വീണ്ടും ക്ലിക്ക് ചെയ്യുക.",
     "live": "നില",
-    "best quality": "ഏറ്റവും നല്ല ഗുണമേന്മ"
+    "best quality": "ഏറ്റവും നല്ല ഗുണമേന്മ",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

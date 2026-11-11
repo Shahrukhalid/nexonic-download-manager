@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "ວີດີໂອນີ້ຖືກປົກປ້ອງການຄັດລອກໂດຍເວັບໄຊ, ສະນັ້ນມັນບໍ່ສາມາດບັນທຶກໄດ້.",
     "No video found yet. Play the video for a few seconds, then click again.": "ຍັງບໍ່ພົບ​ວີດີໂອ​ເທື່ອ. ຫຼີ້ນ​ວີດີໂອ​ເປັນ​ເວລາ​ບໍ່​ເທົ່າ​ໃດ​ວິນາທີ ແລ້ວ​ຄລິກ​ອີກຄັ້ງ.",
     "live": "ລະດັບ",
-    "best quality": "ຄຸນ​ນະ​ພາບ​ດີ​ທີ່ສຸດ"
+    "best quality": "ຄຸນ​ນະ​ພາບ​ດີ​ທີ່ສຸດ",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

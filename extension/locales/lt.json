@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "Šis vaizdo įrašas yra apsaugotas nuo kopijavimo svetainėje, todėl jo negalima išsaugoti.",
     "No video found yet. Play the video for a few seconds, then click again.": "Kol kas vaizdo įrašo nerasta. Keletą sekundžių paleiskite vaizdo įrašą, tada spustelėkite dar kartą.",
     "live": "lygis",
-    "best quality": "Geriausios kokybės"
+    "best quality": "Geriausios kokybės",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

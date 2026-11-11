@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "Video ini dilindungi salinan oleh laman web, jadi ia tidak boleh disimpan.",
     "No video found yet. Play the video for a few seconds, then click again.": "Tiada video ditemui. Mainkan video selama beberapa saat, kemudian klik lagi.",
     "live": "Aras",
-    "best quality": "kualiti terbaik"
+    "best quality": "kualiti terbaik",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

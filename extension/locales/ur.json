@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "سائٹ اس ویڈیو کو کاپی سے محفوظ رکھتی ہے، اس لیے اسے محفوظ نہیں کیا جا سکتا۔",
     "No video found yet. Play the video for a few seconds, then click again.": "ابھی کوئی ویڈیو نہیں ملی۔ ویڈیو چند سیکنڈ چلائیں، پھر دوبارہ کلک کریں۔",
     "live": "لائیو",
-    "best quality": "بہترین کوالٹی"
+    "best quality": "بہترین کوالٹی",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

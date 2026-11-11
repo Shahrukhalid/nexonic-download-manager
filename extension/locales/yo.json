@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "Àwòrán yìí tí sáà fi pamọ́ láti inú àkọlé, láti jẹ́ pé kò lè fi pamọ́.",
     "No video found yet. Play the video for a few seconds, then click again.": "Kò rí àwòrán bíi. Ṣàṣe àwòrán fun àwọn ìsàlẹ̀-ìwé kan, ki o si tẹ̀ ní pàtó.",
     "live": "Àwọn ìpele",
-    "best quality": "Ìgúnrégé tí o dara jú"
+    "best quality": "Ìgúnrégé tí o dara jú",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

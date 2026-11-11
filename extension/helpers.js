@@ -2,7 +2,12 @@
 
 export const HOST = "com.nexonic.downloadmanager";
 
-export const DEFAULTS = { enabled: true, minSizeMB: 1, skipTypes: "", skipSites: "", pausedUntil: 0, videoButton: true };
+export const DEFAULTS = {
+  enabled: true, minSizeMB: 1, skipTypes: "", skipSites: "", pausedUntil: 0, videoButton: true,
+  // The "Download this video" button: corner of the player, size, colour and whether it shows its text.
+  videoButtonCorner: "top-right", videoButtonSize: "normal", videoButtonColor: "#008f9e", videoButtonText: true,
+};
+
 
 export function extensionOf(name) {
   const clean = String(name || "").split(/[?#]/)[0];

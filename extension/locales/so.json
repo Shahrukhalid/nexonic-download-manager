@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "Fiidiyowgan waa mid laga ilaaliyo goobta, sidaa darteed ma aha mid la kaydin karo.",
     "No video found yet. Play the video for a few seconds, then click again.": "Ma jiro video weli la helay. Play video dhowr ilbiriqsi, ka dibna guji mar kale.",
     "live": "heerka",
-    "best quality": "tayada ugu fiican"
+    "best quality": "tayada ugu fiican",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

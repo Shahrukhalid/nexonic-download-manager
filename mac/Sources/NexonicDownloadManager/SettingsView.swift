@@ -23,6 +23,7 @@ struct SettingsView: View {
     @AppStorage(DownloadManager.manualKey) private var manualActive = 0
     @AppStorage(MissingFiles.removeOnStartKey) private var removeMissingOnStart = false
     @State private var missingMessage = ""
+    @AppStorage(AppDelegate.menuBarOnlyKey) private var menuBarOnly = false
     @State private var dataFolder = AppPaths.support.path
     @State private var dataMessage = DataLocation.pending(AppPaths.usual).map { "Moves to \($0) the next time the app starts." } ?? DataLocation.lastProblem ?? ""
     private static let fontFamilies = NSFontManager.shared.availableFontFamilies.sorted()
@@ -111,6 +112,9 @@ struct SettingsView: View {
                 Toggle("Put each type in its own folder (Video, Music, Documents, Programs, Compressed, Images)", isOn: $manager.settings.sortIntoCategoryFolders)
                 CategoriesEditor()
                 Toggle("Start the Add window in the folder I used last time", isOn: $manager.settings.rememberLastFolder)
+                Toggle("Keep Nexonic in the menu bar when its window is closed (no Dock icon)", isOn: $menuBarOnly)
+                    .onChange(of: menuBarOnly) { _ in AppDelegate.updateDockIcon() }
+                    .help("Downloads keep running; open the window again from the menu bar icon.")
                 Toggle("Notifications", isOn: $manager.settings.notifications)
                 HStack {
                     Toggle("Check for updates when the app opens", isOn: $manager.settings.checkForUpdates)

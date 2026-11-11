@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "Dizze fideo is kopieerbefeilige troch de side, dus it kin net opslein wurde.",
     "No video found yet. Play the video for a few seconds, then click again.": "Gjin fideo fûn. Spylje de fideo in pear sekonden ôf en klik dan wer.",
     "live": "Niveau",
-    "best quality": "bêste kwaliteit"
+    "best quality": "bêste kwaliteit",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }
