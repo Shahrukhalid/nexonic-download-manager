@@ -373,7 +373,7 @@
 "Skip items whose title has any of these words" = "جيڪي شيون جن جو عنوان ھنن لفظن مان ڪو ھجي تن کي ڇڏي ڏيو";
 "Preferred qualities, best first (e.g. 1080p 720p)" = "ترجيح ڏنل صفتون، بهترين پھريون (مثال 1080p 720p)";
 "Smallest file: %lld MB" = "Smallest file: %lld MB";
-"Largest file: %lld MB (0 = any)" = "Largest file: %lld MB (0 = any)";
+"Largest file: %lld MB (0 = any)" = "وڏي فائل: %lld MB (0 = ڪوبه)";
 "Only one download per episode" = "صرف ھڪ ڊائون لوڊ";
 "Folder (empty = the usual folder)" = "ڊرائيو (خاص = عام ڊرائيو)";
 "Check every %lld minutes" = "هر %lld منٽن ۾ چکيو";

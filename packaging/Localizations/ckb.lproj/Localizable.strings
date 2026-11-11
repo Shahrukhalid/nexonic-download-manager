@@ -214,7 +214,7 @@
 "Support the Project" = "پڕۆژەکە پشتگیری بکە";
 "Torrent Settings…" = "Torrent Settings…";
 "Update Tracker" = "نوێکردنەوەی شوێنکەوتەوە";
-"%lld downloading" = "%lld downloading";
+"%lld downloading" = "دابەزاندنی %lld";
 "%lld queued" = "ڕیزکردنی %lld";
 "Limit %lld KB/s" = "سنووری %lld KB/s";
 "%@ left" = "%@ چەپ";
