@@ -157,6 +157,7 @@ struct ContentView: View {
             .navigationTitle(filter.title(manager))
         }
         .tint(manager.accent)
+        .background(manager.schemeBackground ?? Color.clear)
         .modifier(AppFont(name: appFont, size: appFontSize))
         .sheet(item: $sheet) { s in sheetView(s).environmentObject(manager) }
         .onChange(of: manager.addRequest?.id) { _ in

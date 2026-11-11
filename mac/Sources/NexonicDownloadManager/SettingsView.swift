@@ -23,7 +23,30 @@ struct SettingsView: View {
     @AppStorage(DownloadManager.manualKey) private var manualActive = 0
     @AppStorage(MissingFiles.removeOnStartKey) private var removeMissingOnStart = false
     @State private var missingMessage = ""
+    @State private var dataFolder = AppPaths.support.path
+    @State private var dataMessage = DataLocation.pending(AppPaths.usual).map { "Moves to \($0) the next time the app starts." } ?? DataLocation.lastProblem ?? ""
     private static let fontFamilies = NSFontManager.shared.availableFontFamilies.sorted()
+
+    /// The user's own scheme (the one saved, or a starting point built from the app's colours).
+    private var customScheme: ColorSchemeChoice {
+        ColorSchemeChoice.custom(manager.settings.colorScheme)
+            ?? ColorSchemeChoice.custom(ColorSchemeChoice.customCode(dark: false, accent: "#2563EB", background: "#F6F8FC"))!
+    }
+
+    private func setCustom(dark: Bool? = nil, accent: String? = nil, background: String? = nil) {
+        let c = customScheme
+        manager.settings.colorScheme = ColorSchemeChoice.customCode(dark: dark ?? c.dark, accent: accent ?? c.accent, background: background ?? c.background)
+    }
+
+    static func color(_ hex: String) -> Color {
+        guard let (r, g, b) = ColorSchemeChoice.rgb(hex) else { return .accentColor }
+        return Color(red: r, green: g, blue: b)
+    }
+
+    static func hex(_ color: Color) -> String {
+        guard let c = NSColor(color).usingColorSpace(.sRGB) else { return "#000000" }
+        return String(format: "#%02X%02X%02X", Int((c.redComponent * 255).rounded()), Int((c.greenComponent * 255).rounded()), Int((c.blueComponent * 255).rounded()))
+    }
 
     var body: some View {
         TabView {
@@ -41,8 +64,18 @@ struct SettingsView: View {
                 Picker("Colour scheme", selection: $manager.settings.colorScheme) {
                     Text("None").tag("")
                     ForEach(ColorSchemeChoice.builtIn, id: \.name) { s in Text(LocalizedStringKey(s.name)).tag(s.name) }
+                    Text("My own").tag(customScheme.name)
                 }
-                .help("A scheme sets light or dark and the accent colour; None follows Appearance.")
+                .help("A scheme sets light or dark, the accent colour and the background; None follows Appearance.")
+                if ColorSchemeChoice.custom(manager.settings.colorScheme) != nil {
+                    Toggle("Dark", isOn: Binding(get: { customScheme.dark }, set: { setCustom(dark: $0) }))
+                    ColorPicker("Accent colour", selection: Binding(get: { Self.color(customScheme.accent) }, set: { setCustom(accent: Self.hex($0)) }), supportsOpacity: false)
+                    ColorPicker("Background", selection: Binding(get: { Self.color(customScheme.background) }, set: { setCustom(background: Self.hex($0)) }), supportsOpacity: false)
+                    if let c = ColorSchemeChoice.contrast(customScheme.accent, customScheme.background), c < 3 {
+                        Text(String(format: String(localized: "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed)."), c))
+                            .font(.caption).foregroundStyle(.orange)
+                    }
+                }
                 Picker("Font", selection: $appFont) {
                     Text("Same as macOS").tag("")
                     ForEach(Self.fontFamilies, id: \.self) { Text(verbatim: $0).tag($0) }
@@ -230,6 +263,20 @@ struct SettingsView: View {
                 }
                 Toggle("When importing, also take the backup's settings", isOn: $takeSettings)
                 if !backupMessage.isEmpty { Text(backupMessage).font(.caption).foregroundStyle(.secondary) }
+                if Portable.root() == nil {
+                    Section("Data folder") {
+                        TextField("Settings, the download list and unfinished parts are kept in", text: $dataFolder)
+                        HStack {
+                            Button("Choose…") { if let u = chooseFolder(URL(fileURLWithPath: dataFolder)) { dataFolder = u.path } }
+                            Button("Move at Next Start") {
+                                dataMessage = DataLocation.request(usual: AppPaths.usual, target: dataFolder.trimmingCharacters(in: .whitespaces))
+                                    ?? "The data moves the next time the app starts. Everything is copied and checked before the old copy is removed."
+                            }
+                            Button("Use the Usual Folder") { dataFolder = AppPaths.usual.path }
+                        }
+                        if !dataMessage.isEmpty { Text(LocalizedStringKey(dataMessage)).font(.caption).foregroundStyle(.secondary) }
+                    }
+                }
                 Section("Missing files") {
                     Toggle("When the app starts, remove finished downloads whose file was deleted or moved", isOn: $removeMissingOnStart)
                     HStack {

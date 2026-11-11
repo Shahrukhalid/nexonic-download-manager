@@ -60,6 +60,12 @@ final class DownloadManager: ObservableObject {
         return Color(red: r, green: g, blue: b)
     }
 
+    /// The background of the chosen colour scheme (the window behind the list and the sidebar), or nil for the system's.
+    var schemeBackground: Color? {
+        guard let s = ColorSchemeChoice.named(settings.colorScheme), let (r, g, b) = ColorSchemeChoice.rgb(s.background) else { return nil }
+        return Color(red: r, green: g, blue: b)
+    }
+
     // MARK: RSS feeds
 
     @Published var feeds: [FeedSubscription] = Feeds.load()

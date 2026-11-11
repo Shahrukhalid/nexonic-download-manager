@@ -50,4 +50,38 @@ final class DisplayAndTypesTests: XCTestCase {
         XCTAssertNil(EnginePaths.problem("/bin/sh"))
         XCTAssertNotNil(EnginePaths.problem("/no/such/yt-dlp"))
     }
+
+    func testCustomColourScheme() {
+        let code = ColorSchemeChoice.customCode(dark: true, accent: "#3aa0f2", background: "#0e1a24")
+        XCTAssertEqual(code, "custom:dark:#3AA0F2:#0E1A24")
+        let s = ColorSchemeChoice.named(code)
+        XCTAssertEqual(s?.dark, true)
+        XCTAssertEqual(s?.accent, "#3AA0F2")
+        XCTAssertNil(ColorSchemeChoice.named("custom:dark:#zzz:#000000"))
+        XCTAssertEqual(ColorSchemeChoice.contrast("#000000", "#FFFFFF") ?? 0, 21, accuracy: 0.01)
+        XCTAssertLessThan(ColorSchemeChoice.contrast("#777777", "#808080") ?? 9, 3)
+    }
+
+    func testDataFolderMovesAndBack() throws {
+        let fm = FileManager.default
+        let root = fm.temporaryDirectory.appendingPathComponent("ndm-data-\(UUID().uuidString)")
+        defer { try? fm.removeItem(at: root) }
+        let usual = root.appendingPathComponent("usual"), other = root.appendingPathComponent("disk/NDM")
+        try fm.createDirectory(at: usual.appendingPathComponent("Parts/a"), withIntermediateDirectories: true)
+        try "{}".write(to: usual.appendingPathComponent("settings.json"), atomically: true, encoding: .utf8)
+        try Data(count: 50_000).write(to: usual.appendingPathComponent("Parts/a/0.part"))
+        XCTAssertNotNil(DataLocation.request(usual: usual, target: "relative"))
+        XCTAssertNotNil(DataLocation.request(usual: usual, target: usual.appendingPathComponent("inside").path))
+        XCTAssertNil(DataLocation.request(usual: usual, target: other.path))
+        XCTAssertEqual(DataLocation.current(usual).path, usual.path)
+        XCTAssertNil(DataLocation.applyPending(usual))
+        XCTAssertEqual(DataLocation.current(usual).standardizedFileURL.path, other.standardizedFileURL.path)
+        XCTAssertEqual(try Data(contentsOf: other.appendingPathComponent("Parts/a/0.part")).count, 50_000)
+        XCTAssertFalse(fm.fileExists(atPath: usual.appendingPathComponent("settings.json").path))
+        XCTAssertNil(DataLocation.request(usual: usual, target: usual.path))
+        XCTAssertNil(DataLocation.applyPending(usual))
+        XCTAssertEqual(DataLocation.current(usual).path, usual.path)
+        XCTAssertTrue(fm.fileExists(atPath: usual.appendingPathComponent("settings.json").path))
+        XCTAssertFalse(fm.fileExists(atPath: other.path))
+    }
 }
