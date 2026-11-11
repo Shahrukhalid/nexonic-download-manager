@@ -1,3 +1,42 @@
+## 0.29.0
+
+**Profile Batch** (Windows, Linux, Mac, Android): paste a public profile, channel or playlist link and the app lists its
+videos, then downloads them in the quality you choose (Best, 8K to 480p, Original or sound only).
+- No login, account, cookies or passwords. A site that only shows its videos to signed-in visitors is reported as such;
+  nothing is bypassed, and not every profile on every site can be listed.
+- All, New Only (skips what you already downloaded) or Preview first; filters by date, length, keywords, type and
+  number; export the list as TXT, CSV or JSON.
+- Each profile gets its own folder and queue. An interrupted scan continues where it stopped instead of starting over.
+- Save a profile and the app checks it for new videos on a schedule.
+- Checked on real public profiles without signing in: YouTube, Vimeo, SoundCloud, Dailymotion and TikTok each listed 40
+  videos with none inaccessible, and a scan stopped after 5 continued without repeating them. Archive.org failed in the
+  video engine, Reddit refused the request (403) and Instagram needs a login; the app says so instead of failing
+  silently.
+
+**Your choice of units, dates and types** (all apps)
+- Sizes in binary, IEC (MiB) or decimal units, speeds in bytes or bits, and relative dates ("5 min ago").
+- New file types: AI models (GGUF, safetensors), CAD (DWG, STEP), camera RAW (CR3, DNG), LZ4, AppImage and M2TS.
+- Sound downloads can be converted to MP3, Opus or FLAC.
+- Batch lists (`p[1-20].{jpg,png}`) with a link filter (`*.jpg !*thumb*`) before anything is added.
+
+**Also new**
+- Move the data folder (settings, history, unfinished parts) to another drive: it is copied and checked, and moved at the
+  next start (Windows, Linux, Mac).
+- Find downloads whose file was deleted or moved, and clear them from the list.
+- Resumed downloads get their own slots, so they don't wait behind new ones.
+- Your own colour scheme with a contrast check (Mac, Android); RSS feeds with rules, debrid accounts (your own key, off
+  by default) on Mac and Android; AllDebrid for torrents.
+- Mac: graphical category editor, app font and text size, your own yt-dlp and FFmpeg, share ratio and uploaded columns.
+- Android: notification sounds, vibration and quiet hours, font and text size, graphical categories.
+- Linux: list columns can be moved.
+
+**Fixes from your reports** (#199)
+- Mac: toolbar buttons take clicks on their whole area, not only on the icon.
+- Mac: option to keep Nexonic in the menu bar without a Dock icon when its window is closed.
+- Mac: the browser helper is registered for Arc, Opera, Opera GX, Thorium and the Beta and Dev channels of Edge and
+  Brave.
+- Browser extension: choose the video button's corner, size, colour, and text or arrow only.
+
 ## 0.28.0
 
 What this release was measured on: faster verified downloads, lower resource use, a more reliable app and smaller
