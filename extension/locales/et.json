@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Videot pole veel leitud. Esitage videot mõne sekundi jooksul ja seejärel klõpsake uuesti.",
     "live": "tase",
     "best quality": "Parima kvaliteediga",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Nupu nurk",
+    "Top right": "Üleval paremal",
+    "Top left": "Üleval vasakul",
+    "Bottom right": "All paremal",
+    "Bottom left": "All vasakul",
+    "Button size": "Nupu suurus",
+    "Small": "Väike",
+    "Normal": "Normaalne",
+    "Large": "Suur",
+    "Button colour": "Nupu värv",
+    "Show the button's text (off = arrow only)": "Näita nupu teksti (väljas = ainult nool)"
   }
 }

@@ -262,7 +262,7 @@
 "Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. Several ranges multiply." = "שים טווח בין צורות: [001-100] שומר על שלוש ספרות, [1-100] לא שומר על שלוש ספרות, [a-z] משתמש באותיות ו- [0-100:5] מספר בחמשות.";
 "Explores a website section and lists the files it links to. Only use it on sites you are allowed to download from." = "חוקר קטע של אתר אינטרנט ומציג את רשימת הקבצים אליהם הוא קשור. השתמש בו רק באתרים שמותר לך להוריד מהם.";
 "Options (⌘,)" = "אפשרויות (⌘,)";
-"Add URL…" = "Add URL…";
+"Add URL…" = "הוספת URL…";
 "Add Torrent…" = "הוספת טורנט…";
 "Add Batch Download…" = "הוספת הורדה בקבוצה…";
 "Site Grabber…" = "אתר Grabber…";

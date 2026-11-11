@@ -55,15 +55,15 @@
     "live": "moyo",
     "best quality": "Quality yabwino kwambiri",
     "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Top right": "Kumanja kumanzere",
+    "Top left": "Kumanja kumanzere",
+    "Bottom right": "pansipa kumanzere",
+    "Bottom left": "pansipa kumanzere",
+    "Button size": "Kukula kwa batani",
+    "Small": "Yaying'ono",
+    "Normal": "Chaka chilichonse",
+    "Large": "Yayikulu",
+    "Button colour": "Utoto wa batani",
+    "Show the button's text (off = arrow only)": "Sungani mawu a batani (otsika = arrow kokha)"
   }
 }

@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Cha deach video a lorg fhathast. Cluich am video airson beagan dhiog is an uairsin briog air a-rithist.",
     "live": "leibheil",
     "best quality": "as fheàrr",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
+    "Button corner": "Cùl a' phutan",
+    "Top right": "Barrachd air deas",
+    "Top left": "Barr-chlì",
+    "Bottom right": "Bonn deas",
+    "Bottom left": "Bun chlì",
     "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Small": "Beagview-size",
+    "Normal": "Gnàthach",
+    "Large": "Mòr",
+    "Button colour": "Dath nan putan",
+    "Show the button's text (off = arrow only)": "Seall teacsa a' phutain (off = saighdean a-mhàin)"
   }
 }

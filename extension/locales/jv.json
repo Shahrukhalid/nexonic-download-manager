@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Ora ana video kang ditemokaké. Puter video kanggo sawetara detik, banjur klik maneh.",
     "live": "tingkat",
     "best quality": "kualitas paling apik",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Bucuning tombol",
+    "Top right": "Katon ndhuwur",
+    "Top left": "Kiri ndhuwur",
+    "Bottom right": "Bawah tengen",
+    "Bottom left": "Bawah kiwa",
+    "Button size": "Ukuran tombol",
+    "Small": "Kecil",
+    "Normal": "Biasa",
+    "Large": "Akèh",
+    "Button colour": "Warna tombol",
+    "Show the button's text (off = arrow only)": "Papar teks tombol (off = mung panah)"
   }
 }

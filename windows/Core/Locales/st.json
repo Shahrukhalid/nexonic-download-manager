@@ -122,7 +122,7 @@
     "RSS Feeds": "Li-feed tsa RSS",
     "New items of these feeds are downloaded when their title matches the rule: files and videos, and torrents when torrents are on. A rule lists words that must all be in the title, or a /regular expression/.": "Lintlha tse ncha tsa li-feeds tsena li bolokiloe ha sehlooho sa tsona se lumellana le molao: lifaele le livideo, le li-torrents ha li-torrents li sebetsa. Molao o bonts'a mantsoe ao ka bobeli a lokelang ho ba sehloohong, kapa /regular expression/.",
     "Feeds": "Li-feeds",
-    "Add Feed…": "Add Feed…",
+    "Add Feed…": "E_nya li-feed…",
     "Edit…": "Edit…",
     "Remove": "_Tlosa",
     "Check Now": "Check Now",

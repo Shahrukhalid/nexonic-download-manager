@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "ምንም ቪዲዮ አልተገኘም። ቪዲዮውን ለጥቂት ሰከንዶች ይጫኑ፣ ከዚያም እንደገና ጠቅ ያድርጉ።",
     "live": "ደረጃ",
     "best quality": "ምርጥ ጥራት",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "ቁልፍ አናት",
+    "Top right": "ቀኝ",
+    "Top left": "ግራ",
+    "Bottom right": "ከታች ቀኝ",
+    "Bottom left": "ወደ ግራ አንቀሳቅስ",
+    "Button size": "ቁመት፦",
+    "Small": "ትንሽ",
+    "Normal": "መደበኛ",
+    "Large": "ትልቅ",
+    "Button colour": "የቁልፍ ቀለም",
+    "Show the button's text (off = arrow only)": "የቁልፉን ጽሑፍ አሳይ (አይሰራም = ቀስት ብቻ)"
   }
 }

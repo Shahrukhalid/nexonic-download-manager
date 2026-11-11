@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Видео олдохгүй байна. Зарим секундын турш тоглуулаад дахин дарна уу.",
     "live": "түвшин",
     "best quality": "хамгийн сайн чанар",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Нугасны булан",
+    "Top right": "Зүүн дээд",
+    "Top left": "Зүүн дээд",
+    "Bottom right": "Зүүн доод",
+    "Bottom left": "Доод зүүн",
+    "Button size": "Тохиргоонууд",
+    "Small": "Жижиг",
+    "Normal": "Зөв",
+    "Large": "том",
+    "Button colour": "Тохиргооны товчны өнгө",
+    "Show the button's text (off = arrow only)": "Тохиргооны товчны бичлэгийг харуулах (гарах = зөвхөн сум)"
   }
 }

@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Kāore he video i kitea. Ka whakapāpāhotia te video mō ētahi waeine, kātahi ka pāhotia anō.",
     "live": "taumata",
     "best quality": "Whakahautanga pai rawa",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Te kōwae o te kīnga",
+    "Top right": "Tapu te taha matau",
+    "Top left": "Waihoki mauī",
+    "Bottom right": "Ki te taha matau o raro",
+    "Bottom left": "Waihoki mauī",
+    "Button size": "Te rahi o te kīnga",
+    "Small": "Iti",
+    "Normal": "Tūturu",
+    "Large": "Nui",
+    "Button colour": "Ko te tae o te kīinga",
+    "Show the button's text (off = arrow only)": "E whakaatu ana i te kupu o te kīnga (kore = kōaro anake)"
   }
 }

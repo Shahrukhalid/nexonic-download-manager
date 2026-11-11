@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Zatiaľ sa nenašlo žiadne video. Prehrajte video na niekoľko sekúnd a potom znova kliknite.",
     "live": "úroveň",
     "best quality": "Najlepšia kvalita",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Roh na gombík",
+    "Top right": "Vpravo hore",
+    "Top left": "Vľavo hore",
+    "Bottom right": "Vpravo dole",
+    "Bottom left": "Vľavo dole",
+    "Button size": "Veľkosť tlačidla",
+    "Small": "Malé",
+    "Normal": "Normálne",
+    "Large": "Veľké",
+    "Button colour": "Farba tlačidla",
+    "Show the button's text (off = arrow only)": "Zobraziť text tlačidla (vypnuté = iba šípka)"
   }
 }

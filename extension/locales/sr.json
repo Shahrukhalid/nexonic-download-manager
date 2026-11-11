@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Још није пронађен видео. Пустите видео на неколико секунди, а онда поново кликните.",
     "live": "ниво",
     "best quality": "најбољи квалитет",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Угао дугмета",
+    "Top right": "Горе десно",
+    "Top left": "Горе лево",
+    "Bottom right": "Доле десно",
+    "Bottom left": "Доле лево",
+    "Button size": "Величина дугмета",
+    "Small": "Мало",
+    "Normal": "Нормална",
+    "Large": "Велики",
+    "Button colour": "Боја дугмета",
+    "Show the button's text (off = arrow only)": "Прикажи текст дугмета (искључено = само стрелице)"
   }
 }

@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "வீடியோ இன்னும் கிடைக்கவில்லை. சில நொடிகளுக்கு வீடியோவை இயக்கவும், பின்னர் மீண்டும் க்ளிக் செய்யவும்.",
     "live": "நிலை",
     "best quality": "சிறந்த தரம்",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "பட்டன் முனை",
+    "Top right": "மேல் வலது",
+    "Top left": "மேல் இடது",
+    "Bottom right": "கீழ் வலது",
+    "Bottom left": "கீழ் இடது",
+    "Button size": "பொத்தானின் அளவு",
+    "Small": "சிறிய",
+    "Normal": "இயல்பான",
+    "Large": "பெரிய",
+    "Button colour": "பொத்தானின் நிறம்",
+    "Show the button's text (off = arrow only)": "பொத்தானின் உரை காட்டு (நிறுத்து = அம்புக்குறி மட்டும்)"
   }
 }

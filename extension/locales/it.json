@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Riproduci il video per alcuni secondi, quindi fai di nuovo clic sul pulsante Riproduci.",
     "live": "vivo",
     "best quality": "La migliore qualità",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Angolo del pulsante",
+    "Top right": "In alto a destra",
+    "Top left": "In alto a sinistra",
+    "Bottom right": "In basso a destra",
+    "Bottom left": "In basso a sinistra",
+    "Button size": "Dimensione del pulsante",
+    "Small": "Piccolo",
+    "Normal": "Normale",
+    "Large": "Grande",
+    "Button colour": "Colore del pulsante",
+    "Show the button's text (off = arrow only)": "Mostra il testo del pulsante (off = solo freccia)"
   }
 }

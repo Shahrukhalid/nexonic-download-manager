@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Ha ho na video e fumanehang. Tšela video ka metsotsoana e seng mekae, ebe o tobetsa hape.",
     "live": "Lebelo",
     "best quality": "boleng bo holimo",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Khohlo ea konopo",
+    "Top right": "Ka holimo ho le letšehali",
+    "Top left": "Bophahamo bo ka tlase ho le letona",
+    "Bottom right": "Ka tlase ka ho le letšehali",
+    "Bottom left": "Ka tlase ka ho le letšehali",
+    "Button size": "Boholo ba li-button",
+    "Small": "E nyane",
+    "Normal": "Bophara:",
+    "Large": "Boholo",
+    "Button colour": "Letšoao la li-buttons",
+    "Show the button's text (off = arrow only)": "Bontša mongolo oa li-button (off = arrow feela)"
   }
 }

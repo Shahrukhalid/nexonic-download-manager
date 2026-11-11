@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Ba'a samu wata bidiyo ba har yanzu. Ka yi wasa da bidiyo na mintina kaɗan, sa'an nan ka danna ta a sake.",
     "live": "mataki",
     "best quality": "quality-level-label",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "QWebPage",
+    "Top right": "QWebPage",
+    "Top left": "QWebPage",
+    "Bottom right": "QWebPage",
+    "Bottom left": "QWebPage",
+    "Button size": "Size Policy",
+    "Small": "QPrintPreviewDialog",
+    "Normal": "@ action",
+    "Large": "QPrintPreviewDialog",
+    "Button colour": "Launi na maɓalli",
+    "Show the button's text (off = arrow only)": "Nuna rubutun maɓalli (bacci = arrow kawai)"
   }
 }

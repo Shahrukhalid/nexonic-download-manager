@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Još nije pronađen nijedan videozapis. Pusti videozapis na nekoliko sekundi, a zatim ponovno klikni.",
     "live": "nivo",
     "best quality": "Najbolji kvalitet",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Uglovi dugmadi",
+    "Top right": "Gornji desni",
+    "Top left": "Gornji lijevi",
+    "Bottom right": "Donje desno",
+    "Bottom left": "Dolje lijevo",
+    "Button size": "Veličina gumba",
+    "Small": "Mala",
+    "Normal": "Normalno",
+    "Large": "Veliki",
+    "Button colour": "Boja gumba",
+    "Show the button's text (off = arrow only)": "Prikaži tekst dugmeta (isključeno = samo strelice)"
   }
 }

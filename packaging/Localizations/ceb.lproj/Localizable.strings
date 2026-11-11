@@ -62,7 +62,7 @@
 "Downloads" = "Pag-download";
 "Edit…" = "Edit…";
 "Expected MD5, SHA-1, SHA-256 or SHA-512" = "Expected MD5, SHA-1, SHA-256 or SHA-512";
-"Export Backup…" = "Export Backup…";
+"Export Backup…" = "Pag-eksport sa backup…";
 "Export Links…" = "Export Links…";
 "File" = "_File";
 "File name" = "_Dapit:";
@@ -186,7 +186,7 @@
 "Stop the selected downloads" = "I-download ang gipili nga mga file";
 "Streaming and copy-protected video can't be saved." = "Espesye sa tanom nga bulak ang Protea incognita.";
 "Terms of Use" = "Mga kondisyon sa paggamit";
-"Terms of Use and License" = "Terms of Use and License";
+"Terms of Use and License" = "Mga termino sa paggamit ug lisensya";
 "The checksum is not a valid value" = "Ang checksum dili usa ka balido nga kantidad";
 "Time" = "Oras";
 "Tries per part (1-50)" = "Adunay 1,501 ka molupyo.";

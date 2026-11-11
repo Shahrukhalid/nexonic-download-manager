@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Ягон видео ёфт нашуд. Видеоро чанд сония пахш кунед, сипас дубора пахш кунед.",
     "live": "дараҷа",
     "best quality": "Сифати беҳтарин",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Кунҷи тугма",
+    "Top right": "Боло ба рост",
+    "Top left": "Боло ба чап",
+    "Bottom right": "Дар поён аз рост",
+    "Bottom left": "Дар поён ба чап",
+    "Button size": "Андозаи тугма",
+    "Small": "& Хурд",
+    "Normal": "& Оддӣ",
+    "Large": "Калон",
+    "Button colour": "Ранги тугма",
+    "Show the button's text (off = arrow only)": "Намоиши матни тугма (off = танҳо тирча)"
   }
 }

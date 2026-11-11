@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "ဗီဒီယိုကိုရှာမတွေ့သေးပါ။ ဗီဒီယိုကိုစက္ကန့်အနည်းငယ်ကြာဖွင့်ပါ၊ ပြီးလျှင်ပြန်နှိပ်ပါ။",
     "live": "အဆင့်",
     "best quality": "အကောင်းဆုံးအရည်အသွေး",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "ခလုတ်ထောင့်",
+    "Top right": "ညာဘက်ထိပ်",
+    "Top left": "ဘယ်ဘက်ထိပ်",
+    "Bottom right": "ညာအောက်ခြေ",
+    "Bottom left": "ဘယ်အောက်ခြေ",
+    "Button size": "ခလုတ် အရွယ်အစား",
+    "Small": "အသေးစား",
+    "Normal": "ပုံမှန်",
+    "Large": "အကြီးစား",
+    "Button colour": "ခလုတ်အရောင်",
+    "Show the button's text (off = arrow only)": "ခလုတ်ရဲ့ စာသားကို ပြပါ (ပိတ်ထားလျှင် = ညာလက်ညှိုးသာ)"
   }
 }

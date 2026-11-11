@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Δεν βρέθηκε ακόμα βίντεο.Αναπαράγετε το βίντεο για λίγα δευτερόλεπτα και μετά κάντε ξανά κλικ.",
     "live": "ζωντανός",
     "best quality": "Η καλύτερη ποιότητα",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Γωνία του κουμπιού",
+    "Top right": "Επάνω δεξιά",
+    "Top left": "Επάνω αριστερά",
+    "Bottom right": "Κάτω δεξιά",
+    "Bottom left": "Κάτω αριστερά",
+    "Button size": "Μέγεθος του κουμπιού",
+    "Small": "Μικρό",
+    "Normal": "Κανονική",
+    "Large": "Μεγάλο",
+    "Button colour": "Χρώμα του κουμπιού",
+    "Show the button's text (off = arrow only)": "Εμφάνιση του κειμένου του κουμπιού (απενεργοποιημένο = μόνο βέλος)"
   }
 }

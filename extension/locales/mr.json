@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "अद्याप व्हिडीओ आढळला नाही. काही सेकंदांसाठी व्हिडीओ चालवा, नंतर पुन्हा क्लिक करा.",
     "live": "स्तर",
     "best quality": "सर्वोत्तम दर्जा",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "बटण कोन",
+    "Top right": "वरील उजवे",
+    "Top left": "वरील डावीकडील",
+    "Bottom right": "खालिल उजवे",
+    "Bottom left": "खालिल डावीकडील",
+    "Button size": "बटण आकार",
+    "Small": "लहान",
+    "Normal": "सर्वसाधारण",
+    "Large": "मोठे",
+    "Button colour": "बटण रंग",
+    "Show the button's text (off = arrow only)": "बटण पाठ्य दर्शवा (बंद = फक्त बाण)"
   }
 }

@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Видео табылмады. Бірнеше секунд бойы ойнатып, содан кейін қайта түртіңіз.",
     "live": "деңгей",
     "best quality": "ең жақсы сапа",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Батырма бұрышы",
+    "Top right": "Жоғарғы оң жақ",
+    "Top left": "Жоғарғы сол жақ",
+    "Bottom right": "Төменгі оң жақ",
+    "Bottom left": "Төменгі сол жақ",
+    "Button size": "Батырма өлшемі",
+    "Small": "Шағын",
+    "Normal": "Қалыпты",
+    "Large": "Үлкен",
+    "Button colour": "Батырманың түсі",
+    "Show the button's text (off = arrow only)": "Батырманың мәтінін көрсету (өшірілген = тек жебесі ғана)"
   }
 }

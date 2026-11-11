@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "ვიდეო ჯერ არ მოიძებნა. ვიდეო რამდენიმე წამით ჩართეთ, შემდეგ კიდევ ერთხელ დააჭირეთ.",
     "live": "დონე",
     "best quality": "საუკეთესო ხარისხი",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "ღილაკის კუთხეში",
+    "Top right": "ზედა მარჯვენა",
+    "Top left": "ზედა მარცხენა",
+    "Bottom right": "ქვემოთ მარჯვნივ",
+    "Bottom left": "ქვემოთ მარცხნივ",
+    "Button size": "ღილაკის ზომა",
+    "Small": "პატარა",
+    "Normal": "ჩვეულებრივი",
+    "Large": "დიდი",
+    "Button colour": "ღილაკის ფერი",
+    "Show the button's text (off = arrow only)": "ღილაკის ტექსტის ჩვენება (გათიშული = მხოლოდ სვეტები)"
   }
 }

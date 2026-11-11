@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "ʻAʻohe wikiō i loaʻa. E pāʻani i ka wikiō no kekahi mau kekona, a laila kaomi hou.",
     "live": "papa",
     "best quality": "maikaʻi loa",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Ke kolamu o ka pihi",
+    "Top right": "Waihoʻoluʻu",
+    "Top left": "Ma luna hema",
+    "Bottom right": "Waihoʻoluʻu",
+    "Bottom left": "Waihoʻoluʻu",
+    "Button size": "Ka nui o ka pihi",
+    "Small": "Liʻiliʻi",
+    "Normal": "Maʻamau",
+    "Large": "Nui",
+    "Button colour": "ʻO ka kala o ka pihi",
+    "Show the button's text (off = arrow only)": "Hōʻike i ka hua'ōlelo o ka pihi (ʻaʻole = arrow wale nō)"
   }
 }

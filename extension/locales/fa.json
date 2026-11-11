@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "هنوز ویدئو پیدا نشد. ویدئو را برای چند ثانیه پخش کنید ، سپس دوباره کلیک کنید.",
     "live": "سطح",
     "best quality": "بهترین کیفیت",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "گوشۀ دکمه‌ها",
+    "Top right": "راست بالا",
+    "Top left": "چپ بالا",
+    "Bottom right": "پایین راست",
+    "Bottom left": "پایین چپ",
+    "Button size": "اندازه دکمه‌ها",
+    "Small": "کوچک",
+    "Normal": "عادی",
+    "Large": "بزرگ",
+    "Button colour": "رنگ دکمه‌ها",
+    "Show the button's text (off = arrow only)": "نمایش متن دکمۀ) غیرفعال = فقط پیکان ("
   }
 }

@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Heç bir video tapıla bilmədi. Videonu bir neçə saniyə oynadın, sonra yenidən basın.",
     "live": "səviyyə",
     "best quality": "ən yaxşı keyfiyyət",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
+    "Button corner": "düymə küncləri",
+    "Top right": "Üst sağ",
+    "Top left": "Üst sol",
+    "Bottom right": "Alt Sağ",
+    "Bottom left": "Sol alt",
+    "Button size": "Düymə böyüklüyü",
+    "Small": "Kiçik",
     "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Large": "Böyük",
+    "Button colour": "Düymə rəngi",
+    "Show the button's text (off = arrow only)": "Düymənin mətnini göstər (off = yalnız ox)"
   }
 }

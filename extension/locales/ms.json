@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Tiada video ditemui. Mainkan video selama beberapa saat, kemudian klik lagi.",
     "live": "Aras",
     "best quality": "kualiti terbaik",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
+    "Button corner": "Butang sudut",
+    "Top right": "Kanan atas",
+    "Top left": "Kiri Atas",
+    "Bottom right": "Bawah kanan",
+    "Bottom left": "Bawah kiri",
+    "Button size": "Saiz butang",
+    "Small": "Kecil",
     "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Large": "Besar",
+    "Button colour": "Warna butang",
+    "Show the button's text (off = arrow only)": "Papar teks butang (off = anak panah sahaja)"
   }
 }

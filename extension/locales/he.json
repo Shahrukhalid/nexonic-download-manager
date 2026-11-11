@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "אין סרטון עדיין. הפעל את הסרטון לכמה שניות, ואז לחץ שוב.",
     "live": "חי",
     "best quality": "באיכות הטובה ביותר",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "פינת כפתור",
+    "Top right": "ימין למעלה",
+    "Top left": "שמאלה למעלה",
+    "Bottom right": "למטה מימין",
+    "Bottom left": "מטה שמאל",
+    "Button size": "גודל כפתור",
+    "Small": "קטן",
+    "Normal": "נורמלי",
+    "Large": "גדול",
+    "Button colour": "צבע כפתור",
+    "Show the button's text (off = arrow only)": "הצג את הטקסט של הכפתור (לא פעיל = רק חץ)"
   }
 }

@@ -216,7 +216,7 @@
 "Update Tracker" = "_Ṣàfikún";
 "%lld downloading" = "Ìṣàmúlò-ètò %lld";
 "%lld queued" = "%lld nínú ìpele";
-"Limit %lld KB/s" = "Limit %lld KB/s";
+"Limit %lld KB/s" = "Àwọn Ìgúnrégé %lld KB/s";
 "%@ left" = "%@ Òkè";
 "Queue: %@" = "%@";
 "Save to: %@" = "Fi pamọ́ sí: %@";
@@ -234,13 +234,13 @@
 "Only the first %lld of %lld links fit in one code." = "Àwọn líǹkì %lld akọkọ tí %lld nìkan nínú ìṣàmúlò-ètò kan.";
 "This link seems to include a private access key (for example a token or signature). Anyone who scans the code can use it until it expires, so share it only with your own phone." = "Líǹkì yìí ní àwọn bọ́tìnì ìṣàmúlò-ètò aládábòójútó (gẹ́gẹ́ bíi tokè tàbí ìsàlẹ̀-ètò). Gbogbo ẹni tí o bá ṣàfihàn àwọn àmì-ìwé náà lè lò titi tí o fi kù, bẹ́ẹ̀ jẹ́ pé o lè gbọ́ nínú kọ̀ǹpútà rẹ̀ nikan.";
 "Only the links are shared: no cookies or passwords. Downloads that need you to be signed in may not work on the phone." = "Àwọn líǹkì nìkan ní a gbọ́: kò si àwọn kúkisì tàbí àwọn àmì-àṣírí. Àwọn ìṣàmúlò-ètò tí a fẹ́ pé ò fi wọlé kò lè ṣiṣẹ́ lórí kọ̀ǹpútà.";
-"Connections per download: %lld" = "Connections per download: %lld";
+"Connections per download: %lld" = "Àwọn ìṣàmúlò-ètò fún ìṣàfihàn: %lld";
 "Downloads at the same time: %lld" = "Àwọn ìṣàmúlò-ètò nígbà kan: %lld";
 "Put each type in its own folder (Video, Music, Documents, Programs, Compressed, Images)" = "Fi iru-ẹ̀yàn kọ̀ǹpútà kọ̀ǹpútà kan pánẹ́ẹ̀lì rẹ̀ (Vídéò, Àwọn àkọsílẹ̀, Àwọn ìṣàmúlò-ètò, Àwọn àwòrán)";
 "With the download window off, downloads start right away. The app keeps running in the menu bar when its window is closed." = "Tí fèrèsé ìṣàmúlò-ètò tí a fi pà, àwọn ìṣàmúlò-ètò náà ń tún àwọn ìṣàmúlò-ètò lọ́wọ́lọ́wọ́ lọ́wọ́lọ́wọ́. Àwọn ìṣàmúlò-ètò náà ń tún ìṣàmúlò-ètò náà lọ́wọ́lọ́wọ́ nínú àká-àtòjọ-ẹ̀yàn tí fèrèsé náà bá pà.";
 "Proxy changes apply to downloads started afterwards. Password-protected downloads: add the user name and password in the Add window or under Properties." = "Àwọn ìṣàfarawé àwọn ìṣàmúlò-ètò proxy tí a tí ìṣàmúlò-ètò náà kọ̀ǹpútà. Àwọn ìṣàmúlò-ètò àti àmì-àṣírí tí a tí ìdáràn: ṣàfikún orúkọ òǹlò àti àmì-àṣírí nínú fèrèsé Ṣàfikún tàbí nínú Àwọn Àbùdá.";
 "Smallest part of a file: %lld KB" = "Ààyè kejì tí fáìlì náà: %lld KB";
-"Tries per part before a download stops: %lld" = "Tries per part before a download stops: %lld";
+"Tries per part before a download stops: %lld" = "Àwọn ààyè-iṣẹ́ fún àwọn ààyè-iṣẹ́ nípa àwọn ààyè-iṣẹ́: %lld";
 "Reconnect a part that receives nothing for %lld s" = "Ṣàfikún ààyè-iṣẹ́ tí kò gba ohunkohun fún %lld s";
 "Torrents on" = "Àwọn Torrents";
 "Forward the listening port on my router (UPnP and NAT-PMP)" = "Ṣàfikún ààyè-iṣẹ́ ìgbọ̀n ní pàtó nínú ààyè-iṣẹ́ mìíràn mìíràn mìíràn mìíràn mìíràn mìíràn";

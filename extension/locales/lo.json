@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "ຍັງບໍ່ພົບ​ວີດີໂອ​ເທື່ອ. ຫຼີ້ນ​ວີດີໂອ​ເປັນ​ເວລາ​ບໍ່​ເທົ່າ​ໃດ​ວິນາທີ ແລ້ວ​ຄລິກ​ອີກຄັ້ງ.",
     "live": "ລະດັບ",
     "best quality": "ຄຸນ​ນະ​ພາບ​ດີ​ທີ່ສຸດ",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "ມຸມ​ປຸ່ມ",
+    "Top right": "ເທິງ​ຂວາ",
+    "Top left": "ດ້ານ​ເທິງ​ຊ້າຍ",
+    "Bottom right": "ດ້ານລຸ່ມ​ຂວາ",
+    "Bottom left": "ດ້ານລຸ່ມ​ຊ້າຍ",
+    "Button size": "ຂະ​ໜາດ​ប៊ូតុង",
+    "Small": "ນ້ອຍ",
+    "Normal": "ປົກກະຕິ",
+    "Large": "ໃຫຍ່",
+    "Button colour": "ពណ៌​ប៊ូតុង",
+    "Show the button's text (off = arrow only)": "ສະແດງຂໍ້ຄວາມຂອງປຸ່ມ (ປິດ = ມີແຕ່ລູກສອນ)"
   }
 }

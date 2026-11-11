@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Zatím nebylo nalezeno žádné video. Přehrajte video na několik sekund a potom klikněte znovu.",
     "live": "Živě",
     "best quality": "Nejlepší kvalita",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
+    "Button corner": "Knoflíkový roh",
+    "Top right": "Vpravo nahoře",
+    "Top left": "Vlevo nahoře",
+    "Bottom right": "Vpravo dole",
+    "Bottom left": "Vlevo dole",
+    "Button size": "Velikost tlačítka",
+    "Small": "Malé",
     "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Large": "Velký",
+    "Button colour": "Barva tlačítka",
+    "Show the button's text (off = arrow only)": "Zobrazit text tlačítka (vypnuto = pouze šipka)"
   }
 }

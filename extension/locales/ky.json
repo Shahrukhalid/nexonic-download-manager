@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Видео табылган жок. Видеону бир нече секунда ойнотуп, андан кийин кайра чыкылдатыңыз.",
     "live": "деңгээл",
     "best quality": "мыкты сапат",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Баскычтын бурчу",
+    "Top right": "Оң жогорку чети",
+    "Top left": "Сол ылдый",
+    "Bottom right": "Төмөнкү оң жагы",
+    "Bottom left": "Төмөндө сол жакта",
+    "Button size": "Баскычтын өлчөмү",
+    "Small": "Кичинекей",
+    "Normal": "_Нормалуу",
+    "Large": "Чоң",
+    "Button colour": "Баскычтын түсү",
+    "Show the button's text (off = arrow only)": "Баскычтын текстин көрсөтүү (off = стрелка только)"
   }
 }

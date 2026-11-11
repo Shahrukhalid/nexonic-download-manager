@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Hakuna video kupatikana bado. Kucheza video kwa sekunde chache, kisha bonyeza tena.",
     "live": "kiwango",
     "best quality": "ubora bora",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Kifungo pembe",
+    "Top right": "Juu kulia",
+    "Top left": "Juu kushoto",
+    "Bottom right": "Chini kulia",
+    "Bottom left": "Chini kushoto",
+    "Button size": "Ukubwa wa kifungo",
+    "Small": "Mdogo",
+    "Normal": "Kawaida",
+    "Large": "kubwa",
+    "Button colour": "Rangi ya kifungo",
+    "Show the button's text (off = arrow only)": "Kuonyesha maandishi ya kifungo (off = mshale tu)"
   }
 }

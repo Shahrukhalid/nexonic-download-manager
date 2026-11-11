@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "Chưa tìm thấy đoạn phim. Bật đoạn phim trong vài giây, rồi nhấn lại.",
     "live": "cấp độ",
     "best quality": "chất lượng tốt nhất",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "Góc nút",
+    "Top right": "Phải trên",
+    "Top left": "Trên trái",
+    "Bottom right": "Hạ phải",
+    "Bottom left": "Trái dưới",
+    "Button size": "Cỡ nút",
+    "Small": "Nhỏ",
+    "Normal": "Thông thường",
+    "Large": "To",
+    "Button colour": "Màu nút",
+    "Show the button's text (off = arrow only)": "Hiển thị văn bản nút (bật = chỉ mũi tên)"
   }
 }

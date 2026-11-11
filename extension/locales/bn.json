@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "কোন ভিডিও পাওয়া যায়নি। ভিডিওটি কয়েক সেকেন্ডের জন্য চালিয়ে দেখুন, তারপর আবার ক্লিক করুন।",
     "live": "স্তর",
     "best quality": "সর্বোচ্চ গুণমান",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "বাটন কোণ",
+    "Top right": "উপরের ডানদিকে",
+    "Top left": "উপরের বাম",
+    "Bottom right": "নিচের ডানদিকে",
+    "Bottom left": "নিচের বাম",
+    "Button size": "বাটন মাপ",
+    "Small": "ছোট",
+    "Normal": "স্বাভাবিক",
+    "Large": "বড়",
+    "Button colour": "বাটন রং",
+    "Show the button's text (off = arrow only)": "বাটন- এর টেক্সট দেখাও (অক্ষম = শুধুমাত্র তীরচিহ্ন)"
   }
 }

@@ -54,16 +54,16 @@
     "No video found yet. Play the video for a few seconds, then click again.": "තවමත් වීඩියෝවක් හමු වී නැත. තත්පර කිහිපයක් සඳහා වීඩියෝව වාදනය කරන්න, ඉන්පසු නැවත ක්ලික් කරන්න.",
     "live": "මට්ටම",
     "best quality": "හොඳම ගුණාත්මක",
-    "Button corner": "Button corner",
-    "Top right": "Top right",
-    "Top left": "Top left",
-    "Bottom right": "Bottom right",
-    "Bottom left": "Bottom left",
-    "Button size": "Button size",
-    "Small": "Small",
-    "Normal": "Normal",
-    "Large": "Large",
-    "Button colour": "Button colour",
-    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
+    "Button corner": "බොත්තම් කෝණය",
+    "Top right": "ඉහළ දකුණ",
+    "Top left": "ඉහළ වම",
+    "Bottom right": "පහළ දකුණ",
+    "Bottom left": "පහළ වම",
+    "Button size": "බොත්තම් ප්‍රමාණය",
+    "Small": "කුඩා",
+    "Normal": "සාමාන්‍ය",
+    "Large": "විශාල",
+    "Button colour": "බොත්තම් වර්‍ණය",
+    "Show the button's text (off = arrow only)": "බොත්තමේ පෙළ පෙන්වන්න (අක්‍රීය = ඊතලය පමණක්)"
   }
 }
