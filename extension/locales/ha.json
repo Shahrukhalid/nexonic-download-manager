@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "Wannan bidiyo an kare shi da kwafinsa ta shafin, don haka ba'a iya adana shi ba.",
     "No video found yet. Play the video for a few seconds, then click again.": "Ba'a samu wata bidiyo ba har yanzu. Ka yi wasa da bidiyo na mintina kaɗan, sa'an nan ka danna ta a sake.",
     "live": "mataki",
-    "best quality": "quality-level-label"
+    "best quality": "quality-level-label",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

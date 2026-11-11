@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "Aquest vídeo està protegit contra còpies pel lloc, de manera que no es pot desar.",
     "No video found yet. Play the video for a few seconds, then click again.": "Encara no s' ha trobat cap vídeo. Reproduïu el vídeo durant uns segons i torneu a fer- hi clic.",
     "live": "nivell",
-    "best quality": "millor qualitat"
+    "best quality": "millor qualitat",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

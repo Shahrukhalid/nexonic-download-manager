@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "Bideo hau kopia-babesa du guneak, beraz ezin da gorde.",
     "No video found yet. Play the video for a few seconds, then click again.": "Oraindik ez da bideorik aurkitu. Erreproduzitu bideoa segundo batzuetan, eta egin klik berriro.",
     "live": "maila",
-    "best quality": "kalitate onena"
+    "best quality": "kalitate onena",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

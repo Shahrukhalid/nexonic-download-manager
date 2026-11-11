@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "사이트가 이 동영상을 복제 방지하므로 저장할 수 없습니다.",
     "No video found yet. Play the video for a few seconds, then click again.": "아직 동영상을 찾지 못했습니다. 동영상을 몇 초 재생한 후 다시 클릭하세요.",
     "live": "라이브",
-    "best quality": "최고 화질"
+    "best quality": "최고 화질",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "ဤဗီဒီယိုကို သိမ်းဆည်းနိုင်ခြင်းမရှိသောကြောင့် ကူးယူခြင်းမှ ကာကွယ်ထားသည်။",
     "No video found yet. Play the video for a few seconds, then click again.": "ဗီဒီယိုကိုရှာမတွေ့သေးပါ။ ဗီဒီယိုကိုစက္ကန့်အနည်းငယ်ကြာဖွင့်ပါ၊ ပြီးလျှင်ပြန်နှိပ်ပါ။",
     "live": "အဆင့်",
-    "best quality": "အကောင်းဆုံးအရည်အသွေး"
+    "best quality": "အကောင်းဆုံးအရည်အသွေး",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

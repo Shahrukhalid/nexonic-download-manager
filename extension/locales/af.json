@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "Hierdie video is kopiebeveilig deur die tuiste, dus kan dit nie gestoor word nie.",
     "No video found yet. Play the video for a few seconds, then click again.": "Geen video nog gevind nie. Speel die video vir 'n paar sekondes, en kliek dan weer.",
     "live": "vlak",
-    "best quality": "beste kwaliteit"
+    "best quality": "beste kwaliteit",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

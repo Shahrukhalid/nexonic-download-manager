@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "Qhov video no yog copy-protected los ntawm lub vev xaib, yog li nws tsis tuaj yeem khaws cia.",
     "No video found yet. Play the video for a few seconds, then click again.": "Tsis tau pom cov yeeb yaj kiab li. Play the video for a few seconds, then click again.",
     "live": "live",
-    "best quality": "zoo tshaj plaws zoo"
+    "best quality": "zoo tshaj plaws zoo",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

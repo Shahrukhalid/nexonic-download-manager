@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "ఈ వీడియో సైట్ ద్వారా కాపీ-రక్షించబడింది, కాబట్టి అది నిల్వ చేయబడలేదు.",
     "No video found yet. Play the video for a few seconds, then click again.": "వీడియో ఇంకా దొరకలేదు. వీడియోను కొన్ని సెకనుల కొరకు ప్లే చేయుము, తరువాత మళ్ళీ నొక్కుము.",
     "live": "స్థాయి",
-    "best quality": "ఉత్తమ నాణ్యత"
+    "best quality": "ఉత్తమ నాణ్యత",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

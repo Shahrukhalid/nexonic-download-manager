@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "हा व्हिडीओ या संकेतस्थळाने कॉपी-राइट संरक्षण दिलेला आहे, त्यामुळे तो साठवता येत नाही.",
     "No video found yet. Play the video for a few seconds, then click again.": "अद्याप व्हिडीओ आढळला नाही. काही सेकंदांसाठी व्हिडीओ चालवा, नंतर पुन्हा क्लिक करा.",
     "live": "स्तर",
-    "best quality": "सर्वोत्तम दर्जा"
+    "best quality": "सर्वोत्तम दर्जा",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "Tämä video on kopiosuojattu sivustolla, joten sitä ei voi tallentaa.",
     "No video found yet. Play the video for a few seconds, then click again.": "Toista video muutaman sekunnin ajan ja klikkaa sitten uudelleen, jotta voit toistaa sen uudelleen.",
     "live": "elävä",
-    "best quality": "Parasta laatua"
+    "best quality": "Parasta laatua",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

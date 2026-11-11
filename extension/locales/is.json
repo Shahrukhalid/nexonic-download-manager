@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "Þetta myndband er afritvarið af síðunni, svo það er ekki hægt að vista það.",
     "No video found yet. Play the video for a few seconds, then click again.": "Ekkert myndband fannst ennþá. Spilaðu myndbandið í nokkrar sekúndur, smelltu síðan aftur.",
     "live": "stig",
-    "best quality": "Bestu gæði"
+    "best quality": "Bestu gæði",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

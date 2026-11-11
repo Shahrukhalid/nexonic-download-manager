@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "இந்த வீடியோ நகல் பாதுகாப்பு தளத்தில் உள்ளது, எனவே அதை சேமிக்க முடியாது.",
     "No video found yet. Play the video for a few seconds, then click again.": "வீடியோ இன்னும் கிடைக்கவில்லை. சில நொடிகளுக்கு வீடியோவை இயக்கவும், பின்னர் மீண்டும் க்ளிக் செய்யவும்.",
     "live": "நிலை",
-    "best quality": "சிறந்த தரம்"
+    "best quality": "சிறந்த தரம்",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "Video punika dipunperlindungi déning situs, saéngga boten saged dipunsimpen.",
     "No video found yet. Play the video for a few seconds, then click again.": "Ora ana video kang ditemokaké. Puter video kanggo sawetara detik, banjur klik maneh.",
     "live": "tingkat",
-    "best quality": "kualitas paling apik"
+    "best quality": "kualitas paling apik",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

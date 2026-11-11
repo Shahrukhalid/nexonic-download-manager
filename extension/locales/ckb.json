@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "ئەم ڤیدیۆیە لەلایەن ماڵپەڕەکەوە پاراستنی هەیە، بۆیە ناتوانرێت بپارێزرێت.",
     "No video found yet. Play the video for a few seconds, then click again.": "هێشتا ڤیدیۆیەک نەدۆزراوەتەوە. ڤیدیۆکە بۆ چەند چرکەیەک بگێڕەوە، پاشان دووبارە کرتە بکە.",
     "live": "پلە",
-    "best quality": "باشترین باڵادەست"
+    "best quality": "باشترین باڵادەست",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

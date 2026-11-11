@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "આ વિડિયો સાઇટ દ્વારા નકલ-સંરક્ષિત છે, તેથી તે સંગ્રહી શકાતો નથી.",
     "No video found yet. Play the video for a few seconds, then click again.": "હજુ સુધી કોઈ વીડિયો મળ્યો નથી. થોડી સેકન્ડો માટે વીડિયો વગાડો, પછી ફરી ક્લિક કરો.",
     "live": "સ્તર",
-    "best quality": "શ્રેષ્ઠ ગુણવત્તા"
+    "best quality": "શ્રેષ્ઠ ગુણવત્તા",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

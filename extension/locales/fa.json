@@ -53,6 +53,17 @@
     "This video is copy-protected by the site, so it can't be saved.": "این ویدئو توسط سایت محافظت شده، بنابراین نمی‌توان آن را ذخیره کرد.",
     "No video found yet. Play the video for a few seconds, then click again.": "هنوز ویدئو پیدا نشد. ویدئو را برای چند ثانیه پخش کنید ، سپس دوباره کلیک کنید.",
     "live": "سطح",
-    "best quality": "بهترین کیفیت"
+    "best quality": "بهترین کیفیت",
+    "Button corner": "Button corner",
+    "Top right": "Top right",
+    "Top left": "Top left",
+    "Bottom right": "Bottom right",
+    "Bottom left": "Bottom left",
+    "Button size": "Button size",
+    "Small": "Small",
+    "Normal": "Normal",
+    "Large": "Large",
+    "Button colour": "Button colour",
+    "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)"
   }
 }

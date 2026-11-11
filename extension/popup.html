@@ -53,6 +53,13 @@
     <summary>Settings</summary>
     <div class="row"><label for="enabled">Send browser downloads to the app</label><input type="checkbox" id="enabled"></div>
     <div class="row"><label for="video">Show “Download this video” on players</label><input type="checkbox" id="video"></div>
+    <div class="row"><label for="vbCorner">Button corner</label><select id="vbCorner">
+      <option value="top-right">Top right</option><option value="top-left">Top left</option>
+      <option value="bottom-right">Bottom right</option><option value="bottom-left">Bottom left</option></select></div>
+    <div class="row"><label for="vbSize">Button size</label><select id="vbSize">
+      <option value="small">Small</option><option value="normal">Normal</option><option value="large">Large</option></select></div>
+    <div class="row"><label for="vbColor">Button colour</label><input type="color" id="vbColor"></div>
+    <div class="row"><label for="vbText">Show the button's text (off = arrow only)</label><input type="checkbox" id="vbText"></div>
     <div class="row"><label for="min">Smallest file to take over (MB)</label><input type="number" id="min" min="0" style="width:70px"></div>
     <label for="skip" class="muted">Keep these types in the browser</label>
     <input type="text" id="skip" placeholder="e.g. pdf, jpg">
