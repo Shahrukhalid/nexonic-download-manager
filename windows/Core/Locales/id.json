@@ -185,6 +185,9 @@
     "Previous": "Previous",
     "Next": "Berikutnya",
     "Getting the gallery engine (only the first time)…": "Getting the gallery engine (only the first time)…",
-    "Getting the video engine (only the first time)…": "Getting the video engine (only the first time)…"
+    "Getting the video engine (only the first time)…": "Getting the video engine (only the first time)…",
+    "Move Column Left": "Pindahkan kolom ke kiri",
+    "Move Column Right": "Pindahkan kolom ke kanan",
+    "Reset Column Order": "Atur ulang urutan kolom"
   }
 }

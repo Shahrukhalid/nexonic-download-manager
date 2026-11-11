@@ -185,6 +185,10 @@
     "Previous": "Vorige",
     "Next": "Volgende",
     "Getting the gallery engine (only the first time)…": "De galerij-engine ophalen (alleen de eerste keer)…",
-    "Getting the video engine (only the first time)…": "De video-engine ophalen (alleen de eerste keer)…"
+    "Getting the video engine (only the first time)…": "De video-engine ophalen (alleen de eerste keer)…",
+    "Categories": "Categories",
+    "Move Column Left": "Move Column Left",
+    "Move Column Right": "Move Column Right",
+    "Reset Column Order": "Reset Column Order"
   }
 }

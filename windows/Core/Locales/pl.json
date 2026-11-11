@@ -185,6 +185,10 @@
     "Previous": "Poprzedni",
     "Next": "Następny",
     "Getting the gallery engine (only the first time)…": "Pobieranie silnika galerii (tylko za pierwszym razem)…",
-    "Getting the video engine (only the first time)…": "Pobieranie silnika wideo (tylko za pierwszym razem)…"
+    "Getting the video engine (only the first time)…": "Pobieranie silnika wideo (tylko za pierwszym razem)…",
+    "Categories": "Categories",
+    "Move Column Left": "Move Column Left",
+    "Move Column Right": "Move Column Right",
+    "Reset Column Order": "Reset Column Order"
   }
 }

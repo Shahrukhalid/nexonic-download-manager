@@ -185,6 +185,9 @@
     "Previous": "Previous",
     "Next": "Próximo",
     "Getting the gallery engine (only the first time)…": "Getting the gallery engine (only the first time)…",
-    "Getting the video engine (only the first time)…": "Getting the video engine (only the first time)…"
+    "Getting the video engine (only the first time)…": "Getting the video engine (only the first time)…",
+    "Move Column Left": "Mover coluna para a esquerda",
+    "Move Column Right": "Mover coluna para a direita",
+    "Reset Column Order": "Redefinir ordem das colunas"
   }
 }

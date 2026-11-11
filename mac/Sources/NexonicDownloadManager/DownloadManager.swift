@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 import CoreServices
 import Foundation
 import NexonicCore
@@ -36,15 +37,66 @@ final class DownloadManager: ObservableObject {
             if TorrentPolicy.unavailable(settings) != nil {
                 for item in items where item.torrent != nil && item.status.isActive { pause(item.id) }
             }
-            if settings.appearance != oldValue.appearance { Self.applyAppearance(settings.appearance) }
+            if settings.appearance != oldValue.appearance || settings.colorScheme != oldValue.colorScheme {
+                Self.applyAppearance(settings.appearance, scheme: settings.colorScheme)
+            }
+            if settings.debrid.key != oldValue.debrid.key { Debrid.saveKey(settings.debrid.key) }
+            Debrid.settings = settings.debrid
             saveSettings()
             schedule()
         }
     }
 
     /// Settings → General → Appearance: the same as macOS, light or dark.
-    static func applyAppearance(_ choice: String) {
+    static func applyAppearance(_ choice: String, scheme: String = "") {
+        // A colour scheme decides light or dark itself.
+        let choice = ColorSchemeChoice.named(scheme).map { $0.dark ? "dark" : "light" } ?? choice
         NSApplication.shared.appearance = choice == "light" ? NSAppearance(named: .aqua) : choice == "dark" ? NSAppearance(named: .darkAqua) : nil
+    }
+
+    /// The accent of the chosen colour scheme, or the app's own.
+    var accent: Color {
+        guard let s = ColorSchemeChoice.named(settings.colorScheme), let (r, g, b) = ColorSchemeChoice.rgb(s.accent) else { return brand }
+        return Color(red: r, green: g, blue: b)
+    }
+
+    // MARK: RSS feeds
+
+    @Published var feeds: [FeedSubscription] = Feeds.load()
+    private var checkingFeeds = false
+
+    func saveFeeds() { Feeds.save(feeds) }
+
+    /// Checks the feeds that are due (or `all`), adding each new item that matches: files and videos, and torrents through
+    /// the Add Torrent window when torrents are on.
+    func checkFeeds(all: Bool = false) {
+        guard !checkingFeeds else { return }
+        let due = feeds.indices.filter { feeds[$0].enabled && (all || Feeds.due(feeds[$0])) }
+        guard !due.isEmpty else { return }
+        checkingFeeds = true
+        let session = URLSession(configuration: Network.configuration(proxy: settings.proxy))
+        Task { @MainActor in
+            defer { checkingFeeds = false; session.finishTasksAndInvalidate(); saveFeeds() }
+            for i in due where i < feeds.count {
+                var feed = feeds[i]
+                do {
+                    let items = try await Feeds.check(&feed, session: session)
+                    for item in items {
+                        let folder = feed.folder.isEmpty ? nil : URL(fileURLWithPath: feed.folder)
+                        if item.link.lowercased().hasPrefix("magnet:") || item.link.lowercased().hasSuffix(".torrent") {
+                            // Torrents open in the Torrents window to choose their files (one at a time).
+                            if TorrentInbox.shared.source == nil { TorrentInbox.shared.source = item.link }
+                        } else {
+                            add(links: item.link, options: AddOptions(folder: folder))
+                        }
+                    }
+                } catch {
+                    feed.lastChecked = Date()
+                    feed.lastResult = "Check failed: " + error.localizedDescription
+                }
+                if i < feeds.count, feeds[i].id == feed.id { feeds[i] = feed }
+            }
+        }
     }
 
     /// Cookies and passwords are kept in a private file (see FileStore); `stored` is what it holds now.
@@ -94,7 +146,9 @@ final class DownloadManager: ObservableObject {
         queues = qs
         for i in items.indices where items[i].status.isActive { items[i].status = .queued }  // interrupted by quit
         applySpeedLimit()
-        Self.applyAppearance(settings.appearance)
+        Self.applyAppearance(settings.appearance, scheme: settings.colorScheme)
+        settings.debrid.key = Debrid.loadKey()
+        Debrid.settings = settings.debrid
         timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.tick() }
         }
@@ -719,6 +773,7 @@ final class DownloadManager: ObservableObject {
     private func tick() {
         ticks += 1
         if ticks % 60 == 0 { applySpeedLimit() }  // every 30 seconds
+        if ticks % 120 == 1 { checkFeeds() }        // feeds that are due, every minute
         var s: [UUID: Double] = [:]
         // Averaged over the last 6 seconds: video sites deliver in bursts, so a single tick is often 0.
         for item in items where item.status.isActive {

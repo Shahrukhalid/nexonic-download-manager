@@ -185,6 +185,10 @@
     "Previous": "Anterior",
     "Next": "Următorul",
     "Getting the gallery engine (only the first time)…": "Obținerea motorului de galerie (doar prima dată)…",
-    "Getting the video engine (only the first time)…": "Obținerea motorului video (doar prima dată)…"
+    "Getting the video engine (only the first time)…": "Obținerea motorului video (doar prima dată)…",
+    "Categories": "Categories",
+    "Move Column Left": "Move Column Left",
+    "Move Column Right": "Move Column Right",
+    "Reset Column Order": "Reset Column Order"
   }
 }

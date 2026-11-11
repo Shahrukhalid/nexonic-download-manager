@@ -26,6 +26,11 @@ struct SettingsView: View {
                     Text("Light").tag("light")
                     Text("Dark").tag("dark")
                 }
+                Picker("Colour scheme", selection: $manager.settings.colorScheme) {
+                    Text("None").tag("")
+                    ForEach(ColorSchemeChoice.builtIn, id: \.name) { s in Text(LocalizedStringKey(s.name)).tag(s.name) }
+                }
+                .help("A scheme sets light or dark and the accent colour; None follows Appearance.")
                 Toggle("Automatic connections", isOn: $manager.settings.autoConnections)
                     .help("Starts with a few connections and adds more while the speed keeps rising; slows down when a server asks.")
                 Stepper((manager.settings.autoConnections ? "Most connections per download: " : "Connections per download: ")
@@ -111,6 +116,15 @@ struct SettingsView: View {
                         Text(LocalizedStringKey(problem)).font(.caption).foregroundStyle(.red)
                     }
                     Text("Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Section("Debrid service (optional)") {
+                    Picker("Debrid service (optional)", selection: $manager.settings.debrid.service) {
+                        ForEach(DebridService.allCases, id: \.self) { s in Text(LocalizedStringKey(s.title)).tag(s) }
+                    }
+                    SecureField("Your API key for the service", text: $manager.settings.debrid.key)
+                    TextField("Sites whose links go through it (comma separated, e.g. example-host.com)", text: $manager.settings.debrid.hosts)
+                    Text("Off by default. Uses your own account; links from other sites are never sent to the service. The key is saved in a private file and never in backups.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }

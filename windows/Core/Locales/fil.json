@@ -185,6 +185,10 @@
     "Previous": "Nakaraang",
     "Next": "Susunod",
     "Getting the gallery engine (only the first time)…": "Pagkuha ng gallery engine (lamang sa unang pagkakataon)…",
-    "Getting the video engine (only the first time)…": "Pagkuha ng video engine (sa unang pagkakataon lamang) …"
+    "Getting the video engine (only the first time)…": "Pagkuha ng video engine (sa unang pagkakataon lamang) …",
+    "Categories": "Categories",
+    "Move Column Left": "Move Column Left",
+    "Move Column Right": "Move Column Right",
+    "Reset Column Order": "Reset Column Order"
   }
 }

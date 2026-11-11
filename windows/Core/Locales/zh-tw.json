@@ -185,6 +185,9 @@
     "Previous": "Previous",
     "Next": "下一步",
     "Getting the gallery engine (only the first time)…": "Getting the gallery engine (only the first time)…",
-    "Getting the video engine (only the first time)…": "Getting the video engine (only the first time)…"
+    "Getting the video engine (only the first time)…": "Getting the video engine (only the first time)…",
+    "Move Column Left": "欄左移",
+    "Move Column Right": "欄右移",
+    "Reset Column Order": "重設欄順序"
   }
 }

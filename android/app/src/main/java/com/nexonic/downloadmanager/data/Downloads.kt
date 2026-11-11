@@ -13,6 +13,7 @@ import com.nexonic.downloadmanager.core.VideoPages
 import com.nexonic.downloadmanager.video.VideoJob
 import com.nexonic.downloadmanager.video.VideoEngine
 import com.nexonic.downloadmanager.core.Links
+import com.nexonic.downloadmanager.core.Net
 import com.nexonic.downloadmanager.core.SpeedLimiter
 import com.nexonic.downloadmanager.core.SpeedSchedule
 import com.nexonic.downloadmanager.core.Transfer
@@ -81,6 +82,9 @@ object Downloads {
         main.postDelayed(object : Runnable { override fun run() { applySpeedLimit(); main.postDelayed(this, 30_000) } }, 30_000)
         cap = settings.dataCap
         Vpn.init(app, settings.vpnOnly)
+        feeds = com.nexonic.downloadmanager.core.Feeds.fromJson(settings.feeds)
+        // RSS feeds that are due are checked every minute while the app runs.
+        main.post(object : Runnable { override fun run() { checkFeeds(); main.postDelayed(this, 60_000) } })
         // Downloads that were running when the app stopped continue.
         _items.value = store.load().map { if (it.status == Status.DOWNLOADING) it.copy(status = Status.QUEUED, speed = 0) else it.copy(speed = 0) }
         if (_items.value.any { it.status == Status.QUEUED }) main.post { pump() }
@@ -431,12 +435,101 @@ object Downloads {
         job.start()
     }
 
-    private fun startTransfer(item: DownloadItem) {
+    // ---- RSS feeds (Downloads → RSS feeds) ----
+
+    var feeds: MutableList<com.nexonic.downloadmanager.core.FeedSubscription> = mutableListOf()
+        private set
+    /** A torrent from a feed, to show in the Add Torrent window (one at a time). */
+    val feedTorrent = MutableStateFlow<String?>(null)
+    @Volatile private var checkingFeeds = false
+
+    @Synchronized fun saveFeeds() { settings.feeds = com.nexonic.downloadmanager.core.Feeds.toJson(feeds) }
+
+    /** Checks the feeds that are due (or all), adding each new matching file; torrents open in the Add Torrent window. */
+    fun checkFeeds(all: Boolean = false, done: (() -> Unit)? = null) {
+        if (!::app.isInitialized || checkingFeeds) return
+        val due = synchronized(this) { feeds.filter { it.enabled && (all || com.nexonic.downloadmanager.core.Feeds.due(it)) } }
+        if (due.isEmpty()) { done?.let { d -> main.post { d() } }; return }
+        checkingFeeds = true
+        Thread {
+            try {
+                for (f in due) {
+                    try {
+                        val url = java.net.URL(f.url)
+                        if (!Links.isWebLink(f.url)) throw java.io.IOException("The feed address must start with http:// or https://")
+                        val c = (Net.opener?.invoke(url) ?: url.openConnection()) as java.net.HttpURLConnection
+                        val xml = try {
+                            c.connectTimeout = 30_000; c.readTimeout = 60_000; c.setRequestProperty("User-Agent", "NexonicDownloadManager")
+                            if (c.responseCode !in 200..299) throw java.io.IOException("HTTP ${c.responseCode}")
+                            c.inputStream.use { it.readBytes() }.also { if (it.size > 16 * 1024 * 1024) throw java.io.IOException("The feed is too large.") }
+                        } finally { c.disconnect() }
+                        val items = synchronized(this) { com.nexonic.downloadmanager.core.Feeds.check(f, xml) }
+                        for (i in items) {
+                            if (i.link.startsWith("magnet:?", true) || i.link.substringBefore('?').endsWith(".torrent", true)) {
+                                if (feedTorrent.value == null) feedTorrent.value = i.link
+                                continue
+                            }
+                            val req = DownloadRequest(i.link)
+                            val probe = runCatching { com.nexonic.downloadmanager.core.Http.probe(req) }.getOrNull()
+                            add(NewDownload(url = i.link, fileName = probe?.fileName ?: FileNames.fromUrl(i.link), size = probe?.size ?: i.size,
+                                resumable = probe?.resumable ?: false, mime = probe?.contentType), startNow = true)
+                        }
+                    } catch (e: Exception) {
+                        synchronized(this) { f.lastChecked = System.currentTimeMillis(); f.lastResult = "Check failed: ${e.message}" }
+                    }
+                }
+                saveFeeds()
+            } finally {
+                checkingFeeds = false
+                done?.let { d -> main.post { d() } }
+            }
+        }.start()
+    }
+
+    // ---- Debrid (Settings → Debrid service): your own key, kept encrypted with the other secrets ----
+
+    private const val DEBRID_KEY_ID = Long.MIN_VALUE
+    var debridKey: String
+        get() = secrets.get(DEBRID_KEY_ID).password.orEmpty()
+        set(v) { if (v.isBlank()) secrets.remove(DEBRID_KEY_ID) else secrets.put(DEBRID_KEY_ID, Secrets(password = v.trim())) }
+    private val debridService get() = runCatching { com.nexonic.downloadmanager.core.DebridService.valueOf(settings.debridService) }
+        .getOrDefault(com.nexonic.downloadmanager.core.DebridService.NONE)
+
+    /** The direct link from the debrid service, for the sites listed in Settings only. */
+    private fun debridLink(url: String): String {
+        val r = com.nexonic.downloadmanager.core.Debrid.request(debridService, debridKey, url)
+        val c = (Net.opener?.invoke(java.net.URL(r.url)) ?: java.net.URL(r.url).openConnection()) as java.net.HttpURLConnection
+        try {
+            c.requestMethod = "POST"; c.doOutput = true; c.connectTimeout = 30_000; c.readTimeout = 60_000
+            c.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+            r.bearer?.let { c.setRequestProperty("Authorization", "Bearer $it") }
+            c.outputStream.use { it.write(com.nexonic.downloadmanager.core.Debrid.formBody(r.form).toByteArray()) }
+            val body = (if (c.responseCode < 400) c.inputStream else c.errorStream)?.use { it.readBytes().toString(Charsets.UTF_8) }.orEmpty()
+            return com.nexonic.downloadmanager.core.Debrid.parseAnswer(debridService, body)
+        } finally { c.disconnect() }
+    }
+
+    private fun startTransfer(item: DownloadItem, direct: String? = null) {
         if (item.isVideo) return startVideo(item)
         if (item.isTorrent) return startTorrent(item)
         val id = item.id
+        if (direct == null && com.nexonic.downloadmanager.core.Debrid.applies(item.url, debridService, debridKey, settings.debridHosts)) {
+            // A fresh direct link on every start, so a resume never uses an expired one.
+            update(id) { it.copy(status = Status.DOWNLOADING, error = null) }
+            Thread {
+                val link = runCatching { debridLink(item.url) }
+                main.post {
+                    val now = get(id) ?: return@post
+                    if (now.status != Status.DOWNLOADING || id in transfers) return@post
+                    link.fold({ startTransfer(now, it) }, { e -> update(id) { it.copy(status = Status.FAILED, error = e.message, speed = 0) }; pump() })
+                }
+            }.start()
+            return
+        }
         val s = secrets.get(id)
-        val request = DownloadRequest(item.url, s.cookies, item.referer, item.userAgent, s.user, s.password)
+        // The site's cookies and login never go to the debrid service's link.
+        val request = if (direct != null) DownloadRequest(direct, null, item.referer, item.userAgent)
+            else DownloadRequest(item.url, s.cookies, item.referer, item.userAgent, s.user, s.password)
         val listener = object : TransferListener {
             override fun progress(state: TransferState, bytesPerSecond: Long) {
                 update(id, save = false) {

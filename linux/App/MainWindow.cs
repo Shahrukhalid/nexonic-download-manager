@@ -50,6 +50,7 @@ public sealed class MainWindow : Window
     {
         this.manager = manager;
         HiddenColumns = new(manager.Settings.HiddenListColumns);
+        Display = LoadOrder(manager.Settings.ColumnLayout);
         Title = "Nexonic Download Manager";
         Icon = Ui.WindowIcon;
         Width = 1180;
@@ -458,7 +459,37 @@ public sealed class MainWindow : Window
 
     /// <summary>Columns turned off under View → Columns (they get no width).</summary>
     internal static HashSet<string> HiddenColumns = new(ListColumns.HiddenByDefault);
-    static string Columns => string.Join(",", Headers.Select(h => HiddenColumns.Contains(h.Key) ? "0" : h.Width));
+    static string Columns => string.Join(",", Enumerable.Range(0, Headers.Length)
+        .Select(pos => Headers[Array.IndexOf(Display, pos)]).Select(h => HiddenColumns.Contains(h.Key) ? "0" : h.Width));
+
+    /// <summary>Where each column is shown: Display[column] = place from the left. The file name always stays first.</summary>
+    internal static int[] Display = Enumerable.Range(0, Headers.Length).ToArray();
+
+    /// <summary>The saved order (same setting as the Windows app), or the default when it doesn't fit these columns.</summary>
+    static int[] LoadOrder(string? saved)
+    {
+        var parsed = ColumnLayout.Parse(saved);
+        var order = Enumerable.Range(0, Headers.Length).Select(i => parsed.TryGetValue(i.ToString(), out var v) ? v.Index : -1).ToArray();
+        return parsed.Count == Headers.Length && order[0] == 0 && order.OrderBy(x => x).SequenceEqual(Enumerable.Range(0, Headers.Length))
+            ? order : Enumerable.Range(0, Headers.Length).ToArray();
+    }
+
+    /// <summary>Moves a column one place left (-1) or right (+1), or back to the default order (0), and saves it.</summary>
+    void MoveColumn(int column, int step)
+    {
+        if (step == 0) Display = Enumerable.Range(0, Headers.Length).ToArray();
+        else
+        {
+            var target = Display[column] + step;
+            if (column == 0 || target < 1 || target >= Headers.Length) return;
+            var other = Array.IndexOf(Display, target);
+            (Display[column], Display[other]) = (target, Display[column]);
+        }
+        manager.Settings.ColumnLayout = ColumnLayout.Format(Headers.Select((_, i) => (i.ToString(), Display[i], 0.0)));
+        manager.ApplySettings(manager.Settings);
+        headerBox.Child = HeaderGrid();
+        Refilter(force: true);
+    }
 
     readonly Border headerBox = new() { BorderBrush = Ui.Line, BorderThickness = new Thickness(0, 0, 0, 1) };
 
@@ -489,11 +520,32 @@ public sealed class MainWindow : Window
                     if (child.Content is TextBlock tb) tb.Text = Headers[idx].Title + (sortKey == Headers[idx].Key ? (sortDescending ? "  ▾" : "  ▴") : "");
                 Refilter(force: true);
             };
-            Grid.SetColumn(b, i);
+            Grid.SetColumn(b, Display[i]);
             b.IsVisible = !HiddenColumns.Contains(key);
+            if (i > 0)
+            {
+                // Right-click a column title to move it (the file name stays first).
+                var column = i;
+                b.ContextMenu = new ContextMenu
+                {
+                    ItemsSource = new[]
+                    {
+                        HeaderItem("Move Column Left", () => MoveColumn(column, -1)),
+                        HeaderItem("Move Column Right", () => MoveColumn(column, 1)),
+                        HeaderItem("Reset Column Order", () => MoveColumn(column, 0)),
+                    },
+                };
+            }
             g.Children.Add(b);
         }
         return g;
+    }
+
+    static MenuItem HeaderItem(string header, Action click)
+    {
+        var m = new MenuItem { Header = header };
+        m.Click += (_, _) => click();
+        return m;
     }
 
     /// <summary>View → Columns: the list's extra columns, on or off (saved with the settings).</summary>
@@ -535,14 +587,15 @@ public sealed class MainWindow : Window
         TextBlock Cell(int column)
         {
             var t = new TextBlock { VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, Margin = new Thickness(6, 0), FontSize = 13 };
-            Grid.SetColumn(t, column);
+            Grid.SetColumn(t, Display[column]);
             g.Children.Add(t);
             return t;
         }
+        Grid.SetColumn(nameCell, Display[0]);
         g.Children.Add(nameCell);
         var size = Cell(1);
         var progress = new ProgressBar { Minimum = 0, Maximum = 100, Height = 8, MinHeight = 8, Margin = new Thickness(6, 0), VerticalAlignment = VerticalAlignment.Center };
-        Grid.SetColumn(progress, 2);
+        Grid.SetColumn(progress, Display[2]);
         g.Children.Add(progress);
         var speed = Cell(3);
         var left = Cell(4);
@@ -551,7 +604,7 @@ public sealed class MainWindow : Window
         var statusText = new TextBlock { VerticalAlignment = VerticalAlignment.Center, FontSize = 13 };
         statusPanel.Children.Add(dot);
         statusPanel.Children.Add(statusText);
-        Grid.SetColumn(statusPanel, 5);
+        Grid.SetColumn(statusPanel, Display[5]);
         g.Children.Add(statusPanel);
         var queue = Cell(6);
         var added = Cell(7);
@@ -559,7 +612,7 @@ public sealed class MainWindow : Window
         var folder = Cell(9);
         var resume = Cell(10);
         foreach (var c in g.Children)
-            if (Grid.GetColumn(c) is var i && i > 0 && HiddenColumns.Contains(Headers[i].Key)) c.IsVisible = false;
+            if (Array.IndexOf(Display, Grid.GetColumn(c)) is var i && i > 0 && HiddenColumns.Contains(Headers[i].Key)) c.IsVisible = false;
         string lastName = "";
         void Update()
         {
