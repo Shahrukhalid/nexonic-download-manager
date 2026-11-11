@@ -26,6 +26,7 @@ public sealed class ColorScheme
         new() { Name = "Ocean", Base = "dark", Background = "#0E1A24", Panel = "#13222F", Text = "#E3EEF7", Muted = "#9DB4C7", Accent = "#3AA0F2", Line = "#24384A", Selected = "#1C3D5C" },
         new() { Name = "Forest", Base = "light", Background = "#F4F8F3", Panel = "#FFFFFF", Text = "#1D2B1F", Muted = "#4E6352", Accent = "#2E7D32", Line = "#DCE6DA", Selected = "#D8EBD6" },
         new() { Name = "Midnight", Base = "dark", Background = "#0B0B10", Panel = "#14141C", Text = "#EDEDF5", Muted = "#A3A3B8", Accent = "#8B7CF6", Line = "#26263A", Selected = "#2A2547" },
+        new() { Name = "OLED Black", Base = "dark", Background = "#000000", Panel = "#080808", Text = "#FFFFFF", Muted = "#A0A0A0", Accent = "#00B0FF", Line = "#222222", Selected = "#002844" },
         new() { Name = "High Contrast", Base = "dark", Background = "#000000", Panel = "#000000", Text = "#FFFFFF", Muted = "#E0E0E0", Accent = "#FFD400", Line = "#FFFFFF", Selected = "#003C8F" },
     };
 

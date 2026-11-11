@@ -39,6 +39,8 @@ public sealed partial class DownloadManager
     public event Action<string>? ClipboardLink;
     public event Action? QuitRequested;
     public void RequestQuit() => QuitRequested?.Invoke();
+    /// <summary>When a queue completes with a post-queue action (sleep or shutdown), prompts with a countdown cancel dialog.</summary>
+    public event Action<DownloadQueue, AfterQueue, Action>? PowerActionPrompt;
     /// <summary>A link clicked in the browser that should open the download window.</summary>
     public event Action<DownloadJob>? DownloadDialogRequested;
     public event Action<Row>? ProgressRequested;
@@ -610,10 +612,9 @@ public sealed partial class DownloadManager
         catch (Exception x) when (x is InvalidOperationException or IOException or UriFormatException) { System.Media.SystemSounds.Asterisk.Play(); }
     }
 
-    void AfterQueue(DownloadQueue q)
+    void ExecuteAfterQueue(DownloadQueue q, AfterQueue action)
     {
-        PlaySound(Sounds.Event.QueueDone);
-        switch (q.AfterDone)
+        switch (action)
         {
             case Nexonic.Core.AfterQueue.Quit:
                 Save();
@@ -628,6 +629,20 @@ public sealed partial class DownloadManager
                 Notify?.Invoke("Queue finished", $"{q.Name} is done. Windows shuts down in one minute (shutdown /a cancels).");
                 try { Process.Start(new ProcessStartInfo("shutdown", "/s /t 60") { CreateNoWindow = true, UseShellExecute = false }); } catch { }
                 break;
+        }
+    }
+
+    void AfterQueue(DownloadQueue q)
+    {
+        PlaySound(Sounds.Event.QueueDone);
+        if (q.AfterDone == Nexonic.Core.AfterQueue.Nothing) return;
+        if (PowerActionPrompt != null)
+        {
+            PowerActionPrompt(q, q.AfterDone, () => ExecuteAfterQueue(q, q.AfterDone));
+        }
+        else
+        {
+            ExecuteAfterQueue(q, q.AfterDone);
         }
     }
 

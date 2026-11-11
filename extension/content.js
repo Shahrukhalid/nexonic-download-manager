@@ -192,4 +192,15 @@
   };
   addEventListener("scroll", placeSoon, { capture: true, passive: true });
   addEventListener("resize", placeSoon, { passive: true });
+
+  // Holding Alt while clicking any link tells the extension to let the browser download natively
+  window.addEventListener(
+    "click",
+    (e) => {
+      if (e.altKey) {
+        try { chrome.runtime.sendMessage({ type: "bypassInterception" }); } catch (_) {}
+      }
+    },
+    true,
+  );
 })();

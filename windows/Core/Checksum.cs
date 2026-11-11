@@ -50,6 +50,35 @@ public static class Checksum
         return Convert.ToHexString(h.ComputeHash(f)).ToLowerInvariant();
     }
 
+    /// <summary>Calculates MD5, SHA-1, SHA-256 and SHA-512 in a single stream pass.</summary>
+    public static (string Md5, string Sha1, string Sha256, string Sha512) ComputeAll(string path)
+    {
+        using var md5 = MD5.Create();
+        using var sha1 = SHA1.Create();
+        using var sha256 = SHA256.Create();
+        using var sha512 = SHA512.Create();
+        using var stream = File.OpenRead(path);
+        var buffer = new byte[64 * 1024];
+        int read;
+        while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            md5.TransformBlock(buffer, 0, read, null, 0);
+            sha1.TransformBlock(buffer, 0, read, null, 0);
+            sha256.TransformBlock(buffer, 0, read, null, 0);
+            sha512.TransformBlock(buffer, 0, read, null, 0);
+        }
+        md5.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
+        sha1.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
+        sha256.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
+        sha512.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
+        return (
+            Convert.ToHexString(md5.Hash!).ToLowerInvariant(),
+            Convert.ToHexString(sha1.Hash!).ToLowerInvariant(),
+            Convert.ToHexString(sha256.Hash!).ToLowerInvariant(),
+            Convert.ToHexString(sha512.Hash!).ToLowerInvariant()
+        );
+    }
+
     /// <summary>"SHA-256 matches" or "SHA-256 does not match (got …)".</summary>
     public static string Verify(string expected, string path)
     {

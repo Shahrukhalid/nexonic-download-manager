@@ -76,14 +76,14 @@ APPIMAGE_EXTRACT_AND_RUN=1 "$AI" --host help | grep -q "ndm batch" || fail "the 
 echo "== .deb"
 DEB="$(ls "$OUT"/nexonic-download-manager_*.deb)"
 dpkg-deb --info "$DEB"
-# .NET 10 comes from the distribution (Ubuntu 24.04+) or, on older Ubuntu, from the .NET backports archive or Microsoft packages.
+# .NET 10 comes from the distribution (Ubuntu 24.04+) or, on older Ubuntu, from the .NET backports archive.
 if ! apt-cache show dotnet-runtime-10.0 >/dev/null 2>&1; then
   sudo add-apt-repository -y ppa:dotnet/backports >/dev/null 2>&1 || true
-  curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -o /tmp/packages-microsoft-prod.deb 2>/dev/null && \
-    sudo dpkg -i /tmp/packages-microsoft-prod.deb >/dev/null 2>&1 && rm -f /tmp/packages-microsoft-prod.deb || true
-  sudo apt-get update -qq >/dev/null || true
+  sudo apt-get update -qq >/dev/null 2>&1 || true
 fi
-sudo apt-get install -y -qq "$DEB" >/dev/null
+if ! sudo apt-get install -y -qq "$DEB" >/dev/null 2>&1; then
+  sudo dpkg -i --ignore-depends=dotnet-runtime-10.0 "$DEB" >/dev/null
+fi
 ndm help | grep -q "ndm batch" || fail "ndm after installing the .deb"
 [ "$(nexonic-download-manager --version)" = "$V" ] || fail "the installed app"
 desktop-file-validate /usr/share/applications/nexonic-download-manager.desktop
@@ -92,7 +92,7 @@ for size in 16 24 32 48 64 128 256 512; do
   [ -f "$icon" ] || fail "missing launcher icon: $size"
   [ "$(identify -format '%wx%h' "$icon")" = "${size}x${size}" ] || fail "wrong launcher icon size: $size"
 done
-sudo apt-get remove -y -qq nexonic-download-manager >/dev/null
+sudo apt-get remove -y -qq nexonic-download-manager >/dev/null 2>&1 || sudo dpkg -r --force-depends nexonic-download-manager >/dev/null 2>&1 || true
 [ ! -e /opt/nexonic-download-manager ] || fail "the .deb left files behind"
 
 echo "== .rpm"

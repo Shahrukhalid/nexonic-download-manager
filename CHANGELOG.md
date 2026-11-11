@@ -1,3 +1,22 @@
+## 0.30.0
+
+**Checksum verification and file integrity** (Windows, Linux, Mac)
+- Dedicated Checksum verification tool (Tasks → Verify Checksum or right-click any download): calculate MD5, SHA-1,
+  SHA-256 and SHA-512 hashes in parallel on any file.
+- Automatic algorithm detection from clipboard input (32, 40, 64 or 128 hex digits) with real-time match/mismatch status indicators.
+- One-click copy buttons for every computed hash algorithm.
+
+**Queue completion safety alert** (Windows)
+- Safety countdown window (30 seconds) before automatic shutdown, sleep or app exit when a scheduled queue finishes.
+- Prominent Cancel button to prevent loss of unsaved work when at the computer, with optional immediate action button.
+
+**Browser controls** (Chrome, Edge, Brave, Opera, Firefox)
+- Modifier key bypass: hold Alt while clicking any link to bypass Nexonic and download directly in the browser.
+
+**Appearance and archive extraction**
+- OLED Black theme: true pitch-black theme (#000000) for OLED/HDR displays and high-contrast environments.
+- Password-protected archive extraction: unpack password-encrypted archives with automatic password handling.
+
 ## 0.29.0
 
 **Profile Batch** (Windows, Linux, Mac, Android): paste a public profile, channel or playlist link and the app lists its

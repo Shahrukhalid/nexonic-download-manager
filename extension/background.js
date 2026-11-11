@@ -66,6 +66,7 @@ async function showStatus(ok) {
 const handedOver = new Map(); // link -> time, so one click is never sent to the app twice
 
 chrome.downloads.onCreated.addListener(async (item) => {
+  if (Date.now() < bypassUntil) return;
   if (!shouldTakeOver(item, await settings())) return;
   try {
     await chrome.downloads.pause(item.id);
@@ -242,12 +243,18 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 
 // ---- Messages from the popup and the page button ----
 
+let bypassUntil = 0;
+
 chrome.runtime.onMessage.addListener((msg, sender, respond) => {
   // A page's own script only ever speaks for its own tab; only the popup (no sender.tab) may name a tab.
   const tabId = sender.tab ? sender.tab.id : msg.tabId;
   const referrer = msg.referrer || (sender.tab && sender.tab.url) || "";
   const run = async () => {
     switch (msg && msg.type) {
+      case "bypassInterception": {
+        bypassUntil = Date.now() + 6000;
+        return { ok: true };
+      }
       case "send-link": {
         // One link the user picked (video button, popup, page menu): the app shows its download window.
         const extra = { referrer, later: !!msg.later, browser: true };

@@ -12,6 +12,7 @@ COPY linux/Directory.Build.props linux/
 COPY linux/Desktop linux/Desktop
 COPY linux/Server linux/Server
 COPY scripts/fetch-video-tools.sh scripts/
+RUN (for i in 1 2 3; do apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && break || sleep 3; done) && rm -rf /var/lib/apt/lists/*
 RUN case "$TARGETARCH" in arm64) RID=linux-arm64 ;; *) RID=linux-x64 ;; esac \
  && dotnet publish linux/Server/Server.csproj -c Release -r "$RID" --self-contained false -p:Version="$(cat VERSION)" \
       -p:DebugType=embedded -o /app -nologo \
@@ -21,7 +22,7 @@ RUN case "$TARGETARCH" in arm64) RID=linux-arm64 ;; *) RID=linux-x64 ;; esac \
 
 FROM mcr.microsoft.com/dotnet/runtime:10.0@sha256:4f1f30cf0bb4ab0c8b2daa84613051683456f8df4a9bf7c812e20d74962992ac
 # ffmpeg joins the parts of streamed videos (Debian's package; its source is in Debian's archive).
-RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg ca-certificates && rm -rf /var/lib/apt/lists/* \
+RUN (for i in 1 2 3; do apt-get update && apt-get install -y --no-install-recommends ffmpeg ca-certificates && break || sleep 3; done) && rm -rf /var/lib/apt/lists/* \
  && mkdir -p /data /downloads && chown app:app /data /downloads
 COPY --from=build /app /app
 COPY LICENSE LICENSE-APACHE packaging/THIRD-PARTY-NOTICES.txt /app/

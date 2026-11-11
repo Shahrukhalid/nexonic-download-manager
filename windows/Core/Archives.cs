@@ -29,20 +29,23 @@ public static class Archives
     }
 
     /// <summary>Unpacks any supported archive (see IsArchive) into a new folder; returns the folder.</summary>
-    public static string Extract(string path) =>
-        string.Equals(Path.GetExtension(path), ".zip", StringComparison.OrdinalIgnoreCase) ? ExtractZip(path) : ExtractOther(path);
+    public static string Extract(string path, string? password = null) =>
+        string.IsNullOrEmpty(password) && string.Equals(Path.GetExtension(path), ".zip", StringComparison.OrdinalIgnoreCase)
+            ? ExtractZip(path)
+            : ExtractOther(path, password);
 
-    static string ExtractOther(string path)
+    static string ExtractOther(string path, string? password = null)
     {
         var folder = FolderFor(path);
         var root = Path.GetFullPath(folder) + Path.DirectorySeparatorChar;
         var name = Path.GetFileName(path).ToLowerInvariant();
         var tar = name.EndsWith(".7z") || name.EndsWith(".rar") ? null : File.OpenRead(path);
+        var readerOptions = string.IsNullOrEmpty(password) ? new ReaderOptions() : new ReaderOptions { Password = password };
         // .tar (.gz, .bz2, .xz) is read in one pass; 7z and RAR (also split RAR sets) through their archive index.
-        using var archive = tar == null ? ArchiveFactory.OpenArchive(new FileInfo(path)) : null;
-        if (archive != null && archive.Entries.Any(e => e.IsEncrypted)) throw new InvalidDataException("The archive needs a password; unpack it yourself.");
+        using var archive = tar == null ? ArchiveFactory.OpenArchive(new FileInfo(path), readerOptions) : null;
+        if (archive != null && string.IsNullOrEmpty(password) && archive.Entries.Any(e => e.IsEncrypted)) throw new InvalidDataException("The archive needs a password.");
         if (archive != null && archive.Entries.Sum(e => Math.Max(0, e.Size)) > MaxUnpackedBytes) throw new InvalidDataException("The archive unpacks to more than 64 GB.");
-        using var reader = archive?.ExtractAllEntries() ?? ReaderFactory.OpenReader(tar!);
+        using var reader = archive?.ExtractAllEntries() ?? ReaderFactory.OpenReader(tar!, readerOptions);
         Directory.CreateDirectory(folder);
         long written = 0;
         try
@@ -51,7 +54,7 @@ public static class Archives
             {
                 var e = reader.Entry;
                 if (e.Key is not { Length: > 0 } key) continue;
-                if (e.IsEncrypted) throw new InvalidDataException("The archive needs a password; unpack it yourself.");
+                if (e.IsEncrypted && string.IsNullOrEmpty(password)) throw new InvalidDataException("The archive needs a password.");
                 var target = Path.GetFullPath(Path.Combine(folder, key.Replace('\\', '/')));
                 if (!target.StartsWith(root, StringComparison.Ordinal)) continue; // "../" tricks
                 if (e.IsDirectory) { Directory.CreateDirectory(target); continue; }

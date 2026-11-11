@@ -74,6 +74,7 @@
         <MenuItem Header="Add _Torrent…" InputGestureText="Ctrl+Shift+T" Click="OnTorrents" />
         <MenuItem Header="Add _Batch Download…" InputGestureText="Ctrl+Shift+B" Click="OnBatch" />
         <MenuItem Header="Open _Metalink File…" Click="OnMetalink" ToolTip="A .meta4 or .metalink file: each file is downloaded from all its mirrors at once and checked when done" />
+        <MenuItem Header="Verify _Checksum…" InputGestureText="Ctrl+Shift+C" Click="OnChecksum" ToolTip="Calculate and compare file checksums (MD5, SHA-1, SHA-256, SHA-512)" />
         <MenuItem Header="Site _Grabber…" InputGestureText="Ctrl+Shift+G" Click="OnGrabber" />
         <MenuItem Header="_Link Grabber…" InputGestureText="Ctrl+Shift+K" Click="OnLinkGrabber" />
         <MenuItem Header="Download _Images from Page…" InputGestureText="Ctrl+Shift+I" Click="OnGallery" />
@@ -223,6 +224,7 @@
               <MenuItem Header="Copy as cURL" Click="OnCopyCurl" ToolTip="A command that fetches the same file elsewhere, with its cookies and login: share it with care" />
               <MenuItem Header="Check Server…" Click="OnDiagnostics" />
               <MenuItem Header="Show QR Code…" Click="OnShowQr" />
+              <MenuItem Header="Verify Checksum…" Click="OnChecksum" />
               <MenuItem x:Name="MoveMenu" Header="Move to Queue" />
               <Separator />
               <MenuItem Header="Delete…" Click="OnRemove" />

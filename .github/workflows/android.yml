@@ -20,9 +20,10 @@ jobs:
       - name: Native build tools
         timeout-minutes: 15
         run: |
+          echo "nameserver 8.8.8.8" | sudo tee -a /etc/resolv.conf >/dev/null
           for try in 1 2 3; do
-            timeout 300 sudo apt-get update -qq && timeout 400 sudo apt-get install -y -qq ninja-build pkg-config autoconf automake libtool && exit 0
-            sleep 20
+            timeout 120 sudo apt-get update -qq && timeout 180 sudo apt-get install -y -qq ninja-build pkg-config autoconf automake libtool && exit 0
+            sleep 5
           done
           exit 1
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

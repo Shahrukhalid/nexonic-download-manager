@@ -34,6 +34,10 @@ public class FeatureTests
         Assert.Null(Checksum.Parse("hello"));
         var file = Path.GetTempFileName();
         File.WriteAllBytes(file, abc);
+        var all = Checksum.ComputeAll(file);
+        Assert.Equal("900150983cd24fb0d6963f7d28e17f72", all.Md5);
+        Assert.Equal("a9993e364706816aba3e25717850c26c9cd0d89d", all.Sha1);
+        Assert.Equal("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", all.Sha256);
         Assert.Equal("MD5 matches", Checksum.Verify("900150983cd24fb0d6963f7d28e17f72", file));
         File.Delete(file);
     }

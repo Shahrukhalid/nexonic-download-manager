@@ -74,6 +74,7 @@ public partial class App : Application
         menu.Add(watchClip);
         menu.Add(new System.Windows.Controls.Separator());
         menu.Add(TrayIcon.Item(L.T("Quit"), () => Quit(manager)));
+        manager.PowerActionPrompt += (q, act, exec) => Dispatcher.Invoke(() => Dialogs.PowerCountdown(window!, q, act, exec));
         manager.Notify += (title, body) =>
         {
             if (manager.Settings.Notifications) tray.Balloon(title, body);

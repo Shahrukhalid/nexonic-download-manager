@@ -1243,4 +1243,233 @@ public static partial class Dialogs
         w.Content = p;
         w.Show();
     }
+
+    public static void PowerCountdown(Window owner, DownloadQueue q, AfterQueue action, Action execute)
+    {
+        var actionName = action switch
+        {
+            AfterQueue.Sleep => "sleep",
+            AfterQueue.ShutDown => "shut down",
+            AfterQueue.Quit => "quit",
+            _ => "finish",
+        };
+        var w = new Window
+        {
+            Title = "Queue Completed",
+            Width = 440,
+            SizeToContent = SizeToContent.Height,
+            ResizeMode = ResizeMode.NoResize,
+            WindowStartupLocation = WindowStartupLocation.CenterScreen,
+            Topmost = true,
+            ShowActivated = true,
+        };
+        var p = new StackPanel { Margin = new Thickness(20) };
+        p.Children.Add(new TextBlock { Text = $"Queue '{q.Name}' Finished", FontSize = 16, FontWeight = FontWeights.SemiBold });
+        var msg = new TextBlock
+        {
+            Text = $"All downloads completed. The computer will {actionName} in 30 seconds.",
+            Margin = new Thickness(0, 8, 0, 12),
+            TextWrapping = TextWrapping.Wrap,
+        };
+        p.Children.Add(msg);
+
+        var countdownText = new TextBlock
+        {
+            Text = "30",
+            FontSize = 32,
+            FontWeight = FontWeights.Bold,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x09, 0x69, 0xDA)),
+            Margin = new Thickness(0, 0, 0, 14),
+        };
+        p.Children.Add(countdownText);
+
+        var buttons = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Center };
+        var cancelBtn = new Button
+        {
+            Content = $"Cancel {char.ToUpper(actionName[0])}{actionName[1..]}",
+            MinWidth = 120,
+            Padding = new Thickness(14, 6, 14, 6),
+            Margin = new Thickness(4),
+            IsCancel = true,
+        };
+        var nowBtn = new Button
+        {
+            Content = $"{char.ToUpper(actionName[0])}{actionName[1..]} Now",
+            MinWidth = 100,
+            Padding = new Thickness(14, 6, 14, 6),
+            Margin = new Thickness(4),
+            IsDefault = true,
+        };
+        buttons.Children.Add(cancelBtn);
+        buttons.Children.Add(nowBtn);
+        p.Children.Add(buttons);
+        w.Content = p;
+
+        var seconds = 30;
+        var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        timer.Tick += (_, _) =>
+        {
+            seconds--;
+            countdownText.Text = seconds.ToString();
+            msg.Text = $"All downloads completed. The computer will {actionName} in {seconds} seconds.";
+            if (seconds <= 0)
+            {
+                timer.Stop();
+                w.Close();
+                execute();
+            }
+        };
+
+        cancelBtn.Click += (_, _) =>
+        {
+            timer.Stop();
+            if (action == AfterQueue.ShutDown)
+            {
+                try { Process.Start(new ProcessStartInfo("shutdown", "/a") { CreateNoWindow = true, UseShellExecute = false }); } catch { }
+            }
+            w.Close();
+        };
+
+        nowBtn.Click += (_, _) =>
+        {
+            timer.Stop();
+            w.Close();
+            execute();
+        };
+
+        w.Closed += (_, _) => timer.Stop();
+        timer.Start();
+        w.Show();
+    }
+
+    public static void VerifyChecksumDialog(Window owner, string? filePath = null, string? expectedHash = null)
+    {
+        var f = new Form(owner, "Verify File Checksum", 580);
+        f.Note("Calculate cryptographic hashes (MD5, SHA-1, SHA-256, SHA-512) and compare against an expected checksum.");
+
+        var pathBox = new TextBox { Text = filePath ?? "", Padding = new Thickness(4, 3, 4, 3) };
+        var browseBtn = new Button { Content = "Browse…", Padding = new Thickness(10, 2, 10, 2), Margin = new Thickness(6, 0, 0, 0) };
+        var pathRow = new DockPanel();
+        DockPanel.SetDock(browseBtn, Dock.Right);
+        pathRow.Children.Add(browseBtn);
+        pathRow.Children.Add(pathBox);
+        f.Field("File path", pathRow);
+
+        browseBtn.Click += (_, _) =>
+        {
+            var d = new Microsoft.Win32.OpenFileDialog { Title = "Select file to verify" };
+            if (d.ShowDialog(f.Window) == true)
+            {
+                pathBox.Text = d.FileName;
+            }
+        };
+
+        TextBox HashRow(string label, out Button copyBtn)
+        {
+            var t = new TextBox { IsReadOnly = true, Padding = new Thickness(4, 3, 4, 3), FontFamily = new FontFamily("Consolas") };
+            var b = new Button { Content = "Copy", Padding = new Thickness(10, 2, 10, 2), Margin = new Thickness(6, 0, 0, 0) };
+            b.Click += (_, _) => { if (!string.IsNullOrEmpty(t.Text)) Clipboard.SetText(t.Text); };
+            var dock = new DockPanel();
+            DockPanel.SetDock(b, Dock.Right);
+            dock.Children.Add(b);
+            dock.Children.Add(t);
+            f.Field(label, dock);
+            copyBtn = b;
+            return t;
+        }
+
+        var md5Box = HashRow("MD5", out _);
+        var sha1Box = HashRow("SHA-1", out _);
+        var sha256Box = HashRow("SHA-256", out _);
+        var sha512Box = HashRow("SHA-512", out _);
+
+        var expectedBox = f.Text("Expected Checksum (from website or clipboard)", expectedHash ?? "");
+        var statusBlock = new TextBlock
+        {
+            FontWeight = FontWeights.SemiBold,
+            FontSize = 13,
+            Margin = new Thickness(0, 8, 0, 8),
+            TextWrapping = TextWrapping.Wrap,
+        };
+        f.Body.Children.Add(statusBlock);
+
+        void UpdateComparison()
+        {
+            var exp = expectedBox.Text.Trim();
+            if (string.IsNullOrEmpty(exp))
+            {
+                statusBlock.Text = "Paste or type an expected checksum to compare.";
+                statusBlock.Foreground = Muted;
+                return;
+            }
+            var parsed = Nexonic.Core.Checksum.Parse(exp);
+            if (parsed == null)
+            {
+                statusBlock.Text = "Not a recognized hash format (expected 32, 40, 64 or 128 hex characters).";
+                statusBlock.Foreground = Brushes.Firebrick;
+                return;
+            }
+            var (algo, hex) = parsed.Value;
+            var actual = algo switch
+            {
+                ChecksumAlgorithm.Md5 => md5Box.Text,
+                ChecksumAlgorithm.Sha1 => sha1Box.Text,
+                ChecksumAlgorithm.Sha256 => sha256Box.Text,
+                _ => sha512Box.Text,
+            };
+            if (string.IsNullOrEmpty(actual) || actual == "Calculating…")
+            {
+                statusBlock.Text = "Waiting for hash calculation to finish…";
+                statusBlock.Foreground = Muted;
+                return;
+            }
+            if (string.Equals(actual, hex, StringComparison.OrdinalIgnoreCase))
+            {
+                statusBlock.Text = $"✔ MATCH: {Nexonic.Core.Checksum.Name(algo)} matches expected checksum!";
+                statusBlock.Foreground = Brushes.SeaGreen;
+            }
+            else
+            {
+                statusBlock.Text = $"✖ MISMATCH: {Nexonic.Core.Checksum.Name(algo)} does not match.";
+                statusBlock.Foreground = Brushes.Firebrick;
+            }
+        }
+
+        async void CalculateHashes(string path)
+        {
+            if (string.IsNullOrEmpty(path) || !File.Exists(path))
+            {
+                md5Box.Text = ""; sha1Box.Text = ""; sha256Box.Text = ""; sha512Box.Text = "";
+                statusBlock.Text = "Select a valid file to verify.";
+                statusBlock.Foreground = Muted;
+                return;
+            }
+            md5Box.Text = "Calculating…"; sha1Box.Text = "Calculating…"; sha256Box.Text = "Calculating…"; sha512Box.Text = "Calculating…";
+            statusBlock.Text = "Calculating hashes…";
+            statusBlock.Foreground = Muted;
+            try
+            {
+                var hashes = await Task.Run(() => Nexonic.Core.Checksum.ComputeAll(path));
+                md5Box.Text = hashes.Md5;
+                sha1Box.Text = hashes.Sha1;
+                sha256Box.Text = hashes.Sha256;
+                sha512Box.Text = hashes.Sha512;
+                UpdateComparison();
+            }
+            catch (Exception ex)
+            {
+                md5Box.Text = "Error"; sha1Box.Text = "Error"; sha256Box.Text = "Error"; sha512Box.Text = "Error";
+                statusBlock.Text = "Could not read file: " + ex.Message;
+                statusBlock.Foreground = Brushes.Firebrick;
+            }
+        }
+
+        pathBox.TextChanged += (_, _) => CalculateHashes(pathBox.Text.Trim());
+        expectedBox.TextChanged += (_, _) => UpdateComparison();
+
+        f.AddButton("Close", f.Close, isCancel: true);
+        if (!string.IsNullOrEmpty(pathBox.Text)) CalculateHashes(pathBox.Text.Trim());
+        f.Show();
+    }
 }
