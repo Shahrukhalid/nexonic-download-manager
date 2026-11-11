@@ -30,7 +30,7 @@
     "e.g. pdf, jpg": "ለምሳሌ pdf, jpg",
     "Keep downloads from these sites in the browser": "ከእነዚህ ጣቢያዎች የወረዱ ፋይሎችን በመቃኘት ላይ ይያዙ",
     "e.g. example.com, files.example.org": "ለምሳሌ example.com, files.example.org",
-    "Keep downloads from {site} in the browser": "Keep downloads from {site} in the browser",
+    "Keep downloads from {site} in the browser": "መተላለፊያውን ከ{site} ውስጥ አስቀምጥ",
     "Language": "ቋንቋ",
     "Same as the browser": "እንደ መቃኛ",
     "Sent": "ላክ",

@@ -308,7 +308,7 @@
 "Network adapter" = "Isixhumi senethiwekhi";
 "Any adapter" = "Nanoma iyiphi i-adaptha";
 "Downloads, videos and torrents use only this adapter (for example your VPN). If it disconnects, downloads stop instead of using another connection." = "Ukulayisha ezantsi, amavidiyo nama-torrents asebenzisa kuphela le-adaptha (njenge-VPN yakho). Uma iqhathaniswa, ukulayisha ngezansi kuyeka endaweni yokusebenzisa enye inxusa.";
-"Torrent blocklist: a file or an https:// address (empty = none)" = "Torrent blocklist: a file or an https:// address (empty = none)";
+"Torrent blocklist: a file or an https:// address (empty = none)" = "Torrent blocklist: a file or a https:// address (empty = none)";
 "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day." = "Ama-torrents angeke axhumeke kumakheli kulolu hlu. P2P, DAT kanye nama-CIDR asebenza, futhi njenge-.gz. Ikheli lilayishwe phansi kabili ngosuku.";
 "The blocklist address must start with https://" = "Ikheli le-blocklist kumele liqale nge-https://";
 "The blocklist file was not found." = "Ihele le-blocklist alitholakali.";

@@ -216,7 +216,7 @@
 "Update Tracker" = "Sledovač aktualizácie";
 "%lld downloading" = "%lld na stiahnutie";
 "%lld queued" = "%lld vo fronte";
-"Limit %lld KB/s" = "Limit %lld KB/s";
+"Limit %lld KB/s" = "Obmedzenie %lld KB/s";
 "%@ left" = "%@ vľavo";
 "Queue: %@" = "Front: %@";
 "Save to: %@" = "Uložiť do: %@";

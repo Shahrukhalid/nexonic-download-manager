@@ -360,7 +360,7 @@
 "Sites whose links go through it (comma separated, e.g. example-host.com)" = "Saịtị nke njikọ ya na-aga n'ime ya (nke e mechichara site na kóm, dịka ọmụmaatụ example-host.com)";
 "Off by default. Uses your own account; links from other sites are never sent to the service. The key is saved in a private file and never in backups." = "Ochie site na dìfọ́ọ̀ltụ̀. Na-eji akaụntụ gị onwe gị; njikọ site n'isiokwu ndị ọzọ anaghị adị mgbe ọbụla na-eziga ya na sava ahụ. Kii a na-echekwa na faịlụ nkeonwe ma ọ bụghị mgbe ọbụla n'ime ebe nchekwa.";
 "RSS Feeds…" = "RSS Feeds…";
-"RSS Feeds" = "RSS Feeds";
+"RSS Feeds" = "Ndesịta ozi ndị ahụ";
 "New items of these feeds are downloaded when their title matches the rule: files and videos, and torrents when torrents are on. A rule lists words that must all be in the title, or a /regular expression/." = "A na-ebubata ihenhọrọ ndị ọfụụ nke ndị a mgbe isiokwu ha na-adaba na iwu ahụ: faịlụ na vidio, nakwa toròntị mgbe toròntị na-arụ ọrụ. Usoro ahụ na-edepụta okwu niile ga-abụ na isiokwu ahụ, mọọbụ /regular expression/.";
 "every item" = "ihenhọrọ ọbụla";
 "not checked yet" = "Enweghị ike inyocha";
