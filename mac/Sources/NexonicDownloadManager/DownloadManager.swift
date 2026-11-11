@@ -119,6 +119,9 @@ final class DownloadManager: ObservableObject {
     private var requeue: Set<UUID> = []
     private var pendingRefresh: [UUID: String?] = [:]
     private var queuesWithWork: Set<String> = []
+    /// Profile Batch: profiles saved to be checked again, and the ones being checked now.
+    @Published var profiles: [SavedProfile] = SavedProfiles.load()
+    var checkingProfiles: Set<String> = []
     private var lastMinute = ""
     private var clipboardCount = NSPasteboard.general.changeCount
     private let limiter = SpeedLimiter()
@@ -451,7 +454,7 @@ final class DownloadManager: ObservableObject {
 
     func queueName(_ id: String) -> String { queues.first { $0.id == id }?.name ?? "Main queue" }
 
-    private func queueID(named name: String) -> String {
+    func queueID(named name: String) -> String {
         if let q = queues.first(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) { return q.id }
         let q = DownloadQueue(name: name, running: true)
         queues.append(q)
@@ -810,6 +813,7 @@ final class DownloadManager: ObservableObject {
         ticks += 1
         if ticks % 60 == 0 { applySpeedLimit() }  // every 30 seconds
         if ticks % 120 == 1 { checkFeeds() }        // feeds that are due, every minute
+        if ticks % 120 == 61 { checkProfiles() }    // saved profiles that are due, every minute
         var s: [UUID: Double] = [:]
         // Averaged over the last 6 seconds: video sites deliver in bursts, so a single tick is often 0.
         for item in items where item.status.isActive {

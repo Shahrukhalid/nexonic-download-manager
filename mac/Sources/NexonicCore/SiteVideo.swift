@@ -135,8 +135,12 @@ public enum SiteVideo {
 
     /// Which picture and sound to fetch. Highest resolution and frame rate first (no higher than `maxHeight` when one
     /// was chosen); at equal quality prefer formats every player opens.
+    /// maxHeight for "Original": the best picture and sound in the site's own formats (no preference for common formats).
+    public static let originalQuality = -1
+
     public static func format(audioOnly: Bool, maxHeight: Int?) -> [String] {
         if audioOnly { return ["-f", "ba[ext=m4a]/ba/b"] }
+        if maxHeight == originalQuality { return ["-f", "bv*+ba/b", "-S", "res,fps,hdr:12", "--merge-output-format", "mp4/mkv"] }
         let res = maxHeight.map { $0 > 0 ? "res:\($0)" : "res" } ?? "res"
         return ["-f", "bv*+ba/b", "-S", "\(res),fps,hdr:12,vcodec:avc,acodec:m4a", "--merge-output-format", "mp4/mkv"]
     }
