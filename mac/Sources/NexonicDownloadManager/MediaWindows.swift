@@ -83,18 +83,24 @@ struct MediaError: LocalizedError {
 }
 
 /// Profile Batch: one link → every video open to everyone there (no login), filtered, downloaded in its own queue.
-private struct ProfileBatchView: View {
+struct ProfileBatchView: View {
     @EnvironmentObject var manager: DownloadManager
     @State var link: String
+
+    init(link: String) { _link = State(initialValue: link) }
+
     @State private var quality = "best"
     @State private var mode = 0  // 0 all, 1 new only, 2 preview
     @State private var autoStart = true
     @State private var ownFolder = true
     @State private var parallel = 2
-    @State private var useFrom = false, useTo = false
-    @State private var from = Date().addingTimeInterval(-30 * 86400), to = Date()
+    @State private var useFrom = false
+    @State private var useTo = false
+    @State private var from = Date().addingTimeInterval(-30 * 86400)
+    @State private var to = Date()
     @State private var keywords = ""
-    @State private var minMinutes = "", maxMinutes = ""
+    @State private var minMinutes = ""
+    @State private var maxMinutes = ""
     @State private var kind = "all"
     @State private var maxCount = ProfileBatch.defaultMax
     @State private var checkHours = 0
@@ -119,7 +125,11 @@ private struct ProfileBatchView: View {
                 .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             TextField("Link", text: $link).textFieldStyle(.roundedBorder).onSubmit(find)
             Form {
-                Picker("Quality", selection: $quality) { ForEach(ProfileBatch.qualities, id: \.key) { Text(LocalizedStringKey($0.title)).tag($0.key) } }
+                Picker("Quality", selection: $quality) {
+                    ForEach(ProfileBatch.qualities.map { $0.key }, id: \.self) { k in
+                        Text(LocalizedStringKey(ProfileBatch.qualities.first { $0.key == k }?.title ?? k)).tag(k)
+                    }
+                }
                 Picker("Download", selection: $mode) {
                     Text("All videos I don't have yet").tag(0)
                     Text("Only new videos (not seen on this profile before)").tag(1)
@@ -228,7 +238,8 @@ private struct ProfileBatchView: View {
                     status = e.localizedDescription
                 case .success(let s):
                     scan = s
-                    let seen = mode == 1 ? manager.profiles.first { ProfileBatch.key($0.url) == ProfileBatch.key(url) }.map { Set($0.seen) } : nil
+                    var seen: Set<String>? = nil
+                    if mode == 1, let p = manager.profiles.first(where: { ProfileBatch.key($0.url) == ProfileBatch.key(url) }) { seen = Set(p.seen) }
                     let (take, counts) = ProfileBatch.choose(s.entries, f, alreadyDownloaded: manager.alreadyDownloaded, seen: seen)
                     if mode == 2 {
                         preview = take; chosen = Set(take.map(\.url))
