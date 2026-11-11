@@ -296,6 +296,11 @@
     "Checked in this order before the built-in types. Sites limit a category to files from those addresses (example.com includes its subdomains; * matches anything).": "Checked in this order before the built-in types. Sites limit a category to files from those addresses (example.com includes its subdomains; * matches anything).",
     "Saved": "Saved",
     "Save Categories": "Save Categories",
-    "Models": "Models"
+    "Models": "Models",
+    "My own": "My own",
+    "Light or dark text and panels for your scheme.": "Light or dark text and panels for your scheme.",
+    "Accent (#RRGGBB)": "Accent (#RRGGBB)",
+    "Background (#RRGGBB)": "Background (#RRGGBB)",
+    "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).": "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed)."
   }
 }
