@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 import CoreServices
 import Foundation
 import NexonicCore
