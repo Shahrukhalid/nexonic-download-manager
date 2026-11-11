@@ -162,6 +162,29 @@ class Settings(context: Context) {
     /** Torrents stay off until the user turns them on (peers and trackers can see the phone's IP address). */
     /** Keep the site's subtitles (phone language and English) inside saved videos. Off by default. */
     var videoSubtitles: Boolean get() = p.getBoolean("videoSubtitles", false); set(v) = p.edit().putBoolean("videoSubtitles", v).apply()
+    // Added in 0.29.0
+    var sizeUnits: String get() = p.getString("sizeUnits", "binary") ?: "binary"; set(v) = p.edit().putString("sizeUnits", v).apply()
+    var speedUnits: String get() = p.getString("speedUnits", "bytes") ?: "bytes"; set(v) = p.edit().putString("speedUnits", v).apply()
+    var dateStyle: String get() = p.getString("dateStyle", "absolute") ?: "absolute"; set(v) = p.edit().putString("dateStyle", v).apply()
+    /** The app's font: "system", "sans", "serif" or "mono"; and the text size in percent (85 to 150). */
+    var appFont: String get() = p.getString("appFont", "system") ?: "system"; set(v) = p.edit().putString("appFont", v).apply()
+    var textScale: Int get() = p.getInt("textScale", 100); set(v) = p.edit().putInt("textScale", v.coerceIn(85, 150)).apply()
+    /** Sound-only video downloads: "original", "mp3", "opus" or "flac". */
+    var audioFormat: String get() = p.getString("audioFormat", "original") ?: "original"; set(v) = p.edit().putString("audioFormat", v).apply()
+    /** Downloads resumed by hand that may run beside the queue (0 = they wait their turn). */
+    var maxManualActive: Int get() = p.getInt("maxManualActive", 0); set(v) = p.edit().putInt("maxManualActive", v.coerceIn(0, 6)).apply()
+    var removeMissingOnStart: Boolean get() = p.getBoolean("removeMissingOnStart", false); set(v) = p.edit().putBoolean("removeMissingOnStart", v).apply()
+    /** Notification sounds: "" = the phone's default, "none" = silent, else a sound's content address. */
+    var soundFinished: String get() = p.getString("soundFinished", "") ?: ""; set(v) = p.edit().putString("soundFinished", v).apply()
+    var soundFailed: String get() = p.getString("soundFailed", "") ?: ""; set(v) = p.edit().putString("soundFailed", v).apply()
+    var notifyVibrate: Boolean get() = p.getBoolean("notifyVibrate", true); set(v) = p.edit().putBoolean("notifyVibrate", v).apply()
+    var quietHours: String get() = p.getString("quietHours", "") ?: ""; set(v) = p.edit().putString("quietHours", v.trim()).apply()
+
+    fun applyFormats() {
+        com.nexonic.downloadmanager.core.Format.sizeStyle = sizeUnits
+        com.nexonic.downloadmanager.core.Format.speedStyle = speedUnits
+        com.nexonic.downloadmanager.core.Format.dateStyle = dateStyle
+    }
     var torrentsEnabled: Boolean get() = p.getBoolean("torrents", false); set(v) = p.edit().putBoolean("torrents", v).apply()
 }
 

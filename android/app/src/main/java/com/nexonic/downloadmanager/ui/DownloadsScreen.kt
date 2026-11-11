@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.PlaylistAdd
+import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.RssFeed
 import androidx.compose.material.icons.outlined.VideoLibrary
 import androidx.compose.material.icons.outlined.Add
@@ -96,8 +97,6 @@ import com.nexonic.downloadmanager.core.Links
 import com.nexonic.downloadmanager.data.DownloadItem
 import com.nexonic.downloadmanager.data.Downloads
 import com.nexonic.downloadmanager.data.Status
-import java.text.DateFormat
-import java.util.Date
 
 private enum class View(val label: String) { ALL("All"), UNFINISHED("Unfinished"), FINISHED("Finished") }
 
@@ -108,6 +107,7 @@ fun categoryIcon(c: FileCategory): ImageVector = when (c) {
     FileCategory.DOCUMENTS -> Icons.Outlined.Description
     FileCategory.PROGRAMS -> Icons.Outlined.Apps
     FileCategory.IMAGES -> Icons.Outlined.Image
+    FileCategory.MODELS -> Icons.Outlined.Memory
     FileCategory.OTHER -> Icons.AutoMirrored.Outlined.InsertDriveFile
 }
 
@@ -214,7 +214,7 @@ fun DownloadsScreen(items: List<DownloadItem>, ui: UiState, onOpenBrowser: () ->
             if (shown.isEmpty()) {
                 Empty(items.isEmpty(), onAdd = { ui.addText = "" }, onOpenBrowser = onOpenBrowser)
             } else {
-                LazyColumn(Modifier.fillMaxSize(), contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 96.dp)) {
+                androidx.compose.runtime.key(Appearance.units) { LazyColumn(Modifier.fillMaxSize(), contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 96.dp)) {
                     items(shown, key = { it.id }) { item ->
                         DownloadRow(
                             item, selected = item.id in selected, selecting = selecting,
@@ -222,7 +222,7 @@ fun DownloadsScreen(items: List<DownloadItem>, ui: UiState, onOpenBrowser: () ->
                             onLongClick = { selected = selected.toggle(item.id) },
                         )
                     }
-                }
+                } }
             }
         }
         if (!selecting) FloatingActionButton(onClick = { ui.addText = "" }, modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp)) {
@@ -283,7 +283,7 @@ fun statusText(item: DownloadItem): String = when (item.status) {
     Status.QUEUED -> tr("Waiting")
     Status.PAUSED -> tr("Paused") + (item.size?.let { " · ${Format.size(item.written)} of ${Format.size(it)}" } ?: "")
     Status.LATER -> tr("Download later") + (item.size?.let { " · ${Format.size(it)}" } ?: "")
-    Status.COMPLETE -> Format.size(item.size ?: item.written) + " · " + DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(item.finishedAt ?: item.addedAt))
+    Status.COMPLETE -> Format.size(item.size ?: item.written) + " · " + Format.date(item.finishedAt ?: item.addedAt)
     Status.FAILED -> item.error ?: tr("Failed")
 }
 
@@ -375,8 +375,8 @@ fun DetailSheet(item: DownloadItem, onDismiss: () -> Unit, message: (String) -> 
             item.quality?.let { InfoRow("Quality", it) }
             InfoRow("Type", item.category.label)
             item.savedPath?.let { InfoRow("Saved to", it) }
-            InfoRow("Added", DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(item.addedAt)))
-            item.finishedAt?.let { InfoRow("Finished", DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(it))) }
+            InfoRow("Added", Format.date(item.addedAt))
+            item.finishedAt?.let { InfoRow("Finished", Format.date(it)) }
             if (!item.isFinished && !item.isTorrent) InfoRow("Can resume", tr(if (item.resumable || item.isVideo) "Yes" else "No"))
             item.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
 

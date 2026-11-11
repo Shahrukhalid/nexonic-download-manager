@@ -109,6 +109,42 @@ object Notifier {
         nm.createNotificationChannel(NotificationChannel(CH_DONE, tr("Finished downloads"), NotificationManager.IMPORTANCE_DEFAULT))
     }
 
+    /**
+     * Android fixes a channel's sound when the channel is made, so each sound and vibration choice (Settings →
+     * Notifications) gets a channel of its own; ones no longer chosen are removed. The phone's default keeps [CH_DONE].
+     */
+    private fun alertChannel(context: Context, sound: String, failed: Boolean): String {
+        val vibrate = Downloads.settings.notifyVibrate
+        if (sound.isEmpty() && vibrate) return CH_DONE
+        val id = "alert-" + Integer.toHexString((sound + "|" + vibrate).hashCode())
+        val nm = context.getSystemService(NotificationManager::class.java)
+        if (nm.getNotificationChannel(id) == null) {
+            val name = if (failed) tr("Failed downloads") else tr("Finished downloads")
+            nm.createNotificationChannel(NotificationChannel(id, name, NotificationManager.IMPORTANCE_DEFAULT).apply {
+                enableVibration(vibrate)
+                if (!vibrate) vibrationPattern = longArrayOf(0)
+                when (sound) {
+                    "" -> {}
+                    "none" -> setSound(null, null)
+                    else -> setSound(Uri.parse(sound), android.media.AudioAttributes.Builder()
+                        .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION).build())
+                }
+            })
+        }
+        val keep = setOf(alertId(Downloads.settings.soundFinished), alertId(Downloads.settings.soundFailed))
+        nm.notificationChannels.filter { it.id.startsWith("alert-") && it.id !in keep }.forEach { nm.deleteNotificationChannel(it.id) }
+        return id
+    }
+
+    private fun alertId(sound: String) = "alert-" + Integer.toHexString((sound + "|" + Downloads.settings.notifyVibrate).hashCode())
+
+    /** True during the quiet hours chosen in Settings: notifications still appear, without sound or vibration. */
+    private fun quiet(): Boolean {
+        val c = java.util.Calendar.getInstance()
+        return com.nexonic.downloadmanager.core.QuietHours.active(Downloads.settings.quietHours,
+            c.get(java.util.Calendar.HOUR_OF_DAY) * 60 + c.get(java.util.Calendar.MINUTE))
+    }
+
     private fun openApp(context: Context, id: Long = 0): PendingIntent =
         PendingIntent.getActivity(context, id.toInt(), Intent(context, MainActivity::class.java).putExtra("open", id),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
@@ -149,8 +185,9 @@ object Notifier {
             PendingIntent.getActivity(context, item.id.toInt(), Intent.createChooser(view, tr("Open with")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         } ?: openApp(context, item.id)
-        val n = NotificationCompat.Builder(context, CH_DONE)
+        val n = NotificationCompat.Builder(context, alertChannel(context, Downloads.settings.soundFinished, false))
             .setSmallIcon(R.drawable.ic_stat_download)
+            .setSilent(quiet())
             .setContentTitle(item.fileName)
             .setContentText("Download complete · ${Format.size(item.size ?: item.written)}")
             .setContentIntent(open)
@@ -161,8 +198,9 @@ object Notifier {
 
     fun failed(context: Context, item: DownloadItem) {
         if (!canNotify(context) || !Downloads.settings.notifyFailed) return
-        val n = NotificationCompat.Builder(context, CH_DONE)
+        val n = NotificationCompat.Builder(context, alertChannel(context, Downloads.settings.soundFailed, true))
             .setSmallIcon(R.drawable.ic_stat_download)
+            .setSilent(quiet())
             .setContentTitle(item.fileName)
             .setContentText(item.error ?: tr("Download failed"))
             .setContentIntent(openApp(context, item.id))

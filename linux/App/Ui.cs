@@ -78,12 +78,12 @@ public static class Ui
         if (ext.Length is 0 or > 4) ext = category switch
         {
             FileCategory.Video => "VID", FileCategory.Music => "AUD", FileCategory.Images => "IMG",
-            FileCategory.Documents => "DOC", FileCategory.Compressed => "ZIP", FileCategory.Programs => "APP", _ => "FILE",
+            FileCategory.Documents => "DOC", FileCategory.Compressed => "ZIP", FileCategory.Programs => "APP", FileCategory.Models => "AI", _ => "FILE",
         };
         var color = category switch
         {
             FileCategory.Video => "#8250DF", FileCategory.Music => "#BF3989", FileCategory.Images => "#1A7F37",
-            FileCategory.Documents => "#0969DA", FileCategory.Compressed => "#9A6700", FileCategory.Programs => "#CF222E", _ => "#6E7781",
+            FileCategory.Documents => "#0969DA", FileCategory.Compressed => "#9A6700", FileCategory.Programs => "#CF222E", FileCategory.Models => "#6639BA", _ => "#6E7781",
         };
         return new Border
         {

@@ -58,12 +58,18 @@ public sealed class DataCap
 public static class ListColumns
 {
     public static readonly (string Key, string Title)[] Optional =
-        { ("queue", "Queue"), ("added", "Added"), ("finished", "Finished"), ("folder", "Folder"), ("resume", "Can Resume") };
+        { ("queue", "Queue"), ("added", "Added"), ("finished", "Finished"), ("folder", "Folder"), ("resume", "Can Resume"),
+          ("peers", "Seeds/Peers"), ("ratio", "Share Ratio"), ("uploaded", "Uploaded") };
 
-    public static readonly List<string> HiddenByDefault = new() { "finished", "folder", "resume" };
+    public static readonly List<string> HiddenByDefault = new() { "finished", "folder", "resume", "peers", "ratio", "uploaded" };
 
-    /// <summary>Date and time in the computer's regional format (short date and time).</summary>
-    public static string When(DateTime? t) => t is { } d ? d.ToString("g", System.Globalization.CultureInfo.CurrentCulture) : "";
+    /// <summary>Date and time as chosen in Options (the computer's short format, or "5 min ago").</summary>
+    public static string When(DateTime? t) => Units.Date(t);
+
+    /// <summary>Torrents only: connected seeds and peers ("3 / 12"), the share ratio ("0.42") and the amount uploaded.</summary>
+    public static string Peers(DownloadRecord r) => r.Torrent is { } t && r.IsActive ? $"{t.Seeds} / {t.Peers}" : "";
+    public static string Ratio(DownloadRecord r) => r.Torrent is { } t ? t.Ratio.ToString("0.00", System.Globalization.CultureInfo.CurrentCulture) : "";
+    public static string Uploaded(DownloadRecord r) => r.Torrent is { Uploaded: > 0 } t ? Units.Size(t.Uploaded) : "";
 
     /// <summary>Where the file is (or will be) saved.</summary>
     public static string Folder(DownloadRecord r) =>

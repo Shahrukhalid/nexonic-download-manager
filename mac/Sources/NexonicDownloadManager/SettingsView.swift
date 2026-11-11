@@ -12,6 +12,18 @@ struct SettingsView: View {
     @State private var takeSettings = false
     @State private var backupMessage = ""
     @State private var language = AppLanguage.chosen
+    @AppStorage(Units.sizeKey) private var sizeUnits = "binary"
+    @AppStorage(Units.speedKey) private var speedUnits = "bytes"
+    @AppStorage(Units.dateKey) private var dateStyle = "absolute"
+    @AppStorage(AppFont.nameKey) private var appFont = ""
+    @AppStorage(AppFont.sizeKey) private var appFontSize = 0.0
+    @AppStorage(AudioConversion.key) private var audioFormat = "original"
+    @AppStorage(EnginePaths.ytdlpKey) private var ownYtDlp = ""
+    @AppStorage(EnginePaths.ffmpegKey) private var ownFFmpeg = ""
+    @AppStorage(DownloadManager.manualKey) private var manualActive = 0
+    @AppStorage(MissingFiles.removeOnStartKey) private var removeMissingOnStart = false
+    @State private var missingMessage = ""
+    private static let fontFamilies = NSFontManager.shared.availableFontFamilies.sorted()
 
     var body: some View {
         TabView {
@@ -31,6 +43,27 @@ struct SettingsView: View {
                     ForEach(ColorSchemeChoice.builtIn, id: \.name) { s in Text(LocalizedStringKey(s.name)).tag(s.name) }
                 }
                 .help("A scheme sets light or dark and the accent colour; None follows Appearance.")
+                Picker("Font", selection: $appFont) {
+                    Text("Same as macOS").tag("")
+                    ForEach(Self.fontFamilies, id: \.self) { Text(verbatim: $0).tag($0) }
+                }
+                Picker("Text size", selection: $appFontSize) {
+                    Text("Same as macOS").tag(0.0)
+                    ForEach([11.0, 12, 13, 14, 15, 16, 18, 20], id: \.self) { Text("\(Int($0)) pt").tag($0) }
+                }
+                Picker("Sizes", selection: $sizeUnits) {
+                    Text("KB, MB, GB (1 KB = 1024 bytes)").tag("binary")
+                    Text("KiB, MiB, GiB (1 KiB = 1024 bytes)").tag("iec")
+                    Text("KB, MB, GB (1 KB = 1000 bytes)").tag("decimal")
+                }
+                Picker("Speeds", selection: $speedUnits) {
+                    Text("Bytes per second (MB/s)").tag("bytes")
+                    Text("Bits per second (Mbit/s)").tag("bits")
+                }
+                Picker("Dates in the list", selection: $dateStyle) {
+                    Text("Date and time").tag("absolute")
+                    Text("How long ago (5 min ago)").tag("relative")
+                }
                 Toggle("Automatic connections", isOn: $manager.settings.autoConnections)
                     .help("Starts with a few connections and adds more while the speed keeps rising; slows down when a server asks.")
                 Stepper((manager.settings.autoConnections ? "Most connections per download: " : "Connections per download: ")
@@ -51,6 +84,23 @@ struct SettingsView: View {
                     Spacer()
                     Button("Check Now") { Updater.check(manual: true) }
                 }
+                Section("Video tools") {
+                    TextField("Your own yt-dlp program (full path)", text: $ownYtDlp)
+                    TextField("Your own FFmpeg program (full path)", text: $ownFFmpeg)
+                    if let p = EnginePaths.problem(ownYtDlp) ?? EnginePaths.problem(ownFFmpeg) {
+                        Text(p).font(.caption).foregroundStyle(.red)
+                    }
+                    Text("Leave empty to use the ones the app ships and keeps current. Your own yt-dlp is never updated or replaced by the app; FFmpeg needs ffprobe in the same folder.")
+                        .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    Picker("Sound-only downloads", selection: $audioFormat) {
+                        Text("Original format (no conversion)").tag("original")
+                        Text("MP3").tag("mp3")
+                        Text("Opus").tag("opus")
+                        Text("FLAC").tag("flac")
+                    }
+                    Text("Converting needs FFmpeg. MP3 uses the best variable quality; FLAC keeps every detail of the sound the site sends.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
                 Section("Browser downloads") {
                     Toggle("Show the download window when a link is clicked in the browser", isOn: $manager.settings.showDownloadDialog)
                     Toggle("Show a progress window for each download I start", isOn: $manager.settings.showProgressWindow)
@@ -64,6 +114,9 @@ struct SettingsView: View {
 
             Form {
                 TextField("Speed limit for all downloads in KB/s (0 = none)", value: $manager.settings.speedLimitKBps, format: .number)
+                Stepper("Downloads I resume myself, beside the queues: \(manualActive == 0 ? String(localized: "off") : String(manualActive))",
+                        value: $manualActive, in: 0...10)
+                    .help("0 = a resumed download waits for a slot in its queue and starts the queue.")
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Speed schedule (one rule per line: days start-end KB/s, 0 = no limit)")
                     TextEditor(text: $manager.settings.speedSchedule)
@@ -177,6 +230,16 @@ struct SettingsView: View {
                 }
                 Toggle("When importing, also take the backup's settings", isOn: $takeSettings)
                 if !backupMessage.isEmpty { Text(backupMessage).font(.caption).foregroundStyle(.secondary) }
+                Section("Missing files") {
+                    Toggle("When the app starts, remove finished downloads whose file was deleted or moved", isOn: $removeMissingOnStart)
+                    HStack {
+                        Button("Remove Missing Files Now") {
+                            missingMessage = String(format: String(localized: "Removed %d from the list. Files on disk are not touched."), manager.removeMissing())
+                        }
+                        Text(missingMessage.isEmpty ? String(format: String(localized: "%d finished downloads have no file now."), manager.items.filter(MissingFiles.isMissing).count) : missingMessage)
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
             }
             .formStyle(.grouped)
             .tabItem { Label("Backup", systemImage: "externaldrive") }

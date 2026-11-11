@@ -115,6 +115,7 @@ public enum HLS {
 /// The ffmpeg that ships inside the app (or one the user installed), used to turn saved streams into .mp4 files.
 public enum FFmpeg {
     public static var path: String? {
+        if let own = EnginePaths.ffmpeg { return own }
         let env = ProcessInfo.processInfo.environment["PATH"] ?? ""
         let bundled = Bundle.main.executableURL?.deletingLastPathComponent().path
         let dirs = [bundled].compactMap { $0 } + ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin"] + env.split(separator: ":").map(String.init)

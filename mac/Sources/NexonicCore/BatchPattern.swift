@@ -1,13 +1,13 @@
 import Foundation
 
 /// Expands download patterns such as `https://example.com/file[001-100].jpg`, `photo[a-z].png` or `part[0-90:10].bin`
-/// (from–to, optional step). Several ranges multiply. Brackets that are not ranges stay as they are.
+/// (from–to, optional step) or a list such as `{jpg,png,webp}`. Several ranges multiply. Brackets that are not ranges stay as they are.
 public enum BatchPattern {
     public static let limit = 10_000
 
     public enum Failure: Error, Equatable { case tooMany(Int) }
 
-    private static let range = try! NSRegularExpression(pattern: #"\[(?:(\d+)-(\d+)(?::(\d+))?|([a-zA-Z])-([a-zA-Z]))\]"#)
+    private static let range = try! NSRegularExpression(pattern: #"\[(?:(\d+)-(\d+)(?::(\d+))?|([a-zA-Z])-([a-zA-Z]))\]|\{([^{}]*,[^{}]*)\}"#)
 
     public static func count(_ pattern: String) -> Int {
         parts(pattern).reduce(1) { total, part in
@@ -41,6 +41,8 @@ public enum BatchPattern {
                 let width = a.count > 1 && a.hasPrefix("0") || a.count == b.count ? a.count : 0
                 let values = from <= to ? Array(stride(from: from, through: to, by: step)) : Array(stride(from: from, through: to, by: -step))
                 parts.append(values.map { width > 0 ? String(format: "%0\(width)ld", $0) : String($0) })
+            } else if let list = group(6) {
+                parts.append(list.split(separator: ",", omittingEmptySubsequences: false).map { $0.trimmingCharacters(in: .whitespaces) })
             } else if let a = group(4)?.unicodeScalars.first?.value, let b = group(5)?.unicodeScalars.first?.value {
                 let values = a <= b ? Array(a...b) : Array((b...a).reversed())
                 parts.append(values.compactMap { Unicode.Scalar($0).map { String(Character($0)) } })

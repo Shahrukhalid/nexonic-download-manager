@@ -38,6 +38,8 @@ class NexonicApp : Application() {
         Downloads.init(this)
         com.nexonic.downloadmanager.ui.Appearance.choice = Downloads.settings.appearance
         com.nexonic.downloadmanager.ui.Appearance.scheme = Downloads.settings.colorScheme
+        com.nexonic.downloadmanager.ui.Appearance.font = Downloads.settings.appFont
+        com.nexonic.downloadmanager.ui.Appearance.textScale = Downloads.settings.textScale
         Notifier.channels(this)
         Scheduler.apply(this)
         VideoEngine.init(this)

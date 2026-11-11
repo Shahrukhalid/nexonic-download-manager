@@ -145,27 +145,32 @@ public static partial class Dialogs
     public static async Task Batch(Window owner, DownloadManager m, string queueId)
     {
         var f = new Form(owner, "Batch Download", 620);
-        f.Note("Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. Several ranges multiply.");
+        f.Note("Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. A list in braces, {jpg,png}, tries each. Several ranges multiply.");
         var pattern = f.Text("Pattern", "https://example.com/photos/img[001-050].jpg");
         pattern.FontFamily = new FontFamily("monospace");
+        var filter = f.Text("Keep only (optional)", "");
+        f.Note("Words find links that contain them; * and ? are wildcards; a leading ! leaves links out. Example: *.jpg !*thumb*");
+        var links = f.Text("Links to download (you can edit them)", "", multi: true);
+        links.Height = 160;
         var preview = f.Note("");
         void Update()
         {
-            var p = pattern.Text ?? "";
-            var n = BatchPattern.Count(p);
-            if (n > BatchPattern.Limit) { preview.Text = $"{n} links – the limit is {BatchPattern.Limit}"; return; }
-            var all = BatchPattern.Expand(p);
-            preview.Text = n > 1 ? $"{n} links\nFirst: {all[0]}\nLast: {all[^1]}" : $"{n} link";
+            var n = BatchPattern.Count((pattern.Text ?? ""));
+            if (n > BatchPattern.Limit) { preview.Text = $"{n} links – the limit is {BatchPattern.Limit}"; links.Text = ""; return; }
+            var kept = LinkFilter.Apply(BatchPattern.Expand((pattern.Text ?? "")), (filter.Text ?? ""));
+            links.Text = string.Join("\n", kept);
+            preview.Text = kept.Count == n ? $"{n} link{(n == 1 ? "" : "s")}" : $"{kept.Count} of {n} links";
         }
         pattern.TextChanged += (_, _) => Update();
+        filter.TextChanged += (_, _) => Update();
         Update();
         var folder = f.Folder(m.Settings.Folder);
         var queue = f.Queue(m, queueId);
         void Go(bool start)
         {
-            var p = pattern.Text ?? "";
-            if (BatchPattern.Count(p) > BatchPattern.Limit) return;
-            m.AddLinks(string.Join("\n", BatchPattern.Expand(p)), new AddOptions
+            var chosen = (links.Text ?? "").Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).Distinct().ToList();
+            if (chosen.Count == 0 || chosen.Count > BatchPattern.Limit) { preview.Text = chosen.Count == 0 ? "No links to download." : $"The limit is {BatchPattern.Limit} links."; return; }
+            m.AddLinks(string.Join("\n", chosen), new AddOptions
             {
                 Folder = (folder.Text ?? "").Trim().Length > 0 ? folder.Text!.Trim() : m.Settings.Folder, QueueId = Form.QueueId(queue), Start = start,
             });
@@ -477,6 +482,14 @@ public static partial class Dialogs
             p.Children.Add(t);
             return t;
         }
+        ComboBox Pick(StackPanel p, string label, string[] titles, string[] values, string current)
+        {
+            p.Children.Add(new TextBlock { Text = label, Margin = new Thickness(0, 10, 0, 3) });
+            var c = new ComboBox { ItemsSource = titles.Select(L.T).ToList(), SelectedIndex = Math.Max(0, Array.IndexOf(values, current)), MinWidth = 220 };
+            AutomationProperties.SetName(c, label);
+            p.Children.Add(c);
+            return c;
+        }
         void Heading(StackPanel p, string text) => p.Children.Add(new TextBlock { Text = text, FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 16, 0, 0) });
 
         var general = Tab("General");
@@ -563,6 +576,9 @@ public static partial class Dialogs
         var scale = new ComboBox { ItemsSource = scales.Select(v => v + "%").ToList(), SelectedIndex = Math.Max(0, Array.IndexOf(scales, s.InterfaceScale) is var si && si >= 0 ? si : 2), MinWidth = 220 };
         AutomationProperties.SetName(scale, "Interface size");
         general.Children.Add(scale);
+        var sizeUnits = Pick(general, "Sizes", new[] { "KB, MB, GB (1 KB = 1024 bytes)", "KiB, MiB, GiB (1 KiB = 1024 bytes)", "KB, MB, GB (1 KB = 1000 bytes)" }, Units.SizeStyles, s.SizeUnits);
+        var speedUnits = Pick(general, "Speeds", new[] { "Bytes per second (MB/s)", "Bits per second (Mbit/s)" }, Units.SpeedStyles, s.SpeedUnits);
+        var dateStyle = Pick(general, "Dates in the list", new[] { "Date and time", "How long ago (5 min ago)" }, Units.DateStyles, s.DateStyle);
         Heading(general, "Browser downloads");
         var askDialog = Tick(general, "Show the download window when a link is clicked in the browser", s.ShowDownloadDialog);
         var progressWin = Tick(general, "Show a progress window for each download I start", s.ShowProgressWindow);
@@ -573,8 +589,11 @@ public static partial class Dialogs
         var ytdlpPath = Box(general, "Your own yt-dlp program (full path)", s.YtDlpPath ?? "");
         var ffmpegPath = Box(general, "Your own FFmpeg program (full path)", s.FFmpegPath ?? "");
         Hint(general, "Leave empty to use the ones the app downloads and keeps current. Your own yt-dlp is never updated or replaced by the app; FFmpeg needs ffprobe in the same folder.");
+        var audioFormat = Pick(general, "Sound-only downloads", new[] { "Original format (no conversion)", "MP3", "Opus", "FLAC" }, AudioConversion.Formats, s.AudioFormat);
+        Hint(general, "Converting needs FFmpeg. MP3 uses the best variable quality; FLAC keeps every detail of the sound the site sends.");
 
         var connection = Tab("Connection");
+        var manualActive = Box(connection, "Downloads I resume myself: run this many at once beside the queues (0 = they wait for a queue slot)", s.MaxManualActive.ToString());
         var limit = Box(connection, "Speed limit for all downloads in KB/s (0 = none)", s.SpeedLimitKBps.ToString());
         var activeLimit = Box(connection, "While I use the computer, limit downloads to KB/s (0 = off)", s.ActiveSpeedLimitKBps.ToString());
         connection.Children.Add(new TextBlock { Text = "Speed limits by time of day (one rule per line)", Margin = new Thickness(0, 10, 0, 2) });
@@ -795,6 +814,31 @@ public static partial class Dialogs
         });
         backup.Children.Add(backupButtons);
         backup.Children.Add(takeSettings);
+        Heading(backup, "Missing files");
+        var removeMissing = Tick(backup, "When the app starts, remove finished downloads whose file was deleted or moved", s.RemoveMissingOnStart);
+        var missingNow = new Button { Content = "Remove Missing Files Now", Margin = new Thickness(0, 6, 0, 0) };
+        var missingResult = Hint(backup, $"{m.Rows.Count(r => MissingFiles.IsMissing(r.Record))} finished downloads have no file now (shown as File missing).");
+        missingNow.Click += (_, _) => missingResult.Text = $"Removed {m.RemoveMissing()} from the list. Files on disk are not touched.";
+        backup.Children.Add(missingNow);
+        Heading(backup, "Data folder");
+        var dataFolder = Box(backup, "Settings, the download list and unfinished parts are kept in", AppPaths.Support);
+        var dataResult = Hint(backup, DataLocation.Pending(AppPaths.Default) is { } waiting ? $"Moves to {waiting} the next time the app starts." : m.DataMoveProblem ?? "");
+        var dataButtons = new WrapPanel { Margin = new Thickness(0, 6, 0, 0) };
+        var chooseData = new Button { Content = "Choose…", Margin = new Thickness(0, 0, 6, 0) };
+        chooseData.Click += async (_, _) =>
+        {
+            var picked = await f.Window.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = "Data folder", AllowMultiple = false });
+            if (picked.Count > 0 && picked[0].TryGetLocalPath() is { } path) dataFolder.Text = path;
+        };
+        var moveData = new Button { Content = "Move at Next Start", Margin = new Thickness(0, 0, 6, 0) };
+        moveData.Click += (_, _) => dataResult.Text = DataLocation.Request(AppPaths.Default, (dataFolder.Text ?? "").Trim()) is { } why ? L.T(why)
+            : L.T("The data moves the next time the app starts. Everything is copied and checked before the old copy is removed.");
+        var usualData = new Button { Content = "Use the Usual Folder" };
+        usualData.Click += (_, _) => dataFolder.Text = AppPaths.Default;
+        dataButtons.Children.Add(chooseData);
+        dataButtons.Children.Add(moveData);
+        dataButtons.Children.Add(usualData);
+        backup.Children.Add(dataButtons);
 
         var clip = Tab("Clipboard");
         var watch = Tick(clip, "Watch the clipboard for copied download links", s.MonitorClipboard);
@@ -883,6 +927,12 @@ public static partial class Dialogs
             s.DuplicateAction = dupChoices[Math.Max(0, dupAction.SelectedIndex)];
             s.AutoMaxConnections = Math.Clamp(Ui.Number(autoMax.Text, 32), 1, Limits.MaxConnections);
             s.MaxActive = Math.Clamp(Ui.Number(active.Text, 3), 1, 10);
+            s.MaxManualActive = Math.Clamp(Ui.Number(manualActive.Text, 0), 0, 10);
+            s.SizeUnits = Units.SizeStyles[Math.Max(0, sizeUnits.SelectedIndex)];
+            s.SpeedUnits = Units.SpeedStyles[Math.Max(0, speedUnits.SelectedIndex)];
+            s.DateStyle = Units.DateStyles[Math.Max(0, dateStyle.SelectedIndex)];
+            s.AudioFormat = AudioConversion.Formats[Math.Max(0, audioFormat.SelectedIndex)];
+            s.RemoveMissingOnStart = removeMissing.IsChecked == true;
             s.Folder = (folder.Text ?? "").Trim().Length > 0 ? folder.Text!.Trim() : s.Folder;
             s.SortIntoCategoryFolders = sort.IsChecked == true;
             s.TorrentsEnabled = torrents.IsChecked == true;

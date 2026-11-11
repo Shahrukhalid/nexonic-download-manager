@@ -187,3 +187,22 @@ public static class MediaLibrary
         catch { return null; }
     }
 }
+
+/// <summary>Sound-only downloads can be converted after downloading (needs FFmpeg): MP3 (best VBR quality), Opus or FLAC.
+/// "original" keeps the sound as the site sends it, without converting (the default, no quality loss).</summary>
+public static class AudioConversion
+{
+    public static readonly string[] Formats = { "original", "mp3", "opus", "flac" };
+    public static volatile string Format = "original";
+
+    public static string[] Arguments(string? format) => format switch
+    {
+        "mp3" => new[] { "-x", "--audio-format", "mp3", "--audio-quality", "0" },
+        "opus" => new[] { "-x", "--audio-format", "opus" },
+        "flac" => new[] { "-x", "--audio-format", "flac" },
+        _ => Array.Empty<string>(),
+    };
+
+    /// <summary>The file extension the converted sound gets (for the category folder), or null for the original.</summary>
+    public static string? Extension(string? format) => format is "mp3" or "opus" or "flac" ? format : null;
+}

@@ -109,19 +109,20 @@ object FileNames {
 
 enum class FileCategory(val label: String) {
     COMPRESSED("Compressed"), DOCUMENTS("Documents"), MUSIC("Music"), VIDEO("Video"),
-    PROGRAMS("Programs"), IMAGES("Images"), OTHER("General");
+    PROGRAMS("Programs"), IMAGES("Images"), OTHER("General"), MODELS("Models");
 
     /** Subfolder like IDM; files of no particular type stay in the main folder. */
     val folder: String? get() = if (this == OTHER) null else label
 
     companion object {
         private val map = mapOf(
-            COMPRESSED to setOf("zip", "rar", "7z", "gz", "tgz", "bz2", "xz", "tar", "zst"),
-            DOCUMENTS to setOf("pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "rtf", "epub", "csv", "odt", "pages", "key", "numbers"),
-            MUSIC to setOf("mp3", "m4a", "aac", "flac", "wav", "ogg", "opus", "aiff"),
-            VIDEO to setOf("mp4", "mkv", "mov", "avi", "webm", "m4v", "wmv", "flv", "ts", "3gp"),
-            PROGRAMS to setOf("dmg", "pkg", "app", "exe", "msi", "deb", "rpm", "apk", "iso", "img", "xapk", "apks"),
-            IMAGES to setOf("jpg", "jpeg", "png", "gif", "webp", "heic", "svg", "tiff", "bmp", "raw", "avif"),
+            COMPRESSED to setOf("zip", "rar", "7z", "gz", "tgz", "bz2", "xz", "tar", "zst", "zipx", "lz", "lzma", "lz4", "z", "cab", "arj", "tbz", "tbz2", "txz", "tzst", "br", "cpio", "sit", "sitx", "ace"),
+            DOCUMENTS to setOf("pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "rtf", "epub", "csv", "odt", "ods", "odp", "md", "xps", "djvu", "mobi", "azw3", "cbz", "cbr", "pages", "key", "numbers", "dwg", "dxf", "dwf", "step", "stp", "iges", "igs", "stl", "3mf", "obj", "fbx", "blend", "skp", "f3d", "ifc", "sldprt", "sldasm", "ipt", "iam", "3ds", "dae", "glb", "gltf"),
+            MUSIC to setOf("mp3", "m4a", "aac", "flac", "wav", "ogg", "opus", "aiff", "alac", "wma", "mka", "ape", "dsf"),
+            VIDEO to setOf("mp4", "mkv", "mov", "avi", "webm", "m4v", "wmv", "flv", "ts", "3gp", "mts", "m2ts", "mpg", "mpeg", "vob", "ogv"),
+            PROGRAMS to setOf("exe", "msi", "dmg", "pkg", "deb", "rpm", "apk", "iso", "img", "appx", "msix", "msixbundle", "appimage", "snap", "flatpak", "xapk", "apks", "app"),
+            IMAGES to setOf("jpg", "jpeg", "png", "gif", "webp", "heic", "heif", "avif", "jxl", "svg", "tiff", "tif", "bmp", "psd", "raw", "cr2", "cr3", "nef", "nrw", "arw", "srf", "sr2", "dng", "orf", "rw2", "raf", "pef", "srw", "x3f", "3fr", "erf", "kdc", "mrw", "iiq"),
+            MODELS to setOf("safetensors", "gguf", "ggml", "onnx", "ckpt", "pt", "pth", "tflite", "mlmodel", "h5", "keras"),
         )
 
         fun of(fileName: String): FileCategory {
@@ -289,17 +290,49 @@ object Media {
 }
 
 object Format {
-    fun size(bytes: Long): String {
+    /** Chosen in Settings: "binary" (1 KB = 1024, the default), "iec" (KiB/MiB) or "decimal" (1 KB = 1000). */
+    @Volatile var sizeStyle = "binary"
+    /** "bytes" (MB/s, the default) or "bits" (Mbit/s). */
+    @Volatile var speedStyle = "bytes"
+    /** "absolute" (date and time, the default) or "relative" ("5 min ago"). */
+    @Volatile var dateStyle = "absolute"
+
+    fun size(bytes: Long, style: String = sizeStyle): String {
         if (bytes < 0) return "Unknown size"
-        if (bytes < 1024) return "$bytes B"
-        val units = listOf("KB", "MB", "GB", "TB")
-        var v = bytes / 1024.0
+        val step = if (style == "decimal") 1000.0 else 1024.0
+        if (bytes < step) return "$bytes B"
+        val units = if (style == "iec") listOf("KiB", "MiB", "GiB", "TiB") else listOf("KB", "MB", "GB", "TB")
+        var v = bytes / step
         var i = 0
-        while (v >= 1024 && i < units.size - 1) { v /= 1024; i++ }
+        while (v >= step && i < units.size - 1) { v /= step; i++ }
         return if (v >= 100) String.format(Locale.US, "%.0f %s", v, units[i]) else String.format(Locale.US, "%.1f %s", v, units[i])
     }
 
-    fun speed(bytesPerSecond: Long): String = if (bytesPerSecond <= 0) "" else size(bytesPerSecond) + "/s"
+    fun speed(bytesPerSecond: Long, style: String = speedStyle, sizes: String = sizeStyle): String {
+        if (bytesPerSecond <= 0) return ""
+        if (style != "bits") return size(bytesPerSecond, sizes) + "/s"
+        val units = listOf("bit/s", "kbit/s", "Mbit/s", "Gbit/s", "Tbit/s")
+        var v = bytesPerSecond * 8.0
+        var i = 0
+        while (v >= 1000 && i < units.size - 1) { v /= 1000; i++ }
+        return if (v >= 100) String.format(Locale.US, "%.0f %s", v, units[i]) else String.format(Locale.US, "%.1f %s", v, units[i])
+    }
+
+    /** Relative: "Just now", "5 min ago", "3 h ago", "Yesterday 14:05", "4 days ago", then the date (also for future times). */
+    fun date(millis: Long, style: String = dateStyle, now: Long = System.currentTimeMillis(), zone: java.util.TimeZone = java.util.TimeZone.getDefault()): String {
+        val absolute = java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT).apply { timeZone = zone }.format(java.util.Date(millis))
+        if (style != "relative") return absolute
+        val ago = now - millis
+        if (ago < 0) return absolute
+        if (ago < 60_000) return Translations.t("Just now")
+        if (ago < 3_600_000) return Translations.t("%d min ago").format(ago / 60_000)
+        fun day(t: Long): Long { val c = java.util.Calendar.getInstance(zone); c.timeInMillis = t
+            return c.get(java.util.Calendar.YEAR) * 400L + c.get(java.util.Calendar.DAY_OF_YEAR) }
+        val days = run { var n = 0; var t = now; while (day(t) != day(millis) && n < 8) { t -= 86_400_000; n++ }; n }
+        if (days == 0) return Translations.t("%d h ago").format(ago / 3_600_000)
+        if (days == 1) return Translations.t("Yesterday") + " " + java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).apply { timeZone = zone }.format(java.util.Date(millis))
+        return if (days < 7) Translations.t("%d days ago").format(days) else absolute
+    }
 
     fun eta(seconds: Long): String = when {
         seconds < 0 -> ""
@@ -313,13 +346,15 @@ object Format {
 
 /** Numbered series like `img[001-100].jpg` or `file[a-f].txt` (desktop BatchPattern). At most 10,000 links. */
 object BatchPattern {
-    private val pattern = Regex("\\[(\\d+)-(\\d+)]|\\[([a-zA-Z])-([a-zA-Z])]")
+    private val pattern = Regex("\\[(\\d+)-(\\d+)]|\\[([a-zA-Z])-([a-zA-Z])]|\\{([^{}]*,[^{}]*)\\}")
 
     fun expand(template: String, limit: Int = 10_000): List<String> {
         val m = pattern.find(template) ?: return listOf(template)
         val before = template.substring(0, m.range.first)
         val after = template.substring(m.range.last + 1)
-        val items: List<String> = if (m.groupValues[1].isNotEmpty()) {
+        val items: List<String> = if (m.groupValues[5].isNotEmpty()) {
+            m.groupValues[5].split(',').map { it.trim() }
+        } else if (m.groupValues[1].isNotEmpty()) {
             val a = m.groupValues[1]; val b = m.groupValues[2]
             val width = if (a.length > 1 && a.startsWith("0")) a.length else 0
             val from = a.toLong(); val to = b.toLong()
@@ -367,4 +402,48 @@ object Bookmarks {
         if (!Links.isWebLink(url)) list else listOf(Bookmark(url, title.trim().ifEmpty { url })) + list.filter { it.url != url }
 
     fun remove(list: List<Bookmark>, url: String): List<Bookmark> = list.filter { it.url != url }
+}
+
+
+/** Filters links: words find links that contain them, * and ? are wildcards, a leading ! leaves links out ("*.jpg !*thumb*"). */
+object LinkFilter {
+    fun apply(links: List<String>, filter: String): List<String> {
+        val terms = filter.split(' ').map { it.trim() }.filter { it.isNotEmpty() }
+        val include = terms.filter { !it.startsWith("!") }
+        val exclude = terms.filter { it.startsWith("!") && it.length > 1 }.map { it.substring(1) }
+        return links.filter { l -> (include.isEmpty() || include.any { matches(l, it) }) && exclude.none { matches(l, it) } }
+    }
+
+    fun matches(link: String, term: String): Boolean {
+        if ('*' !in term && '?' !in term) return link.contains(term, ignoreCase = true)
+        val rx = Regex("^" + term.split('*').joinToString(".*") { part -> part.split('?').joinToString(".") { Regex.escape(it) } } + "$", RegexOption.IGNORE_CASE)
+        val path = runCatching { java.net.URI(link).path }.getOrNull() ?: link
+        return rx.matches(link) || rx.matches(path) || rx.matches(path.substringAfterLast('/'))
+    }
+}
+
+/** Sound-only video downloads converted after downloading (needs FFmpeg); "original" keeps the site's format. */
+object AudioConversion {
+    val formats = listOf("original", "mp3", "opus", "flac")
+    fun arguments(format: String): List<String> = when (format) {
+        "mp3" -> listOf("-x", "--audio-format", "mp3", "--audio-quality", "0")
+        "opus" -> listOf("-x", "--audio-format", "opus")
+        "flac" -> listOf("-x", "--audio-format", "flac")
+        else -> emptyList()
+    }
+}
+
+/** No notification sounds during these hours ("22:00-07:00"); empty = none. */
+object QuietHours {
+    fun parse(text: String): Pair<Int, Int>? {
+        val m = Regex("^\\s*(\\d{1,2}):(\\d{2})\\s*-\\s*(\\d{1,2}):(\\d{2})\\s*$").find(text) ?: return null
+        val (h1, m1, h2, m2) = m.destructured.toList().map { it.toInt() }
+        if (h1 > 23 || h2 > 23 || m1 > 59 || m2 > 59) return null
+        return (h1 * 60 + m1) to (h2 * 60 + m2)
+    }
+
+    fun active(text: String, minuteOfDay: Int): Boolean {
+        val (a, b) = parse(text) ?: return false
+        return if (a <= b) minuteOfDay in a until b else minuteOfDay >= a || minuteOfDay < b
+    }
 }
