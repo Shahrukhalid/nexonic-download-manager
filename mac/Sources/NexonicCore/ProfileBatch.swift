@@ -276,7 +276,7 @@ public enum ProfileBatch {
     }
 }
 
-/// The profile listers Nexonic adds to the video engine (engine/nexonic in the app's resources): they only read what a
+/// The profile listers Nexonic adds to the video engine (engine/nexonic_profiles.py in the app's resources): they only read what a
 /// site shows visitors who are not signed in. Handed to the engine with --plugin-dirs.
 public enum EnginePlugins {
     /// Messages from the listers start with this, so the app shows them as they are.
@@ -284,7 +284,7 @@ public enum EnginePlugins {
     /// Copied out of the signed app (the engine writes compiled files next to plugins) when missing or changed.
     public static let folder: String? = {
         let rel = "nexonic/yt_dlp_plugins/extractor/nexonic_profiles.py"
-        guard let source = Bundle.main.resourceURL?.appendingPathComponent("engine-plugins/" + rel),
+        guard let source = Bundle.main.resourceURL?.appendingPathComponent("engine-plugins/nexonic_profiles.py"),
               let bytes = try? Data(contentsOf: source) else { return nil }
         let root = SiteVideoTools.folder.appendingPathComponent("plugins", isDirectory: true)
         let file = root.appendingPathComponent(rel)
