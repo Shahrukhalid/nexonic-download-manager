@@ -178,6 +178,9 @@ public static class GalleryList
     {
         var args = new List<string> { "-N", Format, "--range", "1-" + Math.Max(1, max), "-o", GalleryDl.Pace };
         if (settingsFile != null) args.AddRange(new[] { "--config", settingsFile });
+        // TikTok: its own listing first through the video engine, then the gallery engine's own way.
+        if (Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Host.EndsWith("tiktok.com", StringComparison.OrdinalIgnoreCase))
+            args.AddRange(new[] { "-o", "extractor.tiktok.ytdl=true" });
         args.Add("--");
         args.Add(url);
         return args;
@@ -245,6 +248,7 @@ public static class GalleryList
                     var listed = Entries(output, owner);
                     if (owner.Length == 0) owner = listed.Owner;
                     all.AddRange(listed.Entries.Where(e => seen.Add(ProfileBatch.Key(e.Url))));
+                    Note(part, cursor != null, all.Count, errors);
                     // The site stopped answering partway (it limits how much one account may read in a row): the engine
                     // says where it got to; after a pause the search continues from there, a few times, longer each time.
                     cursor = ResumeCursor(errors);
@@ -286,6 +290,26 @@ public static class GalleryList
             return new() { url };
         var user = u.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries)[0];
         return new() { $"https://www.instagram.com/{user}/posts/", $"https://www.instagram.com/{user}/reels/" };
+    }
+
+    /// <summary>
+    /// What each search said, kept in the data folder (the last 200 KB) so a search that finds less than expected can be
+    /// looked into. No cookies or passwords are in it: those go to the engine in a private settings file.
+    /// </summary>
+    public static string SearchLog => Path.Combine(AppPaths.Support, "profile-search.log");
+
+    static void Note(string url, bool continued, int found, string errors)
+    {
+        try
+        {
+            var lines = errors.Split('\n', StringSplitOptions.RemoveEmptyEntries).TakeLast(40).Select(l => "    " + l.TrimEnd());
+            var text = $"{DateTime.UtcNow:O}  {url}{(continued ? " (continued)" : "")}  {found} found so far\n" + string.Join("\n", lines) + "\n";
+            var old = File.Exists(SearchLog) ? File.ReadAllText(SearchLog) : "";
+            var all = old + text;
+            File.WriteAllText(SearchLog, all.Length > 200_000 ? all[^200_000..] : all);
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
     }
 
     /// <summary>Where an interrupted listing got to, as the engine says it ("Use '-o cursor=…' to continue").</summary>

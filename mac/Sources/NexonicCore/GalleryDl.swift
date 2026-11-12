@@ -131,6 +131,8 @@ public extension GalleryDl {
         var args = ["-N", listFormat, "--range", "1-\(Swift.max(1, max))", "-o", pace]
         if let settingsFile { args += ["--config", settingsFile] }
         if let browser { args += ["--cookies-from-browser", browser] }
+        // TikTok: its own listing first through the video engine, then the gallery engine's own way.
+        if URL(string: url)?.host?.lowercased().hasSuffix("tiktok.com") == true { args += ["-o", "extractor.tiktok.ytdl=true"] }
         return args + ["--", url]
     }
 
@@ -211,6 +213,7 @@ public extension GalleryDl {
                     if !fresh.isEmpty { all += fresh; found(fresh, owner) }
                 } stop: { stop() || all.count >= max }
                 lastError = errors
+                note(part, cursor: cursor, found: all.count, errors)
                 // The site stopped answering partway (it limits how much one account may read in a row): the engine says
                 // where it got to; after a pause the search continues from there, a few times, longer each time.
                 cursor = resumeCursor(errors)
@@ -235,6 +238,19 @@ public extension GalleryDl {
         guard isProfile(url), let u = URL(string: url), u.host?.lowercased().hasSuffix("instagram.com") == true,
               let user = u.pathComponents.dropFirst().first else { return [url] }
         return ["https://www.instagram.com/\(user)/posts/", "https://www.instagram.com/\(user)/reels/"]
+    }
+
+    /// What each search said, kept in the data folder (the last 200 KB) so a search that finds less than expected can be
+    /// looked into. No cookies or passwords are in it: those go to the engine in a private settings file.
+    public static var searchLog: URL { AppPaths.support.appendingPathComponent("profile-search.log") }
+
+    static func note(_ url: String, cursor: String?, found: Int, _ errors: String) {
+        let text = "\(ISO8601DateFormatter().string(from: Date()))  \(url)\(cursor == nil ? "" : " (continued)")  \(found) found so far\n"
+            + errors.split(whereSeparator: \.isNewline).suffix(40).map { "    " + $0 }.joined(separator: "\n") + "\n"
+        var log = (try? Data(contentsOf: searchLog)) ?? Data()
+        log.append(Data(text.utf8))
+        if log.count > 200_000 { log = log.suffix(200_000) }
+        try? log.write(to: searchLog, options: .atomic)
     }
 
     /// Where an interrupted listing got to, as the engine says it ("Use '-o cursor=…' to continue").

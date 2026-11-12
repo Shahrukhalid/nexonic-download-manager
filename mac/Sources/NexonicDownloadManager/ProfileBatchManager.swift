@@ -86,6 +86,13 @@ extension DownloadManager {
                     note: String(localized: "This site lets Nexonic take only the videos the page has loaded. To add more, scroll further down the page and click Download all again."))
             }
             listings[key] = listing
+            // Its row, as for a search: double-clicking it opens Profile Batch with these.
+            if let u = URL(string: url) {
+                let name = SocialPages.find(url)?.owner ?? (u.host ?? "") + u.path
+                var r = DownloadRecord(url: u, folder: settings.folder, fileName: String(format: String(localized: "Photos and videos of %@"), name))
+                r.listing = true; r.status = .finished; r.streamDone = seed.count
+                putListingRow(r)
+            }
             return
         }
         let proxy = settings.proxy
