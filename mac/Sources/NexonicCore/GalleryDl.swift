@@ -159,11 +159,11 @@ public extension GalleryDl {
         return (list, owner)
     }
 
-    /// Lists a profile with the engine (nil when it can't: not installed, or the site or address isn't one it knows).
-    /// `found(count)` reports progress as the engine finds files.
+    /// Lists a profile with the engine. `found(new, owner)` hands over the files as the engine finds them, so they can be
+    /// shown (and downloaded) at once. Throws `GalleryListError` with the engine's own words when it found nothing.
     static func list(_ url: String, cookies: String?, userAgent: String?, proxy: ProxySettings?, max: Int,
-                     found: @escaping (Int) -> Void = { _ in }, stop: @escaping () -> Bool) throws -> (entries: [BatchEntry], owner: String)? {
-        guard ensureInstalled() else { return nil }
+                     found: @escaping ([BatchEntry], String) -> Void = { _, _ in }, stop: @escaping () -> Bool) throws -> (entries: [BatchEntry], owner: String) {
+        guard ensureInstalled() else { throw GalleryListError(message: missing) }
         let settingsFile = try writeSettings(settings(cookies: cookies, userAgent: userAgent, username: nil, password: nil,
                                                       proxyURL: proxy.flatMap(SiteVideo.proxyURL)))
         defer { if let settingsFile { try? FileManager.default.removeItem(at: settingsFile) } }
@@ -171,15 +171,16 @@ public extension GalleryDl {
         p.executableURL = program
         p.arguments = listArguments(url: url, max: max, settingsFile: settingsFile?.path)
         var env = ProcessInfo.processInfo.environment; env["PYTHONIOENCODING"] = "utf-8"; p.environment = env
-        let out = Pipe()
+        let out = Pipe(), err = Pipe()
         p.standardOutput = out
-        p.standardError = FileHandle.nullDevice
+        p.standardError = err
         try p.run()
-        final class Box: @unchecked Sendable {
-            let lock = NSLock(); var data = Data(); var done = false
-            var lines: Int { lock.lock(); defer { lock.unlock() }; return data.reduce(0) { $1 == 10 ? $0 + 1 : $0 } }
+        final class Box: @unchecked Sendable { let lock = NSLock(); var data = Data(); var errors = Data(); var done = false }
+        let box = Box(), handle = out.fileHandleForReading, errHandle = err.fileHandleForReading
+        DispatchQueue.global(qos: .utility).async {
+            let e = errHandle.readDataToEndOfFile()
+            box.lock.lock(); box.errors = e.suffix(4000); box.lock.unlock()
         }
-        let box = Box(), handle = out.fileHandleForReading
         DispatchQueue.global(qos: .userInitiated).async {
             while true {
                 let chunk = handle.availableData
@@ -188,19 +189,39 @@ public extension GalleryDl {
                 box.data.append(chunk); box.lock.unlock()
             }
         }
-        var last = -1
+        var handed = 0, all: [BatchEntry] = [], owner = ""
+        func handOver(final: Bool) {
+            box.lock.lock(); let data = box.data; box.lock.unlock()
+            // Only whole lines; the last one may still be arriving.
+            guard let end = final ? data.endIndex : data.lastIndex(of: 10).map({ data.index(after: $0) }), end > handed else { return }
+            let listed = entries(String(decoding: data[handed..<end], as: UTF8.self), owner: owner)
+            handed = end
+            if owner.isEmpty { owner = listed.owner }
+            let fresh = listed.entries.filter { e in !all.contains { $0.url == e.url } }
+            if !fresh.isEmpty { all += fresh; found(fresh, owner) }
+        }
         while true {
-            Thread.sleep(forTimeInterval: 0.5)
+            Thread.sleep(forTimeInterval: 0.3)
             if stop() { p.terminate(); throw CancellationError() }
-            let n = box.lines
-            if n != last { last = n; found(n) }
+            handOver(final: false)
             box.lock.lock(); let finished = box.done; box.lock.unlock()
             if finished { break }
         }
         p.waitUntilExit()
-        let listed = entries(String(decoding: box.data, as: UTF8.self))
-        return listed.entries.isEmpty ? nil : listed
+        handOver(final: true)
+        if all.isEmpty {
+            box.lock.lock(); let text = String(decoding: box.errors, as: UTF8.self); box.lock.unlock()
+            let said = text.split(whereSeparator: \.isNewline).last { $0.contains("error") || $0.contains("Error") } ?? text.split(whereSeparator: \.isNewline).last
+            throw GalleryListError(message: said.map { String($0).replacingOccurrences(of: "[error] ", with: "") } ?? "")
+        }
+        return (all, owner)
     }
+}
+
+/// The gallery engine found nothing: its own words (a site it doesn't know, a sign-in it wants …), shown to the user.
+public struct GalleryListError: LocalizedError {
+    public let message: String
+    public var errorDescription: String? { message }
 }
 
 /// Runs the gallery engine for one gallery: the list row counts files and bytes; pausing stops it and resuming continues

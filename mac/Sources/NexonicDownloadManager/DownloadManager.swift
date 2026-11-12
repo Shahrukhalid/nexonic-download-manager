@@ -204,6 +204,7 @@ final class DownloadManager: ObservableObject {
         var maxHeight: Int?  // a single video link's highest picture quality (nil = best)
         var infoJSON: String?  // a single video link's details, already looked up in the Add window
         var gallery = false    // the whole gallery with the gallery engine
+        var rememberFolder = true  // false for Profile Batch: its per-profile folder is not "the last folder used"
         var package: String?   // Link Grabber package name
         var unpack = false     // unpack the package's archives when all of it is done
     }
@@ -283,7 +284,7 @@ final class DownloadManager: ObservableObject {
         if !o.gallery, TorrentSource.isTorrent(url.absoluteString) { record.torrent = TorrentTask(source: url.absoluteString) }
         if o.gallery { record.gallery = true }
         if let p = o.package, !p.isEmpty { record.package = p; record.unpackWhenDone = o.unpack ? true : nil }
-        if let f = o.folder, o.package == nil, settings.rememberLastFolder,
+        if let f = o.folder, o.package == nil, o.rememberFolder, settings.rememberLastFolder,
            f.standardizedFileURL.path != settings.startFolder.standardizedFileURL.path { settings.usedFolder(f) }
         if stream { record.isStream = true }
         if site {
