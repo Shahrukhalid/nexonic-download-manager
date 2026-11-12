@@ -28,6 +28,8 @@ public static partial class Dialogs
         var mode = f.Field("Download", new ComboBox { ItemsSource = new[] { L.T("All videos I don't have yet"), L.T("Only new videos (not seen on this profile before)"), L.T("Let me preview and choose") }, SelectedIndex = 0 });
         var folder = f.Folder(m.Settings.StartFolder);
         var own = f.Check("Put each profile in a folder of its own", true);
+        var viaBrowser = f.Check("Instagram and Facebook: find every video through my browser (the Nexonic extension scrolls the profile there)", m.Settings.ProfilesViaBrowser);
+        viaBrowser.Click += (_, _) => { m.Settings.ProfilesViaBrowser = viaBrowser.IsChecked == true; m.ApplySettings(m.Settings); };
         var parallel = f.Field("Downloads at the same time", new ComboBox { ItemsSource = new[] { "1", "2", "3", "4", "5", "6" }, SelectedIndex = 1 });
         DatePicker? from = null, to = null; TextBox? words = null, minMin = null, maxMin = null, maxCount = null; ComboBox? kind = null, check = null;
         f.Collapsed("Filters", () =>
@@ -54,7 +56,7 @@ public static partial class Dialogs
         var checks = new List<(CheckBox Box, BatchEntry Entry)>();
         ProfileBatch.Scan? scan = null;
         System.Threading.CancellationTokenSource? cancel = null;
-        Button? go = null, export = null, now = null, later = null, sign = null;
+        Button? go = null, export = null, now = null, later = null;
         List<BatchEntry> pending = new();
         BatchCounts? pendingCounts = null;
         int[] hours = { 0, 1, 6, 24, 168 };
@@ -78,34 +80,6 @@ public static partial class Dialogs
             if (later != null) later.IsEnabled = take.Count > 0;
             status.Text = (scan!.Owner.Length > 0 ? scan.Owner + ": " : "") + (counts with { Queued = 0 }).Text
                 + (take.Count > 0 ? "\n" + L.T("Choose Download Now, or Add to Queue to start them later.") : "");
-        }
-
-        // Instagram and Facebook: "Find All (Sign In)" until signed in, then "Sign Out of …" (optional; never needed).
-        void ShowSignIn(string url)
-        {
-            if (sign == null) return;
-            var social = SocialPages.Find(url);
-            sign.Visibility = social == null ? Visibility.Collapsed : Visibility.Visible;
-            if (social is { } s) sign.Content = SocialWebView.SignedIn(s.Site) ? string.Format(L.T("Sign Out of {0}"), s.Site.Name) : L.T("Find All (Sign In)");
-        }
-
-        async void SignInOrOut()
-        {
-            if (SocialPages.Find(box.Text.Trim()) is not { } social) return;
-            if (SocialWebView.SignedIn(social.Site))
-            {
-                SocialWebView.SignOut(social.Site);
-                status.Text = string.Format(L.T("Nexonic is signed out of {0}. Without signing in it finds only the latest posts."), social.Site.Name);
-                ShowSignIn(box.Text.Trim());
-                return;
-            }
-            try
-            {
-                if (await SocialWebView.SignIn(f.Window, social.Site)) Read();
-                else status.Text = string.Format(L.T("Not signed in to {0}. Nexonic keeps finding only the latest posts."), social.Site.Name);
-            }
-            catch (Exception e) { status.Text = e.Message; }
-            ShowSignIn(box.Text.Trim());
         }
 
         void Hand(bool start)
@@ -161,12 +135,26 @@ public static partial class Dialogs
             {
                 if (SocialPages.Find(url) is { } social)
                 {
-                    // Instagram and Facebook show their posts only through their own pages: open them like a visitor's browser.
-                    status.Text = SocialWebView.SignedIn(social.Site)
-                        ? string.Format(L.T("Scrolling the whole {0} profile with your sign-in… (large profiles take a few minutes)"), social.Site.Name)
-                        : string.Format(L.T("Opening the {0} profile like a visitor's browser…"), social.Site.Name);
-                    scan = await SocialWebView.Scan(url, social.Site, social.Owner, social.Pages, filter.Max,
-                        n => status.Text = string.Format(L.T("{0} found so far…"), n), token);
+                    // Instagram and Facebook show visitors only their latest posts. Every video comes through the user's own
+                    // browser: the Nexonic extension scrolls the profile there (with the user's own sign-in, if any).
+                    List<BatchEntry>? all = null;
+                    if (viaBrowser.IsChecked == true)
+                    {
+                        status.Text = L.T(BrowserCollect.Asking);
+                        var (page, ticket) = BrowserCollect.Start(social.Pages[0], filter.Max);
+                        BrowserCollect.Open(page);
+                        all = await BrowserCollect.Wait(ticket, TimeSpan.FromSeconds(45), n => status.Text = string.Format(L.T("{0} found so far…"), n), token);
+                    }
+                    if (all is { Count: > 0 })
+                        scan = new ProfileBatch.Scan { Url = url, Owner = social.Owner, Entries = all, Complete = true,
+                            Note = string.Format(L.T("Found {0} videos by scrolling the profile in your browser."), all.Count) };
+                    else
+                    {
+                        status.Text = string.Format(L.T("Opening the {0} profile like a visitor's browser…"), social.Site.Name);
+                        scan = await SocialWebView.Scan(url, social.Site, social.Owner, social.Pages, filter.Max,
+                            n => status.Text = string.Format(L.T("{0} found so far…"), n), token);
+                        if (viaBrowser.IsChecked == true && all == null) scan.Note += "\n" + L.T(BrowserCollect.NoAnswer);
+                    }
                 }
                 else
                 {
@@ -189,7 +177,6 @@ public static partial class Dialogs
                 }
                 Offer(take, counts);
                 if (scan.Note.Length > 0) status.Text += "\n" + scan.Note;  // what the site doesn't show visitors
-                ShowSignIn(url);
             }
             catch (OperationCanceledException) { status.Text = L.T("Stopped. The videos found so far are kept; Find Videos continues from there."); }
             catch (Exception e) { if (!token.IsCancellationRequested) status.Text = e.Message; }
@@ -207,8 +194,6 @@ public static partial class Dialogs
             File.WriteAllText(d.FileName, ProfileBatch.Export(scan.Entries, d.FilterIndex switch { 2 => "csv", 3 => "json", _ => "txt" }));
         });
         export.IsEnabled = false;
-        sign = f.AddButton("Find All (Sign In)", SignInOrOut);
-        sign.Visibility = Visibility.Collapsed;
         later = f.AddButton("Add to Queue", () => Hand(false));
         now = f.AddButton("Download Now", () => Hand(true));
         later.IsEnabled = now.IsEnabled = false;

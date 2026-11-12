@@ -64,6 +64,12 @@
     "Normal": "Tūturu",
     "Large": "Nui",
     "Button colour": "Ko te tae o te kīinga",
-    "Show the button's text (off = arrow only)": "E whakaatu ana i te kupu o te kīnga (kore = kōaro anake)"
+    "Show the button's text (off = arrow only)": "E whakaatu ana i te kupu o te kīnga (kore = kōaro anake)",
+    "This profile": "This profile",
+    "Scrolls this profile to the end, then sends every video to Nexonic. Keep this tab open until it's done.": "Scrolls this profile to the end, then sends every video to Nexonic. Keep this tab open until it's done.",
+    "Download all videos": "Download all videos",
+    "Scrolling the profile…": "Scrolling the profile…",
+    "Already collecting this profile": "Already collecting this profile",
+    "{count} videos found so far…": "{count} videos found so far…"
   }
 }

@@ -64,6 +64,12 @@
     "Normal": "Kawaida",
     "Large": "kubwa",
     "Button colour": "Rangi ya kifungo",
-    "Show the button's text (off = arrow only)": "Kuonyesha maandishi ya kifungo (off = mshale tu)"
+    "Show the button's text (off = arrow only)": "Kuonyesha maandishi ya kifungo (off = mshale tu)",
+    "This profile": "This profile",
+    "Scrolls this profile to the end, then sends every video to Nexonic. Keep this tab open until it's done.": "Scrolls this profile to the end, then sends every video to Nexonic. Keep this tab open until it's done.",
+    "Download all videos": "Download all videos",
+    "Scrolling the profile…": "Scrolling the profile…",
+    "Already collecting this profile": "Already collecting this profile",
+    "{count} videos found so far…": "{count} videos found so far…"
   }
 }

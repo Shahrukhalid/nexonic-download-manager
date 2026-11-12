@@ -290,6 +290,22 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
         else if (msg.fileName) extra.fileName = msg.fileName;
         return { ok: await send(msg.url, extra) };
       }
+      case "profile-links": {
+        // Profile Batch through the browser: progress and the result go to the app; the tab it opened closes when done.
+        if (!sender.tab || !/^[0-9a-f]{32}$/.test(msg.token || "") || !["started", "done"].includes(msg.stage)) return { ok: false };
+        const r = await chrome.runtime.sendNativeMessage(HOST, { type: "profile-links", token: msg.token, stage: msg.stage, data: msg.data }).catch(() => null);
+        if (msg.stage === "done") chrome.tabs.remove(sender.tab.id).catch(() => {});
+        return { ok: !!(r && r.ok) };
+      }
+      case "profile-send": {
+        // "Download all videos of this profile" from the popup: every video goes to Nexonic in the best quality.
+        let sent = 0;
+        for (const v of msg.videos || []) {
+          if (v && /^https:\/\/www\.(instagram|facebook)\.com\//.test(v.u) && (await send(v.u, { referrer, site: true, browser: true, later: !!msg.later }))) sent++;
+        }
+        chrome.runtime.sendMessage({ type: "profile-sent", sent }).catch(() => {});
+        return { ok: sent > 0, sent };
+      }
       case "send-links": {
         let sent = 0;
         for (const url of msg.urls || []) if (await send(url, { referrer, later: !!msg.later })) sent++;

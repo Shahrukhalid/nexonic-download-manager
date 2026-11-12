@@ -64,6 +64,12 @@
     "Normal": "Faʻamau",
     "Large": "Tele",
     "Button colour": "Le lanu o le kiona",
-    "Show the button's text (off = arrow only)": "Faʻaalia le faʻamatalaga o le ki (faʻatapulaʻaina = saʻo)"
+    "Show the button's text (off = arrow only)": "Faʻaalia le faʻamatalaga o le ki (faʻatapulaʻaina = saʻo)",
+    "This profile": "This profile",
+    "Scrolls this profile to the end, then sends every video to Nexonic. Keep this tab open until it's done.": "Scrolls this profile to the end, then sends every video to Nexonic. Keep this tab open until it's done.",
+    "Download all videos": "Download all videos",
+    "Scrolling the profile…": "Scrolling the profile…",
+    "Already collecting this profile": "Already collecting this profile",
+    "{count} videos found so far…": "{count} videos found so far…"
   }
 }

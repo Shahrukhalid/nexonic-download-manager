@@ -64,6 +64,12 @@
     "Normal": "Normal",
     "Large": "Gran",
     "Button colour": "Color del botó",
-    "Show the button's text (off = arrow only)": "Mostra el text del botó (desactivat = només fletxa)"
+    "Show the button's text (off = arrow only)": "Mostra el text del botó (desactivat = només fletxa)",
+    "This profile": "This profile",
+    "Scrolls this profile to the end, then sends every video to Nexonic. Keep this tab open until it's done.": "Scrolls this profile to the end, then sends every video to Nexonic. Keep this tab open until it's done.",
+    "Download all videos": "Download all videos",
+    "Scrolling the profile…": "Scrolling the profile…",
+    "Already collecting this profile": "Already collecting this profile",
+    "{count} videos found so far…": "{count} videos found so far…"
   }
 }

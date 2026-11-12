@@ -64,6 +64,12 @@
     "Normal": "_Нормалуу",
     "Large": "Чоң",
     "Button colour": "Баскычтын түсү",
-    "Show the button's text (off = arrow only)": "Баскычтын текстин көрсөтүү (off = стрелка только)"
+    "Show the button's text (off = arrow only)": "Баскычтын текстин көрсөтүү (off = стрелка только)",
+    "This profile": "This profile",
+    "Scrolls this profile to the end, then sends every video to Nexonic. Keep this tab open until it's done.": "Scrolls this profile to the end, then sends every video to Nexonic. Keep this tab open until it's done.",
+    "Download all videos": "Download all videos",
+    "Scrolling the profile…": "Scrolling the profile…",
+    "Already collecting this profile": "Already collecting this profile",
+    "{count} videos found so far…": "{count} videos found so far…"
   }
 }

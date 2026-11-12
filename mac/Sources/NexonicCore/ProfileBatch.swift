@@ -391,9 +391,8 @@ public enum InstagramPage {
     }
 }
 
-/// Instagram and Facebook profiles in Profile Batch. Without signing in, the profile page shows visitors only its latest
-/// posts. A user who wants all of them can sign in once on the site's own page inside Nexonic (optional; the session
-/// stays on this computer and can be removed any time): the profile page is then scrolled to the end, as the user would.
+/// Instagram and Facebook profiles in Profile Batch. Their profile pages show visitors who are not signed in only the
+/// latest posts; every video comes through the user's own browser and the Nexonic extension (BrowserCollect).
 public struct SocialSite: Sendable, Equatable {
     public let name: String, loginURL: String, domain: String, sessionCookie: String, script: String
 }
@@ -439,16 +438,6 @@ public enum SocialPages {
 })()
 """#
 
-    /// Scrolls the page one screen further down (signed-in scans load older posts this way).
-    public static let scroll = "window.scrollBy(0, Math.max(window.innerHeight, 800)); 0"
-
-    public static func signedInNote(_ site: SocialSite, _ count: Int) -> String {
-        "Found \(count) videos by scrolling the whole profile with your \(site.name) sign-in."
-    }
-
-    public static func offerSignIn(_ site: SocialSite) -> String {
-        "\(site.name) shows visitors who are not signed in only the latest posts. To find all of this profile's videos, choose \"Find All (Sign In)\": you sign in once on \(site.name)'s own page inside Nexonic, and the session stays on this computer."
-    }
 
     /// Adds what a page shows now to what was found before; true when anything new came. Stops at max.
     public static func merge(_ found: inout [String: BatchEntry], order: inout [String], _ now: [BatchEntry], max: Int) -> Bool {
@@ -463,4 +452,63 @@ public enum SocialPages {
         s.url = url; s.owner = owner; s.entries = entries; s.complete = true; s.note = note
         return s
     }
+}
+
+/// Profile Batch through the user's own browser: Nexonic opens the profile page there with a one-time token in the
+/// address (#nexonic-collect=token:max). The Nexonic extension sees it, scrolls the page as the user would (with whatever
+/// the user is signed in to in that browser; Nexonic itself never signs in or sees a password), sends the video links
+/// back through the browser helper and closes the tab. The helper leaves them in the ProfileLinks folder for the app.
+public enum BrowserCollect {
+    public static var folder: URL { AppPaths.support.appendingPathComponent("ProfileLinks", isDirectory: true) }
+    static let maxPayload = 4 * 1024 * 1024
+
+    static func valid(_ token: String?) -> Bool {
+        guard let token, token.count == 32 else { return false }
+        return token.allSatisfy { $0.isHexDigit && !$0.isUppercase }
+    }
+
+    /// The page address the browser opens, and the token its answer comes back under.
+    public static func start(_ page: String, max: Int) -> (url: String, token: String) {
+        let token = UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
+        let base = page.components(separatedBy: "#")[0]
+        return (base + "#nexonic-collect=\(token):\(Swift.max(1, Swift.min(max, ProfileBatch.limit)))", token)
+    }
+
+    /// The browser helper: the extension's progress ("started", with a count) or result ("done", the page script's JSON).
+    @discardableResult
+    public static func save(token: String?, stage: String?, data: Any?) -> Bool {
+        guard valid(token), let token, let stage, ["started", "done"].contains(stage), let data,
+              JSONSerialization.isValidJSONObject(data), let bytes = try? JSONSerialization.data(withJSONObject: data),
+              bytes.count <= maxPayload else { return false }
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        return (try? bytes.write(to: folder.appendingPathComponent("\(token).\(stage).json"), options: .atomic)) != nil
+    }
+
+    /// Waits for the extension: nil when it does not answer within `answerWithin` seconds (no extension in the default
+    /// browser); otherwise the videos, once the page was scrolled to its end. `found(count)` reports progress.
+    public static func wait(_ token: String, answerWithin: Int, found: @escaping (Int) -> Void, stop: @escaping () -> Bool) async throws -> [BatchEntry]? {
+        let started = folder.appendingPathComponent("\(token).started.json"), done = folder.appendingPathComponent("\(token).done.json")
+        let fm = FileManager.default
+        defer { try? fm.removeItem(at: started); try? fm.removeItem(at: done) }
+        var waited = 0
+        while !fm.fileExists(atPath: started.path) && !fm.fileExists(atPath: done.path) {
+            if waited >= answerWithin { return nil }
+            try await Task.sleep(nanoseconds: 1_000_000_000)
+            if stop() { throw CancellationError() }
+            waited += 1
+        }
+        var last = -1, i = 0
+        while !fm.fileExists(atPath: done.path) {
+            if i > 3600 { throw ProfileBatchError("The browser stopped answering. Find Videos tries again.") }
+            try await Task.sleep(nanoseconds: 1_000_000_000)
+            if stop() { throw CancellationError() }
+            i += 1
+            let n = InstagramPage.read(try? String(contentsOf: started, encoding: .utf8)).posts
+            if n != last { last = n; found(n) }
+        }
+        return InstagramPage.read(try? String(contentsOf: done, encoding: .utf8)).videos
+    }
+
+    public static let asking = "Opening the profile in your browser: the Nexonic extension scrolls it there and closes the tab when it has every video. Keep the browser open."
+    public static let noAnswer = "Your browser didn't answer, so Nexonic took only what visitors see. To find every video, add the Nexonic extension to your default browser and sign in to the site there."
 }

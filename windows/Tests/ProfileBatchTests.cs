@@ -151,6 +151,25 @@ public class ProfileBatchTests
     }
 
     [Fact]
+    public async Task TheBrowserExtensionHandsTheProfileBack()
+    {
+        var (url, token) = BrowserCollect.Start("https://www.instagram.com/nasa/#old", 300);
+        Assert.True(System.Text.RegularExpressions.Regex.IsMatch(url, "^https://www\\.instagram\\.com/nasa/#nexonic-collect=[0-9a-f]{32}:300$"));
+        Assert.False(BrowserCollect.Save("../evil", "done", "{}"));
+        Assert.False(BrowserCollect.Save(token, "other", "{}"));
+        Assert.Null(await BrowserCollect.Wait(token, TimeSpan.FromSeconds(1), _ => { }, default));  // no extension answered
+        var counts = new List<int>();
+        var waiting = BrowserCollect.Wait(token, TimeSpan.FromSeconds(10), counts.Add, default);
+        Assert.True(BrowserCollect.Save(token, "started", "{\"posts\":3,\"videos\":[]}"));
+        await Task.Delay(1500);
+        Assert.True(BrowserCollect.Save(token, "done", "{\"posts\":2,\"videos\":[{\"u\":\"https://www.instagram.com/reel/A1/\",\"t\":\"a\"},{\"u\":\"https://www.facebook.com/reel/123456789/\",\"t\":\"b\"}]}"));
+        var videos = await waiting;
+        Assert.Equal(2, videos!.Count);
+        Assert.Contains(3, counts);
+        Assert.False(File.Exists(Path.Combine(BrowserCollect.Folder, token + ".done.json")));
+    }
+
+    [Fact]
     public void SavedProfilesAreDueOnTheirSchedule()
     {
         var p = new SavedProfile { CheckHours = 6 };

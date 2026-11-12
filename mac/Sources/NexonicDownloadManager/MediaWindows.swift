@@ -94,7 +94,8 @@ struct ProfileBatchView: View {
     // Found videos wait here until the user picks Download Now or Add to Queue: nothing starts by itself.
     @State private var pending: [BatchEntry] = []
     @State private var pendingCounts: BatchCounts?
-    @State private var signedIn = false  // Nexonic's own optional sign-in for the pasted Instagram or Facebook profile
+    // Instagram and Facebook: every video through the user's own browser and the Nexonic extension (BrowserCollect).
+    @AppStorage("profilesViaBrowser") private var viaBrowser = true
     @State private var ownFolder = true
     @State private var parallel = 2
     @State private var useFrom = false
@@ -157,6 +158,7 @@ struct ProfileBatchView: View {
                     Stepper("At most \(maxCount) videos", value: $maxCount, in: 10...ProfileBatch.limit, step: 50)
                     Text("A site that doesn't say when a video was published or how long it is: those videos are kept.").font(.caption).foregroundStyle(.secondary)
                 }
+                Toggle("Instagram and Facebook: find every video through my browser (the Nexonic extension scrolls the profile there)", isOn: $viaBrowser)
                 Picker("Look for new videos", selection: $checkHours) {
                     Text("Never (only now)").tag(0); Text("Every hour").tag(1); Text("Every 6 hours").tag(6); Text("Every day").tag(24); Text("Every week").tag(168)
                 }
@@ -183,7 +185,6 @@ struct ProfileBatchView: View {
                 }.disabled(scan == nil).fixedSize()
                 Spacer()
                 Button("Stop") { stopRequested = true }.disabled(!busy)
-                signButton
                 if !preview.isEmpty || !pending.isEmpty {
                     Button("Add to Queue") { hand(start: false) }
                     Button("Download Now") { hand(start: true) }.keyboardShortcut(.defaultAction)
@@ -196,29 +197,6 @@ struct ProfileBatchView: View {
         .padding(16)
         .frame(minWidth: 600, minHeight: 560)
         .onAppear { if !link.isEmpty { find() } }
-    }
-
-    /// Optional, never needed: signing in lets Nexonic scroll the whole Instagram or Facebook profile instead of the latest posts.
-    @ViewBuilder private var signButton: some View {
-        if scan != nil, !busy, let social = SocialPages.find(link.trimmingCharacters(in: .whitespacesAndNewlines)) {
-            // Optional, never needed: signing in lets Nexonic scroll the whole profile instead of the latest posts.
-            if signedIn {
-                Button(String(format: String(localized: "Sign Out of %@"), social.site.name)) {
-                    Task { @MainActor in
-                        await SocialWebView.signOut(social.site)
-                        signedIn = false
-                        status = String(format: String(localized: "Nexonic is signed out of %@. Without signing in it finds only the latest posts."), social.site.name)
-                    }
-                }
-            } else {
-                Button("Find All (Sign In)") {
-                    Task { @MainActor in
-                        if await SocialWebView.signIn(social.site) { signedIn = true; find() }
-                        else { status = String(format: String(localized: "Not signed in to %@. Nexonic keeps finding only the latest posts."), social.site.name) }
-                    }
-                }
-            }
-        }
     }
 
     private func target(_ s: ProfileBatch.Scan) -> URL {
@@ -259,16 +237,32 @@ struct ProfileBatchView: View {
             : String(localized: "Looking for videos… (large profiles can take a few minutes)")
         let proxy = manager.settings.proxy, f = filter, stopFlag = { [self] in stopRequested }
         if let social = SocialPages.find(url) {
-            // Instagram and Facebook show their posts only through their own pages: open them like a visitor's browser.
-            status = SocialWebView.signedIn(social.site)
-                ? String(format: String(localized: "Scrolling the whole %@ profile with your sign-in… (large profiles take a few minutes)"), social.site.name)
-                : String(format: String(localized: "Opening the %@ profile like a visitor's browser…"), social.site.name)
+            // Instagram and Facebook show visitors only their latest posts. Every video comes through the user's own
+            // browser: the Nexonic extension scrolls the profile there (with the user's own sign-in, if any).
+            let asked = viaBrowser
             Task { @MainActor in
                 do {
-                    let s = try await SocialWebView.scan(url, site: social.site, owner: social.owner, pages: social.pages, max: f.max,
-                                                         found: { n in status = String(format: String(localized: "%d found so far…"), n) },
-                                                         stop: { stopRequested })
-                    show(s, url: url, filter: f)
+                    var videos: [BatchEntry]?
+                    if asked {
+                        status = String(localized: String.LocalizationValue(BrowserCollect.asking))
+                        let (page, ticket) = BrowserCollect.start(social.pages[0], max: f.max)
+                        if let link = URL(string: page) { NSWorkspace.shared.open(link) }
+                        videos = try await BrowserCollect.wait(ticket, answerWithin: 45,
+                                                               found: { n in status = String(format: String(localized: "%d found so far…"), n) },
+                                                               stop: { stopRequested })
+                    }
+                    if let videos, !videos.isEmpty {
+                        show(SocialPages.scan(url: url, owner: social.owner, entries: videos,
+                                              note: String(format: String(localized: "Found %d videos by scrolling the profile in your browser."), videos.count)),
+                             url: url, filter: f)
+                    } else {
+                        status = String(format: String(localized: "Opening the %@ profile like a visitor's browser…"), social.site.name)
+                        var s = try await SocialWebView.scan(url, site: social.site, owner: social.owner, pages: social.pages, max: f.max,
+                                                             found: { n in status = String(format: String(localized: "%d found so far…"), n) },
+                                                             stop: { stopRequested })
+                        if asked, videos == nil { s.note = (s.note ?? "") + "\n" + String(localized: String.LocalizationValue(BrowserCollect.noAnswer)) }
+                        show(s, url: url, filter: f)
+                    }
                 } catch is CancellationError {
                     status = String(localized: "Stopped.")
                 } catch {
@@ -301,7 +295,6 @@ struct ProfileBatchView: View {
     /// Shows a finished scan: the preview list, or the counts, or the queued downloads.
     private func show(_ s: ProfileBatch.Scan, url: String, filter f: BatchFilter) {
         scan = s
-        signedIn = SocialPages.find(url).map { SocialWebView.signedIn($0.site) } ?? false
         var seen: Set<String>? = nil
         if mode == 1, let p = manager.profiles.first(where: { ProfileBatch.key($0.url) == ProfileBatch.key(url) }) { seen = Set(p.seen) }
         let (take, counts) = ProfileBatch.choose(s.entries, f, alreadyDownloaded: manager.alreadyDownloaded, seen: seen)

@@ -31,6 +31,8 @@ public static partial class Dialogs
         var mode = f.Field("Download", new ComboBox { ItemsSource = new[] { L.T("All videos I don't have yet"), L.T("Only new videos (not seen on this profile before)"), L.T("Let me preview and choose") }, SelectedIndex = 0, MinWidth = 260 });
         var folder = f.Folder(m.Settings.StartFolder);
         var own = f.Check("Put each profile in a folder of its own", true);
+        var viaBrowser = f.Check("Instagram and Facebook: find every video through my browser (the Nexonic extension scrolls the profile there)", m.Settings.ProfilesViaBrowser);
+        viaBrowser.Click += (_, _) => { m.Settings.ProfilesViaBrowser = viaBrowser.IsChecked == true; m.ApplySettings(m.Settings); };
         var parallel = f.Field("Downloads at the same time", new ComboBox { ItemsSource = new[] { "1", "2", "3", "4", "5", "6" }, SelectedIndex = 1 });
         CalendarDatePicker? from = null, to = null; TextBox? words = null, minMin = null, maxMin = null, maxCount = null; ComboBox? kind = null, check = null;
         f.Collapsed("Filters", () =>
@@ -136,8 +138,26 @@ public static partial class Dialogs
             var proxy = HostProfiles.Match(m.Settings.HostProfiles, url)?.Proxy ?? m.Settings.Proxy;
             try
             {
-                scan = await Task.Run(() => ProfileBatch.Discover(url, proxy, filter.Max,
-                    (e, n) => { if (n % 10 == 0) Avalonia.Threading.Dispatcher.UIThread.Post(() => status.Text = string.Format(L.T("{0} found so far…"), n)); }, cancel: token));
+                // Instagram and Facebook show visitors only their latest posts. Every video comes through the user's own
+                // browser: the Nexonic extension scrolls the profile there (with the user's own sign-in, if any).
+                List<BatchEntry>? all = null;
+                var social = SocialPages.Find(url);
+                if (social != null && viaBrowser.IsChecked == true)
+                {
+                    status.Text = L.T(BrowserCollect.Asking);
+                    var (page, ticket) = BrowserCollect.Start(social.Value.Pages[0], filter.Max);
+                    BrowserCollect.Open(page);
+                    all = await BrowserCollect.Wait(ticket, TimeSpan.FromSeconds(45), n => status.Text = string.Format(L.T("{0} found so far…"), n), token);
+                }
+                if (social != null && all is { Count: > 0 })
+                    scan = new ProfileBatch.Scan { Url = url, Owner = social.Value.Owner, Entries = all, Complete = true,
+                        Note = string.Format(L.T("Found {0} videos by scrolling the profile in your browser."), all.Count) };
+                else
+                {
+                    scan = await Task.Run(() => ProfileBatch.Discover(url, proxy, filter.Max,
+                        (e, n) => { if (n % 10 == 0) Avalonia.Threading.Dispatcher.UIThread.Post(() => status.Text = string.Format(L.T("{0} found so far…"), n)); }, cancel: token));
+                    if (social != null && viaBrowser.IsChecked == true && all == null) scan.Note += (scan.Note.Length > 0 ? "\n" : "") + L.T(BrowserCollect.NoAnswer);
+                }
                 var seen = mode.SelectedIndex == 1 && Saved(url) is { } p ? new HashSet<string>(p.Seen) : null;
                 var (take, counts) = ProfileBatch.Choose(scan.Entries, filter, m.AlreadyDownloaded, seen);
                 if (export != null) export.IsEnabled = true;

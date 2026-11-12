@@ -1,14 +1,17 @@
 ## 0.31.0
 
 **Profile Batch**
-- Instagram and Facebook profiles (Windows, Mac, Android): pasting a profile link opens the profile page the way any
-  visitor's browser does, in a hidden web view, and takes the videos and reels the page shows. Without signing in that is
-  what the sites show visitors: on a Mac with a home connection, an Instagram profile showed its latest 12 posts (all
-  12 found and downloaded) and a Facebook profile's reels tab showed 10 reels (the old way found 1).
-- Optional: **Find All (Sign In)**. To get every video of a profile, sign in once on Instagram's or Facebook's own page
-  inside Nexonic (your password goes only to the site; the session stays on this computer, and Sign Out removes it).
-  Profile Batch then scrolls the whole profile, as you would. Nothing needs an account: without signing in, it works
-  as above.
+- Instagram and Facebook profiles: Instagram stopped answering the request Nexonic used to read profiles, and both
+  sites show visitors who are not signed in only a profile's latest posts.
+  - Every video, through your own browser (Windows, Mac, Linux): Profile Batch opens the profile in your browser, the
+    Nexonic extension scrolls it to the end there and sends every video back, then closes the tab. Whatever you are
+    signed in to in your browser counts; Nexonic itself never asks for a password or signs in. On by default; switch
+    it off in Profile Batch.
+  - Without the extension (and on Android), a hidden private web view takes what visitors see: on a Mac with a home
+    connection, an Instagram profile showed its latest 12 posts (all found and downloaded) and a Facebook profile's
+    reels tab showed 10 reels (the old way found 1).
+- Browser extension: on an Instagram or Facebook profile you are signed in to, the popup offers **Download all videos**
+  (or Download later): it scrolls the profile to the end and sends every video to Nexonic.
 - Snapchat profiles (all apps): the Spotlight videos a public profile shows visitors (snapchat.com/@name).
 - Nothing starts by itself any more: after Find Videos, choose **Download Now** or **Add to Queue** (added, waiting
   until you start them). This replaces the "Start downloading straight away" switch.
@@ -16,8 +19,6 @@
   for formats MP4 can't hold.
 - Instagram, Facebook, X, Snapchat and Threads videos are named after their caption plus the video's id. Before, they
   were all named "Video by <name>", so the engine skipped every video after the first as "already downloaded".
-- Linux has no built-in web view: for Instagram there, open the profile in your browser, right-click the page and
-  choose "Download all links with Nexonic".
 
 ## 0.30.1
 

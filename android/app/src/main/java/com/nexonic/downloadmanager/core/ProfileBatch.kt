@@ -214,9 +214,8 @@ object InstagramPage {
 }
 
 /**
- * Instagram and Facebook profiles in Profile Batch. Without signing in, the profile page shows visitors only its latest
- * posts. A user who wants all of them can sign in once on the site's own page inside Nexonic (optional; the session stays
- * on this device and can be removed any time): the profile page is then scrolled to the end, as the user would.
+ * Instagram and Facebook profiles in Profile Batch. Their profile pages show visitors who are not signed in only the
+ * latest posts; the app takes what its hidden web view shows (on computers, the browser extension finds every video).
  */
 data class SocialSite(val name: String, val loginUrl: String, val domain: String, val sessionCookie: String, val script: String)
 
@@ -256,11 +255,6 @@ object SocialPages {
 
     val fbSite get() = facebook.copy(script = FACEBOOK_SCRIPT)
 
-    /** Scrolls the page one screen further down (signed-in scans load older posts this way). */
-    const val SCROLL = "window.scrollBy(0, Math.max(window.innerHeight, 800)); 0"
-
-    fun signedInNote(site: SocialSite, count: Int) = "Found $count videos by scrolling the whole profile with your ${site.name} sign-in."
-    fun offerSignIn(site: SocialSite) = "${site.name} shows visitors who are not signed in only the latest posts. To find all of this profile's videos, choose \"Find all (sign in)\": you sign in once on ${site.name}'s own page inside Nexonic, and the session stays on this device."
 
     /** Adds what a page shows now to what was found before; true when anything new came. Stops at [max]. */
     fun merge(found: LinkedHashMap<String, BatchEntry>, now: List<BatchEntry>, max: Int): Boolean {

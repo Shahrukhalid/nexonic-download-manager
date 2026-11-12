@@ -64,6 +64,12 @@
     "Normal": "Оддий",
     "Large": "Катта",
     "Button colour": "Тугма ранги",
-    "Show the button's text (off = arrow only)": "Бутон матнини кўрсатиш (очиқ = фақат ўқ)"
+    "Show the button's text (off = arrow only)": "Бутон матнини кўрсатиш (очиқ = фақат ўқ)",
+    "This profile": "This profile",
+    "Scrolls this profile to the end, then sends every video to Nexonic. Keep this tab open until it's done.": "Scrolls this profile to the end, then sends every video to Nexonic. Keep this tab open until it's done.",
+    "Download all videos": "Download all videos",
+    "Scrolling the profile…": "Scrolling the profile…",
+    "Already collecting this profile": "Already collecting this profile",
+    "{count} videos found so far…": "{count} videos found so far…"
   }
 }

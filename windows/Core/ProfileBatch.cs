@@ -426,9 +426,8 @@ public static class InstagramPage
 }
 
 /// <summary>
-/// Instagram and Facebook profiles in Profile Batch. Without signing in, the profile page shows visitors only its latest
-/// posts. A user who wants all of them can sign in once on the site's own page inside Nexonic (optional; the session
-/// stays on this computer and can be removed any time): the profile page is then scrolled to the end, as the user would.
+/// Instagram and Facebook profiles in Profile Batch. Their profile pages show visitors who are not signed in only the
+/// latest posts; every video comes through the user's own browser and the Nexonic extension (BrowserCollect).
 /// </summary>
 public sealed record SocialSite(string Name, string LoginUrl, string Domain, string SessionCookie, string Script);
 
@@ -471,14 +470,6 @@ public static class SocialPages
         })()
         """;
 
-    /// <summary>Scrolls the page one screen further down (signed-in scans load older posts this way).</summary>
-    public const string Scroll = "window.scrollBy(0, Math.max(window.innerHeight, 800)); document.scrollingElement && document.scrollingElement.scrollHeight";
-
-    /// <summary>Shown with a signed-in result.</summary>
-    public static string SignedInNote(SocialSite site, int count) => $"Found {count} videos by scrolling the whole profile with your {site.Name} sign-in.";
-
-    public static string OfferSignIn(SocialSite site) =>
-        $"{site.Name} shows visitors who are not signed in only the latest posts. To find all of this profile's videos, choose \"Find All (Sign In)\": you sign in once on {site.Name}'s own page inside Nexonic, and the session stays on this computer.";
 
     /// <summary>
     /// Adds what a page shows now to what was found before (pages drop posts that scrolled far away) and says whether
@@ -490,4 +481,81 @@ public static class SocialPages
         foreach (var e in now) if (found.Count < max) found.TryAdd(e.Url, e);
         return found.Count > before;
     }
+}
+
+/// <summary>
+/// Profile Batch through the user's own browser: Nexonic opens the profile page there with a one-time token in the
+/// address (#nexonic-collect=token:max). The Nexonic extension sees it, scrolls the page as the user would (with whatever
+/// the user is signed in to in that browser; Nexonic itself never signs in or sees a password), sends the video links
+/// back through the browser helper and closes the tab. The helper leaves them in the ProfileLinks folder for the app.
+/// </summary>
+public static class BrowserCollect
+{
+    public static string Folder => Path.Combine(AppPaths.Support, "ProfileLinks");
+    const int MaxPayload = 4 * 1024 * 1024;
+
+    static bool ValidToken(string? token) => token is { Length: 32 } && token.All(Uri.IsHexDigit);
+
+    /// <summary>The page address the browser opens, and the token its answer comes back under.</summary>
+    public static (string Url, string Token) Start(string page, int max)
+    {
+        var token = Guid.NewGuid().ToString("N");
+        return (page.Split('#')[0] + $"#nexonic-collect={token}:{Math.Clamp(max, 1, ProfileBatch.Limit)}", token);
+    }
+
+    /// <summary>The browser helper: the extension's progress ("started", with a count) or result ("done", the page script's JSON).</summary>
+    public static bool Save(string? token, string? stage, string? json)
+    {
+        if (!ValidToken(token) || stage is not ("started" or "done") || json == null || json.Length > MaxPayload) return false;
+        Directory.CreateDirectory(Folder);
+        var file = Path.Combine(Folder, $"{token}.{stage}.json");
+        File.WriteAllText(file + ".tmp", json);
+        File.Move(file + ".tmp", file, true);
+        return true;
+    }
+
+    /// <summary>
+    /// Waits for the extension: null when it does not answer within answerWithin (no extension in the default browser);
+    /// otherwise the videos, once the page was scrolled to its end. found(count) reports progress.
+    /// </summary>
+    public static async Task<List<BatchEntry>?> Wait(string token, TimeSpan answerWithin, Action<int> found, CancellationToken cancel)
+    {
+        var started = Path.Combine(Folder, $"{token}.started.json");
+        var done = Path.Combine(Folder, $"{token}.done.json");
+        try
+        {
+            for (var waited = TimeSpan.Zero; !File.Exists(started) && !File.Exists(done); waited += TimeSpan.FromSeconds(1))
+            {
+                if (waited >= answerWithin) return null;
+                await Task.Delay(1000, cancel);
+            }
+            var last = -1;
+            for (var i = 0; !File.Exists(done); i++)
+            {
+                if (i > 3600) throw new TimeoutException("The browser stopped answering. Find Videos tries again.");
+                await Task.Delay(1000, cancel);
+                if (InstagramPage.Read(Read(started)).Posts is var n && n != last) { last = n; found(n); }
+            }
+            return InstagramPage.Read(Read(done)).Videos;
+        }
+        finally
+        {
+            foreach (var f in new[] { started, done }) try { File.Delete(f); } catch (IOException) { }
+        }
+    }
+
+    static string? Read(string file)
+    {
+        try { return File.Exists(file) ? File.ReadAllText(file) : null; } catch (IOException) { return null; }
+    }
+
+    /// <summary>Opens the page in the user's default browser.</summary>
+    public static void Open(string url)
+    {
+        if (OperatingSystem.IsWindows()) Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        else Process.Start("xdg-open", url);
+    }
+
+    public const string Asking = "Opening the profile in your browser: the Nexonic extension scrolls it there and closes the tab when it has every video. Keep the browser open.";
+    public const string NoAnswer = "Your browser didn't answer, so Nexonic took only what visitors see. To find every video, add the Nexonic extension to your default browser (Options → Browser) and sign in to the site there.";
 }
