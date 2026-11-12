@@ -299,7 +299,7 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
         return { ok: !!profileOf(msg.url || "") };
       case "profile-all": {
         // The popup's "Download all" on a profile: Nexonic's Profile Batch opens with it and lists every photo and video
-        // with this browser's cookies for the site, at a person's pace (2-4 seconds between requests); the user then picks
+        // with this browser's cookies for the site, at a person's pace (1-2 seconds between requests); the user then picks
         // Download Now or Add to Queue. Nothing scrolls here.
         if (!profileOf(msg.url || "")) return { ok: false };
         return { ok: await send(msg.url, { referrer: msg.url, profile: true }) };

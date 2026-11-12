@@ -78,11 +78,11 @@ public static class GalleryDl
 
     /// <summary>The engine's arguments: everything goes straight into <paramref name="folder"/>; files already there are skipped.
     /// The site login, cookies and proxy are never here: they go in the private settings file (see <see cref="Settings"/>).</summary>
-    public const string Pace = "extractor.sleep-request=2.0-4.0";
+    public const string Pace = "extractor.sleep-request=1.0-2.0";
 
     public static List<string> Arguments(string url, string folder, int speedLimitKBps, string? referrer, string? settingsFile = null)
     {
-        // A person's pace on every site: 2-4 seconds between the requests that list a profile or gallery.
+        // A person's pace on every site: 1-2 seconds between the requests that list a profile or gallery.
         var args = new List<string> { "--directory", folder, "-o", Pace };
         if (settingsFile != null) args.AddRange(new[] { "--config", settingsFile });
         if (speedLimitKBps > 0) args.AddRange(new[] { "--limit-rate", speedLimitKBps + "k" });

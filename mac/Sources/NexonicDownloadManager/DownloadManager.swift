@@ -159,7 +159,11 @@ final class DownloadManager: ObservableObject {
         var qs = Self.load([DownloadQueue].self, from: AppPaths.queues) ?? []
         if !qs.contains(where: \.isMain) { qs.insert(.main, at: 0) }
         queues = qs
-        for i in items.indices where items[i].status.isActive { items[i].status = .queued }  // interrupted by quit
+        for i in items.indices where items[i].status.isActive {
+            if items[i].listing == true {  // a Profile Batch search interrupted by quit: double-click searches again
+                items[i].status = .failed; items[i].error = "Interrupted. Double-click to search again."
+            } else { items[i].status = .queued }  // interrupted by quit
+        }
         applySpeedLimit()
         Self.applyAppearance(settings.appearance, scheme: settings.colorScheme)
         settings.debrid.key = Debrid.loadKey()
@@ -332,7 +336,7 @@ final class DownloadManager: ObservableObject {
                 // The extension's Download all: Profile Batch lists the profile with the browser's cookies, then the user
                 // picks Download Now or Add to Queue.
                 profileCookies[ProfileBatch.key(job.url)] = (job.cookies, job.userAgent)
-                MediaWindows.showPlaylist(job.url, replace: true)
+                MediaWindows.showPlaylist(job.url)
                 continue
             }
             if job.gallery == true {
@@ -360,11 +364,13 @@ final class DownloadManager: ObservableObject {
     private var canceled = Set<UUID>()
 
     func pause(_ id: UUID) {
+        if let r = items.first(where: { $0.id == id }), r.listing == true { listings[ProfileBatch.key(r.url.absoluteString)]?.stop.set(); return }
         manual.remove(id)
         if let t = transfers[id] { t.pause() } else { update(id) { if $0.status != .finished { $0.status = .paused } } }
     }
 
     func resume(_ id: UUID) {
+        if let r = items.first(where: { $0.id == id }), r.listing == true { MediaWindows.showPlaylist(r.url.absoluteString); return }
         canceled.remove(id)
         update(id) { if [.paused, .failed].contains($0.status) { $0.status = .queued; $0.error = nil } }
         if UserDefaults.standard.integer(forKey: Self.manualKey) > 0 { manual.insert(id); schedule(); return }
@@ -392,6 +398,12 @@ final class DownloadManager: ObservableObject {
     }
 
     func remove(_ id: UUID, deleteFile: Bool = false) {
+        if let r = items.first(where: { $0.id == id }), r.listing == true {  // a Profile Batch search: stop it, nothing to delete
+            listings[ProfileBatch.key(r.url.absoluteString)]?.stop.set()
+            items.removeAll { $0.id == id }
+            persist()
+            return
+        }
         transfers.removeValue(forKey: id)?.discard()
         if deleteFile, let path = items.first(where: { $0.id == id })?.savedPath {
             try? FileManager.default.trashItem(at: URL(fileURLWithPath: path), resultingItemURL: nil)
@@ -563,7 +575,7 @@ final class DownloadManager: ObservableObject {
         for q in queues where q.running {
             let limit = q.isMain ? settings.maxActive : q.maxActive
             var slots = max(1, limit) - items.filter { $0.queue == q.id && $0.status.isActive && $0.status != .seeding }.count
-            for item in items where item.queue == q.id && item.status == .queued && slots > 0 && transfers[item.id] == nil && !manual.contains(item.id) {
+            for item in items where item.queue == q.id && item.status == .queued && slots > 0 && transfers[item.id] == nil && !manual.contains(item.id) && item.listing != true {
                 slots -= 1
                 startTransfer(item)
             }
@@ -815,7 +827,7 @@ final class DownloadManager: ObservableObject {
 
     // MARK: timer
 
-    private func update(_ id: UUID, _ change: (inout DownloadRecord) -> Void) {
+    func update(_ id: UUID, _ change: (inout DownloadRecord) -> Void) {
         guard let i = items.firstIndex(where: { $0.id == id }) else { return }
         change(&items[i])
         persist()
@@ -918,7 +930,7 @@ final class DownloadManager: ObservableObject {
 
     // Secrets live only in the private secrets file, not in the lists. If it can't be written, the values from 0.6.1
     // files stay where they were and new ones are kept while the app runs; it is tried again on the next save.
-    private func persist() {
+    func persist() {
         var list = Secrets.stripped(items)
         if !syncSecrets() {
             var s = AppSettings()

@@ -5,32 +5,39 @@ import SwiftUI
 
 /// Playlists and channels, and the Media Library (Milestone 8).
 enum MediaWindows {
-    @MainActor private static var playlist: NSWindow?
-    @MainActor private static var playlistLink = ""
-
-    @MainActor static func closePlaylist() { playlist?.close() }
-
-    /// Profile Batch is open with this link.
-    @MainActor static func isShowing(_ link: String) -> Bool { playlist != nil && ProfileBatch.key(playlistLink) == ProfileBatch.key(link) }
+    /// Profile Batch windows, one per profile (several searches can run at once), by profile address ("" = no link yet).
+    @MainActor private static var playlists: [String: NSWindow] = [:]
     @MainActor private static var library: NSWindow?
 
-    /// Lists a playlist's or channel's videos; the chosen ones open in the Add window.
-    @MainActor static func showPlaylist(_ link: String = "", replace: Bool = false) {
-        if let w = playlist {
-            if !replace { NSApp.activate(ignoringOtherApps: true); w.makeKeyAndOrderFront(nil); w.orderFrontRegardless(); return }
-            w.close(); playlist = nil
-        }
+    /// Closes the Profile Batch window of this link; a search it started keeps running in the downloads list.
+    @MainActor static func closePlaylist(_ link: String) {
+        let key = link.isEmpty ? "" : ProfileBatch.key(link)
+        (playlists[key] ?? playlists.first { $0.value.isKeyWindow }?.value)?.close()
+    }
+
+    /// Profile Batch is open with this link.
+    @MainActor static func isShowing(_ link: String) -> Bool { playlists[ProfileBatch.key(link)] != nil }
+
+    /// Lists a profile's, playlist's or channel's videos (and photos); the chosen ones go into a queue of their own. One
+    /// window per profile: opening one that is open brings it to the front.
+    @MainActor static func showPlaylist(_ link: String = "") {
         let start = link.isEmpty ? (NSPasteboard.general.string(forType: .string).flatMap { DownloadJob(url: $0.trimmingCharacters(in: .whitespacesAndNewlines)).validURL != nil ? $0 : nil } ?? "") : link
+        let key = start.isEmpty ? "" : ProfileBatch.key(start)
+        if let w = playlists[key] {
+            NSApp.activate(ignoringOtherApps: true); w.makeKeyAndOrderFront(nil); w.orderFrontRegardless()
+            return
+        }
         let w = NSWindow(contentViewController: NSHostingController(rootView: ProfileBatchView(link: start).environmentObject(DownloadManager.shared)))
         w.title = String(localized: "Profile Batch")
-        w.styleMask = [.titled, .closable, .resizable]
+        w.styleMask = [.titled, .closable, .resizable, .miniaturizable]
         w.isReleasedWhenClosed = false
         w.setContentSize(NSSize(width: 680, height: 640))
         w.center()
-        playlist = w
-        playlistLink = start
+        if !playlists.isEmpty, let last = playlists.values.first { w.setFrameOrigin(NSPoint(x: last.frame.minX + 28, y: last.frame.minY - 28)) }
+        playlists[key] = w
         NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: w, queue: .main) { _ in
-            Task { @MainActor in playlist = nil }
+            // Only this window's entry: another window may have taken the same profile meanwhile.
+            Task { @MainActor in if playlists[key] === w { playlists[key] = nil } }
         }
         NSApp.activate(ignoringOtherApps: true)
         w.makeKeyAndOrderFront(nil)
@@ -98,9 +105,11 @@ struct ProfileBatchView: View {
     @EnvironmentObject var manager: DownloadManager
     @State var link: String
 
-    init(link: String) { _link = State(initialValue: link) }
+    init(link: String) { _link = State(initialValue: link); windowLink = link }
 
     @State private var lastLink = ""
+    /// The link this window was opened with (its entry among the Profile Batch windows).
+    private let windowLink: String
     @State private var quality = "best"
     @State private var mode = 0  // 0 all, 1 new only, 2 preview
     // Found videos wait here until the user picks Download Now or Add to Queue: nothing starts by itself.
@@ -199,7 +208,7 @@ struct ProfileBatchView: View {
                 }.disabled(scan == nil).fixedSize()
                 Spacer()
                 // While a profile is listed in the background, Close leaves it running (Nexonic reopens Profile Batch).
-                Button("Close") { MediaWindows.closePlaylist() }
+                Button("Close") { MediaWindows.closePlaylist(windowLink) }
                 Button("Stop") {
                     stopRequested = true
                     let key = ProfileBatch.key(link.trimmingCharacters(in: .whitespacesAndNewlines))
@@ -221,7 +230,7 @@ struct ProfileBatchView: View {
         .onReceive(manager.$listings) { all in
             let key = ProfileBatch.key(link.trimmingCharacters(in: .whitespacesAndNewlines))
             if busy, let l = all[key], l.running, l.found > 0 {
-                status = String(format: String(localized: "%d photos and videos found so far… You can close this window: Nexonic keeps going and opens Profile Batch again when it's done."), l.found)
+                status = String(format: String(localized: "%d photos and videos found so far… You can close this window: the search keeps going in the downloads list; double-click it there to come back."), l.found)
             }
             guard busy, let l = all[key], !l.running, !l.stopped else { return }
             DispatchQueue.main.async { find() }  // after the change is stored
@@ -274,8 +283,8 @@ struct ProfileBatchView: View {
         }
         if manager.profileCookies[key] != nil {
             // Opened by the extension's Download all: the gallery engine lists every photo and video with the browser's
-            // sign-in, a request every 2-4 seconds, in the background; this window may close meanwhile.
-            status = String(localized: "Listing every photo and video with your browser's sign-in, a request every 2–4 seconds. A large profile takes a few minutes: you can close this window, Nexonic keeps going and opens Profile Batch again when it's done.")
+            // sign-in, a request every 1-2 seconds, in the background; this window may close meanwhile.
+            status = String(localized: "Searching every photo and video with your browser's sign-in, a request every 1–2 seconds. You can close this window: the search keeps going in the downloads list (\"Photos and videos of …\"); double-click it there to come back.")
             manager.startListing(url, max: f.max)
             return
         }

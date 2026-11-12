@@ -88,6 +88,9 @@ public struct DownloadRecord: Codable, Identifiable, Sendable {
     public var maxHeight: Int?
     // Added in 0.26.0: a whole gallery saved by the gallery engine (savedPath is its folder, streamDone counts files)
     public var gallery: Bool?
+    // Added in 0.31.0: a Profile Batch search shown in the list (the extension's Download all): streamDone counts what
+    // was found; double-clicking it opens Profile Batch with the result
+    public var listing: Bool?
     // Added in 0.26.0: Link Grabber packages (saved together, unpacked when every download in the package is done)
     public var package: String?
     public var unpackWhenDone: Bool?

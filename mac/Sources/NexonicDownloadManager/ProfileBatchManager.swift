@@ -45,9 +45,9 @@ extension DownloadManager {
         return n
     }
 
-    /// Starts listing a profile with the gallery engine and the browser's cookies (the extension's Download all), in the
-    /// background: the Profile Batch window may close meanwhile. When it is done Nexonic says so and opens Profile Batch
-    /// with what was found (or with what visitors see, when the engine can't read the site).
+    /// Starts searching a profile with the gallery engine and the browser's cookies (the extension's Download all), in
+    /// the background, as a row in the downloads list: several can run at once, the Profile Batch window may close, and
+    /// double-clicking the row opens it again with the count so far or what was found.
     func startListing(_ url: String, max: Int) {
         let key = ProfileBatch.key(url)
         guard let signedIn = profileCookies[key], listings[key]?.running != true else { return }
@@ -55,10 +55,24 @@ extension DownloadManager {
         let listing = ProfileListing(url: url, running: true)
         listings[key] = listing
         let stop = listing.stop
+        // Its row: "Photos and videos of <name>", in the list until removed.
+        let name = SocialPages.find(url)?.owner ?? URL(string: url).map { ($0.host ?? "") + $0.path } ?? url
+        items.removeAll { $0.listing == true && ProfileBatch.key($0.url.absoluteString) == key }
+        let row: UUID?
+        if let u = URL(string: url) {
+            var r = DownloadRecord(url: u, folder: settings.folder, fileName: String(format: String(localized: "Photos and videos of %@"), name))
+            r.listing = true; r.status = .probing; r.streamDone = 0
+            items.insert(r, at: 0)
+            row = r.id
+            persist()
+        } else { row = nil }
         DispatchQueue.global(qos: .userInitiated).async {
             let result = Result { try GalleryDl.list(SocialPages.listable(url), cookies: signedIn.cookies, userAgent: signedIn.userAgent, proxy: proxy,
                                                      max: max,
-                                                     found: { n in Task { @MainActor in self.listings[key]?.found = n } }, stop: { stop.isSet }) }
+                                                     found: { n in Task { @MainActor in
+                                                         self.listings[key]?.found = n
+                                                         if let row { self.update(row) { $0.streamDone = n; $0.status = .downloading } }
+                                                     } }, stop: { stop.isSet }) }
             Task { @MainActor in
                 var l = self.listings[key] ?? ProfileListing(url: url)
                 l.running = false
@@ -70,16 +84,18 @@ extension DownloadManager {
                     let videos = found.filter { $0.kind == "video" }.count
                     l.scan = SocialPages.scan(url: url, owner: owner, entries: found,
                         note: String(format: String(localized: "Found %d videos and %d photos with your browser's sign-in."), videos, found.count - videos))
+                    if let row { self.update(row) { $0.status = .finished; $0.streamDone = found.count; $0.error = nil } }
                     self.post(String(localized: "Profile Batch"), (owner.isEmpty ? "" : owner + ": ")
-                              + String(format: String(localized: "%d videos and %d photos found"), videos, found.count - videos))
+                              + String(format: String(localized: "%d videos and %d photos found. Double-click it in the list to download."), videos, found.count - videos))
                 case .failure(is CancellationError):
                     l.stopped = true
+                    if let row { self.update(row) { $0.status = .paused } }
                 default:
-                    l.visitorsOnly = true  // the engine can't read this site or address
+                    l.visitorsOnly = true  // the engine can't read this site or address: what visitors see, in Profile Batch
                     self.profileCookies[key] = nil
+                    if let row { self.update(row) { $0.status = .finished } }
                 }
                 self.listings[key] = l
-                if !l.stopped { MediaWindows.showPlaylist(url, replace: !MediaWindows.isShowing(url)) }
             }
         }
     }

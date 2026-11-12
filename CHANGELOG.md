@@ -9,12 +9,13 @@
 - Browser extension: **Download all** on a profile (Instagram, TikTok, X, Threads, Pinterest, Reddit, Tumblr, Bluesky
   and more) opens it in Profile Batch, which lists every photo and video with your browser's sign-in for that site (the
   extension hands over its cookies; Nexonic never sees your password) and shows the result: choose **Download Now** or
-  **Add to Queue**, or preview and pick. The listing runs in the background, so the window can be closed: Nexonic says
-  when it's done and opens Profile Batch again with the result. Photos are saved as they are, named after their
+  **Add to Queue**, or preview and pick. On the Mac the search is a row in the downloads list ("Photos and videos
+  of …", with the count found so far): close the window, start more searches on other profiles at the same time, and
+  double-click a row to come back to its result. On Windows and Linux the window keeps the search. Photos are saved as they are, named after their
   description; videos too. Nothing scrolls in the browser. Facebook pages are listed from the page itself (their reels
   tab can't be read); where a site can't be listed at all, Profile Batch takes what visitors see, as before.
   - It stays polite, so it never looks or acts like a bot: it only reads (never likes, follows, comments, messages or
-    posts) and waits 2–4 seconds between its requests to the site, like a person. All galleries now keep that pace.
+    posts) and waits 1–2 seconds between its requests to the site, like a person. All galleries now keep that pace.
 - Instagram posts from the extension (the video button and "This page's video") open in Profile Batch the same way,
   photos included, so you choose Download Now or Add to Queue; the video engine couldn't read them.
 - The **Download this video** button now also appears on players covered by see-through layers (Instagram, Facebook,

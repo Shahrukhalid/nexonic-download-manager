@@ -133,14 +133,14 @@ public static partial class Dialogs
             try
             {
                 // Opened by the extension's Download all: the gallery engine lists every photo and video with the browser's
-                // sign-in for the site, a request every 2-4 seconds, in the background (the manager's StartListing); this
+                // sign-in for the site, a request every 1-2 seconds, in the background (the manager's StartListing); this
                 // window may close meanwhile. Nothing is downloaded until Download Now or Add to Queue.
                 var key = ProfileBatch.Key(url);
                 if (m.Listings.TryGetValue(key, out var listing) && listing is { Running: false, Scan: { } listed })
                     scan = listed;
                 else if (m.ProfileCookies.ContainsKey(key))
                 {
-                    status.Text = L.T("Listing every photo and video with your browser's sign-in, a request every 2–4 seconds. A large profile takes a few minutes: you can close this window, Nexonic keeps going and opens Profile Batch again when it's done.");
+                    status.Text = L.T("Listing every photo and video with your browser's sign-in, a request every 1–2 seconds. A large profile takes a few minutes: you can close this window, Nexonic keeps going and opens Profile Batch again when it's done.");
                     m.StartListing(url, filter.Max);
                     return;
                 }
