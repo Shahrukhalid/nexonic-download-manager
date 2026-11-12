@@ -135,6 +135,58 @@ if (tab) {
   }
 }
 
+// Videos on this page (Instagram, Facebook, TikTok, YouTube, X …): every post or video the page shows, one click for all
+// of them. They go to the app as video-site links (Instagram posts to the gallery engine, photos included).
+if (tab && isVideoSite(tab.url)) {
+  const [{ result: posts = [] } = {}] = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: videosOnPage }).catch(() => []);
+  if (posts.length) {
+    $("postsBox").hidden = false;
+    for (const p of posts) {
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.checked = true;
+      box.value = p.url;
+      $("posts").append(item(p.url, p.label, box));
+    }
+    const postBoxes = () => [...$("posts").querySelectorAll("input")];
+    $("postsAll").onclick = () => postBoxes().forEach((b) => (b.checked = true));
+    $("postsNone").onclick = () => postBoxes().forEach((b) => (b.checked = false));
+    const sendPosts = (later) => async () => {
+      const urls = postBoxes().filter((b) => b.checked).map((b) => b.value);
+      if (!urls.length) return;
+      const r = await ask({ type: "send-videos", urls, later, referrer: tab.url });
+      $("postsDownload").textContent = r && r.ok ? t("Sent {count}", { count: r.sent }) : t("Failed");
+    };
+    $("postsDownload").onclick = sendPosts(false);
+    $("postsLater").onclick = sendPosts(true);
+  }
+}
+
+/** Runs in the page: the links of the posts and videos it shows (self-contained). */
+function videosOnPage() {
+  const patterns = [
+    [/^https:\/\/(www\.)?instagram\.com\/(?:[^/]+\/)?(p|reel|tv)\/([\w-]+)/, (m) => `https://www.instagram.com/${m[2] === "p" ? "p" : "reel"}/${m[3]}/`],
+    [/^https:\/\/(www\.|web\.|m\.)?facebook\.com\/(?:[^/]+\/)?(?:reel|videos)\/(?:[^/]+\/)?(\d{6,})/, (m) => `https://www.facebook.com/reel/${m[2]}/`],
+    [/^https:\/\/(www\.|web\.|m\.)?facebook\.com\/watch\/?\?v=(\d{6,})/, (m) => `https://www.facebook.com/watch/?v=${m[2]}`],
+    [/^https:\/\/(www\.)?tiktok\.com\/@([\w.-]+)\/video\/(\d+)/, (m) => `https://www.tiktok.com/@${m[2]}/video/${m[3]}`],
+    [/^https:\/\/(www\.|m\.)?youtube\.com\/(?:watch\?v=|shorts\/)([\w-]{11})/, (m) => `https://www.youtube.com/watch?v=${m[2]}`],
+    [/^https:\/\/(x|twitter)\.com\/(\w{1,15})\/status\/(\d+)\/video/, (m) => `https://x.com/${m[2]}/status/${m[3]}`],
+  ];
+  const seen = new Map();
+  for (const href of [location.href, ...[...document.querySelectorAll("a[href]")].map((a) => a.href)]) {
+    for (const [re, link] of patterns) {
+      const m = href.match(re);
+      if (m && !seen.has(link(m))) {
+        const a = [...document.querySelectorAll("a[href]")].find((x) => x.href === href);
+        const label = ((a && (a.getAttribute("aria-label") || a.textContent || (a.querySelector("img") || {}).alt)) || "").trim().replace(/\s+/g, " ").slice(0, 80);
+        seen.set(link(m), label || link(m));
+      }
+    }
+    if (seen.size >= 500) break;
+  }
+  return [...seen].map(([url, label]) => ({ url, label }));
+}
+
 // Links on this page
 let found = [];
 $("find").onclick = async () => {

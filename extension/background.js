@@ -308,6 +308,16 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
         if (!profileOf(msg.url || "")) return { ok: false };
         return { ok: await send(msg.url, { referrer: msg.url, profile: true }) };
       }
+      case "send-videos": {
+        // "Videos on this page": each one straight to the app's video engine (Instagram posts to the gallery engine,
+        // photos included), no download window for each.
+        let sent = 0;
+        for (const url of (msg.urls || []).slice(0, 500)) {
+          const instagram = /^https:\/\/(www\.)?instagram\.com\//.test(url);
+          if (await send(url, { referrer, later: !!msg.later, ...(instagram ? { gallery: true } : { site: true }) })) sent++;
+        }
+        return { ok: sent > 0, sent };
+      }
       case "send-links": {
         let sent = 0;
         for (const url of msg.urls || []) if (await send(url, { referrer, later: !!msg.later })) sent++;

@@ -68,6 +68,7 @@
     "This profile": "This profile",
     "Lists every photo and video of this profile in Nexonic's Profile Batch, using what this browser is signed in to; then choose Download Now or Add to Queue there. Nothing scrolls here: Nexonic asks the site for the posts at a person's pace (a request every 1–2 seconds) and only reads; nothing is liked, followed or posted.": "Lists every photo and video of this profile in Nexonic's Profile Batch, using what this browser is signed in to; then choose Download Now or Add to Queue there. Nothing scrolls here: Nexonic asks the site for the posts at a person's pace (a request every 1–2 seconds) and only reads; nothing is liked, followed or posted.",
     "Download all": "Download all",
-    "Opened in Nexonic's Profile Batch": "Opened in Nexonic's Profile Batch"
+    "Opened in Nexonic's Profile Batch": "Opened in Nexonic's Profile Batch",
+    "Videos on this page": "Videos on this page"
   }
 }

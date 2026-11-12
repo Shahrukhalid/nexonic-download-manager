@@ -9,10 +9,15 @@ enum MediaWindows {
     @MainActor private static var playlists: [String: NSWindow] = [:]
     @MainActor private static var library: NSWindow?
 
-    /// Closes the Profile Batch window of this link; a search it started keeps running in the downloads list.
+    @MainActor private static var lastHidden: String?
+
+    /// Close: hides the Profile Batch window of this link; whatever it was doing keeps going (a signed-in search in the
+    /// downloads list, or what visitors see). Profile Batch in the toolbar, or double-clicking the search's row, shows it again.
     @MainActor static func closePlaylist(_ link: String) {
         let key = link.isEmpty ? "" : ProfileBatch.key(link)
-        (playlists[key] ?? playlists.first { $0.value.isKeyWindow }?.value)?.close()
+        guard let (k, w) = playlists[key].map({ (key, $0) }) ?? playlists.first(where: { $0.value.isKeyWindow }).map({ ($0.key, $0.value) }) else { return }
+        w.orderOut(nil)
+        lastHidden = k
     }
 
     /// Profile Batch is open with this link.
@@ -21,6 +26,12 @@ enum MediaWindows {
     /// Lists a profile's, playlist's or channel's videos (and photos); the chosen ones go into a queue of their own. One
     /// window per profile: opening one that is open brings it to the front.
     @MainActor static func showPlaylist(_ link: String = "") {
+        // Profile Batch from the toolbar: the window hidden last (Close), still working, comes back first.
+        if link.isEmpty, let k = lastHidden, let w = playlists[k], !w.isVisible {
+            lastHidden = nil
+            NSApp.activate(ignoringOtherApps: true); w.makeKeyAndOrderFront(nil); w.orderFrontRegardless()
+            return
+        }
         let start = link.isEmpty ? (NSPasteboard.general.string(forType: .string).flatMap { DownloadJob(url: $0.trimmingCharacters(in: .whitespacesAndNewlines)).validURL != nil ? $0 : nil } ?? "") : link
         let key = start.isEmpty ? "" : ProfileBatch.key(start)
         if let w = playlists[key] {
