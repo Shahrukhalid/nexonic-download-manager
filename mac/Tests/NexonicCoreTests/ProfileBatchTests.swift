@@ -54,4 +54,18 @@ final class ProfileBatchTests: XCTestCase {
         XCTAssertNotNil(r.videos[0].date)
         XCTAssertEqual(InstagramPage.read("not json").posts, 0)
     }
+
+    func testInstagramAndFacebookProfilesAreRecognised() {
+        XCTAssertEqual(SocialPages.find("https://www.instagram.com/alexvkino/")?.owner, "alexvkino")
+        let id = SocialPages.find("https://www.facebook.com/profile.php?id=100066819891059&sk=reels_tab")
+        XCTAssertEqual(id?.site, SocialPages.facebook)
+        XCTAssertEqual(id?.pages.first, "https://www.facebook.com/profile.php?id=100066819891059&sk=reels_tab")
+        XCTAssertEqual(SocialPages.find("https://m.facebook.com/NASA/videos")?.pages.first, "https://www.facebook.com/NASA/reels/")
+        XCTAssertNil(SocialPages.find("https://www.facebook.com/watch/?v=123"))
+        var all: [String: BatchEntry] = [:], order: [String] = []
+        let page = [BatchEntry(url: "https://www.facebook.com/reel/1/", title: "a"), BatchEntry(url: "https://www.facebook.com/reel/2/", title: "b")]
+        XCTAssertTrue(SocialPages.merge(&all, order: &order, page, max: 10))
+        XCTAssertFalse(SocialPages.merge(&all, order: &order, page, max: 10))
+        XCTAssertEqual(order.count, 2)
+    }
 }

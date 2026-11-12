@@ -128,6 +128,29 @@ public class ProfileBatchTests
     }
 
     [Fact]
+    public void InstagramAndFacebookProfilesAreRecognised()
+    {
+        var ig = SocialPages.Find("https://www.instagram.com/alexvkino/")!.Value;
+        Assert.Equal(("Instagram", "alexvkino", "https://www.instagram.com/alexvkino/"), (ig.Site.Name, ig.Owner, ig.Pages[0]));
+        var id = SocialPages.Find("https://www.facebook.com/profile.php?id=100066819891059&sk=reels_tab")!.Value;
+        Assert.Equal(("Facebook", "100066819891059"), (id.Site.Name, id.Owner));
+        Assert.Equal("https://www.facebook.com/profile.php?id=100066819891059&sk=reels_tab", id.Pages[0]);
+        var name = SocialPages.Find("https://m.facebook.com/NASA/videos")!.Value;
+        Assert.Equal(("NASA", "https://www.facebook.com/NASA/reels/"), (name.Owner, name.Pages[0]));
+        Assert.Null(SocialPages.Find("https://www.facebook.com/watch/?v=123"));
+        Assert.Null(SocialPages.Find("https://www.facebook.com/reel/123456789"));
+        Assert.Null(SocialPages.Find("https://www.youtube.com/@nasa"));
+        var found = new Dictionary<string, BatchEntry>();
+        var page = new List<BatchEntry> { new("https://www.facebook.com/reel/1/", "a"), new("https://www.facebook.com/reel/2/", "b") };
+        Assert.True(SocialPages.Merge(found, page, 10));
+        Assert.False(SocialPages.Merge(found, page, 10));
+        Assert.True(SocialPages.Merge(found, new List<BatchEntry> { new("https://www.facebook.com/watch/?v=3", "c") }, 10));
+        Assert.Equal(3, found.Count);
+        var (_, fb) = InstagramPage.Read("{\"posts\":1,\"videos\":[{\"u\":\"https://www.facebook.com/watch/?v=12345678\",\"t\":\"x\"}]}");
+        Assert.Equal(("12345678", "video"), (fb[0].Id, fb[0].Kind));
+    }
+
+    [Fact]
     public void SavedProfilesAreDueOnTheirSchedule()
     {
         var p = new SavedProfile { CheckHours = 6 };

@@ -94,6 +94,7 @@ struct ProfileBatchView: View {
     // Found videos wait here until the user picks Download Now or Add to Queue: nothing starts by itself.
     @State private var pending: [BatchEntry] = []
     @State private var pendingCounts: BatchCounts?
+    @State private var signedIn = false  // Nexonic's own optional sign-in for the pasted Instagram or Facebook profile
     @State private var ownFolder = true
     @State private var parallel = 2
     @State private var useFrom = false
@@ -182,6 +183,7 @@ struct ProfileBatchView: View {
                 }.disabled(scan == nil).fixedSize()
                 Spacer()
                 Button("Stop") { stopRequested = true }.disabled(!busy)
+                signButton
                 if !preview.isEmpty || !pending.isEmpty {
                     Button("Add to Queue") { hand(start: false) }
                     Button("Download Now") { hand(start: true) }.keyboardShortcut(.defaultAction)
@@ -194,6 +196,29 @@ struct ProfileBatchView: View {
         .padding(16)
         .frame(minWidth: 600, minHeight: 560)
         .onAppear { if !link.isEmpty { find() } }
+    }
+
+    /// Optional, never needed: signing in lets Nexonic scroll the whole Instagram or Facebook profile instead of the latest posts.
+    @ViewBuilder private var signButton: some View {
+        if scan != nil, !busy, let social = SocialPages.find(link.trimmingCharacters(in: .whitespacesAndNewlines)) {
+            // Optional, never needed: signing in lets Nexonic scroll the whole profile instead of the latest posts.
+            if signedIn {
+                Button(String(format: String(localized: "Sign Out of %@"), social.site.name)) {
+                    Task { @MainActor in
+                        await SocialWebView.signOut(social.site)
+                        signedIn = false
+                        status = String(format: String(localized: "Nexonic is signed out of %@. Without signing in it finds only the latest posts."), social.site.name)
+                    }
+                }
+            } else {
+                Button("Find All (Sign In)") {
+                    Task { @MainActor in
+                        if await SocialWebView.signIn(social.site) { signedIn = true; find() }
+                        else { status = String(format: String(localized: "Not signed in to %@. Nexonic keeps finding only the latest posts."), social.site.name) }
+                    }
+                }
+            }
+        }
     }
 
     private func target(_ s: ProfileBatch.Scan) -> URL {
@@ -233,6 +258,26 @@ struct ProfileBatchView: View {
         status = earlier > 0 ? String(format: String(localized: "Continuing an interrupted scan (%d found before)…"), earlier)
             : String(localized: "Looking for videos… (large profiles can take a few minutes)")
         let proxy = manager.settings.proxy, f = filter, stopFlag = { [self] in stopRequested }
+        if let social = SocialPages.find(url) {
+            // Instagram and Facebook show their posts only through their own pages: open them like a visitor's browser.
+            status = SocialWebView.signedIn(social.site)
+                ? String(format: String(localized: "Scrolling the whole %@ profile with your sign-in… (large profiles take a few minutes)"), social.site.name)
+                : String(format: String(localized: "Opening the %@ profile like a visitor's browser…"), social.site.name)
+            Task { @MainActor in
+                do {
+                    let s = try await SocialWebView.scan(url, site: social.site, owner: social.owner, pages: social.pages, max: f.max,
+                                                         found: { n in status = String(format: String(localized: "%d found so far…"), n) },
+                                                         stop: { stopRequested })
+                    show(s, url: url, filter: f)
+                } catch is CancellationError {
+                    status = String(localized: "Stopped.")
+                } catch {
+                    status = error.localizedDescription
+                }
+                busy = false
+            }
+            return
+        }
         DispatchQueue.global(qos: .userInitiated).async {
             let result = Result {
                 try ProfileBatch.discover(url, proxy: proxy, max: f.max, stop: { DispatchQueue.main.sync { stopFlag() } }) { _, n in
@@ -245,16 +290,7 @@ struct ProfileBatchView: View {
                 case .failure(let e) where e is CancellationError:
                     status = String(localized: "Stopped. The videos found so far are kept; Find Videos continues from there.")
                 case .failure(let e):
-                    guard let user = InstagramPage.user(url) else { status = e.localizedDescription; return }
-                    // Instagram shows visitors its posts only through its own page: open it like a visitor's browser would.
-                    busy = true
-                    status = String(localized: "Opening the Instagram profile like a visitor's browser…")
-                    Task { @MainActor in
-                        do { show(try await InstagramWebView.scan(url, user: user, stop: { stopRequested }), url: url, filter: f) }
-                        catch is CancellationError { status = String(localized: "Stopped.") }
-                        catch { status = error.localizedDescription }
-                        busy = false
-                    }
+                    status = e.localizedDescription
                 case .success(let s):
                     show(s, url: url, filter: f)
                 }
@@ -265,6 +301,7 @@ struct ProfileBatchView: View {
     /// Shows a finished scan: the preview list, or the counts, or the queued downloads.
     private func show(_ s: ProfileBatch.Scan, url: String, filter f: BatchFilter) {
         scan = s
+        signedIn = SocialPages.find(url).map { SocialWebView.signedIn($0.site) } ?? false
         var seen: Set<String>? = nil
         if mode == 1, let p = manager.profiles.first(where: { ProfileBatch.key($0.url) == ProfileBatch.key(url) }) { seen = Set(p.seen) }
         let (take, counts) = ProfileBatch.choose(s.entries, f, alreadyDownloaded: manager.alreadyDownloaded, seen: seen)

@@ -346,6 +346,13 @@
     "Opening the Instagram profile like a visitor's browser…": "Opening the Instagram profile like a visitor's browser…",
     "Add to queue": "Add to queue",
     "Download now": "Download now",
-    "Choose Download now, or Add to queue to start them later.": "Choose Download now, or Add to queue to start them later."
+    "Choose Download now, or Add to queue to start them later.": "Choose Download now, or Add to queue to start them later.",
+    "Scrolling the whole profile with your sign-in… (large profiles take a few minutes)": "Scrolling the whole profile with your sign-in… (large profiles take a few minutes)",
+    "Opening the profile like a visitor's browser…": "Opening the profile like a visitor's browser…",
+    "no videos were shown to a visitor who is not signed in (the profile may be private or not exist).": "no videos were shown to a visitor who is not signed in (the profile may be private or not exist).",
+    "Nexonic is signed out. Without signing in it finds only the latest posts.": "Nexonic is signed out. Without signing in it finds only the latest posts.",
+    "Sign out of": "Sign out of",
+    "Not signed in. Nexonic keeps finding only the latest posts.": "Not signed in. Nexonic keeps finding only the latest posts.",
+    "Find all (sign in)": "Find all (sign in)"
   }
 }

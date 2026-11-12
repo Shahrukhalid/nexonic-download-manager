@@ -358,7 +358,7 @@ public enum InstagramPage {
         dates.locale = Locale(identifier: "en_US_POSIX")
         dates.dateFormat = "MMMM d, yyyy"
         for v in o["videos"] as? [[String: Any]] ?? [] {
-            guard let url = v["u"] as? String, url.hasPrefix("https://www.instagram.com/") else { continue }
+            guard let url = v["u"] as? String, url.hasPrefix("https://www.instagram.com/") || url.hasPrefix("https://www.facebook.com/") else { continue }
             let text = (v["t"] as? String) ?? ""
             var date: Date?
             if let r = text.range(of: #" on [A-Z][a-z]+ \d{1,2}, \d{4}"#, options: .regularExpression) {
@@ -388,5 +388,79 @@ public enum InstagramPage {
 
     public static func noVideos(_ posts: Int) -> String {
         "None of the latest \(posts) posts Instagram shows visitors of this profile is a video."
+    }
+}
+
+/// Instagram and Facebook profiles in Profile Batch. Without signing in, the profile page shows visitors only its latest
+/// posts. A user who wants all of them can sign in once on the site's own page inside Nexonic (optional; the session
+/// stays on this computer and can be removed any time): the profile page is then scrolled to the end, as the user would.
+public struct SocialSite: Sendable, Equatable {
+    public let name: String, loginURL: String, domain: String, sessionCookie: String, script: String
+}
+
+public enum SocialPages {
+    public static let instagram = SocialSite(name: "Instagram", loginURL: "https://www.instagram.com/accounts/login/", domain: "instagram.com",
+                                             sessionCookie: "sessionid", script: InstagramPage.script)
+    public static let facebook = SocialSite(name: "Facebook", loginURL: "https://www.facebook.com/login/", domain: "facebook.com",
+                                            sessionCookie: "c_user", script: facebookScript)
+
+    /// The site, the profile's name and the pages that list its videos; nil for other links.
+    public static func find(_ link: String) -> (site: SocialSite, owner: String, pages: [String])? {
+        if let user = InstagramPage.user(link) { return (instagram, user, ["https://www.instagram.com/\(user)/"]) }
+        let pattern = #"^https?://(?:www\.|m\.|web\.)?facebook\.com/(?:profile\.php\?id=(\d+)|(?!(?:watch|reel|videos|groups|events|share|story\.php|photo|permalink\.php|login|marketplace|gaming|people|pages)\b)([A-Za-z0-9.\-]{2,80}))"#
+        let text = link.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let re = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+              let m = re.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) else { return nil }
+        if let r = Range(m.range(at: 1), in: text) {
+            let id = String(text[r])
+            return (facebook, id, ["https://www.facebook.com/profile.php?id=\(id)&sk=reels_tab", "https://www.facebook.com/profile.php?id=\(id)&sk=videos"])
+        }
+        guard let r = Range(m.range(at: 2), in: text) else { return nil }
+        let name = String(text[r])
+        return (facebook, name, ["https://www.facebook.com/\(name)/reels/", "https://www.facebook.com/\(name)/videos/"])
+    }
+
+    /// Run in a loaded Facebook page: its reels and videos, as InstagramPage.script reports them.
+    public static let facebookScript = #"""
+(() => {
+  const seen = new Set(), videos = [];
+  for (const a of document.querySelectorAll('a[href*="/reel/"], a[href*="/videos/"], a[href*="watch/?v="], a[href*="watch?v="]')) {
+    const link = new URL(a.getAttribute('href'), location.href);
+    let id = null, reel = false, m;
+    if ((m = link.pathname.match(/\/reel\/(\d+)/))) { id = m[1]; reel = true; }
+    else if ((m = link.pathname.match(/\/videos\/(?:[^/]+\/)?(\d{6,})/))) id = m[1];
+    else if (/^\d{6,}$/.test(link.searchParams.get('v') || '')) id = link.searchParams.get('v');
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    const u = reel ? 'https://www.facebook.com/reel/' + id + '/' : 'https://www.facebook.com/watch/?v=' + id;
+    videos.push({ u, t: (a.getAttribute('aria-label') || a.innerText || '').trim().slice(0, 200) });
+  }
+  return JSON.stringify({ posts: videos.length, videos });
+})()
+"""#
+
+    /// Scrolls the page one screen further down (signed-in scans load older posts this way).
+    public static let scroll = "window.scrollBy(0, Math.max(window.innerHeight, 800)); 0"
+
+    public static func signedInNote(_ site: SocialSite, _ count: Int) -> String {
+        "Found \(count) videos by scrolling the whole profile with your \(site.name) sign-in."
+    }
+
+    public static func offerSignIn(_ site: SocialSite) -> String {
+        "\(site.name) shows visitors who are not signed in only the latest posts. To find all of this profile's videos, choose \"Find All (Sign In)\": you sign in once on \(site.name)'s own page inside Nexonic, and the session stays on this computer."
+    }
+
+    /// Adds what a page shows now to what was found before; true when anything new came. Stops at max.
+    public static func merge(_ found: inout [String: BatchEntry], order: inout [String], _ now: [BatchEntry], max: Int) -> Bool {
+        var grew = false
+        for e in now where found.count < max && found[e.url] == nil { found[e.url] = e; order.append(e.url); grew = true }
+        return grew
+    }
+
+    /// The result for Profile Batch.
+    public static func scan(url: String, owner: String, entries: [BatchEntry], note: String) -> ProfileBatch.Scan {
+        var s = ProfileBatch.Scan()
+        s.url = url; s.owner = owner; s.entries = entries; s.complete = true; s.note = note
+        return s
     }
 }

@@ -198,7 +198,7 @@ object InstagramPage {
         for (i in 0 until a.length()) {
             val v = a.optJSONObject(i) ?: continue
             val url = v.optString("u")
-            if (!url.startsWith("https://www.instagram.com/")) continue
+            if (!url.startsWith("https://www.instagram.com/") && !url.startsWith("https://www.facebook.com/")) continue
             val text = v.optString("t")
             val date = Regex(""" on ([A-Z][a-z]+ \d{1,2}, \d{4})""").find(text)?.let { m -> runCatching { dates.parse(m.groupValues[1])?.time }.getOrNull() }
             var title = text.split(Regex("""\s+""")).filter { it.isNotEmpty() }.joinToString(" ")
@@ -211,4 +211,61 @@ object InstagramPage {
     fun note(posts: Int) = "Instagram shows visitors who are not signed in only the latest $posts posts of a profile; Nexonic took the videos among them."
     const val NOTHING = "Instagram did not show any posts of this profile to a visitor who is not signed in (it may be private or not exist)."
     fun noVideos(posts: Int) = "None of the latest $posts posts Instagram shows visitors of this profile is a video."
+}
+
+/**
+ * Instagram and Facebook profiles in Profile Batch. Without signing in, the profile page shows visitors only its latest
+ * posts. A user who wants all of them can sign in once on the site's own page inside Nexonic (optional; the session stays
+ * on this device and can be removed any time): the profile page is then scrolled to the end, as the user would.
+ */
+data class SocialSite(val name: String, val loginUrl: String, val domain: String, val sessionCookie: String, val script: String)
+
+object SocialPages {
+    val instagram = SocialSite("Instagram", "https://www.instagram.com/accounts/login/", "instagram.com", "sessionid", InstagramPage.SCRIPT)
+    val facebook = SocialSite("Facebook", "https://www.facebook.com/login/", "facebook.com", "c_user", "")
+    private val fbProfile = Regex("""^https?://(?:www\.|m\.|web\.)?facebook\.com/(?:profile\.php\?id=(\d+)|(?!(?:watch|reel|videos|groups|events|share|story\.php|photo|permalink\.php|login|marketplace|gaming|people|pages)\b)([A-Za-z0-9.\-]{2,80}))""", RegexOption.IGNORE_CASE)
+
+    /** The site, the profile's name and the pages that list its videos; null for other links. */
+    fun find(link: String): Triple<SocialSite, String, List<String>>? {
+        InstagramPage.user(link)?.let { return Triple(instagram, it, listOf("https://www.instagram.com/$it/")) }
+        val m = fbProfile.find(link.trim()) ?: return null
+        val id = m.groupValues[1]
+        if (id.isNotEmpty()) return Triple(fbSite, id, listOf("https://www.facebook.com/profile.php?id=$id&sk=reels_tab", "https://www.facebook.com/profile.php?id=$id&sk=videos"))
+        val name = m.groupValues[2].ifEmpty { return null }
+        return Triple(fbSite, name, listOf("https://www.facebook.com/$name/reels/", "https://www.facebook.com/$name/videos/"))
+    }
+
+    /** Run in a loaded Facebook page: its reels and videos, as [InstagramPage.SCRIPT] reports them. */
+    val FACEBOOK_SCRIPT = """
+(() => {
+  const seen = new Set(), videos = [];
+  for (const a of document.querySelectorAll('a[href*="/reel/"], a[href*="/videos/"], a[href*="watch/?v="], a[href*="watch?v="]')) {
+    const link = new URL(a.getAttribute('href'), location.href);
+    let id = null, reel = false, m;
+    if ((m = link.pathname.match(/\/reel\/(\d+)/))) { id = m[1]; reel = true; }
+    else if ((m = link.pathname.match(/\/videos\/(?:[^/]+\/)?(\d{6,})/))) id = m[1];
+    else if (/^\d{6,}${"$"}/.test(link.searchParams.get('v') || '')) id = link.searchParams.get('v');
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    const u = reel ? 'https://www.facebook.com/reel/' + id + '/' : 'https://www.facebook.com/watch/?v=' + id;
+    videos.push({ u, t: (a.getAttribute('aria-label') || a.innerText || '').trim().slice(0, 200) });
+  }
+  return JSON.stringify({ posts: videos.length, videos });
+})()
+""".trimIndent()
+
+    val fbSite get() = facebook.copy(script = FACEBOOK_SCRIPT)
+
+    /** Scrolls the page one screen further down (signed-in scans load older posts this way). */
+    const val SCROLL = "window.scrollBy(0, Math.max(window.innerHeight, 800)); 0"
+
+    fun signedInNote(site: SocialSite, count: Int) = "Found $count videos by scrolling the whole profile with your ${site.name} sign-in."
+    fun offerSignIn(site: SocialSite) = "${site.name} shows visitors who are not signed in only the latest posts. To find all of this profile's videos, choose \"Find all (sign in)\": you sign in once on ${site.name}'s own page inside Nexonic, and the session stays on this device."
+
+    /** Adds what a page shows now to what was found before; true when anything new came. Stops at [max]. */
+    fun merge(found: LinkedHashMap<String, BatchEntry>, now: List<BatchEntry>, max: Int): Boolean {
+        var grew = false
+        for (e in now) if (found.size < max && !found.containsKey(e.url)) { found[e.url] = e; grew = true }
+        return grew
+    }
 }

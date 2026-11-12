@@ -100,6 +100,7 @@ fun ProfileBatchSheet(link: String, onDismiss: () -> Unit, message: (String) -> 
     // Found videos wait here until the user picks Download now or Add to queue: nothing starts by itself.
     var pending by remember { mutableStateOf(emptyList<com.nexonic.downloadmanager.core.BatchEntry>()) }
     var pendingCounts by remember { mutableStateOf<com.nexonic.downloadmanager.core.BatchCounts?>(null) }
+    var signedIn by remember { mutableStateOf(false) }  // Nexonic's own optional sign-in for the pasted Instagram or Facebook profile
     var keywords by remember { mutableStateOf("") }
     var minMinutes by remember { mutableStateOf("") }
     var maxMinutes by remember { mutableStateOf("") }
@@ -152,42 +153,48 @@ fun ProfileBatchSheet(link: String, onDismiss: () -> Unit, message: (String) -> 
         busy = true; preview = emptyList(); pending = emptyList(); pendingCounts = null
         status = tr("Looking for videos… (large profiles can take a few minutes)")
         val f = filter()
+        fun show(entries: List<com.nexonic.downloadmanager.core.BatchEntry>, name: String, note: String) {
+            found = entries; owner = name
+            val (take, counts) = pb.choose(entries, f, Downloads::alreadyDownloaded, if (mode == "new") saved(url)?.seen else null)
+            when {
+                mode == "preview" -> { preview = take; chosen = take.map { it.url }.toSet(); status = (if (name.isEmpty()) "" else "$name: ") + counts.copy(queued = 0).text }
+                take.isEmpty() -> status = (if (name.isEmpty()) "" else "$name: ") + counts.copy(queued = 0).text
+                else -> {
+                    pending = take; pendingCounts = counts
+                    status = (if (name.isEmpty()) "" else "$name: ") + counts.copy(queued = 0).text + "\n" + tr("Choose Download now, or Add to queue to start them later.")
+                }
+            }
+            note.takeIf { it.isNotEmpty() }?.let { status += "\n" + it }
+        }
+        val social = com.nexonic.downloadmanager.core.SocialPages.find(url)
+        if (social != null) {
+            // Instagram and Facebook show their posts only through their own pages: open them like a visitor's browser.
+            val (site, name, pages) = social
+            val web = com.nexonic.downloadmanager.video.SocialWebView
+            val withSignIn = web.signedIn(context, site)
+            status = if (withSignIn) tr("Scrolling the whole profile with your sign-in… (large profiles take a few minutes)") else tr("Opening the profile like a visitor's browser…")
+            scope.launch {
+                val (posts, videos) = runCatching { web.scan(context, site, pages, f.max, { n -> status = tr("%d found so far…").format(n) }) { !busy } }
+                    .getOrDefault(0 to emptyList())
+                busy = false
+                signedIn = withSignIn
+                when {
+                    videos.isNotEmpty() -> show(videos, name, if (withSignIn) com.nexonic.downloadmanager.core.SocialPages.signedInNote(site, videos.size) else com.nexonic.downloadmanager.core.SocialPages.offerSignIn(site))
+                    posts > 0 -> status = com.nexonic.downloadmanager.core.InstagramPage.noVideos(posts)
+                    else -> status = "${site.name}: " + tr("no videos were shown to a visitor who is not signed in (the profile may be private or not exist).")
+                }
+            }
+            return
+        }
         scope.launch {
             val r = withContext(Dispatchers.IO) {
                 runCatching { Downloads.discover(url, f.max, false, stopId) { n -> if (n > 0) scope.launch { status = tr("%d found so far…").format(n) } } }
             }
             busy = false
-            fun show(entries: List<com.nexonic.downloadmanager.core.BatchEntry>, name: String, note: String) {
-                found = entries; owner = name
-                val (take, counts) = pb.choose(entries, f, Downloads::alreadyDownloaded, if (mode == "new") saved(url)?.seen else null)
-                when {
-                    mode == "preview" -> { preview = take; chosen = take.map { it.url }.toSet(); status = (if (name.isEmpty()) "" else "$name: ") + counts.copy(queued = 0).text }
-                    take.isEmpty() -> status = (if (name.isEmpty()) "" else "$name: ") + counts.copy(queued = 0).text
-                    else -> {
-                        pending = take; pendingCounts = counts
-                        status = (if (name.isEmpty()) "" else "$name: ") + counts.copy(queued = 0).text + "\n" + tr("Choose Download now, or Add to queue to start them later.")
-                    }
-                }
-                note.takeIf { it.isNotEmpty() }?.let { status += "\n" + it }
-            }
             r.onSuccess { (entries, name) -> show(entries, name, com.nexonic.downloadmanager.video.VideoEngine.lastNote) }
             r.onFailure {
-                val user = com.nexonic.downloadmanager.core.InstagramPage.user(url)
-                if (it is com.yausername.youtubedl_android.YoutubeDL.CanceledException) status = tr("Stopped. The videos found so far are kept; Find videos continues from there.")
-                else if (user == null) status = it.message ?: tr("The list of videos could not be read.")
-                else {
-                    // Instagram shows visitors its posts only through its own page: open it like a visitor's browser would.
-                    busy = true
-                    status = tr("Opening the Instagram profile like a visitor's browser…")
-                    val (posts, videos) = runCatching { com.nexonic.downloadmanager.video.InstagramWebView.read(context, user) { !busy } }.getOrDefault(0 to emptyList())
-                    busy = false
-                    val ig = com.nexonic.downloadmanager.core.InstagramPage
-                    when {
-                        posts == 0 -> status = ig.NOTHING
-                        videos.isEmpty() -> status = ig.noVideos(posts)
-                        else -> show(videos, user, ig.note(posts))
-                    }
-                }
+                status = if (it is com.yausername.youtubedl_android.YoutubeDL.CanceledException) tr("Stopped. The videos found so far are kept; Find videos continues from there.")
+                else it.message ?: tr("The list of videos could not be read.")
             }
         }
     }
@@ -234,6 +241,18 @@ fun ProfileBatchSheet(link: String, onDismiss: () -> Unit, message: (String) -> 
                 }
                 if (busy) TextButton(onClick = { VideoEngine.cancel(stopId) }) { Text(tr("Stop")) }
                 Button(onClick = { find() }, enabled = !busy) { Text(tr("Find videos")) }
+            }
+            val socialLink = com.nexonic.downloadmanager.core.SocialPages.find(input.trim())
+            if (socialLink != null && found.isNotEmpty() && !busy) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                // Optional, never needed: signing in lets Nexonic scroll the whole profile instead of the latest posts.
+                val web = com.nexonic.downloadmanager.video.SocialWebView
+                if (signedIn) TextButton(onClick = {
+                    web.signOut(context, socialLink.first); signedIn = false
+                    status = tr("Nexonic is signed out. Without signing in it finds only the latest posts.")
+                }) { Text(tr("Sign out of") + " " + socialLink.first.name) }
+                else TextButton(onClick = {
+                    scope.launch { if (web.signIn(context, socialLink.first)) { signedIn = true; find() } else status = tr("Not signed in. Nexonic keeps finding only the latest posts.") }
+                }) { Text(tr("Find all (sign in)")) }
             }
             if (preview.isNotEmpty() || pending.isNotEmpty()) Row(Modifier.fillMaxWidth().padding(bottom = 16.dp), horizontalArrangement = Arrangement.End) {
                 fun hand(start: Boolean) {

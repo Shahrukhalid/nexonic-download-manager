@@ -1,11 +1,14 @@
 ## 0.31.0
 
 **Profile Batch**
-- Instagram profiles (Windows, Mac, Android): Instagram stopped answering the request Nexonic used to read profiles.
-  Nexonic now opens the profile page the way any visitor's browser does, in a hidden private web view (Windows: the
-  system's Edge WebView2; no sign-in, no cookies), and takes the videos and reels the page shows. Instagram shows
-  visitors who are not signed in only a profile's latest 12 posts, and the result says so. Checked on a Mac with a home
-  connection: 12 reels found and added, and they downloaded.
+- Instagram and Facebook profiles (Windows, Mac, Android): pasting a profile link opens the profile page the way any
+  visitor's browser does, in a hidden web view, and takes the videos and reels the page shows. Without signing in that is
+  what the sites show visitors: on a Mac with a home connection, an Instagram profile showed its latest 12 posts (all
+  12 found and downloaded) and a Facebook profile's reels tab showed 10 reels (the old way found 1).
+- Optional: **Find All (Sign In)**. To get every video of a profile, sign in once on Instagram's or Facebook's own page
+  inside Nexonic (your password goes only to the site; the session stays on this computer, and Sign Out removes it).
+  Profile Batch then scrolls the whole profile, as you would. Nothing needs an account: without signing in, it works
+  as above.
 - Snapchat profiles (all apps): the Spotlight videos a public profile shows visitors (snapchat.com/@name).
 - Nothing starts by itself any more: after Find Videos, choose **Download Now** or **Add to Queue** (added, waiting
   until you start them). This replaces the "Start downloading straight away" switch.

@@ -403,13 +403,13 @@ public static class InstagramPage
                 foreach (var e in v.EnumerateArray())
                 {
                     var url = e.TryGetProperty("u", out var u) ? u.GetString() ?? "" : "";
-                    if (!url.StartsWith("https://www.instagram.com/", StringComparison.Ordinal)) continue;
+                    if (!url.StartsWith("https://www.instagram.com/", StringComparison.Ordinal) && !url.StartsWith("https://www.facebook.com/", StringComparison.Ordinal)) continue;
                     var text = e.TryGetProperty("t", out var t) ? t.GetString() ?? "" : "";
                     DateTime? date = Regex.Match(text, @" on ([A-Z][a-z]+ \d{1,2}, \d{4})") is { Success: true } dm
                         && DateTime.TryParseExact(dm.Groups[1].Value, "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var d) ? d : null;
                     var title = Regex.Replace(text, @"\s+", " ").Trim();
                     if (title.Length > 120) title = title[..120] + "…";
-                    list.Add(new BatchEntry(url, title.Length > 0 ? title : url, null, date, url.Contains("/reel/") ? "shorts" : "video", true, url.Split('/')[^2]));
+                    list.Add(new BatchEntry(url, title.Length > 0 ? title : url, null, date, url.Contains("/reel/") ? "shorts" : "video", true, url.Contains("?v=") ? url.Split("?v=")[^1] : url.Split('/')[^2]));
                 }
             return (posts, list);
         }
@@ -423,4 +423,71 @@ public static class InstagramPage
     public const string Nothing = "Instagram did not show any posts of this profile to a visitor who is not signed in (it may be private or not exist).";
 
     public static string NoVideos(int posts) => $"None of the latest {posts} posts Instagram shows visitors of this profile is a video.";
+}
+
+/// <summary>
+/// Instagram and Facebook profiles in Profile Batch. Without signing in, the profile page shows visitors only its latest
+/// posts. A user who wants all of them can sign in once on the site's own page inside Nexonic (optional; the session
+/// stays on this computer and can be removed any time): the profile page is then scrolled to the end, as the user would.
+/// </summary>
+public sealed record SocialSite(string Name, string LoginUrl, string Domain, string SessionCookie, string Script);
+
+public static class SocialPages
+{
+    public static readonly SocialSite Instagram = new("Instagram", "https://www.instagram.com/accounts/login/", "instagram.com", "sessionid", InstagramPage.Script);
+    public static readonly SocialSite Facebook = new("Facebook", "https://www.facebook.com/login/", "facebook.com", "c_user", FacebookScript);
+
+    /// <summary>The site, the profile's name and the pages that list its videos; null for other links.</summary>
+    public static (SocialSite Site, string Owner, string[] Pages)? Find(string link)
+    {
+        if (InstagramPage.User(link) is { } user) return (Instagram, user, new[] { $"https://www.instagram.com/{user}/" });
+        var m = Regex.Match(link.Trim(), @"^https?://(?:www\.|m\.|web\.)?facebook\.com/(?:profile\.php\?id=(\d+)|(?!(?:watch|reel|videos|groups|events|share|story\.php|photo|permalink\.php|login|marketplace|gaming|people|pages)\b)([A-Za-z0-9.\-]{2,80}))", RegexOptions.IgnoreCase);
+        if (!m.Success) return null;
+        if (m.Groups[1].Success)
+        {
+            var id = m.Groups[1].Value;
+            return (Facebook, id, new[] { $"https://www.facebook.com/profile.php?id={id}&sk=reels_tab", $"https://www.facebook.com/profile.php?id={id}&sk=videos" });
+        }
+        var name = m.Groups[2].Value;
+        return (Facebook, name, new[] { $"https://www.facebook.com/{name}/reels/", $"https://www.facebook.com/{name}/videos/" });
+    }
+
+    /// <summary>Run in a loaded Facebook page: its reels and videos, as InstagramPage.Script reports them.</summary>
+    public const string FacebookScript = """
+        (() => {
+          const seen = new Set(), videos = [];
+          for (const a of document.querySelectorAll('a[href*="/reel/"], a[href*="/videos/"], a[href*="watch/?v="], a[href*="watch?v="]')) {
+            const link = new URL(a.getAttribute('href'), location.href);
+            let id = null, reel = false, m;
+            if ((m = link.pathname.match(/\/reel\/(\d+)/))) { id = m[1]; reel = true; }
+            else if ((m = link.pathname.match(/\/videos\/(?:[^/]+\/)?(\d{6,})/))) id = m[1];
+            else if (/^\d{6,}$/.test(link.searchParams.get('v') || '')) id = link.searchParams.get('v');
+            if (!id || seen.has(id)) continue;
+            seen.add(id);
+            const u = reel ? 'https://www.facebook.com/reel/' + id + '/' : 'https://www.facebook.com/watch/?v=' + id;
+            videos.push({ u, t: (a.getAttribute('aria-label') || a.innerText || '').trim().slice(0, 200) });
+          }
+          return JSON.stringify({ posts: videos.length, videos });
+        })()
+        """;
+
+    /// <summary>Scrolls the page one screen further down (signed-in scans load older posts this way).</summary>
+    public const string Scroll = "window.scrollBy(0, Math.max(window.innerHeight, 800)); document.scrollingElement && document.scrollingElement.scrollHeight";
+
+    /// <summary>Shown with a signed-in result.</summary>
+    public static string SignedInNote(SocialSite site, int count) => $"Found {count} videos by scrolling the whole profile with your {site.Name} sign-in.";
+
+    public static string OfferSignIn(SocialSite site) =>
+        $"{site.Name} shows visitors who are not signed in only the latest posts. To find all of this profile's videos, choose \"Find All (Sign In)\": you sign in once on {site.Name}'s own page inside Nexonic, and the session stays on this computer.";
+
+    /// <summary>
+    /// Adds what a page shows now to what was found before (pages drop posts that scrolled far away) and says whether
+    /// anything new came. Stops at max.
+    /// </summary>
+    public static bool Merge(Dictionary<string, BatchEntry> found, List<BatchEntry> now, int max)
+    {
+        var before = found.Count;
+        foreach (var e in now) if (found.Count < max) found.TryAdd(e.Url, e);
+        return found.Count > before;
+    }
 }
