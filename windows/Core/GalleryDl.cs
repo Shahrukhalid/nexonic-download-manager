@@ -199,8 +199,24 @@ public static class GalleryList
         return list;
     }
 
+    /// <summary>The account the listed files belong to (its folder), from the engine's details: "" when it doesn't say.</summary>
+    public static string Owner(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.ValueKind != JsonValueKind.Array) return "";
+            foreach (var m in doc.RootElement.EnumerateArray())
+                if (m.ValueKind == JsonValueKind.Array && m.GetArrayLength() > 0 && m[m.GetArrayLength() - 1] is { ValueKind: JsonValueKind.Object } kw)
+                    foreach (var k in new[] { "username", "owner_username", "author", "user" })
+                        if (kw.TryGetProperty(k, out var v) && v.ValueKind == JsonValueKind.String && v.GetString() is { Length: > 0 } name) return name;
+        }
+        catch (JsonException) { }
+        return "";
+    }
+
     /// <summary>Lists a profile with the engine; null when it can't (no build here, not installed, or a site or address it doesn't know).</summary>
-    public static async Task<List<BatchEntry>?> ListAsync(string url, string? cookies, string? userAgent, ProxySettings? proxy, int max, CancellationToken cancel)
+    public static async Task<(List<BatchEntry> Entries, string Owner)?> ListAsync(string url, string? cookies, string? userAgent, ProxySettings? proxy, int max, CancellationToken cancel)
     {
         if (GalleryDl.Asset == null || !await Task.Run(() => GalleryDl.EnsureInstalled(), cancel)) return null;
         var settingsFile = GalleryDl.WriteSettings(GalleryDl.Settings(cookies, userAgent, null, null, proxy == null ? null : SiteVideo.ProxyUrl(proxy, url)));
@@ -219,8 +235,9 @@ public static class GalleryList
             var output = await p.StandardOutput.ReadToEndAsync(cancel);
             await p.WaitForExitAsync(cancel);
             _ = await errors;
-            var found = Entries(output, "");
-            return found.Count == 0 && p.ExitCode != 0 ? null : found;
+            var owner = Owner(output);
+            var found = Entries(output, owner);
+            return found.Count == 0 ? null : (found, owner);
         }
         finally { if (settingsFile != null) try { File.Delete(settingsFile); } catch { } }
     }

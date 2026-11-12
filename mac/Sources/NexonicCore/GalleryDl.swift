@@ -154,9 +154,19 @@ public extension GalleryDl {
         return list
     }
 
+    /// The account the listed files belong to (its folder), from the engine's details: "" when it doesn't say.
+    static func owner(_ data: Data) -> String {
+        guard let messages = try? JSONSerialization.jsonObject(with: data) as? [Any] else { return "" }
+        for case let m as [Any] in messages {
+            guard let kw = m.last as? [String: Any] else { continue }
+            for k in ["username", "owner_username", "author", "user"] { if let v = kw[k] as? String, !v.isEmpty { return v } }
+        }
+        return ""
+    }
+
     /// Lists a profile with the engine (nil when it can't: not installed, or the site or address isn't one it knows).
     static func list(_ url: String, cookies: String?, userAgent: String?, proxy: ProxySettings?, max: Int,
-                     stop: @escaping () -> Bool) throws -> [BatchEntry]? {
+                     stop: @escaping () -> Bool) throws -> (entries: [BatchEntry], owner: String)? {
         guard ensureInstalled() else { return nil }
         let settingsFile = try writeSettings(settings(cookies: cookies, userAgent: userAgent, username: nil, password: nil,
                                                       proxyURL: proxy.flatMap(SiteVideo.proxyURL)))
@@ -173,8 +183,9 @@ public extension GalleryDl {
         DispatchQueue.global(qos: .userInitiated).async { box.data = handle.readDataToEndOfFile(); done.signal() }
         while done.wait(timeout: .now() + 0.5) == .timedOut { if stop() { p.terminate(); throw CancellationError() } }
         p.waitUntilExit()
-        let found = entries(box.data, owner: "")
-        return found.isEmpty && p.terminationStatus != 0 ? nil : found
+        let who = owner(box.data)
+        let found = entries(box.data, owner: who)
+        return found.isEmpty ? nil : (found, who)
     }
 }
 

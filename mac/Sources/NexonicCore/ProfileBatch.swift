@@ -402,6 +402,17 @@ public struct SocialSite: Sendable, Equatable {
 }
 
 public enum SocialPages {
+    /// The address the gallery engine lists a profile from: a Facebook page's own address rather than one of its tabs
+    /// (reels, videos, photos), which it doesn't read; other sites' addresses as they are.
+    public static func listable(_ url: String) -> String {
+        guard var c = URLComponents(string: url), let host = c.host?.lowercased(), host == "facebook.com" || host.hasSuffix(".facebook.com") else { return url }
+        let parts = c.path.split(separator: "/")
+        if parts.count >= 2, ["reels", "videos", "photos", "photos_by", "reels_tab"].contains(parts[1].lowercased()) { c.path = "/" + parts[0] + "/" }
+        c.queryItems = c.queryItems?.filter { $0.name == "id" }
+        if c.queryItems?.isEmpty == true { c.queryItems = nil }
+        return c.string ?? url
+    }
+
     /// Added under what a visitor sees: how to get the rest. The Nexonic extension's "Download all" on the profile, in a
     /// browser signed in to the site, hands the whole profile to the gallery engine with the browser's cookies (read-only, a person's pace) and sends every
     /// video and photo here. Nexonic itself never signs in.

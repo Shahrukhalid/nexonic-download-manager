@@ -6,6 +6,10 @@ import SwiftUI
 /// Playlists and channels, and the Media Library (Milestone 8).
 enum MediaWindows {
     @MainActor private static var playlist: NSWindow?
+    @MainActor private static var playlistLink = ""
+
+    /// Profile Batch is open with this link.
+    @MainActor static func isShowing(_ link: String) -> Bool { playlist != nil && ProfileBatch.key(playlistLink) == ProfileBatch.key(link) }
     @MainActor private static var library: NSWindow?
 
     /// Lists a playlist's or channel's videos; the chosen ones open in the Add window.
@@ -22,6 +26,7 @@ enum MediaWindows {
         w.setContentSize(NSSize(width: 680, height: 640))
         w.center()
         playlist = w
+        playlistLink = start
         NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: w, queue: .main) { _ in
             Task { @MainActor in playlist = nil }
         }
@@ -190,7 +195,11 @@ struct ProfileBatchView: View {
                     Button("JSON") { export("json") }
                 }.disabled(scan == nil).fixedSize()
                 Spacer()
-                Button("Stop") { stopRequested = true }.disabled(!busy)
+                Button("Stop") {
+                    stopRequested = true
+                    let key = ProfileBatch.key(link.trimmingCharacters(in: .whitespacesAndNewlines))
+                    if let l = manager.listings[key], l.running { l.stop.set(); busy = false; status = String(localized: "Stopped.") }
+                }.disabled(!busy)
                 if !preview.isEmpty || !pending.isEmpty {
                     Button("Add to Queue") { hand(start: false) }
                     Button("Download Now") { hand(start: true) }.keyboardShortcut(.defaultAction)
@@ -203,6 +212,12 @@ struct ProfileBatchView: View {
         .padding(16)
         .frame(minWidth: 600, minHeight: 560)
         .onAppear { lastLink = link; if !link.isEmpty { find() } }
+        // A background listing finished while this window is open: show it (or what visitors see).
+        .onReceive(manager.$listings) { all in
+            let key = ProfileBatch.key(link.trimmingCharacters(in: .whitespacesAndNewlines))
+            guard busy, let l = all[key], !l.running, !l.stopped else { return }
+            DispatchQueue.main.async { find() }  // after the change is stored
+        }
     }
 
     private func target(_ s: ProfileBatch.Scan) -> URL {
@@ -242,35 +257,21 @@ struct ProfileBatchView: View {
         status = earlier > 0 ? String(format: String(localized: "Continuing an interrupted scan (%d found before)…"), earlier)
             : String(localized: "Looking for videos… (large profiles can take a few minutes)")
         let proxy = manager.settings.proxy, f = filter, stopFlag = { [self] in stopRequested }
-        if let signedIn = manager.profileCookies[ProfileBatch.key(url)] {
-            // Opened by the extension's Download all: the gallery engine lists every photo and video with the browser's
-            // sign-in for the site, a request every 2-4 seconds; nothing is downloaded until Download Now or Add to Queue.
-            status = String(localized: "Listing every photo and video with your browser's sign-in… (a request every 2–4 seconds, so a large profile takes a few minutes)")
-            // The profile's name (its folder): the first part of the address, e.g. "@name" on TikTok.
-            let owner = SocialPages.find(url)?.owner
-                ?? URL(string: url)?.pathComponents.dropFirst().first.map { $0.trimmingCharacters(in: CharacterSet(charactersIn: "@")) } ?? ""
-            DispatchQueue.global(qos: .userInitiated).async {
-                let result = Result { try GalleryDl.list(url, cookies: signedIn.cookies, userAgent: signedIn.userAgent, proxy: proxy, max: f.max,
-                                                         stop: { DispatchQueue.main.sync { stopFlag() } }) }
-                DispatchQueue.main.async {
-                    busy = false
-                    switch result {
-                    case .success(let found?) where !found.isEmpty:
-                        let videos = found.filter { $0.kind == "video" }.count
-                        show(SocialPages.scan(url: url, owner: owner, entries: found,
-                                              note: String(format: String(localized: "Found %d videos and %d photos with your browser's sign-in."), videos, found.count - videos)),
-                             url: url, filter: f)
-                    case .failure(is CancellationError):
-                        status = String(localized: "Stopped.")
-                    default:
-                        // The gallery engine doesn't know this site or address: what visitors see, as usual.
-                        manager.profileCookies[ProfileBatch.key(url)] = nil
-                        find()
-                    }
-                }
-            }
+        let key = ProfileBatch.key(url)
+        if let listing = manager.listings[key], !listing.running, let found = listing.scan {
+            // Listed in the background (the extension's Download all): show it.
+            busy = false
+            show(found, url: url, filter: f)
             return
         }
+        if manager.profileCookies[key] != nil {
+            // Opened by the extension's Download all: the gallery engine lists every photo and video with the browser's
+            // sign-in, a request every 2-4 seconds, in the background; this window may close meanwhile.
+            status = String(localized: "Listing every photo and video with your browser's sign-in, a request every 2–4 seconds. A large profile takes a few minutes: you can close this window, Nexonic keeps going and opens Profile Batch again when it's done.")
+            manager.startListing(url, max: f.max)
+            return
+        }
+        if manager.listings[key]?.visitorsOnly == true { manager.listings[key] = nil }  // what visitors see, below
         if let social = SocialPages.find(url) {
             // Instagram and Facebook show visitors only their latest posts: Nexonic takes those straight away and says how to
             // get the rest (the extension's Download all in the user's signed-in browser; Nexonic never signs in).

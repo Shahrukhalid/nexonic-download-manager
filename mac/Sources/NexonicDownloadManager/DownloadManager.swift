@@ -125,6 +125,8 @@ final class DownloadManager: ObservableObject {
     /// The browser's cookies for profiles the extension opened in Profile Batch (Download all), by profile address; kept in
     /// memory only, for listing that profile as the user sees it.
     var profileCookies: [String: (cookies: String?, userAgent: String?)] = [:]
+    /// Profiles being listed (or listed) with those cookies, by profile address (see startListing).
+    @Published var listings: [String: ProfileListing] = [:]
     private var lastMinute = ""
     private var clipboardCount = NSPasteboard.general.changeCount
     private let limiter = SpeedLimiter()

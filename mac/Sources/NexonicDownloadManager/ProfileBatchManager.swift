@@ -1,6 +1,23 @@
 import Foundation
 import NexonicCore
 
+/// A profile listed in the background with the browser's cookies (the extension's Download all).
+struct ProfileListing {
+    /// Stop, from the window; read by the listing on its own thread.
+    final class StopFlag: @unchecked Sendable {
+        private let lock = NSLock()
+        private var value = false
+        var isSet: Bool { lock.lock(); defer { lock.unlock() }; return value }
+        func set() { lock.lock(); value = true; lock.unlock() }
+    }
+    var url: String
+    var running = false
+    let stop = StopFlag()
+    var stopped = false
+    var visitorsOnly = false
+    var scan: ProfileBatch.Scan?
+}
+
 /// Profile Batch: found videos go into a queue of their own; saved profiles are checked for new ones.
 extension DownloadManager {
     /// Adds the chosen videos to the queue `owner` (its own limit), in `quality`, into `folder`; starts it when `start`.
@@ -25,6 +42,44 @@ extension DownloadManager {
             if add(job, options: o) != nil { n += 1 }
         }
         return n
+    }
+
+    /// Starts listing a profile with the gallery engine and the browser's cookies (the extension's Download all), in the
+    /// background: the Profile Batch window may close meanwhile. When it is done Nexonic says so and opens Profile Batch
+    /// with what was found (or with what visitors see, when the engine can't read the site).
+    func startListing(_ url: String, max: Int) {
+        let key = ProfileBatch.key(url)
+        guard let signedIn = profileCookies[key], listings[key]?.running != true else { return }
+        let proxy = settings.proxy
+        let listing = ProfileListing(url: url, running: true)
+        listings[key] = listing
+        let stop = listing.stop
+        DispatchQueue.global(qos: .userInitiated).async {
+            let result = Result { try GalleryDl.list(SocialPages.listable(url), cookies: signedIn.cookies, userAgent: signedIn.userAgent, proxy: proxy,
+                                                     max: max, stop: { stop.isSet }) }
+            Task { @MainActor in
+                var l = self.listings[key] ?? ProfileListing(url: url)
+                l.running = false
+                switch result {
+                case .success(let listed?):
+                    // The profile's name (its folder): Instagram's or Facebook's owner, else the account the files belong to.
+                    let owner = SocialPages.find(url)?.owner ?? listed.owner
+                    let found = listed.entries
+                    let videos = found.filter { $0.kind == "video" }.count
+                    l.scan = SocialPages.scan(url: url, owner: owner, entries: found,
+                        note: String(format: String(localized: "Found %d videos and %d photos with your browser's sign-in."), videos, found.count - videos))
+                    self.post(String(localized: "Profile Batch"), (owner.isEmpty ? "" : owner + ": ")
+                              + String(format: String(localized: "%d videos and %d photos found"), videos, found.count - videos))
+                case .failure(is CancellationError):
+                    l.stopped = true
+                default:
+                    l.visitorsOnly = true  // the engine can't read this site or address
+                    self.profileCookies[key] = nil
+                }
+                self.listings[key] = l
+                if !l.stopped { MediaWindows.showPlaylist(url, replace: !MediaWindows.isShowing(url)) }
+            }
+        }
     }
 
     func alreadyDownloaded(_ url: String) -> Bool {

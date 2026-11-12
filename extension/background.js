@@ -284,9 +284,9 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
         const extra = { referrer, later: !!msg.later, browser: true };
         if (msg.stream) Object.assign(extra, { stream: true, fileName: msg.fileName });
         else if (msg.site && !msg.audioOnly && /^https:\/\/([a-z]+\.)?instagram\.com\/(?:[^/]+\/)?(p|reel|tv)\//.test(msg.url)) {
-          // An Instagram post: the gallery engine saves its video or photos with this browser's sign-in (the video engine
-          // can't read Instagram posts for signed-in browsers).
-          extra.gallery = true;
+          // An Instagram post: Profile Batch opens with it and lists its video or photos with this browser's sign-in (the
+          // video engine can't read Instagram posts for signed-in browsers); the user picks Download Now or Add to Queue.
+          return { ok: await send(msg.url, { referrer, profile: true }) };
         }
         else if (msg.site) {
           Object.assign(extra, { site: true, audioOnly: !!msg.audioOnly });

@@ -138,19 +138,16 @@ public static partial class Dialogs
             try
             {
                 // Opened by the extension's Download all: the gallery engine lists every photo and video with the browser's
-                // sign-in for the site, a request every 2-4 seconds; nothing is downloaded until Download Now or Add to Queue.
-                List<BatchEntry>? listed = null;
-                if (m.ProfileCookies.TryGetValue(ProfileBatch.Key(url), out var signedIn))
+                // sign-in for the site, a request every 2-4 seconds, in the background (the manager's StartListing); this
+                // window may close meanwhile. Nothing is downloaded until Download Now or Add to Queue.
+                var key = ProfileBatch.Key(url);
+                if (m.Listings.TryGetValue(key, out var listing) && listing is { Running: false, Scan: { } listed })
+                    scan = listed;
+                else if (m.ProfileCookies.ContainsKey(key))
                 {
-                    status.Text = L.T("Listing every photo and video with your browser's sign-in… (a request every 2–4 seconds, so a large profile takes a few minutes)");
-                    listed = await GalleryList.ListAsync(url, signedIn.Cookies, signedIn.UserAgent, proxy, filter.Max, token);
-                    if (listed is not { Count: > 0 }) m.ProfileCookies.Remove(ProfileBatch.Key(url));  // a site it doesn't know
-                }
-                if (listed is { Count: > 0 })
-                {
-                    var videos = listed.Count(x => x.Kind == "video");
-                    scan = new ProfileBatch.Scan { Url = url, Owner = ProfileBatch.OwnerOf(url), Entries = listed, Complete = true,
-                        Note = string.Format(L.T("Found {0} videos and {1} photos with your browser's sign-in."), videos, listed.Count - videos) };
+                    status.Text = L.T("Listing every photo and video with your browser's sign-in, a request every 2–4 seconds. A large profile takes a few minutes: you can close this window, Nexonic keeps going and opens Profile Batch again when it's done.");
+                    m.StartListing(url, filter.Max);
+                    return;
                 }
                 else
                 {
@@ -188,7 +185,11 @@ public static partial class Dialogs
         // Opened with a link (the extension's Download all, or a link handed over): Find Videos starts by itself.
         if (link.Length > 0) f.Window.Opened += (_, _) => Read();
         f.AddButton("Close", f.Close, isCancel: true);
-        f.AddButton("Stop", () => cancel?.Cancel());
+        f.AddButton("Stop", () =>
+        {
+            cancel?.Cancel();
+            if (m.Listings.TryGetValue(ProfileBatch.Key((box.Text ?? "").Trim()), out var listing) && listing.Running) listing.Stop.Cancel();
+        });
         export = f.AddButton("Export…", async () =>
         {
             if (scan == null) return;
