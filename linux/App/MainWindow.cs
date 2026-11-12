@@ -296,6 +296,7 @@ public sealed class MainWindow : Window
             Item("Delete _Completed…", () => _ = OnClear()),
             Line(),
             unzipItem,
+            Item("_Archive Passwords…", () => _ = Dialogs.ArchivePasswords(this, manager)),
             subtitlesItem,
             Item("_Media Library…", OpenLibrary, "Ctrl+L"),
             Line(),

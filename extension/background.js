@@ -66,7 +66,7 @@ async function showStatus(ok) {
 const handedOver = new Map(); // link -> time, so one click is never sent to the app twice
 
 chrome.downloads.onCreated.addListener(async (item) => {
-  if (Date.now() < bypassUntil) return;
+  if (await bypassed(item)) return;
   if (!shouldTakeOver(item, await settings())) return;
   try {
     await chrome.downloads.pause(item.id);
@@ -243,7 +243,30 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 
 // ---- Messages from the popup and the page button ----
 
-let bypassUntil = 0;
+// Alt+click on a link: that one link downloads in the browser, not in Nexonic. Kept per link for a few seconds, in session
+// storage so a restarted background script still knows (the browser may start it again for the download).
+const BYPASS_MS = 10000;
+const bypassMemory = new Map();
+async function bypassList() {
+  try { return (await chrome.storage.session.get("bypass")).bypass || {}; } catch (_) { return Object.fromEntries(bypassMemory); }
+}
+async function saveBypass(list) {
+  try { await chrome.storage.session.set({ bypass: list }); } catch (_) { bypassMemory.clear(); for (const [k, v] of Object.entries(list)) bypassMemory.set(k, v); }
+}
+async function markBypass(url) {
+  const now = Date.now(), list = await bypassList();
+  for (const [k, until] of Object.entries(list)) if (until < now) delete list[k];
+  list[url] = now + BYPASS_MS;
+  await saveBypass(list);
+}
+async function bypassed(item) {
+  const list = await bypassList(), now = Date.now();
+  const hit = [item.url, item.finalUrl].find((u) => u && list[u] >= now);
+  if (!hit) return false;
+  delete list[hit];
+  await saveBypass(list);
+  return true;
+}
 
 chrome.runtime.onMessage.addListener((msg, sender, respond) => {
   // A page's own script only ever speaks for its own tab; only the popup (no sender.tab) may name a tab.
@@ -252,7 +275,8 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
   const run = async () => {
     switch (msg && msg.type) {
       case "bypassInterception": {
-        bypassUntil = Date.now() + 6000;
+        if (typeof msg.url !== "string" || !/^https?:/i.test(msg.url)) return { ok: false };
+        await markBypass(msg.url);
         return { ok: true };
       }
       case "send-link": {

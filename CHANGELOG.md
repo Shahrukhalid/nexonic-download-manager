@@ -1,6 +1,23 @@
+## 0.30.1
+
+Fixes for 0.30.0:
+- Archives that need a password can now be unpacked: add the passwords under Downloads → Archive Passwords (Windows,
+  Linux); each is tried in turn, and a wrong one leaves nothing behind. In 0.30.0 nothing could pass a password.
+- Checksum tool (Windows): typing a path no longer starts a calculation for every key; only the latest file's result
+  is shown, and closing the window stops the reading.
+- Queue countdown (Windows): "Quit" now says that Nexonic quits, not the computer.
+- Browser extension: Alt+click lets only the clicked link download in the browser (0.30.0 let every download from
+  any tab through for 6 seconds), and it still works when the browser restarts the extension's background script.
+- Profile Batch on X uses only X's own public timeline again; the 0.30.0 fallback sent the profile name to an outside
+  service.
+- Profile Batch on Instagram: Instagram no longer answers the request Nexonic uses to read a profile without signing
+  in (checked on a home connection: 404 for every profile, while its own page still shows 12 posts to visitors).
+  Nexonic now says so, instead of "This Instagram profile does not exist", and points to the browser extension:
+  right-click the open profile page and choose "Download all links with Nexonic".
+
 ## 0.30.0
 
-**Checksum verification and file integrity** (Windows, Linux, Mac)
+**Checksum verification and file integrity** (Windows)
 - Dedicated Checksum verification tool (Tasks → Verify Checksum or right-click any download): calculate MD5, SHA-1,
   SHA-256 and SHA-512 hashes in parallel on any file.
 - Automatic algorithm detection from clipboard input (32, 40, 64 or 128 hex digits) with real-time match/mismatch status indicators.
@@ -15,7 +32,7 @@
 
 **Appearance and archive extraction**
 - OLED Black theme: true pitch-black theme (#000000) for OLED/HDR displays and high-contrast environments.
-- Password-protected archive extraction: unpack password-encrypted archives with automatic password handling.
+- Password-protected archive extraction (Windows, Linux; reachable from 0.30.1, see there).
 
 ## 0.29.0
 

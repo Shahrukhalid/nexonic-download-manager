@@ -28,11 +28,39 @@ public static class Archives
         return System.Text.RegularExpressions.Regex.Replace(name, @"\.part0*1$", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
     }
 
-    /// <summary>Unpacks any supported archive (see IsArchive) into a new folder; returns the folder.</summary>
-    public static string Extract(string path, string? password = null) =>
-        string.IsNullOrEmpty(password) && string.Equals(Path.GetExtension(path), ".zip", StringComparison.OrdinalIgnoreCase)
-            ? ExtractZip(path)
-            : ExtractOther(path, password);
+    /// <summary>The start of the message for an archive that needs a password none of the saved ones opened.</summary>
+    public const string NeedsPassword = "The archive needs a password.";
+
+    /// <summary>
+    /// Unpacks any supported archive (see IsArchive) into a new folder; returns the folder. An archive with a password is
+    /// tried with each saved archive password (Downloads → Archive Passwords) until one opens it.
+    /// </summary>
+    public static string Extract(string path, IReadOnlyList<string>? passwords = null)
+    {
+        try { return ExtractWith(path, null); }
+        catch (InvalidDataException e) when (e.Message == NeedsPassword)
+        {
+            if (passwords is not { Count: > 0 }) throw new InvalidDataException(NeedsPassword + " Add it under Downloads → Archive Passwords, then unpack again.");
+        }
+        foreach (var password in passwords!.Where(p => p.Length > 0).Distinct())
+        {
+            try { return ExtractWith(path, password); }
+            catch (Exception x) when (x is not OutOfMemoryException) { }  // wrong password: try the next one
+        }
+        throw new InvalidDataException(NeedsPassword + " None of the saved archive passwords opens it (Downloads → Archive Passwords).");
+    }
+
+    static string ExtractWith(string path, string? password)
+    {
+        var zip = string.Equals(Path.GetExtension(path), ".zip", StringComparison.OrdinalIgnoreCase);
+        if (zip && password == null)
+        {
+            using (var z = ZipFile.OpenRead(path))
+                if (!z.Entries.Any(e => e.IsEncrypted)) return ExtractZip(path);
+            throw new InvalidDataException(NeedsPassword);
+        }
+        return ExtractOther(path, password);
+    }
 
     static string ExtractOther(string path, string? password = null)
     {
@@ -43,7 +71,7 @@ public static class Archives
         var readerOptions = string.IsNullOrEmpty(password) ? new ReaderOptions() : new ReaderOptions { Password = password };
         // .tar (.gz, .bz2, .xz) is read in one pass; 7z and RAR (also split RAR sets) through their archive index.
         using var archive = tar == null ? ArchiveFactory.OpenArchive(new FileInfo(path), readerOptions) : null;
-        if (archive != null && string.IsNullOrEmpty(password) && archive.Entries.Any(e => e.IsEncrypted)) throw new InvalidDataException("The archive needs a password.");
+        if (archive != null && string.IsNullOrEmpty(password) && archive.Entries.Any(e => e.IsEncrypted)) throw new InvalidDataException(NeedsPassword);
         if (archive != null && archive.Entries.Sum(e => Math.Max(0, e.Size)) > MaxUnpackedBytes) throw new InvalidDataException("The archive unpacks to more than 64 GB.");
         using var reader = archive?.ExtractAllEntries() ?? ReaderFactory.OpenReader(tar!, readerOptions);
         Directory.CreateDirectory(folder);
@@ -54,7 +82,7 @@ public static class Archives
             {
                 var e = reader.Entry;
                 if (e.Key is not { Length: > 0 } key) continue;
-                if (e.IsEncrypted && string.IsNullOrEmpty(password)) throw new InvalidDataException("The archive needs a password.");
+                if (e.IsEncrypted && string.IsNullOrEmpty(password)) throw new InvalidDataException(NeedsPassword);
                 var target = Path.GetFullPath(Path.Combine(folder, key.Replace('\\', '/')));
                 if (!target.StartsWith(root, StringComparison.Ordinal)) continue; // "../" tricks
                 if (e.IsDirectory) { Directory.CreateDirectory(target); continue; }
@@ -63,6 +91,12 @@ public static class Archives
                 Directory.CreateDirectory(Path.GetDirectoryName(target)!);
                 reader.WriteEntryToFile(target, new ExtractionOptions { Overwrite = false, PreserveFileTime = true });
             }
+        }
+        catch when (password != null)
+        {
+            // A wrong password: the folder was new, so nothing of the user's is removed with it.
+            try { Directory.Delete(folder, true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+            throw;
         }
         finally { tar?.Dispose(); }
         return folder;

@@ -84,7 +84,7 @@ public partial class App : Application
             if (manager.Settings.Notifications)
                 tray.Balloon("Download finished", r.FileName + (r.ChecksumResult is { } c ? " – " + c : ""));
             if (manager.Settings.ShowCompleteDialog) Dialogs.Complete(manager, r);
-            foreach (var archive in LinkGrabber.ToUnpack(r, manager.Rows.Select(x => x.Record), manager.Settings.ExtractZips)) Unzip(archive, text =>
+            foreach (var archive in LinkGrabber.ToUnpack(r, manager.Rows.Select(x => x.Record), manager.Settings.ExtractZips)) Unzip(archive, manager.Settings.ArchivePasswords.ToList(), text =>
             {
                 if (manager.Settings.Notifications) tray.Balloon("Unzipped", text);
             });
@@ -127,13 +127,13 @@ public partial class App : Application
     }
 
     /// <summary>Unzip when finished (Downloads menu): unpacks in the background, then reports on the UI thread.</summary>
-    void Unzip(string path, Action<string> done)
+    void Unzip(string path, IReadOnlyList<string> passwords, Action<string> done)
     {
         var name = Path.GetFileName(path);
         Task.Run(() =>
         {
             string text;
-            try { text = $"{name} → {Path.GetFileName(Archives.Extract(path))}"; }
+            try { text = $"{name} → {Path.GetFileName(Archives.Extract(path, passwords))}"; }
             catch (Exception e) { text = $"{name}: {e.Message}"; }
             Dispatcher.BeginInvoke(() => done(text));
         });

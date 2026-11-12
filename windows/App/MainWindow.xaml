@@ -102,6 +102,8 @@
         <Separator />
         <MenuItem x:Name="UnzipItem" Header="_Unpack Finished Archives (.zip, .7z, .rar, .tar)" IsCheckable="True" Click="OnToggleUnzip"
                   ToolTip="Unpack each finished .zip download into a folder next to it" />
+        <MenuItem Header="_Archive Passwords…" Click="OnArchivePasswords"
+                  ToolTip="Passwords tried on archives that need one, one per line" />
         <MenuItem x:Name="SubtitlesItem" Header="Save Su_btitles With Videos" IsCheckable="True" Click="OnToggleSubtitles"
                   ToolTip="Videos keep subtitles in your language and English when the site has them" />
         <MenuItem Header="_Media Library…" InputGestureText="Ctrl+L" Click="OnLibrary" />
