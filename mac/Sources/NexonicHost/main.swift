@@ -107,6 +107,7 @@ while let message = try? NativeMessaging.read(from: input) {
         if let browser = message["browser"] as? Bool, browser { job.fromBrowser = true }
         if let gallery = message["gallery"] as? Bool, gallery { job.gallery = true }
         if let profile = message["profile"] as? Bool, profile { job.profile = true }
+        if let auto = message["auto"] as? Bool, auto { job.auto = true }
         guard job.validURL != nil else {
             reply(["ok": false, "error": "Only http and https links can be downloaded"])
             continue

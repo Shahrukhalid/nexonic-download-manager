@@ -56,7 +56,7 @@ public sealed partial class DownloadManager
     /// window may close meanwhile. When it is done Nexonic says so and opens Profile Batch again with what was found (or
     /// with what visitors see, when the engine can't read the site). Call on the UI thread.
     /// </summary>
-    public async void StartListing(string url, int max)
+    public async void StartListing(string url, int max, bool auto = false)
     {
         var key = ProfileBatch.Key(url);
         if (!ProfileCookies.TryGetValue(key, out var signedIn) || Listings.TryGetValue(key, out var busy) && busy.Running) return;
@@ -76,7 +76,15 @@ public sealed partial class DownloadManager
             listing.Scan = new ProfileBatch.Scan { Url = url, Owner = owner, Entries = listed.Entries, Complete = true,
                 Note = string.Format(L.T("Found {0} videos and {1} photos with your browser's sign-in."), videos, listed.Entries.Count - videos) };
             Notify?.Invoke(L.T("Profile Batch"), (owner.Length > 0 ? owner + ": " : "") + string.Format(L.T("{0} videos and {1} photos found"), videos, listed.Entries.Count - videos));
+            if (auto)
+            {
+                // Download all: everything not already in the list goes into the profile's queue and starts.
+                var take = listed.Entries.Where(e => !AlreadyDownloaded(e.Url)).ToList();
+                if (take.Count > 0) QueueBatch(owner, take, ProfileBatch.FolderFor(Settings.StartFolder, owner, url), "best", 2, true);
+                return;
+            }
         }
+        else if (auto) { ProfileCookies.Remove(key); return; }  // nothing more than the page's own videos
         else
         {
             listing.VisitorsOnly = true;  // the engine can't read this site or address
@@ -94,7 +102,10 @@ public sealed partial class DownloadManager
         if (j.Profile == true)
         {
             ProfileCookies[ProfileBatch.Key(j.Url)] = (j.Cookies, j.UserAgent);
-            ProfileRequested?.Invoke(j.Url);
+            // The one-button Download all: the rest of the profile is found in the background and downloaded; otherwise
+            // Profile Batch opens to choose.
+            if (j.Auto == true) StartListing(j.Url, ProfileBatch.Limit, auto: true);
+            else ProfileRequested?.Invoke(j.Url);
             return true;
         }
         if (j.Gallery == true)

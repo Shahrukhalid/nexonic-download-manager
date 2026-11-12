@@ -299,24 +299,18 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
         else if (msg.fileName) extra.fileName = msg.fileName;
         return { ok: await send(msg.url, extra) };
       }
-      case "profile-check":
-        return { ok: !!profileOf(msg.url || "") };
-      case "profile-all": {
-        // The popup's "Download all" on a profile: Nexonic's Profile Batch opens with it and lists every photo and video
-        // with this browser's cookies for the site, at a person's pace (1-2 seconds between requests); the user then picks
-        // Download Now or Add to Queue. Nothing scrolls here.
-        if (!profileOf(msg.url || "")) return { ok: false };
-        return { ok: await send(msg.url, { referrer: msg.url, profile: true }) };
-      }
-      case "send-videos": {
-        // "Videos on this page": each one straight to the app's video engine (Instagram posts to the gallery engine,
-        // photos included), no download window for each.
+      case "download-all": {
+        // The popup's one button: every post and video this page shows goes to the app now (downloading at once), and on
+        // a profile the app's gallery engine finds the rest with this browser's sign-in and adds them as it goes.
+        if (!Number.isInteger(tabId)) return { ok: false };
+        const [{ result: posts = [] } = {}] = await chrome.scripting.executeScript({ target: { tabId }, func: videosOnPage }).catch(() => []);
         let sent = 0;
-        for (const url of (msg.urls || []).slice(0, 500)) {
-          const instagram = /^https:\/\/(www\.)?instagram\.com\//.test(url);
-          if (await send(url, { referrer, later: !!msg.later, ...(instagram ? { gallery: true } : { site: true }) })) sent++;
+        for (const p of posts.slice(0, 500)) {
+          const instagram = /^https:\/\/(www\.)?instagram\.com\//.test(p.url);
+          if (await send(p.url, { referrer: msg.url, ...(instagram ? { gallery: true } : { site: true }) })) sent++;
         }
-        return { ok: sent > 0, sent };
+        const more = !!profileOf(msg.url || "") && await send(msg.url, { referrer: msg.url, profile: true, auto: true });
+        return { ok: sent > 0 || more, sent, more };
       }
       case "send-links": {
         let sent = 0;
@@ -361,4 +355,29 @@ function profileOf(url) {
   if (!path.length && u.pathname !== "/profile.php") return null;
   if (/^(p|reel|reels|tv|stories|explore|accounts|direct|watch|search|settings|home|messages|notifications|i|login|share|hashtag|tag|video|status)$/i.test(path[0] || "")) return null;
   return u.href;
+}
+
+/** Runs in the page: the links of the posts and videos it shows (self-contained). */
+function videosOnPage() {
+  const patterns = [
+    [/^https:\/\/(www\.)?instagram\.com\/(?:[^/]+\/)?(p|reel|tv)\/([\w-]+)/, (m) => `https://www.instagram.com/${m[2] === "p" ? "p" : "reel"}/${m[3]}/`],
+    [/^https:\/\/(www\.|web\.|m\.)?facebook\.com\/(?:[^/]+\/)?(?:reel|videos)\/(?:[^/]+\/)?(\d{6,})/, (m) => `https://www.facebook.com/reel/${m[2]}/`],
+    [/^https:\/\/(www\.|web\.|m\.)?facebook\.com\/watch\/?\?v=(\d{6,})/, (m) => `https://www.facebook.com/watch/?v=${m[2]}`],
+    [/^https:\/\/(www\.)?tiktok\.com\/@([\w.-]+)\/video\/(\d+)/, (m) => `https://www.tiktok.com/@${m[2]}/video/${m[3]}`],
+    [/^https:\/\/(www\.|m\.)?youtube\.com\/(?:watch\?v=|shorts\/)([\w-]{11})/, (m) => `https://www.youtube.com/watch?v=${m[2]}`],
+    [/^https:\/\/(x|twitter)\.com\/(\w{1,15})\/status\/(\d+)\/video/, (m) => `https://x.com/${m[2]}/status/${m[3]}`],
+  ];
+  const seen = new Map();
+  for (const href of [location.href, ...[...document.querySelectorAll("a[href]")].map((a) => a.href)]) {
+    for (const [re, link] of patterns) {
+      const m = href.match(re);
+      if (m && !seen.has(link(m))) {
+        const a = [...document.querySelectorAll("a[href]")].find((x) => x.href === href);
+        const label = ((a && (a.getAttribute("aria-label") || a.textContent || (a.querySelector("img") || {}).alt)) || "").trim().replace(/\s+/g, " ").slice(0, 80);
+        seen.set(link(m), label || link(m));
+      }
+    }
+    if (seen.size >= 500) break;
+  }
+  return [...seen].map(([url, label]) => ({ url, label }));
 }

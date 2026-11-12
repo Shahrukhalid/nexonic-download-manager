@@ -184,7 +184,8 @@ public extension GalleryDl {
             let name = FileNames.sanitize("\(label) [\(post)\(count > 1 && num > 0 ? "-\(num)" : "")].\(ext)")
             list.append(BatchEntry(url: url, title: name, duration: (f[14] as? NSNumber)?.doubleValue,
                                    date: df.date(from: text(13)) ?? iso.date(from: text(13) + (text(13).contains("+") || text(13).hasSuffix("Z") ? "" : "Z")),
-                                   kind: videoExtensions.contains(ext) ? "video" : "photo", available: true, direct: true))
+                                   kind: videoExtensions.contains(ext) ? "video" : "photo", available: true, direct: true,
+                                   post: [2, 3, 4].map(text).first { !$0.isEmpty }))
         }
         return (list, owner)
     }

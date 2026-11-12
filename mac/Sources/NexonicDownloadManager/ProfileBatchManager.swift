@@ -18,6 +18,8 @@ struct ProfileListing {
     var visitorsOnly = false
     var found = 0
     var owner = ""
+    /// Download everything as it is found (the extension's one-button Download all).
+    var auto = false
     /// Why the signed-in search found nothing, in the gallery engine's own words.
     var error: String?
     var scan: ProfileBatch.Scan?
@@ -52,7 +54,7 @@ extension DownloadManager {
     /// Starts searching a profile with the gallery engine and the browser's cookies (the extension's Download all), in
     /// the background, as a row in the downloads list: several can run at once, the Profile Batch window may close, and
     /// double-clicking the row opens it again with what was found.
-    func startListing(_ url: String, max: Int) {
+    func startListing(_ url: String, max: Int, auto: Bool = false) {
         let key = ProfileBatch.key(url)
         guard listings[key]?.running != true else { return }
         // The extension's cookies when it handed the profile over; otherwise the default browser's own sign-in (macOS asks
@@ -63,6 +65,7 @@ extension DownloadManager {
         let proxy = settings.proxy
         var listing = ProfileListing(url: url, running: true)
         listing.owner = SocialPages.find(url)?.owner ?? ""
+        listing.auto = auto
         listings[key] = listing
         let stop = listing.stop
         // Its row: "Photos and videos of <name>", in the list until removed.
@@ -114,6 +117,16 @@ extension DownloadManager {
         l.found += fresh.count
         listings[key] = l
         if let row { update(row) { $0.streamDone = l.found; $0.status = .downloading } }
+        // Download all: straight into the profile's queue, except posts already in the list (the page's own videos were
+        // sent a moment earlier) and files already downloaded.
+        if l.auto {
+            let have = items.map(\.url.absoluteString)
+            let take = fresh.filter { e in !alreadyDownloaded(e.url) && !(e.post.map { p in have.contains { $0.contains("/\(p)/") } } ?? false) }
+            if !take.isEmpty {
+                queueBatch(owner: l.owner, take, folder: ProfileBatch.folder(base: settings.startFolder, owner: l.owner, url: l.url),
+                           quality: "best", maxActive: 2, start: true)
+            }
+        }
     }
 
     /// The browser that opens web links here, as the gallery engine names it (nil: one it can't read).

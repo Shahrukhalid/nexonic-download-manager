@@ -10,6 +10,8 @@ public struct BatchEntry: Codable, Equatable, Sendable, Identifiable {
     public var available = true
     /// Added in 0.31.0: the file itself (a gallery engine listing), downloaded as it is rather than by the video engine.
     public var direct: Bool?
+    /// Added in 0.31.0: the post a listed file belongs to (its short code), so a post already downloaded is not added again.
+    public var post: String?
     public var id: String { url }
 }
 

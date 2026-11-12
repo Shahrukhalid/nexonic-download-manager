@@ -18,8 +18,10 @@
   listed this way; Profile Batch takes what visitors see there, and single Facebook videos download as before.
   - It stays polite, so it never looks or acts like a bot: it only reads (never likes, follows, comments, messages or
     posts) and waits 1–2 seconds between its requests to the site, like a person. All galleries keep that pace.
-- Browser extension: **Videos on this page** in the popup lists every post and video the page shows (Instagram,
-  Facebook, TikTok, YouTube, X), with checkboxes: one click downloads all of them (Instagram posts with their photos).
+- Browser extension: one **Download all** button on Instagram, Facebook, TikTok, YouTube, X and other video sites:
+  every video the page shows starts downloading at once (Instagram posts with their photos), and on a profile Nexonic
+  then finds the rest in the background with your browser's sign-in and downloads them as it finds them (a row in the
+  list shows the count). Facebook: the videos the page shows.
 - Profile Batch on the Mac: **Close** only hides the window; what it was doing keeps going, and Profile Batch in the
   toolbar (or double-clicking a search's row) brings it back.
 - Instagram posts from the extension (the video button and "This page's video") open the download window and are saved
