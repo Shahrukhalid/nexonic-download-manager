@@ -65,7 +65,7 @@ public sealed partial class DownloadManager
         (List<BatchEntry> Entries, string Owner)? found = null;
         try { found = await GalleryList.ListAsync(SocialPages.Listable(url), signedIn.Cookies, signedIn.UserAgent, proxy, max, listing.Stop.Token); }
         catch (OperationCanceledException) { listing.Stopped = true; }
-        catch (Exception e) when (e is IOException or InvalidOperationException or System.ComponentModel.Win32Exception) { }
+        catch (Exception e) when (e is System.IO.IOException or InvalidOperationException or System.ComponentModel.Win32Exception) { }
         listing.Running = false;
         if (listing.Stopped) return;
         if (found is { } listed)
@@ -156,5 +156,5 @@ public sealed class ProfileListing
     public bool Stopped { get; set; }
     public bool VisitorsOnly { get; set; }
     public ProfileBatch.Scan? Scan { get; set; }
-    public CancellationTokenSource Stop { get; } = new();
+    public System.Threading.CancellationTokenSource Stop { get; } = new();
 }
