@@ -427,12 +427,20 @@ public static class InstagramPage
 
 /// <summary>
 /// Instagram and Facebook profiles in Profile Batch. Their profile pages show visitors who are not signed in only the
-/// latest posts; every video comes through the user's own browser and the Nexonic extension (BrowserCollect).
+/// latest posts; the rest come through the user's own signed-in browser and the Nexonic extension (see More).
 /// </summary>
 public sealed record SocialSite(string Name, string LoginUrl, string Domain, string SessionCookie, string Script);
 
 public static class SocialPages
 {
+    /// <summary>
+    /// Added under what a visitor sees: how to get the rest. The Nexonic extension's "Download all" on the profile, in a
+    /// browser signed in to the site, reads the whole post list (read-only, a page every few seconds) and sends every
+    /// video and photo here. Nexonic itself never signs in.
+    /// </summary>
+    public static string More(SocialSite site) =>
+        $"To get every video and photo: open this profile in Chrome, Edge or Firefox where you are signed in to {site.Name}, click the Nexonic extension and choose Download all. It only reads the post list, a page every few seconds like a person scrolling, and sends everything here; Nexonic never sees your password.";
+
     public static readonly SocialSite Instagram = new("Instagram", "https://www.instagram.com/accounts/login/", "instagram.com", "sessionid", InstagramPage.Script);
     public static readonly SocialSite Facebook = new("Facebook", "https://www.facebook.com/login/", "facebook.com", "c_user", FacebookScript);
 
@@ -481,124 +489,4 @@ public static class SocialPages
         foreach (var e in now) if (found.Count < max) found.TryAdd(e.Url, e);
         return found.Count > before;
     }
-}
-
-/// <summary>
-/// Profile Batch through the user's own browser, without any tab: the app leaves a request (site, profile, limit) in the
-/// ProfileLinks folder; the Nexonic extension picks it up through the browser helper (it asks about once a minute),
-/// asks the site for the profile's posts with the browser's own sign-in (Nexonic never signs in or sees a password) and
-/// sends the video links back the same way.
-/// </summary>
-public static class BrowserCollect
-{
-    public static string Folder => Path.Combine(AppPaths.Support, "ProfileLinks");
-    const int MaxPayload = 4 * 1024 * 1024;
-
-    static bool ValidToken(string? token) => token is { Length: 32 } && token.All(Uri.IsHexDigit);
-
-    /// <summary>Leaves the request for the extension; returns the token its answer comes back under.</summary>
-    public static string Start(SocialSite site, string owner, string[] pages, int max)
-    {
-        var token = Guid.NewGuid().ToString("N");
-        Directory.CreateDirectory(Folder);
-        File.WriteAllText(Path.Combine(Folder, $"{token}.request.json"), JsonSerializer.Serialize(new
-        {
-            token, site = site.Name.ToLowerInvariant(), owner, pages, max = Math.Clamp(max, 1, ProfileBatch.Limit), time = DateTime.UtcNow,
-        }));
-        return token;
-    }
-
-    /// <summary>The browser helper: the requests waiting for the extension (each handed out once; old ones dropped).</summary>
-    public static List<JsonElement> TakeRequests()
-    {
-        var list = new List<JsonElement>();
-        if (!Directory.Exists(Folder)) return list;
-        foreach (var file in Directory.GetFiles(Folder, "*.request.json"))
-        {
-            try
-            {
-                if (File.GetLastWriteTimeUtc(file) > DateTime.UtcNow.AddMinutes(-10))
-                    using (var doc = JsonDocument.Parse(File.ReadAllText(file))) list.Add(doc.RootElement.Clone());
-                File.Delete(file);
-            }
-            catch (Exception x) when (x is IOException or JsonException or UnauthorizedAccessException) { }
-        }
-        return list;
-    }
-
-    /// <summary>The browser helper: the extension's progress ("started", with a count) or result ("done", the page script's JSON).</summary>
-    public static bool Save(string? token, string? stage, string? json)
-    {
-        if (!ValidToken(token) || stage is not ("started" or "done") || json == null || json.Length > MaxPayload) return false;
-        Directory.CreateDirectory(Folder);
-        var file = Path.Combine(Folder, $"{token}.{stage}.json");
-        File.WriteAllText(file + ".tmp", json);
-        File.Move(file + ".tmp", file, true);
-        return true;
-    }
-
-    /// <summary>
-    /// Waits for the extension: null when it does not answer within answerWithin (no extension in the default browser);
-    /// otherwise the videos, once the page was scrolled to its end. found(count) reports progress.
-    /// </summary>
-    public static async Task<List<BatchEntry>?> Wait(string token, TimeSpan answerWithin, Action<int> found, CancellationToken cancel)
-    {
-        var started = Path.Combine(Folder, $"{token}.started.json");
-        var done = Path.Combine(Folder, $"{token}.done.json");
-        try
-        {
-            for (var waited = TimeSpan.Zero; !File.Exists(started) && !File.Exists(done); waited += TimeSpan.FromSeconds(1))
-            {
-                if (waited >= answerWithin) return null;
-                await Task.Delay(1000, cancel);
-            }
-            var last = -1;
-            for (var i = 0; !File.Exists(done); i++)
-            {
-                if (i > 3600) throw new TimeoutException("The browser stopped answering. Find Videos tries again.");
-                await Task.Delay(1000, cancel);
-                if (InstagramPage.Read(Read(started)).Posts is var n && n != last) { last = n; found(n); }
-            }
-            var answer = Read(done);
-            stoppedBy[token] = Stopped(answer);
-            return InstagramPage.Read(answer).Videos;
-        }
-        finally
-        {
-            foreach (var f in new[] { started, done }) try { File.Delete(f); } catch (IOException) { }
-        }
-    }
-
-    static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> stoppedBy = new();
-
-    static string Stopped(string? json)
-    {
-        try
-        {
-            using var doc = JsonDocument.Parse(json ?? "{}");
-            return doc.RootElement.TryGetProperty("stopped", out var s) && s.ValueKind == JsonValueKind.String ? s.GetString() ?? "" : "";
-        }
-        catch (JsonException) { return ""; }
-    }
-
-    /// <summary>
-    /// Why the extension stopped early for this request, as a note for the user; null when it finished normally. The
-    /// extension stops by itself when the site answers anything unusual, so it never keeps asking like a bot would.
-    /// </summary>
-    public static string? Why(string token, int found) => (stoppedBy.TryRemove(token, out var why) ? why : "") switch
-    {
-        "rest" => "The site asked to slow down, so the extension stopped at once and leaves it alone for an hour.",
-        "hourly" => "The extension reached its hourly limit (about 2,000 posts), so it stopped; try again later.",
-        "busy" => "The extension is still finding another profile; try again in a few minutes.",
-        "signed-out" => "Your browser isn't signed in to this site, so only what visitors see was found. Sign in there and try again.",
-        _ => found == 0 ? "Your browser found no videos; make sure you're signed in to the site there." : null,
-    };
-
-    static string? Read(string file)
-    {
-        try { return File.Exists(file) ? File.ReadAllText(file) : null; } catch (IOException) { return null; }
-    }
-
-    public const string Asking = "Asking the Nexonic extension in your browser for every video of this profile. It reads the post list with your browser's own sign-in, without a tab, one page every few seconds like a person scrolling; nothing is liked, followed or posted and Nexonic never sees your password. It can take up to a minute to start; keep the browser open.";
-    public const string NoAnswer = "Your browser didn't answer, so Nexonic took only what visitors see. To find every video, add the Nexonic extension to your browser, keep the browser open and sign in to the site there.";
 }

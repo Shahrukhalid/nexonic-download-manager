@@ -156,13 +156,6 @@ while (NativeMessaging.Read(input) is { } msg)
         case "qualities":
             NativeMessaging.Write(output, Qualities(msg));
             break;
-        case "profile-requests":
-            NativeMessaging.Write(output, new { ok = true, requests = BrowserCollect.TakeRequests() });
-            break;
-        case "profile-links":
-            // Profile Batch through the browser: the extension's progress and result for the app (BrowserCollect).
-            NativeMessaging.Write(output, new { ok = BrowserCollect.Save(msg["token"]?.GetValue<string>(), msg["stage"]?.GetValue<string>(), msg["data"]?.ToJsonString()) });
-            break;
         case "open":
             StartApp();
             NativeMessaging.Write(output, new { ok = true });

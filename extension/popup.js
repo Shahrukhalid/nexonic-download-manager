@@ -119,8 +119,8 @@ if (profileSite) {
       busy: "Already collecting this profile",
     };
     const start = (later) => async () => {
-      const r = await ask({ type: "profile-all", url: tab.url, later });
-      $("profileCount").textContent = t(r && r.ok ? "Finding videos…" : "Failed");
+      const r = await ask({ type: "profile-all", url: tab.url, tabId: tab.id, later });
+      $("profileCount").textContent = !r || !r.ok ? t("Failed") : r.stopped ? t(stoppedNote[r.stopped]) : t("Finding videos and photos…");
       $("profileAll").disabled = $("profileLater").disabled = true;
     };
     $("profileAll").onclick = start(false);

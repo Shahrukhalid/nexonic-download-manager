@@ -151,32 +151,12 @@ public class ProfileBatchTests
     }
 
     [Fact]
-    public async Task TheBrowserExtensionHandsTheProfileBack()
+    public void VisitorsAreToldHowToGetTheRestThroughTheirOwnBrowser()
     {
-        var token = BrowserCollect.Start(SocialPages.Instagram, "nasa", new[] { "https://www.instagram.com/nasa/" }, 300);
-        var requests = BrowserCollect.TakeRequests().Where(r => r.GetProperty("token").GetString() == token).ToList();
-        Assert.Equal(1, requests.Count);
-        Assert.Equal(("instagram", "nasa", 300), (requests[0].GetProperty("site").GetString(), requests[0].GetProperty("owner").GetString(), requests[0].GetProperty("max").GetInt32()));
-        Assert.False(BrowserCollect.TakeRequests().Any(r => r.GetProperty("token").GetString() == token));  // handed out once
-        Assert.False(BrowserCollect.Save("../evil", "done", "{}"));
-        Assert.False(BrowserCollect.Save(token, "other", "{}"));
-        Assert.Null(await BrowserCollect.Wait(token, TimeSpan.FromSeconds(1), _ => { }, default));  // no extension answered
-        var counts = new List<int>();
-        var waiting = BrowserCollect.Wait(token, TimeSpan.FromSeconds(10), counts.Add, default);
-        Assert.True(BrowserCollect.Save(token, "started", "{\"posts\":3,\"videos\":[]}"));
-        await Task.Delay(1500);
-        Assert.True(BrowserCollect.Save(token, "done", "{\"posts\":2,\"videos\":[{\"u\":\"https://www.instagram.com/reel/A1/\",\"t\":\"a\"},{\"u\":\"https://www.facebook.com/reel/123456789/\",\"t\":\"b\"}]}"));
-        var videos = await waiting;
-        Assert.Equal(2, videos!.Count);
-        Assert.Contains(3, counts);
-        Assert.False(File.Exists(Path.Combine(BrowserCollect.Folder, token + ".done.json")));
-        Assert.Null(BrowserCollect.Why(token, videos.Count));  // finished normally: no note
-
-        // The site asked to slow down: what was found is kept and the user is told why it stopped.
-        var slowed = BrowserCollect.Start(SocialPages.Instagram, "nasa", new[] { "https://www.instagram.com/nasa/" }, 300);
-        Assert.True(BrowserCollect.Save(slowed, "done", "{\"posts\":1,\"videos\":[{\"u\":\"https://www.instagram.com/reel/A1/\",\"t\":\"a\"}],\"stopped\":\"rest\"}"));
-        Assert.Equal(1, (await BrowserCollect.Wait(slowed, TimeSpan.FromSeconds(5), _ => { }, default))!.Count);
-        Assert.Contains("slow down", BrowserCollect.Why(slowed, 1));
+        var more = SocialPages.More(SocialPages.Instagram);
+        Assert.Contains("signed in to Instagram", more);
+        Assert.Contains("Download all", more);
+        Assert.Contains("never sees your password", more);
     }
 
     [Fact]

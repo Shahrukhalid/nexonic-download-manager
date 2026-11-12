@@ -29,7 +29,7 @@ test("every permission asked for is used (stores reject unused permissions)", ()
   const uses = {
     downloads: /chrome\.downloads\./, nativeMessaging: /sendNativeMessage|connectNative/, contextMenus: /chrome\.contextMenus\./,
     storage: /chrome\.storage\./, cookies: /chrome\.cookies\./, scripting: /chrome\.scripting\./, webRequest: /chrome\.webRequest\./,
-    tabs: /chrome\.tabs\./, alarms: /chrome\.alarms\./,
+    tabs: /chrome\.tabs\./,
   };
   for (const p of manifest.permissions) {
     assert.ok(uses[p], `${p}: add how it is used to this test and to docs/STORES.md`);

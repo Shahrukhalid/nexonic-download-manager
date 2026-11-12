@@ -291,14 +291,16 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
         return { ok: await send(msg.url, extra) };
       }
       case "profile-all": {
-        // The popup's "Download all videos of this profile": collected here, without any tab, then sent to Nexonic.
+        // The popup's "Download all" on an Instagram or Facebook profile the user has open and is signed in to.
         const profile = profileOf(msg.url || "");
-        if (!profile) return { ok: false };
-        profileJob(profile, 5000, (n) => chrome.runtime.sendMessage({ type: "profile-progress", count: n }).catch(() => {})).then(async ({ videos, stopped }) => {
-          let sent = 0;
-          for (const v of videos) if (await send(v.u, { referrer: msg.url, site: true, browser: true, later: !!msg.later })) sent++;
-          chrome.runtime.sendMessage({ type: "profile-sent", sent, stopped }).catch(() => {});
-        });
+        if (!profile || !Number.isInteger(tabId)) return { ok: false };
+        return { ok: true, ...(await profileStart(profile, tabId, msg.url, !!msg.later)) };
+      }
+      case "profile-found": {
+        // The collector in the profile's tab: progress, or the finished list (only from the tab of the running job).
+        if (!sender.tab || !profileRun || profileRun.tabId !== sender.tab.id) return { ok: false };
+        if (msg.done) await profileFinish(msg);
+        else chrome.runtime.sendMessage({ type: "profile-progress", count: Number(msg.count) || 0 }).catch(() => {});
         return { ok: true };
       }
       case "send-links": {
@@ -331,49 +333,24 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
   return true;
 });
 
-// ---- Every video of an Instagram or Facebook profile, with this browser's own sign-in and without any tab ----
-// Nexonic's Profile Batch leaves requests with the browser helper; they are fetched about once a minute. Rules, so this
-// never looks or acts like a bot:
-//  - read only: the profile's post list, the way the site's own profile page asks for it when you scroll; never a like,
-//    follow, comment, message or post;
+// ---- Every video and photo of an Instagram or Facebook profile the user has open, with their own sign-in ----
+// The popup's "Download all" runs a small reader in that profile's tab, so the site answers it as it answers its own
+// profile page; no other tab opens and nothing scrolls. Rules, so this never looks or acts like a bot:
+//  - read only: the profile's post list, as the site's own page asks for it when you scroll; never a like, follow,
+//    comment, message or post;
 //  - one profile at a time, one page (about 33 posts) every 2-4 seconds, like a person scrolling;
 //  - at most 60 pages an hour across all profiles (about 2,000 posts);
 //  - when the site answers anything unexpected (slow down, check your account, signed out), stop at once and leave that
 //    site alone for an hour.
 // Nexonic never signs in and never sees a password: only what this browser is already signed in to.
-const PROFILE_POLL = "nexonic-profile-requests";
 const PAGES_PER_HOUR = 60;
-const pause = (ms) => new Promise((r) => setTimeout(r, ms));
-let profileBusy = false;
-
-if (chrome.alarms) {
-  chrome.alarms.create(PROFILE_POLL, { periodInMinutes: 1 });
-  chrome.alarms.onAlarm.addListener((alarm) => { if (alarm.name === PROFILE_POLL) pollProfiles(); });
-}
-chrome.runtime.onStartup.addListener(() => pollProfiles());
+let profileRun = null;  // { tabId, site, owner, referrer, later, started }
 
 async function pace() {
-  const { profilePace = { pages: [], restUntil: {} } } = await chrome.storage.local.get("profilePace").catch(() => ({}));
-  profilePace.pages = (profilePace.pages || []).filter((t) => Date.now() - t < 3600_000);
-  profilePace.restUntil = profilePace.restUntil || {};
-  return profilePace;
+  const { profilePace = {} } = await chrome.storage.local.get("profilePace").catch(() => ({}));
+  return { pages: (profilePace.pages || []).filter((t) => Date.now() - t < 3600_000), restUntil: profilePace.restUntil || {} };
 }
 const savePace = (p) => chrome.storage.local.set({ profilePace: p }).catch(() => {});
-
-async function pollProfiles() {
-  if (profileBusy) return;
-  const r = await chrome.runtime.sendNativeMessage(HOST, { type: "profile-requests" }).catch(() => null);
-  for (const req of (r && r.requests) || []) {
-    if (!/^[0-9a-f]{32}$/.test(req.token || "") || !["instagram", "facebook"].includes(req.site)) continue;
-    const report = (stage, data) => chrome.runtime.sendNativeMessage(HOST, { type: "profile-links", token: req.token, stage, data }).catch(() => null);
-    await report("started", { posts: 0, videos: [] });
-    let last = 0;
-    const result = await profileJob({ site: req.site, owner: String(req.owner || ""), pages: req.pages || [] }, Number(req.max) || 500, (n) => {
-      if (Date.now() - last > 2000) { last = Date.now(); report("started", { posts: n, videos: [] }); }
-    });
-    await report("done", { posts: result.videos.length, videos: result.videos, stopped: result.stopped });
-  }
-}
 
 /** The site and profile of a link: { site, owner, pages }. */
 function profileOf(url) {
@@ -393,74 +370,101 @@ function profileOf(url) {
   return null;
 }
 
-/** { videos, stopped }: stopped is "" (finished), "busy", "rest" (the site asked to slow down), "signed-out" or "hourly". */
-async function profileJob(profile, max, progress) {
-  if (profileBusy) return { videos: [], stopped: "busy" };
-  profileBusy = true;
+/** Starts the reader in the tab; { stopped } when it can't start now ("busy", "rest" or "hourly"). */
+async function profileStart(profile, tabId, referrer, later) {
+  if (profileRun && Date.now() - profileRun.started < 3600_000) return { stopped: "busy" };
   const p = await pace();
+  if ((p.restUntil[profile.site] || 0) > Date.now()) return { stopped: "rest" };
+  const allowed = PAGES_PER_HOUR - p.pages.length;
+  if (allowed <= 0) return { stopped: "hourly" };
+  profileRun = { tabId, site: profile.site, owner: profile.owner, referrer, later, started: Date.now() };
   try {
-    if ((p.restUntil[profile.site] || 0) > Date.now()) return { videos: [], stopped: "rest" };
-    // One page of posts, if the pace allows; false (and an hour's rest for the site) when the site doesn't answer normally.
-    const page = async (url, init) => {
-      if (p.pages.length >= PAGES_PER_HOUR) throw "hourly";
-      p.pages.push(Date.now());
-      await savePace(p);
-      const r = await fetch(url, { credentials: "include", ...init }).catch(() => null);
-      if (!r || !r.ok || r.redirected && /login|checkpoint|challenge/.test(r.url)) {
-        if (r && (r.status === 429 || r.status >= 500 || /checkpoint|challenge/.test(r.url))) { p.restUntil[profile.site] = Date.now() + 3600_000; await savePace(p); throw "rest"; }
-        throw "signed-out";
-      }
-      return r;
-    };
-    const videos = [];
-    try {
-      if (profile.site === "instagram") await instagramVideos(profile.owner, max, progress, page, videos);
-      else await facebookVideos(profile.pages, max, progress, page, videos);
-      return { videos, stopped: "" };
-    } catch (why) {
-      return { videos, stopped: typeof why === "string" ? why : "signed-out" };
-    }
-  } finally {
-    profileBusy = false;
+    await chrome.scripting.executeScript({ target: { tabId }, func: profileReader, args: [profile, allowed] });
+  } catch (_) {
+    profileRun = null;
+    return { stopped: "signed-out" };
   }
+  return {};
 }
 
-async function instagramVideos(user, max, progress, page, videos) {
-  const headers = { "X-IG-App-ID": "936619743392459", "X-ASBD-ID": "129477", "X-Requested-With": "XMLHttpRequest" };
-  const csrf = await chrome.cookies.get({ url: "https://www.instagram.com/", name: "csrftoken" }).catch(() => null);
-  if (csrf) headers["X-CSRFToken"] = csrf.value;
-  const seen = new Set();
-  let next = `https://www.instagram.com/api/v1/feed/user/${encodeURIComponent(user)}/username/?count=33`, userId = null;
-  while (next && videos.length < max) {
-    const j = await (await page(next, { headers })).json().catch(() => null);
-    if (!j || j.status === "fail") throw "signed-out";
-    for (const it of j.items || []) {
-      userId = userId || (it.user && it.user.pk) || (it.owner && it.owner.pk);
-      const video = it.media_type === 2 || (it.carousel_media || []).some((c) => c.media_type === 2);
-      if (video && it.code && !seen.has(it.code) && videos.length < max) {
-        seen.add(it.code);
-        videos.push({ u: `https://www.instagram.com/${it.product_type === "clips" ? "reel" : "p"}/${it.code}/`, t: ((it.caption && it.caption.text) || "").slice(0, 200) });
-      }
-    }
-    progress(videos.length);
-    next = j.more_available && j.next_max_id && userId
-      ? `https://www.instagram.com/api/v1/feed/user/${userId}/?count=33&max_id=${encodeURIComponent(j.next_max_id)}` : null;
-    if (next) await pause(2000 + Math.random() * 2000);
-  }
+/** The reader's result: the pace is recorded, videos go to the app's video engine and photos are downloaded as files. */
+async function profileFinish(msg) {
+  const run = profileRun;
+  profileRun = null;
+  const p = await pace();
+  for (let i = 0; i < Math.min(Number(msg.pages) || 0, PAGES_PER_HOUR); i++) p.pages.push(Date.now());
+  if (msg.stopped === "rest") p.restUntil[run.site] = Date.now() + 3600_000;
+  await savePace(p);
+  const media = /^https:\/\/([a-z0-9-]+\.)*(instagram\.com|facebook\.com|cdninstagram\.com|fbcdn\.net)\//;
+  let sent = 0;
+  for (const v of (msg.videos || []).slice(0, 5000))
+    if (media.test(v.u || "") && await send(v.u, { referrer: run.referrer, site: true, browser: true, later: run.later })) sent++;
+  for (const f of (msg.photos || []).slice(0, 5000))
+    if (media.test(f.u || "") && await send(f.u, { referrer: run.referrer, fileName: f.name, browser: true, later: run.later })) sent++;
+  chrome.runtime.sendMessage({ type: "profile-sent", sent, stopped: msg.stopped || "" }).catch(() => {});
 }
 
-async function facebookVideos(pages, max, progress, page, videos) {
-  const seen = new Set();
-  for (const url of pages) {
-    const html = await (await page(url)).text();
-    for (const m of html.matchAll(/(?:\\?\/reel\\?\/|\\?\/videos\\?\/(?:[^/"\\]+\\?\/)?|"video_id":")(\d{8,})/g)) {
-      const id = m[1];
-      if (!seen.has(id) && videos.length < max) {
-        seen.add(id);
-        videos.push({ u: /reel/.test(m[0]) ? `https://www.facebook.com/reel/${id}/` : `https://www.facebook.com/watch/?v=${id}`, t: "" });
+/**
+ * Runs in the profile's own tab (the extension's isolated world), so the site sees its own page asking. Posts what it
+ * found back with chrome.runtime.sendMessage({ type: "profile-found", … }). Self-contained: nothing from outside.
+ */
+async function profileReader(profile, allowed) {
+  const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+  const tell = (m) => chrome.runtime.sendMessage({ type: "profile-found", ...m }).catch(() => {});
+  const clean = (t) => (t || "").replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+  const videos = [], photos = [], seen = new Set();
+  let pages = 0;
+  const page = async (url, init) => {
+    if (pages >= allowed) throw "hourly";
+    pages++;
+    const r = await fetch(url, { credentials: "include", ...init }).catch(() => null);
+    if (!r || !r.ok || (r.redirected && /login|checkpoint|challenge/.test(r.url))) {
+      if (r && (r.status === 429 || r.status >= 500 || /checkpoint|challenge/.test(r.url))) throw "rest";
+      throw "signed-out";
+    }
+    return r;
+  };
+  let stopped = "";
+  try {
+    if (profile.site === "instagram") {
+      const csrf = (document.cookie.match(/(?:^|; )csrftoken=([^;]+)/) || [])[1];
+      const headers = { "X-IG-App-ID": "936619743392459", "X-ASBD-ID": "129477", "X-Requested-With": "XMLHttpRequest" };
+      if (csrf) headers["X-CSRFToken"] = csrf;
+      let next = `https://www.instagram.com/api/v1/feed/user/${encodeURIComponent(profile.owner)}/username/?count=33`, userId = null;
+      while (next) {
+        const j = await (await page(next, { headers })).json().catch(() => null);
+        if (!j || j.status === "fail") throw "signed-out";
+        for (const it of j.items || []) {
+          userId = userId || (it.user && it.user.pk) || (it.owner && it.owner.pk);
+          if (!it.code || seen.has(it.code)) continue;
+          seen.add(it.code);
+          const caption = clean(it.caption && it.caption.text) || profile.owner;
+          const parts = it.carousel_media && it.carousel_media.length ? it.carousel_media : [it];
+          if (parts.some((c) => c.media_type === 2))
+            videos.push({ u: `https://www.instagram.com/${it.product_type === "clips" ? "reel" : "p"}/${it.code}/` });
+          parts.forEach((c, i) => {
+            const best = c.media_type === 1 && c.image_versions2 && (c.image_versions2.candidates || [])[0];
+            if (best && best.url) photos.push({ u: best.url, name: `${caption} [${it.code}${parts.length > 1 ? "-" + (i + 1) : ""}].jpg` });
+          });
+        }
+        tell({ count: videos.length + photos.length });
+        next = j.more_available && j.next_max_id && userId ? `https://www.instagram.com/api/v1/feed/user/${userId}/?count=33&max_id=${encodeURIComponent(j.next_max_id)}` : null;
+        if (next) await pause(2000 + Math.random() * 2000);
+      }
+    } else {
+      for (const url of profile.pages) {
+        const html = await (await page(url)).text();
+        for (const m of html.matchAll(/(?:\\?\/reel\\?\/|\\?\/videos\\?\/(?:[^/"\\]+\\?\/)?|"video_id":")(\d{8,})/g)) {
+          if (seen.has(m[1])) continue;
+          seen.add(m[1]);
+          videos.push({ u: /reel/.test(m[0]) ? `https://www.facebook.com/reel/${m[1]}/` : `https://www.facebook.com/watch/?v=${m[1]}` });
+        }
+        tell({ count: videos.length });
+        await pause(2000 + Math.random() * 2000);
       }
     }
-    progress(videos.length);
-    await pause(2000 + Math.random() * 2000);
+  } catch (why) {
+    stopped = typeof why === "string" ? why : "signed-out";
   }
+  tell({ done: true, videos, photos, pages, stopped });
 }

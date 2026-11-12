@@ -392,12 +392,19 @@ public enum InstagramPage {
 }
 
 /// Instagram and Facebook profiles in Profile Batch. Their profile pages show visitors who are not signed in only the
-/// latest posts; every video comes through the user's own browser and the Nexonic extension (BrowserCollect).
+/// latest posts; the rest come through the user's own signed-in browser and the Nexonic extension (see more(_:)).
 public struct SocialSite: Sendable, Equatable {
     public let name: String, loginURL: String, domain: String, sessionCookie: String, script: String
 }
 
 public enum SocialPages {
+    /// Added under what a visitor sees: how to get the rest. The Nexonic extension's "Download all" on the profile, in a
+    /// browser signed in to the site, reads the whole post list (read-only, a page every few seconds) and sends every
+    /// video and photo here. Nexonic itself never signs in.
+    public static func more(_ site: SocialSite) -> String {
+        "To get every video and photo: open this profile in Chrome, Edge or Firefox where you are signed in to \(site.name), click the Nexonic extension and choose Download all. It only reads the post list, a page every few seconds like a person scrolling, and sends everything here; Nexonic never sees your password."
+    }
+
     public static let instagram = SocialSite(name: "Instagram", loginURL: "https://www.instagram.com/accounts/login/", domain: "instagram.com",
                                              sessionCookie: "sessionid", script: InstagramPage.script)
     public static let facebook = SocialSite(name: "Facebook", loginURL: "https://www.facebook.com/login/", domain: "facebook.com",
@@ -452,101 +459,4 @@ public enum SocialPages {
         s.url = url; s.owner = owner; s.entries = entries; s.complete = true; s.note = note
         return s
     }
-}
-
-/// Profile Batch through the user's own browser, without any tab: the app leaves a request (site, profile, limit) in the
-/// ProfileLinks folder; the Nexonic extension picks it up through the browser helper (it asks about once a minute),
-/// asks the site for the profile's posts with the browser's own sign-in (Nexonic never signs in or sees a password) and
-/// sends the video links back the same way.
-public enum BrowserCollect {
-    public static var folder: URL { AppPaths.support.appendingPathComponent("ProfileLinks", isDirectory: true) }
-    static let maxPayload = 4 * 1024 * 1024
-
-    static func valid(_ token: String?) -> Bool {
-        guard let token, token.count == 32 else { return false }
-        return token.allSatisfy { $0.isHexDigit && !$0.isUppercase }
-    }
-
-    /// Leaves the request for the extension; returns the token its answer comes back under.
-    public static func start(site: SocialSite, owner: String, pages: [String], max: Int) -> String {
-        let token = UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
-        let request: [String: Any] = ["token": token, "site": site.name.lowercased(), "owner": owner, "pages": pages,
-                                      "max": Swift.max(1, Swift.min(max, ProfileBatch.limit))]
-        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        if let data = try? JSONSerialization.data(withJSONObject: request) {
-            try? data.write(to: folder.appendingPathComponent("\(token).request.json"), options: .atomic)
-        }
-        return token
-    }
-
-    /// The browser helper: the requests waiting for the extension (each handed out once; old ones dropped).
-    public static func takeRequests() -> [[String: Any]] {
-        let fm = FileManager.default
-        guard let names = try? fm.contentsOfDirectory(atPath: folder.path) else { return [] }
-        var list: [[String: Any]] = []
-        for name in names where name.hasSuffix(".request.json") {
-            let file = folder.appendingPathComponent(name)
-            let fresh = ((try? fm.attributesOfItem(atPath: file.path))?[.modificationDate] as? Date).map { Date().timeIntervalSince($0) < 600 } ?? false
-            if fresh, let data = try? Data(contentsOf: file), let o = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] { list.append(o) }
-            try? fm.removeItem(at: file)
-        }
-        return list
-    }
-
-    /// The browser helper: the extension's progress ("started", with a count) or result ("done", the page script's JSON).
-    @discardableResult
-    public static func save(token: String?, stage: String?, data: Any?) -> Bool {
-        guard valid(token), let token, let stage, ["started", "done"].contains(stage), let data,
-              JSONSerialization.isValidJSONObject(data), let bytes = try? JSONSerialization.data(withJSONObject: data),
-              bytes.count <= maxPayload else { return false }
-        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        return (try? bytes.write(to: folder.appendingPathComponent("\(token).\(stage).json"), options: .atomic)) != nil
-    }
-
-    /// Waits for the extension: nil when it does not answer within `answerWithin` seconds (no extension in the default
-    /// browser); otherwise the videos, once the page was scrolled to its end. `found(count)` reports progress.
-    public static func wait(_ token: String, answerWithin: Int, found: @escaping (Int) -> Void, stop: @escaping () -> Bool) async throws -> [BatchEntry]? {
-        let started = folder.appendingPathComponent("\(token).started.json"), done = folder.appendingPathComponent("\(token).done.json")
-        let fm = FileManager.default
-        defer { try? fm.removeItem(at: started); try? fm.removeItem(at: done) }
-        var waited = 0
-        while !fm.fileExists(atPath: started.path) && !fm.fileExists(atPath: done.path) {
-            if waited >= answerWithin { return nil }
-            try await Task.sleep(nanoseconds: 1_000_000_000)
-            if stop() { throw CancellationError() }
-            waited += 1
-        }
-        var last = -1, i = 0
-        while !fm.fileExists(atPath: done.path) {
-            if i > 3600 { throw ProfileBatchError("The browser stopped answering. Find Videos tries again.") }
-            try await Task.sleep(nanoseconds: 1_000_000_000)
-            if stop() { throw CancellationError() }
-            i += 1
-            let n = InstagramPage.read(try? String(contentsOf: started, encoding: .utf8)).posts
-            if n != last { last = n; found(n) }
-        }
-        let answer = try? String(contentsOf: done, encoding: .utf8)
-        // Why the extension stopped early, if it did; read once by why(_:found:).
-        let stopped = (answer?.data(using: .utf8)).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }?["stopped"] as? String ?? ""
-        try? Data(stopped.utf8).write(to: folder.appendingPathComponent("\(token).why"), options: .atomic)
-        return InstagramPage.read(answer).videos
-    }
-
-    /// Why the extension stopped early for this request, as a note for the user; nil when it finished normally. The
-    /// extension stops by itself when the site answers anything unusual, so it never keeps asking like a bot would.
-    public static func why(_ token: String, found: Int) -> String? {
-        let file = folder.appendingPathComponent("\(token).why")
-        let stopped = (try? String(contentsOf: file, encoding: .utf8)) ?? ""
-        try? FileManager.default.removeItem(at: file)
-        switch stopped {
-        case "rest": return "The site asked to slow down, so the extension stopped at once and leaves it alone for an hour."
-        case "hourly": return "The extension reached its hourly limit (about 2,000 posts), so it stopped; try again later."
-        case "busy": return "The extension is still finding another profile; try again in a few minutes."
-        case "signed-out": return "Your browser isn't signed in to this site, so only what visitors see was found. Sign in there and try again."
-        default: return found == 0 ? "Your browser found no videos; make sure you're signed in to the site there." : nil
-        }
-    }
-
-    public static let asking = "Asking the Nexonic extension in your browser for every video of this profile. It reads the post list with your browser's own sign-in, without a tab, one page every few seconds like a person scrolling; nothing is liked, followed or posted and Nexonic never sees your password. It can take up to a minute to start; keep the browser open."
-    public static let noAnswer = "Your browser didn't answer, so Nexonic took only what visitors see. To find every video, add the Nexonic extension to your browser, keep the browser open and sign in to the site there."
 }

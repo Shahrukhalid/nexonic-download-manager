@@ -14,8 +14,7 @@
     "cookies",
     "scripting",
     "webRequest",
-    "tabs",
-    "alarms"
+    "tabs"
   ],
   "host_permissions": [
     "<all_urls>"

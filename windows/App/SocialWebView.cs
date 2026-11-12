@@ -9,7 +9,7 @@ namespace Nexonic.App;
 /// <summary>
 /// Profile Batch for Instagram and Facebook without the browser extension: the profile page opens in a hidden, private
 /// web view (no cookies, no sign-in: what any visitor sees) and the video links it shows are read with the site's script.
-/// The sites show visitors only their latest posts; every video comes through the user's own browser (BrowserCollect).
+/// The sites show visitors only their latest posts; the rest come through the user's own signed-in browser (SocialPages.More).
 /// </summary>
 static class SocialWebView
 {

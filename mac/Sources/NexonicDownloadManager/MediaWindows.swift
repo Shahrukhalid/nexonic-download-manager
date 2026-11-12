@@ -89,13 +89,12 @@ struct ProfileBatchView: View {
 
     init(link: String) { _link = State(initialValue: link) }
 
+    @State private var lastLink = ""
     @State private var quality = "best"
     @State private var mode = 0  // 0 all, 1 new only, 2 preview
     // Found videos wait here until the user picks Download Now or Add to Queue: nothing starts by itself.
     @State private var pending: [BatchEntry] = []
     @State private var pendingCounts: BatchCounts?
-    // Instagram and Facebook: every video through the user's own browser and the Nexonic extension (BrowserCollect).
-    @AppStorage("profilesViaBrowser") private var viaBrowser = true
     @State private var ownFolder = true
     @State private var parallel = 2
     @State private var useFrom = false
@@ -125,9 +124,14 @@ struct ProfileBatchView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Paste one link to a profile, channel, playlist, gallery or page on any site the video engine supports. Nexonic finds every video that is open to everyone (no login needed), skips the ones you already have and downloads the rest in their own queue.")
+            Text("Paste one link to a profile, channel, playlist, gallery or page on any site the video engine supports. Nexonic finds every video that is open to everyone (no login needed) as soon as you paste, skips the ones you already have and downloads the rest in their own queue. Instagram and Facebook show visitors only the latest posts; for all of them, use the Nexonic extension's Download all on the profile in your signed-in browser.")
                 .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             TextField("Link", text: $link).textFieldStyle(.roundedBorder).onSubmit(find)
+                // Pasting a whole link starts Find Videos straight away (typing one doesn't, until Return).
+                .onChange(of: link) { new in
+                    defer { lastLink = new }
+                    if !busy, new.count - lastLink.count > 8, DownloadJob(url: new.trimmingCharacters(in: .whitespacesAndNewlines)).validURL != nil { find() }
+                }
             Form {
                 Picker("Quality", selection: $quality) {
                     ForEach(ProfileBatch.qualities.map { $0.key }, id: \.self) { k in
@@ -158,7 +162,6 @@ struct ProfileBatchView: View {
                     Stepper("At most \(maxCount) videos", value: $maxCount, in: 10...ProfileBatch.limit, step: 50)
                     Text("A site that doesn't say when a video was published or how long it is: those videos are kept.").font(.caption).foregroundStyle(.secondary)
                 }
-                Toggle("Instagram and Facebook: find every video with my browser's sign-in (Nexonic extension; read-only, no tab, a page every few seconds)", isOn: $viaBrowser)
                 Picker("Look for new videos", selection: $checkHours) {
                     Text("Never (only now)").tag(0); Text("Every hour").tag(1); Text("Every 6 hours").tag(6); Text("Every day").tag(24); Text("Every week").tag(168)
                 }
@@ -196,7 +199,7 @@ struct ProfileBatchView: View {
         }
         .padding(16)
         .frame(minWidth: 600, minHeight: 560)
-        .onAppear { if !link.isEmpty { find() } }
+        .onAppear { lastLink = link; if !link.isEmpty { find() } }
     }
 
     private func target(_ s: ProfileBatch.Scan) -> URL {
@@ -237,33 +240,16 @@ struct ProfileBatchView: View {
             : String(localized: "Looking for videos… (large profiles can take a few minutes)")
         let proxy = manager.settings.proxy, f = filter, stopFlag = { [self] in stopRequested }
         if let social = SocialPages.find(url) {
-            // Instagram and Facebook show visitors only their latest posts. Every video comes through the user's own
-            // browser: the Nexonic extension reads the post list there, read-only and at a person's pace (see background.js).
-            let asked = viaBrowser
+            // Instagram and Facebook show visitors only their latest posts: Nexonic takes those straight away and says how to
+            // get the rest (the extension's Download all in the user's signed-in browser; Nexonic never signs in).
             Task { @MainActor in
                 do {
-                    var videos: [BatchEntry]?, why: String?
-                    if asked {
-                        status = String(localized: String.LocalizationValue(BrowserCollect.asking))
-                        let ticket = BrowserCollect.start(site: social.site, owner: social.owner, pages: social.pages, max: f.max)
-                        videos = try await BrowserCollect.wait(ticket, answerWithin: 75,
-                                                               found: { n in status = String(format: String(localized: "%d found so far…"), n) },
-                                                               stop: { stopRequested })
-                        if let videos { why = BrowserCollect.why(ticket, found: videos.count) }
-                    }
-                    let whyNote = why.map { "\n" + String(localized: String.LocalizationValue($0)) } ?? ""
-                    if let videos, !videos.isEmpty {
-                        show(SocialPages.scan(url: url, owner: social.owner, entries: videos,
-                                              note: String(format: String(localized: "Found %d videos through your browser."), videos.count) + whyNote),
-                             url: url, filter: f)
-                    } else {
-                        status = String(format: String(localized: "Opening the %@ profile like a visitor's browser…"), social.site.name)
-                        var s = try await SocialWebView.scan(url, site: social.site, owner: social.owner, pages: social.pages, max: f.max,
-                                                             found: { n in status = String(format: String(localized: "%d found so far…"), n) },
-                                                             stop: { stopRequested })
-                        if asked { s.note = (s.note ?? "") + (why == nil ? "\n" + String(localized: String.LocalizationValue(BrowserCollect.noAnswer)) : whyNote) }
-                        show(s, url: url, filter: f)
-                    }
+                    status = String(format: String(localized: "Opening the %@ profile like a visitor's browser…"), social.site.name)
+                    var s = try await SocialWebView.scan(url, site: social.site, owner: social.owner, pages: social.pages, max: f.max,
+                                                         found: { n in status = String(format: String(localized: "%d found so far…"), n) },
+                                                         stop: { stopRequested })
+                    s.note = [s.note ?? "", String(localized: String.LocalizationValue(SocialPages.more(social.site)))].filter { !$0.isEmpty }.joined(separator: "\n")
+                    show(s, url: url, filter: f)
                 } catch is CancellationError {
                     status = String(localized: "Stopped.")
                 } catch {
