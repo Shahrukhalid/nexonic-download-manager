@@ -10,6 +10,10 @@ Fixes for 0.30.0:
   any tab through for 6 seconds), and it still works when the browser restarts the extension's background script.
 - Profile Batch on X uses only X's own public timeline again; the 0.30.0 fallback sent the profile name to an outside
   service.
+- Profile Batch on Instagram: Instagram no longer answers the request Nexonic uses to read a profile without signing
+  in (checked on a home connection: 404 for every profile, while its own page still shows 12 posts to visitors).
+  Nexonic now says so, instead of "This Instagram profile does not exist", and points to the browser extension:
+  right-click the open profile page and choose "Download all links with Nexonic".
 
 ## 0.30.0
 

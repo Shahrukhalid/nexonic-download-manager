@@ -40,7 +40,7 @@ class NexonicInstagramProfileIE(InfoExtractor):
             if isinstance(e.cause, HTTPError) and e.cause.status == 429:
                 raise ExtractorError(N + 'Instagram is limiting requests from this network right now. Try again in a few minutes.', expected=True)
             if isinstance(e.cause, HTTPError) and e.cause.status == 404:
-                raise ExtractorError(N + 'This Instagram profile does not exist.', expected=True)
+                return None  # Instagram answers 404 both for missing profiles and when it no longer shows profiles this way
             raise
 
     @staticmethod
@@ -76,8 +76,9 @@ class NexonicInstagramProfileIE(InfoExtractor):
         info = self._api('users/web_profile_info/', user, 'Reading the public profile', {'username': user})
         u = traverse_obj(info, ('data', 'user'))
         if not u:
-            raise ExtractorError(N + 'Instagram did not show this profile to a visitor who is not signed in. '
-                                 'Nexonic does not sign in, so it cannot list this profile.', expected=True)
+            raise ExtractorError(N + 'Instagram did not let Nexonic read this profile without signing in, and Nexonic does not '
+                                 'sign in. To pick its videos anyway, open the profile in your browser, right-click the page and '
+                                 'choose "Download all links with Nexonic".', expected=True)
         if u.get('is_private'):
             raise ExtractorError(N + 'This Instagram profile is private. Only its approved followers can see its videos.', expected=True)
         timeline = u.get('edge_owner_to_timeline_media') or {}
