@@ -66,13 +66,15 @@
     "Button colour": "Nupu värv",
     "Show the button's text (off = arrow only)": "Näita nupu teksti (väljas = ainult nool)",
     "This profile": "This profile",
-    "Downloads every video and photo of this profile with your browser's own sign-in. It reads the post list one page every few seconds, like a person scrolling, and only reads: nothing is liked, followed or posted, and Nexonic never sees your password.": "Downloads every video and photo of this profile with your browser's own sign-in. It reads the post list one page every few seconds, like a person scrolling, and only reads: nothing is liked, followed or posted, and Nexonic never sees your password.",
+    "Downloads every video and photo of this profile with your browser's own sign-in. It scrolls this tab slowly, a screen every few seconds like a person, and only reads what the page shows: nothing is liked, followed or posted, and Nexonic never sees your password. Stop ends it at any time.": "Downloads every video and photo of this profile with your browser's own sign-in. It scrolls this tab slowly, a screen every few seconds like a person, and only reads what the page shows: nothing is liked, followed or posted, and Nexonic never sees your password. Stop ends it at any time.",
     "Download all": "Download all",
-    "Finding videos and photos…": "Finding videos and photos…",
-    "Already collecting this profile": "Already collecting this profile",
-    "{count} videos found so far…": "{count} videos found so far…",
+    "Scrolling this profile…": "Scrolling this profile…",
+    "Already collecting a profile": "Already collecting a profile",
+    "{count} found so far…": "{count} found so far…",
     "The site asked to slow down, so Nexonic stopped and will leave it alone for an hour.": "The site asked to slow down, so Nexonic stopped and will leave it alone for an hour.",
-    "Hourly limit reached (about 2,000 posts); try again later.": "Hourly limit reached (about 2,000 posts); try again later.",
-    "Not signed in to this site in this browser.": "Not signed in to this site in this browser."
+    "Hourly limit reached (about 1,800 posts); try again later.": "Hourly limit reached (about 1,800 posts); try again later.",
+    "Not signed in to this site in this browser.": "Not signed in to this site in this browser.",
+    "Stop": "Stop",
+    "Stopped": "Stopped"
   }
 }

@@ -296,6 +296,12 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
         if (!profile || !Number.isInteger(tabId)) return { ok: false };
         return { ok: true, ...(await profileStart(profile, tabId, msg.url, !!msg.later)) };
       }
+      case "profile-stop": {
+        // The popup's Stop: the reader ends after the current screen and what it found is still sent.
+        if (!profileRun) return { ok: false };
+        await chrome.scripting.executeScript({ target: { tabId: profileRun.tabId }, func: () => { window.__nexonicProfileStop = true; } }).catch(() => {});
+        return { ok: true };
+      }
       case "profile-found": {
         // The collector in the profile's tab: progress, or the finished list (only from the tab of the running job).
         if (!sender.tab || !profileRun || profileRun.tabId !== sender.tab.id) return { ok: false };
@@ -334,16 +340,15 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
 });
 
 // ---- Every video and photo of an Instagram or Facebook profile the user has open, with their own sign-in ----
-// The popup's "Download all" runs a small reader in that profile's tab, so the site answers it as it answers its own
-// profile page; no other tab opens and nothing scrolls. Rules, so this never looks or acts like a bot:
-//  - read only: the profile's post list, as the site's own page asks for it when you scroll; never a like, follow,
-//    comment, message or post;
-//  - one profile at a time, one page (about 33 posts) every 2-4 seconds, like a person scrolling;
-//  - at most 60 pages an hour across all profiles (about 2,000 posts);
-//  - when the site answers anything unexpected (slow down, check your account, signed out), stop at once and leave that
-//    site alone for an hour.
+// The popup's "Download all" scrolls the profile tab the user has open, slowly, and collects the posts the page itself
+// shows (the sites load more posts only as the page scrolls). Rules, so this never looks or acts like a bot:
+//  - read only: it scrolls and reads what the page shows; never a like, follow, comment, message or post;
+//  - one profile at a time, one screen every 2-4 seconds, like a person scrolling; Stop in the popup ends it;
+//  - at most 150 screens an hour across all profiles (about 1,800 posts);
+//  - when the site leaves the profile (a sign-in page, a check of the account, "try again later"), stop at once and
+//    leave that site alone for an hour.
 // Nexonic never signs in and never sees a password: only what this browser is already signed in to.
-const PAGES_PER_HOUR = 60;
+const PAGES_PER_HOUR = 150;
 let profileRun = null;  // { tabId, site, owner, referrer, later, started }
 
 async function pace() {
@@ -372,6 +377,7 @@ function profileOf(url) {
 
 /** Starts the reader in the tab; { stopped } when it can't start now ("busy", "rest" or "hourly"). */
 async function profileStart(profile, tabId, referrer, later) {
+  if (profileRun && !(await chrome.tabs.get(profileRun.tabId).catch(() => null))) profileRun = null;  // its tab was closed
   if (profileRun && Date.now() - profileRun.started < 3600_000) return { stopped: "busy" };
   const p = await pace();
   if ((p.restUntil[profile.site] || 0) > Date.now()) return { stopped: "rest" };
@@ -405,66 +411,62 @@ async function profileFinish(msg) {
 }
 
 /**
- * Runs in the profile's own tab (the extension's isolated world), so the site sees its own page asking. Posts what it
- * found back with chrome.runtime.sendMessage({ type: "profile-found", … }). Self-contained: nothing from outside.
+ * Runs in the profile's tab (the extension's isolated world): scrolls one screen at a time and collects the posts the
+ * page shows. Posts back with chrome.runtime.sendMessage({ type: "profile-found", … }). Self-contained.
  */
 async function profileReader(profile, allowed) {
+  if (window.__nexonicProfileRunning) return;
+  window.__nexonicProfileRunning = true;
+  window.__nexonicProfileStop = false;
   const pause = (ms) => new Promise((r) => setTimeout(r, ms));
   const tell = (m) => chrome.runtime.sendMessage({ type: "profile-found", ...m }).catch(() => {});
   const clean = (t) => (t || "").replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
-  const videos = [], photos = [], seen = new Set();
-  let pages = 0;
-  const page = async (url, init) => {
-    if (pages >= allowed) throw "hourly";
-    pages++;
-    const r = await fetch(url, { credentials: "include", ...init }).catch(() => null);
-    if (!r || !r.ok || (r.redirected && /login|checkpoint|challenge/.test(r.url))) {
-      if (r && (r.status === 429 || r.status >= 500 || /checkpoint|challenge/.test(r.url))) throw "rest";
-      throw "signed-out";
-    }
-    return r;
+  const videos = new Map(), photos = new Map();
+  // The biggest picture of a tile's image (srcset lists several sizes).
+  const biggest = (img) => {
+    const set = (img.getAttribute("srcset") || "").split(",").map((x) => x.trim().split(/\s+/))
+      .map(([u, w]) => ({ u, w: parseInt(w, 10) || 0 })).filter((x) => /^https:/.test(x.u));
+    set.sort((a, b) => b.w - a.w);
+    return (set[0] && set[0].u) || img.currentSrc || img.src;
   };
-  let stopped = "";
-  try {
-    if (profile.site === "instagram") {
-      const csrf = (document.cookie.match(/(?:^|; )csrftoken=([^;]+)/) || [])[1];
-      const headers = { "X-IG-App-ID": "936619743392459", "X-ASBD-ID": "129477", "X-Requested-With": "XMLHttpRequest" };
-      if (csrf) headers["X-CSRFToken"] = csrf;
-      let next = `https://www.instagram.com/api/v1/feed/user/${encodeURIComponent(profile.owner)}/username/?count=33`, userId = null;
-      while (next) {
-        const j = await (await page(next, { headers })).json().catch(() => null);
-        if (!j || j.status === "fail") throw "signed-out";
-        for (const it of j.items || []) {
-          userId = userId || (it.user && it.user.pk) || (it.owner && it.owner.pk);
-          if (!it.code || seen.has(it.code)) continue;
-          seen.add(it.code);
-          const caption = clean(it.caption && it.caption.text) || profile.owner;
-          const parts = it.carousel_media && it.carousel_media.length ? it.carousel_media : [it];
-          if (parts.some((c) => c.media_type === 2))
-            videos.push({ u: `https://www.instagram.com/${it.product_type === "clips" ? "reel" : "p"}/${it.code}/` });
-          parts.forEach((c, i) => {
-            const best = c.media_type === 1 && c.image_versions2 && (c.image_versions2.candidates || [])[0];
-            if (best && best.url) photos.push({ u: best.url, name: `${caption} [${it.code}${parts.length > 1 ? "-" + (i + 1) : ""}].jpg` });
-          });
-        }
-        tell({ count: videos.length + photos.length });
-        next = j.more_available && j.next_max_id && userId ? `https://www.instagram.com/api/v1/feed/user/${userId}/?count=33&max_id=${encodeURIComponent(j.next_max_id)}` : null;
-        if (next) await pause(2000 + Math.random() * 2000);
-      }
-    } else {
-      for (const url of profile.pages) {
-        const html = await (await page(url)).text();
-        for (const m of html.matchAll(/(?:\\?\/reel\\?\/|\\?\/videos\\?\/(?:[^/"\\]+\\?\/)?|"video_id":")(\d{8,})/g)) {
-          if (seen.has(m[1])) continue;
-          seen.add(m[1]);
-          videos.push({ u: /reel/.test(m[0]) ? `https://www.facebook.com/reel/${m[1]}/` : `https://www.facebook.com/watch/?v=${m[1]}` });
-        }
-        tell({ count: videos.length });
-        await pause(2000 + Math.random() * 2000);
+  const collect = () => {
+    for (const a of document.querySelectorAll("a[href]")) {
+      const u = new URL(a.href, location.href);
+      if (profile.site === "instagram") {
+        const m = u.pathname.match(/^\/(?:[^/]+\/)?(p|reel|tv)\/([\w-]+)/);
+        if (!m || videos.has(m[2]) || photos.has(m[2])) continue;
+        const icon = [...a.querySelectorAll("svg[aria-label]")].map((x) => x.getAttribute("aria-label")).join(" ");
+        const img = a.querySelector("img");
+        if (m[1] !== "p" || /clip|reel|video/i.test(icon)) videos.set(m[2], { u: `https://www.instagram.com/reel/${m[2]}/` });
+        else if (img) photos.set(m[2], { u: biggest(img), name: `${clean(img.alt) || profile.owner} [${m[2]}].jpg` });
+      } else {
+        const m = u.pathname.match(/\/reel\/(\d{6,})/) || u.pathname.match(/\/videos\/(?:[^/]+\/)?(\d{6,})/)
+          || (u.pathname === "/watch/" && (u.searchParams.get("v") || "").match(/^(\d{6,})$/));
+        if (m && !videos.has(m[1]))
+          videos.set(m[1], { u: /\/reel\//.test(u.pathname) ? `https://www.facebook.com/reel/${m[1]}/` : `https://www.facebook.com/watch/?v=${m[1]}` });
       }
     }
-  } catch (why) {
-    stopped = typeof why === "string" ? why : "signed-out";
+  };
+  let pages = 0, stopped = "", still = 0;
+  try {
+    collect();
+    while (!window.__nexonicProfileStop) {
+      if (pages >= allowed) { stopped = "hourly"; break; }
+      if (/\/(accounts\/login|login|checkpoint|challenge)\b/.test(location.pathname)) { stopped = "rest"; break; }
+      const before = videos.size + photos.size, height = document.documentElement.scrollHeight;
+      window.scrollBy({ top: Math.round(innerHeight * 0.85), behavior: "smooth" });
+      pages++;
+      await pause(2000 + Math.random() * 2000);
+      collect();
+      tell({ count: videos.size + photos.size });
+      // The end of the profile: nothing new and the page stopped growing for a few screens.
+      still = videos.size + photos.size === before && document.documentElement.scrollHeight === height ? still + 1 : 0;
+      if (still >= 4) break;
+    }
+    if (window.__nexonicProfileStop) stopped = "stopped";
+  } catch (_) {
+    stopped = stopped || "signed-out";
   }
-  tell({ done: true, videos, photos, pages, stopped });
+  window.__nexonicProfileRunning = false;
+  tell({ done: true, videos: [...videos.values()], photos: [...photos.values()], pages, stopped });
 }

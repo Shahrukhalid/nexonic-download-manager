@@ -103,8 +103,8 @@ if (tab && isVideoSite(tab.url)) {
   $("siteAudio").onclick = go(true, $("siteAudio"));
 }
 
-// Instagram or Facebook profile, with the user signed in there in this browser: every video of the profile, found by
-// background.js without any tab (read-only, at a person's pace; see the rules there).
+// Instagram or Facebook profile, with the user signed in there in this browser: every video and photo of the profile,
+// collected by scrolling this tab slowly (read-only, at a person's pace; see the rules in background.js).
 const signedInCookie = { instagram: ["https://www.instagram.com/", "ds_user_id"], facebook: ["https://www.facebook.com/", "c_user"] };
 const profileSite = tab && (/^https:\/\/([a-z]+\.)?(instagram|facebook)\.com\//.exec(tab.url || "") || [])[2];
 if (profileSite) {
@@ -114,19 +114,26 @@ if (profileSite) {
     $("profileBox").hidden = false;
     const stoppedNote = {
       rest: "The site asked to slow down, so Nexonic stopped and will leave it alone for an hour.",
-      hourly: "Hourly limit reached (about 2,000 posts); try again later.",
+      hourly: "Hourly limit reached (about 1,800 posts); try again later.",
       "signed-out": "Not signed in to this site in this browser.",
-      busy: "Already collecting this profile",
+      busy: "Already collecting a profile",
+      stopped: "Stopped",
+    };
+    // While it runs, "Download later" becomes Stop.
+    const running = () => {
+      $("profileAll").disabled = true;
+      $("profileLater").textContent = t("Stop");
+      $("profileLater").onclick = async () => { await ask({ type: "profile-stop" }); $("profileLater").disabled = true; };
     };
     const start = (later) => async () => {
       const r = await ask({ type: "profile-all", url: tab.url, tabId: tab.id, later });
-      $("profileCount").textContent = !r || !r.ok ? t("Failed") : r.stopped ? t(stoppedNote[r.stopped]) : t("Finding videos and photos…");
-      $("profileAll").disabled = $("profileLater").disabled = true;
+      $("profileCount").textContent = !r || !r.ok ? t("Failed") : r.stopped ? t(stoppedNote[r.stopped]) : t("Scrolling this profile…");
+      if (r && r.ok && !r.stopped) running();
     };
     $("profileAll").onclick = start(false);
     $("profileLater").onclick = start(true);
     chrome.runtime.onMessage.addListener((msg) => {
-      if (msg && msg.type === "profile-progress") $("profileCount").textContent = t("{count} videos found so far…", { count: msg.count });
+      if (msg && msg.type === "profile-progress") { $("profileCount").textContent = t("{count} found so far…", { count: msg.count }); running(); }
       if (msg && msg.type === "profile-sent")
         $("profileCount").textContent = [t("Sent {count}", { count: msg.sent }), msg.stopped && stoppedNote[msg.stopped] ? t(stoppedNote[msg.stopped]) : ""].filter(Boolean).join(" · ");
     });

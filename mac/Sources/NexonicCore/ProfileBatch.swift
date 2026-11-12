@@ -399,10 +399,10 @@ public struct SocialSite: Sendable, Equatable {
 
 public enum SocialPages {
     /// Added under what a visitor sees: how to get the rest. The Nexonic extension's "Download all" on the profile, in a
-    /// browser signed in to the site, reads the whole post list (read-only, a page every few seconds) and sends every
+    /// browser signed in to the site, scrolls the profile slowly and reads what it shows (read-only) and sends every
     /// video and photo here. Nexonic itself never signs in.
     public static func more(_ site: SocialSite) -> String {
-        "To get every video and photo: open this profile in Chrome, Edge or Firefox where you are signed in to \(site.name), click the Nexonic extension and choose Download all. It only reads the post list, a page every few seconds like a person scrolling, and sends everything here; Nexonic never sees your password."
+        "To get every video and photo: open this profile in Chrome, Edge or Firefox where you are signed in to \(site.name), click the Nexonic extension and choose Download all. It scrolls the profile in that tab slowly, like a person, only reads what the page shows and sends everything here; Nexonic never sees your password."
     }
 
     public static let instagram = SocialSite(name: "Instagram", loginURL: "https://www.instagram.com/accounts/login/", domain: "instagram.com",
