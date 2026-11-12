@@ -103,41 +103,17 @@ if (tab && isVideoSite(tab.url)) {
   $("siteAudio").onclick = go(true, $("siteAudio"));
 }
 
-// Instagram or Facebook profile, with the user signed in there in this browser: every video and photo of the profile,
-// collected by scrolling this tab slowly (read-only, at a person's pace; see the rules in background.js).
-const signedInCookie = { instagram: ["https://www.instagram.com/", "ds_user_id"], facebook: ["https://www.facebook.com/", "c_user"] };
-const profileSite = tab && (/^https:\/\/([a-z]+\.)?(instagram|facebook)\.com\//.exec(tab.url || "") || [])[2];
-if (profileSite) {
-  const [cookieUrl, name] = signedInCookie[profileSite];
-  const signedIn = await chrome.cookies.get({ url: cookieUrl, name }).catch(() => null);
-  if (signedIn) {
-    $("profileBox").hidden = false;
-    const stoppedNote = {
-      rest: "The site asked to slow down, so Nexonic stopped and will leave it alone for an hour.",
-      hourly: "Hourly limit reached (about 1,800 posts); try again later.",
-      "signed-out": "Not signed in to this site in this browser.",
-      busy: "Already collecting a profile",
-      stopped: "Stopped",
-    };
-    // While it runs, "Download later" becomes Stop.
-    const running = () => {
-      $("profileAll").disabled = true;
-      $("profileLater").textContent = t("Stop");
-      $("profileLater").onclick = async () => { await ask({ type: "profile-stop" }); $("profileLater").disabled = true; };
-    };
-    const start = (later) => async () => {
-      const r = await ask({ type: "profile-all", url: tab.url, tabId: tab.id, later });
-      $("profileCount").textContent = !r || !r.ok ? t("Failed") : r.stopped ? t(stoppedNote[r.stopped]) : t("Scrolling this profile…");
-      if (r && r.ok && !r.stopped) running();
-    };
-    $("profileAll").onclick = start(false);
-    $("profileLater").onclick = start(true);
-    chrome.runtime.onMessage.addListener((msg) => {
-      if (msg && msg.type === "profile-progress") { $("profileCount").textContent = t("{count} found so far…", { count: msg.count }); running(); }
-      if (msg && msg.type === "profile-sent")
-        $("profileCount").textContent = [t("Sent {count}", { count: msg.sent }), msg.stopped && stoppedNote[msg.stopped] ? t(stoppedNote[msg.stopped]) : ""].filter(Boolean).join(" · ");
-    });
-  }
+// A profile on Instagram, Facebook, TikTok, X, Threads, Pinterest …: every photo and video of it, saved by the app's
+// gallery engine with this browser's sign-in for the site (see "Download all" in background.js). Nothing scrolls.
+if (tab && (await ask({ type: "profile-check", url: tab.url }))?.ok) {
+  $("profileBox").hidden = false;
+  const start = (later) => async () => {
+    const r = await ask({ type: "profile-all", url: tab.url, later });
+    $("profileCount").textContent = t(r && r.ok ? "Sent to Nexonic" : "Open Nexonic first");
+    $("profileAll").disabled = $("profileLater").disabled = true;
+  };
+  $("profileAll").onclick = start(false);
+  $("profileLater").onclick = start(true);
 }
 
 // Media seen on this tab

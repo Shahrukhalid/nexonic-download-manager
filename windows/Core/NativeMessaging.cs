@@ -81,6 +81,8 @@ public sealed record DownloadJob(string Url, string? FileName = null, string? Re
     public long? Size { get; init; }
     public bool? FromBrowser { get; init; }
     public string? InfoJson { get; init; }
+    /// <summary>A whole profile or gallery for the gallery engine, with the browser's cookies (the extension's Download all; added in 0.31.0).</summary>
+    public bool? Gallery { get; init; }
 
     /// <summary>Only plain web links are accepted.</summary>
     public bool IsValid => Uri.TryCreate(Url, UriKind.Absolute, out var u) && (u.Scheme == "http" || u.Scheme == "https");

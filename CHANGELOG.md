@@ -6,14 +6,12 @@
   - Profile Batch takes what visitors see as soon as you paste the link (a hidden private web view on Windows, Mac
     and Android): on a Mac with a home connection, a Facebook profile's reels showed 19 (the old way found 1) and an
     Instagram profile its latest 12 posts. It then says how to get the rest.
-- Browser extension: **Download all** on an Instagram or Facebook profile you have open and are signed in to scrolls
-  that tab slowly and collects every video and photo the page shows, then sends them to Nexonic: videos through the
-  video engine, Instagram photos as files named after their description (a carousel gives its cover photo). Stop ends
-  it at any time and keeps what was found. Nexonic never signs in and never sees your password.
-  - How it stays polite, so it never looks or acts like a bot: it only scrolls and reads (never likes, follows,
-    comments, messages or posts); one profile at a time; one screen every 2–4 seconds, like a person; at most 150
-    screens an hour (about 1,800 posts); and if the site leaves the profile (a sign-in page or an account check) it
-    stops at once and leaves that site alone for an hour. The popup says why it stopped.
+- Browser extension: **Download all** on a profile (Instagram, Facebook, TikTok, X, Threads, Pinterest, Reddit, Tumblr,
+  Bluesky and more) saves every photo and video of it in Nexonic. The app's gallery engine lists the whole profile with
+  your browser's sign-in for that site (its cookies, handed over by the extension); nothing scrolls in the browser and
+  Nexonic never sees your password. Files go into a folder per site and profile.
+  - It stays polite, so it never looks or acts like a bot: it only reads (never likes, follows, comments, messages or
+    posts) and waits 2–4 seconds between its requests to the site, like a person. All galleries now keep that pace.
 - The **Download this video** button now also appears on players covered by see-through layers (Instagram, Facebook,
   TikTok and others), not only on YouTube.
 - Pasting a link in Profile Batch starts Find Videos straight away.

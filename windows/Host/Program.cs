@@ -136,7 +136,8 @@ while (NativeMessaging.Read(input) is { } msg)
                   Site = msg["site"]?.GetValue<bool>() == true ? true : null, AudioOnly = msg["audioOnly"]?.GetValue<bool>() == true ? true : null,
                   MaxHeight = msg["maxHeight"] is System.Text.Json.Nodes.JsonValue hv && hv.TryGetValue<double>(out var mh) && mh >= 100 && mh <= 10000 ? (int)mh : null,
                   Size = msg["size"] is System.Text.Json.Nodes.JsonValue sv && sv.TryGetValue<double>(out var sz) && sz > 0 ? (long)sz : null,
-                  FromBrowser = msg["browser"]?.GetValue<bool>() == true ? true : null };
+                  FromBrowser = msg["browser"]?.GetValue<bool>() == true ? true : null,
+                  Gallery = msg["gallery"]?.GetValue<bool>() == true ? true : null };
             if (!job.IsValid)
             {
                 NativeMessaging.Write(output, new { ok = false, error = "Only http and https links can be downloaded" });

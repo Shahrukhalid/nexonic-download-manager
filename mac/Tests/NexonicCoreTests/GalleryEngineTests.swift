@@ -19,9 +19,9 @@ final class GalleryEngineTests: XCTestCase {
 
     func testArgumentsAndOutput() {
         XCTAssertEqual(GalleryDl.arguments(url: "https://s.test/a", folder: "/d", speedLimitKBps: 200, referrer: nil),
-                       ["--directory", "/d", "--limit-rate", "200k", "--", "https://s.test/a"])
+                       ["--directory", "/d", "-o", GalleryDl.pace, "--limit-rate", "200k", "--", "https://s.test/a"])
         XCTAssertEqual(GalleryDl.arguments(url: "https://s.test/a", folder: "/d", speedLimitKBps: 0, referrer: nil, settingsFile: "/p/g.json"),
-                       ["--directory", "/d", "--config", "/p/g.json", "--", "https://s.test/a"])
+                       ["--directory", "/d", "-o", GalleryDl.pace, "--config", "/p/g.json", "--", "https://s.test/a"])
         XCTAssertEqual(GalleryDl.savedFile("/d/a.jpg")?.saved, true)
         XCTAssertEqual(GalleryDl.savedFile("# /d/a.jpg")?.path, "/d/a.jpg")
         XCTAssertNil(GalleryDl.savedFile("[gallery-dl][error] Unsupported URL"))

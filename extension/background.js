@@ -290,24 +290,13 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
         else if (msg.fileName) extra.fileName = msg.fileName;
         return { ok: await send(msg.url, extra) };
       }
+      case "profile-check":
+        return { ok: !!profileOf(msg.url || "") };
       case "profile-all": {
-        // The popup's "Download all" on an Instagram or Facebook profile the user has open and is signed in to.
-        const profile = profileOf(msg.url || "");
-        if (!profile || !Number.isInteger(tabId)) return { ok: false };
-        return { ok: true, ...(await profileStart(profile, tabId, msg.url, !!msg.later)) };
-      }
-      case "profile-stop": {
-        // The popup's Stop: the reader ends after the current screen and what it found is still sent.
-        if (!profileRun) return { ok: false };
-        await chrome.scripting.executeScript({ target: { tabId: profileRun.tabId }, func: () => { window.__nexonicProfileStop = true; } }).catch(() => {});
-        return { ok: true };
-      }
-      case "profile-found": {
-        // The collector in the profile's tab: progress, or the finished list (only from the tab of the running job).
-        if (!sender.tab || !profileRun || profileRun.tabId !== sender.tab.id) return { ok: false };
-        if (msg.done) await profileFinish(msg);
-        else chrome.runtime.sendMessage({ type: "profile-progress", count: Number(msg.count) || 0 }).catch(() => {});
-        return { ok: true };
+        // The popup's "Download all" on a profile: the app's gallery engine saves every photo and video of it with this
+        // browser's cookies for the site, at a person's pace (2-4 seconds between its requests). Nothing scrolls here.
+        if (!profileOf(msg.url || "")) return { ok: false };
+        return { ok: await send(msg.url, { referrer: msg.url, gallery: true, browser: true, later: !!msg.later }) };
       }
       case "send-links": {
         let sent = 0;
@@ -339,134 +328,17 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
   return true;
 });
 
-// ---- Every video and photo of an Instagram or Facebook profile the user has open, with their own sign-in ----
-// The popup's "Download all" scrolls the profile tab the user has open, slowly, and collects the posts the page itself
-// shows (the sites load more posts only as the page scrolls). Rules, so this never looks or acts like a bot:
-//  - read only: it scrolls and reads what the page shows; never a like, follow, comment, message or post;
-//  - one profile at a time, one screen every 2-4 seconds, like a person scrolling; Stop in the popup ends it;
-//  - at most 150 screens an hour across all profiles (about 1,800 posts);
-//  - when the site leaves the profile (a sign-in page, a check of the account, "try again later"), stop at once and
-//    leave that site alone for an hour.
-// Nexonic never signs in and never sees a password: only what this browser is already signed in to.
-const PAGES_PER_HOUR = 150;
-let profileRun = null;  // { tabId, site, owner, referrer, later, started }
+// ---- Download all: a whole profile with the app's gallery engine ----
+// Sites whose profiles the gallery engine lists completely (photos and videos), with the browser's own sign-in.
+const PROFILE_SITES = /(^|\.)(instagram\.com|facebook\.com|tiktok\.com|x\.com|twitter\.com|threads\.net|threads\.com|pinterest\.[a-z.]+|reddit\.com|tumblr\.com|bsky\.app|vk\.com|flickr\.com|deviantart\.com)$/;
 
-async function pace() {
-  const { profilePace = {} } = await chrome.storage.local.get("profilePace").catch(() => ({}));
-  return { pages: (profilePace.pages || []).filter((t) => Date.now() - t < 3600_000), restUntil: profilePace.restUntil || {} };
-}
-const savePace = (p) => chrome.storage.local.set({ profilePace: p }).catch(() => {});
-
-/** The site and profile of a link: { site, owner, pages }. */
+/** A profile page's address on one of those sites, or null (single posts, feeds and settings pages are not profiles). */
 function profileOf(url) {
   let u;
   try { u = new URL(url); } catch (_) { return null; }
+  if (u.protocol !== "https:" || !PROFILE_SITES.test(u.hostname)) return null;
   const path = u.pathname.split("/").filter(Boolean);
-  if (/(^|\.)instagram\.com$/.test(u.hostname) && path[0] && /^[A-Za-z0-9._]{1,30}$/.test(path[0])
-      && !/^(p|reel|reels|tv|stories|explore|accounts|direct)$/.test(path[0])) {
-    return { site: "instagram", owner: path[0], pages: [`https://www.instagram.com/${path[0]}/`] };
-  }
-  if (/(^|\.)facebook\.com$/.test(u.hostname)) {
-    const id = u.pathname === "/profile.php" ? u.searchParams.get("id") : path[0] === "people" ? path[2] : null;
-    if (id && /^\d+$/.test(id)) return { site: "facebook", owner: id, pages: [`https://www.facebook.com/profile.php?id=${id}&sk=reels_tab`, `https://www.facebook.com/profile.php?id=${id}&sk=videos`] };
-    if (path[0] && !/^(watch|reel|videos|groups|events|share|photo|login|marketplace|gaming|pages|search)$/.test(path[0]))
-      return { site: "facebook", owner: path[0], pages: [`https://www.facebook.com/${path[0]}/reels/`, `https://www.facebook.com/${path[0]}/videos/`] };
-  }
-  return null;
-}
-
-/** Starts the reader in the tab; { stopped } when it can't start now ("busy", "rest" or "hourly"). */
-async function profileStart(profile, tabId, referrer, later) {
-  if (profileRun && !(await chrome.tabs.get(profileRun.tabId).catch(() => null))) profileRun = null;  // its tab was closed
-  if (profileRun && Date.now() - profileRun.started < 3600_000) return { stopped: "busy" };
-  const p = await pace();
-  if ((p.restUntil[profile.site] || 0) > Date.now()) return { stopped: "rest" };
-  const allowed = PAGES_PER_HOUR - p.pages.length;
-  if (allowed <= 0) return { stopped: "hourly" };
-  profileRun = { tabId, site: profile.site, owner: profile.owner, referrer, later, started: Date.now() };
-  try {
-    await chrome.scripting.executeScript({ target: { tabId }, func: profileReader, args: [profile, allowed] });
-  } catch (_) {
-    profileRun = null;
-    return { stopped: "signed-out" };
-  }
-  return {};
-}
-
-/** The reader's result: the pace is recorded, videos go to the app's video engine and photos are downloaded as files. */
-async function profileFinish(msg) {
-  const run = profileRun;
-  profileRun = null;
-  const p = await pace();
-  for (let i = 0; i < Math.min(Number(msg.pages) || 0, PAGES_PER_HOUR); i++) p.pages.push(Date.now());
-  if (msg.stopped === "rest") p.restUntil[run.site] = Date.now() + 3600_000;
-  await savePace(p);
-  const media = /^https:\/\/([a-z0-9-]+\.)*(instagram\.com|facebook\.com|cdninstagram\.com|fbcdn\.net)\//;
-  let sent = 0;
-  for (const v of (msg.videos || []).slice(0, 5000))
-    if (media.test(v.u || "") && await send(v.u, { referrer: run.referrer, site: true, browser: true, later: run.later })) sent++;
-  for (const f of (msg.photos || []).slice(0, 5000))
-    if (media.test(f.u || "") && await send(f.u, { referrer: run.referrer, fileName: f.name, browser: true, later: run.later })) sent++;
-  chrome.runtime.sendMessage({ type: "profile-sent", sent, stopped: msg.stopped || "" }).catch(() => {});
-}
-
-/**
- * Runs in the profile's tab (the extension's isolated world): scrolls one screen at a time and collects the posts the
- * page shows. Posts back with chrome.runtime.sendMessage({ type: "profile-found", … }). Self-contained.
- */
-async function profileReader(profile, allowed) {
-  if (window.__nexonicProfileRunning) return;
-  window.__nexonicProfileRunning = true;
-  window.__nexonicProfileStop = false;
-  const pause = (ms) => new Promise((r) => setTimeout(r, ms));
-  const tell = (m) => chrome.runtime.sendMessage({ type: "profile-found", ...m }).catch(() => {});
-  const clean = (t) => (t || "").replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
-  const videos = new Map(), photos = new Map();
-  // The biggest picture of a tile's image (srcset lists several sizes).
-  const biggest = (img) => {
-    const set = (img.getAttribute("srcset") || "").split(",").map((x) => x.trim().split(/\s+/))
-      .map(([u, w]) => ({ u, w: parseInt(w, 10) || 0 })).filter((x) => /^https:/.test(x.u));
-    set.sort((a, b) => b.w - a.w);
-    return (set[0] && set[0].u) || img.currentSrc || img.src;
-  };
-  const collect = () => {
-    for (const a of document.querySelectorAll("a[href]")) {
-      const u = new URL(a.href, location.href);
-      if (profile.site === "instagram") {
-        const m = u.pathname.match(/^\/(?:[^/]+\/)?(p|reel|tv)\/([\w-]+)/);
-        if (!m || videos.has(m[2]) || photos.has(m[2])) continue;
-        const icon = [...a.querySelectorAll("svg[aria-label]")].map((x) => x.getAttribute("aria-label")).join(" ");
-        const img = a.querySelector("img");
-        if (m[1] !== "p" || /clip|reel|video/i.test(icon)) videos.set(m[2], { u: `https://www.instagram.com/reel/${m[2]}/` });
-        else if (img) photos.set(m[2], { u: biggest(img), name: `${clean(img.alt) || profile.owner} [${m[2]}].jpg` });
-      } else {
-        const m = u.pathname.match(/\/reel\/(\d{6,})/) || u.pathname.match(/\/videos\/(?:[^/]+\/)?(\d{6,})/)
-          || (u.pathname === "/watch/" && (u.searchParams.get("v") || "").match(/^(\d{6,})$/));
-        if (m && !videos.has(m[1]))
-          videos.set(m[1], { u: /\/reel\//.test(u.pathname) ? `https://www.facebook.com/reel/${m[1]}/` : `https://www.facebook.com/watch/?v=${m[1]}` });
-      }
-    }
-  };
-  let pages = 0, stopped = "", still = 0;
-  try {
-    collect();
-    while (!window.__nexonicProfileStop) {
-      if (pages >= allowed) { stopped = "hourly"; break; }
-      if (/\/(accounts\/login|login|checkpoint|challenge)\b/.test(location.pathname)) { stopped = "rest"; break; }
-      const before = videos.size + photos.size, height = document.documentElement.scrollHeight;
-      window.scrollBy({ top: Math.round(innerHeight * 0.85), behavior: "smooth" });
-      pages++;
-      await pause(2000 + Math.random() * 2000);
-      collect();
-      tell({ count: videos.size + photos.size });
-      // The end of the profile: nothing new and the page stopped growing for a few screens.
-      still = videos.size + photos.size === before && document.documentElement.scrollHeight === height ? still + 1 : 0;
-      if (still >= 4) break;
-    }
-    if (window.__nexonicProfileStop) stopped = "stopped";
-  } catch (_) {
-    stopped = stopped || "signed-out";
-  }
-  window.__nexonicProfileRunning = false;
-  tell({ done: true, videos: [...videos.values()], photos: [...photos.values()], pages, stopped });
+  if (!path.length && u.pathname !== "/profile.php") return null;
+  if (/^(p|reel|reels|tv|stories|explore|accounts|direct|watch|search|settings|home|messages|notifications|i|login|share|hashtag|tag|video|status)$/i.test(path[0] || "")) return null;
+  return u.href;
 }

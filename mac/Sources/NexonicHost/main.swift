@@ -105,6 +105,7 @@ while let message = try? NativeMessaging.read(from: input) {
         if let h = (message["maxHeight"] as? NSNumber)?.intValue, (100...10_000).contains(h) { job.maxHeight = h }
         if let size = (message["size"] as? NSNumber)?.int64Value, size > 0 { job.size = size }
         if let browser = message["browser"] as? Bool, browser { job.fromBrowser = true }
+        if let gallery = message["gallery"] as? Bool, gallery { job.gallery = true }
         guard job.validURL != nil else {
             reply(["ok": false, "error": "Only http and https links can be downloaded"])
             continue

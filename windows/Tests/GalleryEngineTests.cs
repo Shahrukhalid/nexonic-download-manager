@@ -24,8 +24,8 @@ public class GalleryEngineTests
     public void ArgumentsEndWithTheAddress()
     {
         var args = GalleryDl.Arguments("https://site.test/user/a", "/data/Gallery", 500, "https://site.test/", "/p/g.json");
-        Assert.Equal(new[] { "--directory", "/data/Gallery", "--config", "/p/g.json", "--limit-rate", "500k", "-o", "extractor.referer=https://site.test/", "--", "https://site.test/user/a" }, args);
-        Assert.Equal(new[] { "--directory", "/d", "--", "-x" }, GalleryDl.Arguments("-x", "/d", 0, null));
+        Assert.Equal(new[] { "--directory", "/data/Gallery", "-o", GalleryDl.Pace, "--config", "/p/g.json", "--limit-rate", "500k", "-o", "extractor.referer=https://site.test/", "--", "https://site.test/user/a" }, args);
+        Assert.Equal(new[] { "--directory", "/d", "-o", GalleryDl.Pace, "--", "-x" }, GalleryDl.Arguments("-x", "/d", 0, null));
     }
 
     [Fact]

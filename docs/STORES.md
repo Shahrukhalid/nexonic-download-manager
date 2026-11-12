@@ -29,16 +29,15 @@ computer.
 | `nativeMessaging` | to talk to the app on the same computer |
 | `contextMenus` | "Download with Nexonic" in the right-click menu |
 | `storage` | the extension's own settings (language, sites to skip) |
-| `cookies` | the cookies of the download's own site, so downloads that need a login work in the app; whether you are signed in to Instagram or Facebook (for the popup's "Download all videos") |
-| `scripting` | to collect the links of the current page (or of the selected text) when the user asks to download them all, and to scroll the Instagram or Facebook profile open in the tab and read its posts for "Download all" |
+| `cookies` | the cookies of the download's own site, so downloads that need a login work in the app; for "Download all" on a profile, the site's cookies so the app can list the profile as you see it |
+| `scripting` | to collect the links of the current page (or of the selected text) when the user asks to download them all |
 | `webRequest` | to notice video streams the page plays, for "Download this video" |
 | `tabs` | the current page's address and title for the context menu and the popup |
 | host access (all sites) | downloads and videos can come from any site |
 
 **Data:** the extension collects nothing and sends nothing anywhere except to the app on the same computer. When you
-choose "Download all" on an Instagram or Facebook profile you have open, it scrolls that tab slowly and reads the posts the
-page shows (read-only, a screen every few seconds, at most 150 screens an hour) and hands the video and photo links to
-the app. No
+choose "Download all" on a profile (Instagram, Facebook, TikTok, X …), it hands the profile's address and your
+cookies for that site to the app, whose gallery engine saves the profile's photos and videos at a person's pace. No
 analytics, no accounts. Privacy policy: the "Privacy and terms" section of the README and TERMS.md.
 
 The owner submits the uploads; this repository never publishes to a store automatically.

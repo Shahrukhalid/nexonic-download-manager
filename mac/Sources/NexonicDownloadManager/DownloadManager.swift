@@ -323,6 +323,12 @@ final class DownloadManager: ObservableObject {
                 if settings.showProgressWindow && job.fromBrowser == true { ProgressWindow.show(dup.id, manager: self) }
                 continue
             }
+            if job.gallery == true {
+                // The extension's Download all: the whole profile with the gallery engine and the browser's cookies.
+                var o = AddOptions(); o.gallery = true
+                add(job, options: o)
+                continue
+            }
             if DownloadInfoWindow.isOpen(for: job.url) { continue }
             if job.fromBrowser == true && settings.showDownloadDialog {
                 DownloadInfoWindow.show(job, manager: self)

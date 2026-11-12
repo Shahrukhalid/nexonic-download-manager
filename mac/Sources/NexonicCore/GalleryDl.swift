@@ -62,8 +62,11 @@ public enum GalleryDl {
 
     /// The engine's arguments: everything goes straight into `folder`; files already there are skipped.
     /// The site login, cookies and proxy are never here: they go in the private settings file (see `settings`).
+    public static let pace = "extractor.sleep-request=2.0-4.0"
+
     public static func arguments(url: String, folder: String, speedLimitKBps: Int, referrer: String?, settingsFile: String? = nil) -> [String] {
-        var args = ["--directory", folder]
+        // A person's pace on every site: 2-4 seconds between the requests that list a profile or gallery.
+        var args = ["--directory", folder, "-o", pace]
         if let settingsFile { args += ["--config", settingsFile] }
         if speedLimitKBps > 0 { args += ["--limit-rate", "\(speedLimitKBps)k"] }
         if let referrer, URL(string: referrer)?.scheme?.hasPrefix("http") == true { args += ["-o", "extractor.referer=" + referrer] }
