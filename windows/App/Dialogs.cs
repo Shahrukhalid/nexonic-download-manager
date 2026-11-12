@@ -1244,6 +1244,22 @@ public static partial class Dialogs
         w.Show();
     }
 
+    /// <summary>Downloads → Archive Passwords: tried in order on archives that need a password.</summary>
+    public static void ArchivePasswords(Window owner, DownloadManager m)
+    {
+        var f = new Form(owner, "Archive Passwords", 460);
+        f.Note("Archives that need a password are tried with each of these, one per line. They are kept on this computer only.");
+        var box = f.Text("Passwords", string.Join("\n", m.Settings.ArchivePasswords), multi: true);
+        f.AddButton("Save", () =>
+        {
+            m.Settings.ArchivePasswords = box.Text.Split('\n').Select(l => l.TrimEnd('\r')).Where(l => l.Length > 0).Distinct().ToList();
+            m.ApplySettings(m.Settings);
+            f.Close();
+        }, isDefault: true);
+        f.AddButton("Cancel", f.Close, isCancel: true);
+        f.Show();
+    }
+
     public static void PowerCountdown(Window owner, DownloadQueue q, AfterQueue action, Action execute)
     {
         var actionName = action switch
@@ -1265,9 +1281,13 @@ public static partial class Dialogs
         };
         var p = new StackPanel { Margin = new Thickness(20) };
         p.Children.Add(new TextBlock { Text = $"Queue '{q.Name}' Finished", FontSize = 16, FontWeight = FontWeights.SemiBold });
+        // Quitting closes only the app; sleeping and shutting down are the computer's.
+        string Message(int s) => action == AfterQueue.Quit
+            ? $"All downloads finished. Nexonic will quit in {s} seconds."
+            : $"All downloads finished. The computer will {actionName} in {s} seconds.";
         var msg = new TextBlock
         {
-            Text = $"All downloads completed. The computer will {actionName} in 30 seconds.",
+            Text = Message(30),
             Margin = new Thickness(0, 8, 0, 12),
             TextWrapping = TextWrapping.Wrap,
         };
@@ -1312,7 +1332,7 @@ public static partial class Dialogs
         {
             seconds--;
             countdownText.Text = seconds.ToString();
-            msg.Text = $"All downloads completed. The computer will {actionName} in {seconds} seconds.";
+            msg.Text = Message(seconds);
             if (seconds <= 0)
             {
                 timer.Stop();
@@ -1323,11 +1343,7 @@ public static partial class Dialogs
 
         cancelBtn.Click += (_, _) =>
         {
-            timer.Stop();
-            if (action == AfterQueue.ShutDown)
-            {
-                try { Process.Start(new ProcessStartInfo("shutdown", "/a") { CreateNoWindow = true, UseShellExecute = false }); } catch { }
-            }
+            timer.Stop();  // nothing was started yet: the action only runs when the countdown ends or on "Now"
             w.Close();
         };
 
@@ -1436,8 +1452,15 @@ public static partial class Dialogs
             }
         }
 
+        // Typing a path asks again on every key: only the latest file's result is shown, and an earlier one is stopped.
+        CancellationTokenSource? running = null;
+        f.Window.Closed += (_, _) => running?.Cancel();
+
         async void CalculateHashes(string path)
         {
+            running?.Cancel();
+            var mine = running = new CancellationTokenSource();
+            try { await Task.Delay(300, mine.Token); } catch (OperationCanceledException) { return; }
             if (string.IsNullOrEmpty(path) || !File.Exists(path))
             {
                 md5Box.Text = ""; sha1Box.Text = ""; sha256Box.Text = ""; sha512Box.Text = "";
@@ -1450,15 +1473,18 @@ public static partial class Dialogs
             statusBlock.Foreground = Muted;
             try
             {
-                var hashes = await Task.Run(() => Nexonic.Core.Checksum.ComputeAll(path));
+                var hashes = await Task.Run(() => Nexonic.Core.Checksum.ComputeAll(path, mine.Token));
+                if (mine.IsCancellationRequested) return;
                 md5Box.Text = hashes.Md5;
                 sha1Box.Text = hashes.Sha1;
                 sha256Box.Text = hashes.Sha256;
                 sha512Box.Text = hashes.Sha512;
                 UpdateComparison();
             }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
+                if (mine.IsCancellationRequested) return;
                 md5Box.Text = "Error"; sha1Box.Text = "Error"; sha256Box.Text = "Error"; sha512Box.Text = "Error";
                 statusBlock.Text = "Could not read file: " + ex.Message;
                 statusBlock.Foreground = Brushes.Firebrick;

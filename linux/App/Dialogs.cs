@@ -13,6 +13,22 @@ namespace Nexonic.App;
 /// <summary>The app's small windows, the same as the Windows app's, built in code so each one reads top to bottom.</summary>
 public static partial class Dialogs
 {
+    /// <summary>Downloads → Archive Passwords: tried in order on archives that need a password.</summary>
+    public static Task ArchivePasswords(Window owner, DownloadManager m)
+    {
+        var f = new Form(owner, "Archive Passwords", 460);
+        f.Note("Archives that need a password are tried with each of these, one per line. They are kept on this computer only.");
+        var box = f.Text("Passwords", string.Join("\n", m.Settings.ArchivePasswords), multi: true);
+        f.AddButton("Save", () =>
+        {
+            m.Settings.ArchivePasswords = (box.Text ?? "").Split('\n').Select(l => l.TrimEnd('\r')).Where(l => l.Length > 0).Distinct().ToList();
+            m.ApplySettings(m.Settings);
+            f.Close();
+        }, isDefault: true);
+        f.AddButton("Cancel", f.Close, isCancel: true);
+        return f.Show();
+    }
+
     // ---- Add ----
 
     public static async Task Add(Window owner, DownloadManager m, string links, string queueId)

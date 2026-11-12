@@ -267,6 +267,8 @@ public sealed class AppSettings
     public bool ToolbarText { get; set; } = true;
     /// <summary>Unzip finished .zip downloads into a folder next to them (off unless turned on).</summary>
     public bool ExtractZips { get; set; }
+    /// <summary>Passwords tried, in order, on archives that need one (Downloads → Archive Passwords; added in 0.30.1).</summary>
+    public List<string> ArchivePasswords { get; set; } = new();
     /// <summary>Save subtitles (the computer's language and English) inside downloaded videos (added in 0.16.0, off unless turned on).</summary>
     public bool VideoSubtitles { get; set; }
     // Added in 0.26.0

@@ -104,7 +104,7 @@ public sealed class App : Application
             if (m.Settings.Notifications)
                 LinuxSystem.Notify("Download finished", r.FileName + (r.ChecksumResult is { } c ? " – " + c : ""), IconPath);
             if (m.Settings.ShowCompleteDialog) Dialogs.Complete(m, r);
-            foreach (var archive in LinkGrabber.ToUnpack(r, m.Rows.Select(x => x.Record), m.Settings.ExtractZips)) Unzip(archive, text =>
+            foreach (var archive in LinkGrabber.ToUnpack(r, m.Rows.Select(x => x.Record), m.Settings.ExtractZips)) Unzip(archive, m.Settings.ArchivePasswords.ToList(), text =>
             {
                 if (m.Settings.Notifications) LinuxSystem.Notify("Unzipped", text, IconPath);
             });
@@ -140,13 +140,13 @@ public sealed class App : Application
     }
 
     /// <summary>Unzip when finished (Downloads menu): unpacks in the background, then reports on the UI thread.</summary>
-    static void Unzip(string path, Action<string> done)
+    static void Unzip(string path, IReadOnlyList<string> passwords, Action<string> done)
     {
         var name = Path.GetFileName(path);
         Task.Run(() =>
         {
             string text;
-            try { text = $"{name} → {Path.GetFileName(Archives.Extract(path))}"; }
+            try { text = $"{name} → {Path.GetFileName(Archives.Extract(path, passwords))}"; }
             catch (Exception e) { text = $"{name}: {e.Message}"; }
             Dispatcher.UIThread.Post(() => done(text));
         });

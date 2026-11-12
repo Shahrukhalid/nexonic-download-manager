@@ -55,6 +55,28 @@ public class AutomationFeatureTests
         finally { Directory.Delete(dir, true); }
     }
 
+    [Fact]
+    public void ArchivesWithAPasswordUseTheSavedPasswords()
+    {
+        var dir = Temp();
+        try
+        {
+            // inside.txt ("secret file\n") in a zip protected with the password "pass123".
+            var path = Path.Combine(dir, "locked.zip");
+            File.WriteAllBytes(path, Convert.FromBase64String(
+                "UEsDBAoACQAAADUpbF082kmDGAAAAAwAAAAKAAAAaW5zaWRlLnR4dExiV+qS7xAnpNSSLuKU9+R6CJvoy1fn1VBLBwg82kmDGAAAAAwAAABQSwECHgMKAAkAAAA1KWxdPNpJgxgAAAAMAAAACgAAAAAAAAABAAAApIEAAAAAaW5zaWRlLnR4dFBLBQYAAAAAAQABADgAAABQAAAAAAA="));
+            var none = Assert.Throws<InvalidDataException>(() => Archives.Extract(path));
+            Assert.StartsWith(Archives.NeedsPassword, none.Message);
+            Assert.Contains("Archive Passwords", none.Message);
+            var wrong = Assert.Throws<InvalidDataException>(() => Archives.Extract(path, new[] { "nope" }));
+            Assert.Contains("None of the saved", wrong.Message);
+            Assert.False(Directory.Exists(Path.Combine(dir, "locked")));  // nothing left behind by the wrong password
+            var folder = Archives.Extract(path, new[] { "nope", "pass123" });
+            Assert.Equal("secret file\n", File.ReadAllText(Path.Combine(folder, "inside.txt")));
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
     [Theory]
     [InlineData("movie.part1.rar", true)]
     [InlineData("movie.part2.rar", false)]

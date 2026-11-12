@@ -250,6 +250,7 @@ public partial class MainWindow : Window
     }
 
     void OnToggleToolbar(object s, RoutedEventArgs e) { manager.Settings.ShowToolbar = ShowToolbarItem.IsChecked; manager.ApplySettings(manager.Settings); ApplyToolbar(); }
+    void OnArchivePasswords(object s, RoutedEventArgs e) => Dialogs.ArchivePasswords(this, manager);
     void OnToggleUnzip(object s, RoutedEventArgs e) { manager.Settings.ExtractZips = UnzipItem.IsChecked; manager.ApplySettings(manager.Settings); }
     void OnToggleSubtitles(object s, RoutedEventArgs e)
     {

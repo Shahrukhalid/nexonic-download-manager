@@ -193,12 +193,13 @@
   addEventListener("scroll", placeSoon, { capture: true, passive: true });
   addEventListener("resize", placeSoon, { passive: true });
 
-  // Holding Alt while clicking any link tells the extension to let the browser download natively
+  // Alt+click on a link: the browser downloads that link itself instead of handing it to Nexonic.
   window.addEventListener(
     "click",
     (e) => {
-      if (e.altKey) {
-        try { chrome.runtime.sendMessage({ type: "bypassInterception" }); } catch (_) {}
+      const link = e.altKey && e.target instanceof Element ? e.target.closest("a[href]") : null;
+      if (link) {
+        try { chrome.runtime.sendMessage({ type: "bypassInterception", url: link.href }); } catch (_) {}
       }
     },
     true,
