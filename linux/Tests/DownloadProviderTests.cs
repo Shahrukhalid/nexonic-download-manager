@@ -178,6 +178,8 @@ public sealed class NativeTorrentRuntimeTests
         Assert.Equal("Nexonic test\n", await File.ReadAllTextAsync(record.SavedPath!));
         Assert.Equal(Path.Combine(destination, "fixture.bin"), record.SavedPath);
         var checkpointPath = Path.Combine(AppPaths.Parts, record.Id.ToString("N"), "native", "torrent-payload.resume");
+        // The engine writes its resume checkpoint just after the download finishes; slower runners need a moment.
+        for (var i = 0; i < 50 && !File.Exists(checkpointPath); i++) await Task.Delay(100);
         Assert.True(File.Exists(checkpointPath));
         Assert.NotEmpty(await File.ReadAllBytesAsync(checkpointPath));
         Directory.Delete(Path.GetDirectoryName(checkpointPath)!, true);
