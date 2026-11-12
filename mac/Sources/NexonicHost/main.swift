@@ -118,6 +118,8 @@ while let message = try? NativeMessaging.read(from: input) {
         }
     case "qualities":
         reply(qualities(message))
+    case "profile-requests":
+        reply(["ok": true, "requests": BrowserCollect.takeRequests()])
     case "profile-links":
         // Profile Batch through the browser: the extension's progress and result for the app (BrowserCollect).
         reply(["ok": BrowserCollect.save(token: message["token"] as? String, stage: message["stage"] as? String, data: message["data"])])

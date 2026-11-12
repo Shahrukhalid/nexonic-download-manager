@@ -28,7 +28,7 @@ public static partial class Dialogs
         var mode = f.Field("Download", new ComboBox { ItemsSource = new[] { L.T("All videos I don't have yet"), L.T("Only new videos (not seen on this profile before)"), L.T("Let me preview and choose") }, SelectedIndex = 0 });
         var folder = f.Folder(m.Settings.StartFolder);
         var own = f.Check("Put each profile in a folder of its own", true);
-        var viaBrowser = f.Check("Instagram and Facebook: find every video through my browser (the Nexonic extension scrolls the profile there)", m.Settings.ProfilesViaBrowser);
+        var viaBrowser = f.Check("Instagram and Facebook: find every video with my browser's sign-in (Nexonic extension; read-only, no tab, a page every few seconds)", m.Settings.ProfilesViaBrowser);
         viaBrowser.Click += (_, _) => { m.Settings.ProfilesViaBrowser = viaBrowser.IsChecked == true; m.ApplySettings(m.Settings); };
         var parallel = f.Field("Downloads at the same time", new ComboBox { ItemsSource = new[] { "1", "2", "3", "4", "5", "6" }, SelectedIndex = 1 });
         DatePicker? from = null, to = null; TextBox? words = null, minMin = null, maxMin = null, maxCount = null; ComboBox? kind = null, check = null;
@@ -136,24 +136,25 @@ public static partial class Dialogs
                 if (SocialPages.Find(url) is { } social)
                 {
                     // Instagram and Facebook show visitors only their latest posts. Every video comes through the user's own
-                    // browser: the Nexonic extension scrolls the profile there (with the user's own sign-in, if any).
+                    // browser: the Nexonic extension reads the post list there, read-only and at a person's pace (see background.js).
                     List<BatchEntry>? all = null;
+                    string? ticket = null;
                     if (viaBrowser.IsChecked == true)
                     {
                         status.Text = L.T(BrowserCollect.Asking);
-                        var (page, ticket) = BrowserCollect.Start(social.Pages[0], filter.Max);
-                        BrowserCollect.Open(page);
-                        all = await BrowserCollect.Wait(ticket, TimeSpan.FromSeconds(45), n => status.Text = string.Format(L.T("{0} found so far…"), n), token);
+                        ticket = BrowserCollect.Start(social.Site, social.Owner, social.Pages, filter.Max);
+                        all = await BrowserCollect.Wait(ticket, TimeSpan.FromSeconds(75), n => status.Text = string.Format(L.T("{0} found so far…"), n), token);
                     }
+                    var why = ticket == null || all == null ? null : BrowserCollect.Why(ticket, all.Count);
                     if (all is { Count: > 0 })
-                        scan = new ProfileBatch.Scan { Url = url, Owner = social.Owner, Entries = all, Complete = true,
-                            Note = string.Format(L.T("Found {0} videos by scrolling the profile in your browser."), all.Count) };
+                        scan = new ProfileBatch.Scan { Url = url, Owner = social.Owner, Entries = all, Complete = why == null,
+                            Note = string.Format(L.T("Found {0} videos through your browser."), all.Count) + (why == null ? "" : "\n" + L.T(why)) };
                     else
                     {
                         status.Text = string.Format(L.T("Opening the {0} profile like a visitor's browser…"), social.Site.Name);
                         scan = await SocialWebView.Scan(url, social.Site, social.Owner, social.Pages, filter.Max,
                             n => status.Text = string.Format(L.T("{0} found so far…"), n), token);
-                        if (viaBrowser.IsChecked == true && all == null) scan.Note += "\n" + L.T(BrowserCollect.NoAnswer);
+                        if (viaBrowser.IsChecked == true) scan.Note += "\n" + L.T(why ?? BrowserCollect.NoAnswer);
                     }
                 }
                 else

@@ -103,22 +103,32 @@ if (tab && isVideoSite(tab.url)) {
   $("siteAudio").onclick = go(true, $("siteAudio"));
 }
 
-// Instagram or Facebook profile, with the user signed in there: every video of the profile (collect.js scrolls it).
-if (tab && /^https:\/\/([a-z]+\.)?(instagram|facebook)\.com\//.test(tab.url || "")) {
-  const info = await chrome.tabs.sendMessage(tab.id, { type: "profile-check" }).catch(() => null);
-  if (info && info.profile && info.signedIn) {
+// Instagram or Facebook profile, with the user signed in there in this browser: every video of the profile, found by
+// background.js without any tab (read-only, at a person's pace; see the rules there).
+const signedInCookie = { instagram: ["https://www.instagram.com/", "ds_user_id"], facebook: ["https://www.facebook.com/", "c_user"] };
+const profileSite = tab && (/^https:\/\/([a-z]+\.)?(instagram|facebook)\.com\//.exec(tab.url || "") || [])[2];
+if (profileSite) {
+  const [cookieUrl, name] = signedInCookie[profileSite];
+  const signedIn = await chrome.cookies.get({ url: cookieUrl, name }).catch(() => null);
+  if (signedIn) {
     $("profileBox").hidden = false;
+    const stoppedNote = {
+      rest: "The site asked to slow down, so Nexonic stopped and will leave it alone for an hour.",
+      hourly: "Hourly limit reached (about 2,000 posts); try again later.",
+      "signed-out": "Not signed in to this site in this browser.",
+      busy: "Already collecting this profile",
+    };
     const start = (later) => async () => {
-      const r = await chrome.tabs.sendMessage(tab.id, { type: "profile-collect", later }).catch(() => null);
-      $("profileCount").textContent = t(r && r.ok ? "Scrolling the profile…" : "Already collecting this profile");
+      const r = await ask({ type: "profile-all", url: tab.url, later });
+      $("profileCount").textContent = t(r && r.ok ? "Finding videos…" : "Failed");
       $("profileAll").disabled = $("profileLater").disabled = true;
     };
     $("profileAll").onclick = start(false);
     $("profileLater").onclick = start(true);
-    if (info.running) { $("profileCount").textContent = t("Scrolling the profile…"); $("profileAll").disabled = $("profileLater").disabled = true; }
     chrome.runtime.onMessage.addListener((msg) => {
       if (msg && msg.type === "profile-progress") $("profileCount").textContent = t("{count} videos found so far…", { count: msg.count });
-      if (msg && msg.type === "profile-sent") $("profileCount").textContent = t("Sent {count}", { count: msg.sent });
+      if (msg && msg.type === "profile-sent")
+        $("profileCount").textContent = [t("Sent {count}", { count: msg.sent }), msg.stopped && stoppedNote[msg.stopped] ? t(stoppedNote[msg.stopped]) : ""].filter(Boolean).join(" · ");
     });
   }
 }

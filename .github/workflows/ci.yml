@@ -206,7 +206,6 @@ jobs:
           python3 scripts/build-extensions.py
           node --check build/extension-firefox/background.js
           node --check extension/content.js
-          node --check extension/collect.js
       - name: Firefox add-on passes the linter
         run: npx --yes web-ext@8 lint --source-dir build/extension-firefox --warnings-as-errors=false
       - name: No outside names

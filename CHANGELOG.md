@@ -3,15 +3,19 @@
 **Profile Batch**
 - Instagram and Facebook profiles: Instagram stopped answering the request Nexonic used to read profiles, and both
   sites show visitors who are not signed in only a profile's latest posts.
-  - Every video, through your own browser (Windows, Mac, Linux): Profile Batch opens the profile in your browser, the
-    Nexonic extension scrolls it to the end there and sends every video back, then closes the tab. Whatever you are
-    signed in to in your browser counts; Nexonic itself never asks for a password or signs in. On by default; switch
-    it off in Profile Batch.
+  - Every video, through your own browser (Windows, Mac, Linux): Profile Batch asks the Nexonic extension, which reads
+    the profile's post list in the background with your browser's own sign-in. No tab opens and nothing scrolls on
+    screen. Nexonic itself never asks for a password or signs in. On by default; switch it off in Profile Batch.
+  - How it stays polite, so it never looks or acts like a bot: it only reads (never likes, follows, comments, messages
+    or posts); one profile at a time; one page of about 33 posts every 2–4 seconds, like a person scrolling; at most
+    60 pages an hour (about 2,000 posts); and if the site answers anything unusual (slow down, check your account,
+    signed out) it stops at once and leaves that site alone for an hour. Profile Batch and the popup say why it
+    stopped and keep what was found.
   - Without the extension (and on Android), a hidden private web view takes what visitors see: on a Mac with a home
     connection, an Instagram profile showed its latest 12 posts (all found and downloaded) and a Facebook profile's
     reels tab showed 10 reels (the old way found 1).
 - Browser extension: on an Instagram or Facebook profile you are signed in to, the popup offers **Download all videos**
-  (or Download later): it scrolls the profile to the end and sends every video to Nexonic.
+  (or Download later): it finds every video the same way, without a tab, and sends them to Nexonic.
 - Snapchat profiles (all apps): the Spotlight videos a public profile shows visitors (snapchat.com/@name).
 - Nothing starts by itself any more: after Find Videos, choose **Download Now** or **Add to Queue** (added, waiting
   until you start them). This replaces the "Start downloading straight away" switch.

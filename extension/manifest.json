@@ -14,7 +14,8 @@
     "cookies",
     "scripting",
     "webRequest",
-    "tabs"
+    "tabs",
+    "alarms"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -42,16 +43,6 @@
       ],
       "run_at": "document_idle",
       "all_frames": true
-    },
-    {
-      "matches": [
-        "*://*.instagram.com/*",
-        "*://*.facebook.com/*"
-      ],
-      "js": [
-        "collect.js"
-      ],
-      "run_at": "document_idle"
     }
   ]
 }

@@ -29,13 +29,17 @@ computer.
 | `nativeMessaging` | to talk to the app on the same computer |
 | `contextMenus` | "Download with Nexonic" in the right-click menu |
 | `storage` | the extension's own settings (language, sites to skip) |
-| `cookies` | the cookies of the download's own site, so downloads that need a login work in the app |
+| `cookies` | the cookies of the download's own site, so downloads that need a login work in the app; whether you are signed in to Instagram or Facebook (for the popup's "Download all videos") |
+| `alarms` | about once a minute, asks the app whether Profile Batch is waiting for a profile's video list (read-only, at a person's pace) |
 | `scripting` | to collect the links of the current page (or of the selected text) when the user asks to download them all |
 | `webRequest` | to notice video streams the page plays, for "Download this video" |
 | `tabs` | the current page's address and title for the context menu and the popup |
 | host access (all sites) | downloads and videos can come from any site |
 
-**Data:** the extension collects nothing and sends nothing anywhere except to the app on the same computer. No
+**Data:** the extension collects nothing and sends nothing anywhere except to the app on the same computer. When you
+ask for every video of an Instagram or Facebook profile, it reads that profile's post list from the site itself with
+your browser's sign-in (read-only, one page every few seconds, at most 60 pages an hour) and hands the video links to
+the app. No
 analytics, no accounts. Privacy policy: the "Privacy and terms" section of the README and TERMS.md.
 
 The owner submits the uploads; this repository never publishes to a store automatically.

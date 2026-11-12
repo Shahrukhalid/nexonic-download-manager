@@ -158,7 +158,7 @@ struct ProfileBatchView: View {
                     Stepper("At most \(maxCount) videos", value: $maxCount, in: 10...ProfileBatch.limit, step: 50)
                     Text("A site that doesn't say when a video was published or how long it is: those videos are kept.").font(.caption).foregroundStyle(.secondary)
                 }
-                Toggle("Instagram and Facebook: find every video through my browser (the Nexonic extension scrolls the profile there)", isOn: $viaBrowser)
+                Toggle("Instagram and Facebook: find every video with my browser's sign-in (Nexonic extension; read-only, no tab, a page every few seconds)", isOn: $viaBrowser)
                 Picker("Look for new videos", selection: $checkHours) {
                     Text("Never (only now)").tag(0); Text("Every hour").tag(1); Text("Every 6 hours").tag(6); Text("Every day").tag(24); Text("Every week").tag(168)
                 }
@@ -238,29 +238,30 @@ struct ProfileBatchView: View {
         let proxy = manager.settings.proxy, f = filter, stopFlag = { [self] in stopRequested }
         if let social = SocialPages.find(url) {
             // Instagram and Facebook show visitors only their latest posts. Every video comes through the user's own
-            // browser: the Nexonic extension scrolls the profile there (with the user's own sign-in, if any).
+            // browser: the Nexonic extension reads the post list there, read-only and at a person's pace (see background.js).
             let asked = viaBrowser
             Task { @MainActor in
                 do {
-                    var videos: [BatchEntry]?
+                    var videos: [BatchEntry]?, why: String?
                     if asked {
                         status = String(localized: String.LocalizationValue(BrowserCollect.asking))
-                        let (page, ticket) = BrowserCollect.start(social.pages[0], max: f.max)
-                        if let link = URL(string: page) { NSWorkspace.shared.open(link) }
-                        videos = try await BrowserCollect.wait(ticket, answerWithin: 45,
+                        let ticket = BrowserCollect.start(site: social.site, owner: social.owner, pages: social.pages, max: f.max)
+                        videos = try await BrowserCollect.wait(ticket, answerWithin: 75,
                                                                found: { n in status = String(format: String(localized: "%d found so far…"), n) },
                                                                stop: { stopRequested })
+                        if let videos { why = BrowserCollect.why(ticket, found: videos.count) }
                     }
+                    let whyNote = why.map { "\n" + String(localized: String.LocalizationValue($0)) } ?? ""
                     if let videos, !videos.isEmpty {
                         show(SocialPages.scan(url: url, owner: social.owner, entries: videos,
-                                              note: String(format: String(localized: "Found %d videos by scrolling the profile in your browser."), videos.count)),
+                                              note: String(format: String(localized: "Found %d videos through your browser."), videos.count) + whyNote),
                              url: url, filter: f)
                     } else {
                         status = String(format: String(localized: "Opening the %@ profile like a visitor's browser…"), social.site.name)
                         var s = try await SocialWebView.scan(url, site: social.site, owner: social.owner, pages: social.pages, max: f.max,
                                                              found: { n in status = String(format: String(localized: "%d found so far…"), n) },
                                                              stop: { stopRequested })
-                        if asked, videos == nil { s.note = (s.note ?? "") + "\n" + String(localized: String.LocalizationValue(BrowserCollect.noAnswer)) }
+                        if asked { s.note = (s.note ?? "") + (why == nil ? "\n" + String(localized: String.LocalizationValue(BrowserCollect.noAnswer)) : whyNote) }
                         show(s, url: url, filter: f)
                     }
                 } catch is CancellationError {

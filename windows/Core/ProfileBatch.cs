@@ -484,10 +484,10 @@ public static class SocialPages
 }
 
 /// <summary>
-/// Profile Batch through the user's own browser: Nexonic opens the profile page there with a one-time token in the
-/// address (#nexonic-collect=token:max). The Nexonic extension sees it, scrolls the page as the user would (with whatever
-/// the user is signed in to in that browser; Nexonic itself never signs in or sees a password), sends the video links
-/// back through the browser helper and closes the tab. The helper leaves them in the ProfileLinks folder for the app.
+/// Profile Batch through the user's own browser, without any tab: the app leaves a request (site, profile, limit) in the
+/// ProfileLinks folder; the Nexonic extension picks it up through the browser helper (it asks about once a minute),
+/// asks the site for the profile's posts with the browser's own sign-in (Nexonic never signs in or sees a password) and
+/// sends the video links back the same way.
 /// </summary>
 public static class BrowserCollect
 {
@@ -496,11 +496,34 @@ public static class BrowserCollect
 
     static bool ValidToken(string? token) => token is { Length: 32 } && token.All(Uri.IsHexDigit);
 
-    /// <summary>The page address the browser opens, and the token its answer comes back under.</summary>
-    public static (string Url, string Token) Start(string page, int max)
+    /// <summary>Leaves the request for the extension; returns the token its answer comes back under.</summary>
+    public static string Start(SocialSite site, string owner, string[] pages, int max)
     {
         var token = Guid.NewGuid().ToString("N");
-        return (page.Split('#')[0] + $"#nexonic-collect={token}:{Math.Clamp(max, 1, ProfileBatch.Limit)}", token);
+        Directory.CreateDirectory(Folder);
+        File.WriteAllText(Path.Combine(Folder, $"{token}.request.json"), JsonSerializer.Serialize(new
+        {
+            token, site = site.Name.ToLowerInvariant(), owner, pages, max = Math.Clamp(max, 1, ProfileBatch.Limit), time = DateTime.UtcNow,
+        }));
+        return token;
+    }
+
+    /// <summary>The browser helper: the requests waiting for the extension (each handed out once; old ones dropped).</summary>
+    public static List<JsonElement> TakeRequests()
+    {
+        var list = new List<JsonElement>();
+        if (!Directory.Exists(Folder)) return list;
+        foreach (var file in Directory.GetFiles(Folder, "*.request.json"))
+        {
+            try
+            {
+                if (File.GetLastWriteTimeUtc(file) > DateTime.UtcNow.AddMinutes(-10))
+                    using (var doc = JsonDocument.Parse(File.ReadAllText(file))) list.Add(doc.RootElement.Clone());
+                File.Delete(file);
+            }
+            catch (Exception x) when (x is IOException or JsonException or UnauthorizedAccessException) { }
+        }
+        return list;
     }
 
     /// <summary>The browser helper: the extension's progress ("started", with a count) or result ("done", the page script's JSON).</summary>
@@ -536,7 +559,9 @@ public static class BrowserCollect
                 await Task.Delay(1000, cancel);
                 if (InstagramPage.Read(Read(started)).Posts is var n && n != last) { last = n; found(n); }
             }
-            return InstagramPage.Read(Read(done)).Videos;
+            var answer = Read(done);
+            stoppedBy[token] = Stopped(answer);
+            return InstagramPage.Read(answer).Videos;
         }
         finally
         {
@@ -544,18 +569,36 @@ public static class BrowserCollect
         }
     }
 
+    static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> stoppedBy = new();
+
+    static string Stopped(string? json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json ?? "{}");
+            return doc.RootElement.TryGetProperty("stopped", out var s) && s.ValueKind == JsonValueKind.String ? s.GetString() ?? "" : "";
+        }
+        catch (JsonException) { return ""; }
+    }
+
+    /// <summary>
+    /// Why the extension stopped early for this request, as a note for the user; null when it finished normally. The
+    /// extension stops by itself when the site answers anything unusual, so it never keeps asking like a bot would.
+    /// </summary>
+    public static string? Why(string token, int found) => (stoppedBy.TryRemove(token, out var why) ? why : "") switch
+    {
+        "rest" => "The site asked to slow down, so the extension stopped at once and leaves it alone for an hour.",
+        "hourly" => "The extension reached its hourly limit (about 2,000 posts), so it stopped; try again later.",
+        "busy" => "The extension is still finding another profile; try again in a few minutes.",
+        "signed-out" => "Your browser isn't signed in to this site, so only what visitors see was found. Sign in there and try again.",
+        _ => found == 0 ? "Your browser found no videos; make sure you're signed in to the site there." : null,
+    };
+
     static string? Read(string file)
     {
         try { return File.Exists(file) ? File.ReadAllText(file) : null; } catch (IOException) { return null; }
     }
 
-    /// <summary>Opens the page in the user's default browser.</summary>
-    public static void Open(string url)
-    {
-        if (OperatingSystem.IsWindows()) Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-        else Process.Start("xdg-open", url);
-    }
-
-    public const string Asking = "Opening the profile in your browser: the Nexonic extension scrolls it there and closes the tab when it has every video. Keep the browser open.";
-    public const string NoAnswer = "Your browser didn't answer, so Nexonic took only what visitors see. To find every video, add the Nexonic extension to your default browser (Options → Browser) and sign in to the site there.";
+    public const string Asking = "Asking the Nexonic extension in your browser for every video of this profile. It reads the post list with your browser's own sign-in, without a tab, one page every few seconds like a person scrolling; nothing is liked, followed or posted and Nexonic never sees your password. It can take up to a minute to start; keep the browser open.";
+    public const string NoAnswer = "Your browser didn't answer, so Nexonic took only what visitors see. To find every video, add the Nexonic extension to your browser, keep the browser open and sign in to the site there.";
 }

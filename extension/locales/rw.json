@@ -66,10 +66,13 @@
     "Button colour": "Ibara ry'ibumoso:",
     "Show the button's text (off = arrow only)": "i Akabuto Umwandiko Bidakora Akambi",
     "This profile": "This profile",
-    "Scrolls this profile to the end, then sends every video to Nexonic. Keep this tab open until it's done.": "Scrolls this profile to the end, then sends every video to Nexonic. Keep this tab open until it's done.",
+    "Finds every video of this profile with your browser's own sign-in, without opening a tab, one page every few seconds like a person scrolling. Read-only: nothing is liked, followed or posted, and Nexonic never sees your password.": "Finds every video of this profile with your browser's own sign-in, without opening a tab, one page every few seconds like a person scrolling. Read-only: nothing is liked, followed or posted, and Nexonic never sees your password.",
     "Download all videos": "Download all videos",
-    "Scrolling the profile…": "Scrolling the profile…",
+    "Finding videos…": "Finding videos…",
     "Already collecting this profile": "Already collecting this profile",
-    "{count} videos found so far…": "{count} videos found so far…"
+    "{count} videos found so far…": "{count} videos found so far…",
+    "The site asked to slow down, so Nexonic stopped and will leave it alone for an hour.": "The site asked to slow down, so Nexonic stopped and will leave it alone for an hour.",
+    "Hourly limit reached (about 2,000 posts); try again later.": "Hourly limit reached (about 2,000 posts); try again later.",
+    "Not signed in to this site in this browser.": "Not signed in to this site in this browser."
   }
 }
