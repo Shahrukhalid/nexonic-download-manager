@@ -161,13 +161,24 @@
     });
   });
 
+  /** The visible video under a point, through any layers on top of it (none when the pointer is on our button). */
+  function playerAt(x, y) {
+    if (host.isConnected && host.contains(document.elementFromPoint(x, y))) return null;
+    const v = document.elementsFromPoint(x, y).find((n) => n.tagName === "VIDEO");
+    if (!v) return null;
+    const r = v.getBoundingClientRect();
+    return r.width >= 120 && r.height >= 80 ? v : null;
+  }
+
   host.addEventListener("mouseenter", () => clearTimeout(hideTimer));
   host.addEventListener("mouseleave", () => (hideTimer = setTimeout(hide, 800)));
   document.addEventListener(
     "mouseover",
     (e) => {
       if (!enabled) return;
-      const el = e.target && e.target.closest ? e.target.closest("video, audio") : null;
+      // Instagram, Facebook, TikTok … lay see-through layers over their players, so the pointer is often over a
+      // layer, not the video: the player under the pointer counts too.
+      const el = (e.target && e.target.closest ? e.target.closest("video, audio") : null) || playerAt(e.clientX, e.clientY);
       if (el) show(el);
       else if (target && !host.contains(e.target)) {
         const r = target.getBoundingClientRect();
