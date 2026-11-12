@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace Nexonic.Core;
 
@@ -351,4 +352,75 @@ public static class EnginePlugins
         catch (IOException) { return null; }
         catch (UnauthorizedAccessException) { return null; }
     }
+}
+
+/// <summary>
+/// Instagram shows visitors who are not signed in the latest posts of a profile, but only through its own page scripts.
+/// The apps open the profile page in a private web view (no cookies, no sign-in), like a visitor's browser, run Script
+/// and read the video links the page shows. Nothing else of Instagram's is called.
+/// </summary>
+public static class InstagramPage
+{
+    static readonly string[] Reserved = { "p", "reel", "reels", "tv", "stories", "explore", "accounts", "direct", "about", "legal",
+        "developer", "api", "graphql", "web", "challenge", "emails", "session", "privacy", "terms" };
+
+    /// <summary>The user name of an Instagram profile link (instagram.com/name, /name/reels), or null.</summary>
+    public static string? User(string link)
+    {
+        var m = Regex.Match(link.Trim(), @"^https?://(?:www\.)?instagram\.com/([A-Za-z0-9._]{1,30})/?(?:reels/?|videos/?)?(?:[?#].*)?$", RegexOptions.IgnoreCase);
+        return m.Success && !Reserved.Contains(m.Groups[1].Value.ToLowerInvariant()) ? m.Groups[1].Value : null;
+    }
+
+    /// <summary>Run in the loaded page: {"posts": links to posts shown, "videos": [{"u": link, "t": picture text}]}.</summary>
+    public const string Script = """
+        (() => {
+          const all = [...document.querySelectorAll('a[href*="/reel/"], a[href*="/p/"]')], seen = new Set(), videos = [];
+          for (const a of all) {
+            const link = new URL(a.getAttribute('href'), location.href);
+            const m = link.pathname.match(/\/(p|reel)\/([A-Za-z0-9_-]+)/);
+            if (!m) continue;
+            const alt = (a.querySelector('img') || {}).alt || '';
+            const video = m[1] === 'reel' || /^Video by /.test(alt) || !!a.querySelector('svg[aria-label="Clip"], svg[aria-label="Video"], svg[aria-label="Reel"]');
+            const u = 'https://www.instagram.com/' + m[1] + '/' + m[2] + '/';
+            if (video && !seen.has(u)) { seen.add(u); videos.push({ u, t: alt }); }
+          }
+          return JSON.stringify({ posts: all.length, videos });
+        })()
+        """;
+
+    /// <summary>What Script returned: the number of posts the page shows and its videos.</summary>
+    public static (int Posts, List<BatchEntry> Videos) Read(string? json)
+    {
+        var list = new List<BatchEntry>();
+        if (string.IsNullOrEmpty(json)) return (0, list);
+        try
+        {
+            // The web views hand the script's string back either as it is or JSON-quoted.
+            if (json.StartsWith('"')) json = JsonSerializer.Deserialize<string>(json) ?? "";
+            using var doc = JsonDocument.Parse(json);
+            var posts = doc.RootElement.TryGetProperty("posts", out var p) && p.ValueKind == JsonValueKind.Number ? p.GetInt32() : 0;
+            if (doc.RootElement.TryGetProperty("videos", out var v) && v.ValueKind == JsonValueKind.Array)
+                foreach (var e in v.EnumerateArray())
+                {
+                    var url = e.TryGetProperty("u", out var u) ? u.GetString() ?? "" : "";
+                    if (!url.StartsWith("https://www.instagram.com/", StringComparison.Ordinal)) continue;
+                    var text = e.TryGetProperty("t", out var t) ? t.GetString() ?? "" : "";
+                    DateTime? date = Regex.Match(text, @" on ([A-Z][a-z]+ \d{1,2}, \d{4})") is { Success: true } dm
+                        && DateTime.TryParseExact(dm.Groups[1].Value, "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var d) ? d : null;
+                    var title = Regex.Replace(text, @"\s+", " ").Trim();
+                    if (title.Length > 120) title = title[..120] + "…";
+                    list.Add(new BatchEntry(url, title.Length > 0 ? title : url, null, date, url.Contains("/reel/") ? "shorts" : "video", true, url.Split('/')[^2]));
+                }
+            return (posts, list);
+        }
+        catch (JsonException) { return (0, list); }
+    }
+
+    /// <summary>Shown with the result: Instagram shows visitors only the latest posts.</summary>
+    public static string Note(int posts) =>
+        $"Instagram shows visitors who are not signed in only the latest {posts} posts of a profile; Nexonic took the videos among them.";
+
+    public const string Nothing = "Instagram did not show any posts of this profile to a visitor who is not signed in (it may be private or not exist).";
+
+    public static string NoVideos(int posts) => $"None of the latest {posts} posts Instagram shows visitors of this profile is a video.";
 }

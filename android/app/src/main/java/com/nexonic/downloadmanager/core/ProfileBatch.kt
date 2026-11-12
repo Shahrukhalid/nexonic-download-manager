@@ -156,3 +156,59 @@ object ProfileBatch {
         }
     }.getOrDefault(emptyList())
 }
+
+/**
+ * Instagram shows visitors who are not signed in the latest posts of a profile, but only through its own page scripts.
+ * The app opens the profile page in a hidden web view, like a visitor's browser, runs [SCRIPT] and reads the video links
+ * the page shows. Nothing else of Instagram's is called.
+ */
+object InstagramPage {
+    private val reserved = setOf("p", "reel", "reels", "tv", "stories", "explore", "accounts", "direct", "about", "legal",
+        "developer", "api", "graphql", "web", "challenge", "emails", "session", "privacy", "terms")
+    private val profile = Regex("""^https?://(?:www\.)?instagram\.com/([A-Za-z0-9._]{1,30})/?(?:reels/?|videos/?)?(?:[?#].*)?$""", RegexOption.IGNORE_CASE)
+
+    /** The user name of an Instagram profile link (instagram.com/name, /name/reels), or null. */
+    fun user(link: String): String? = profile.find(link.trim())?.groupValues?.get(1)?.takeIf { it.lowercase() !in reserved }
+
+    /** Run in the loaded page: {"posts": links to posts shown, "videos": [{"u": link, "t": picture text}]}. */
+    val SCRIPT = """
+(() => {
+  const all = [...document.querySelectorAll('a[href*="/reel/"], a[href*="/p/"]')], seen = new Set(), videos = [];
+  for (const a of all) {
+    const link = new URL(a.getAttribute('href'), location.href);
+    const m = link.pathname.match(/\/(p|reel)\/([A-Za-z0-9_-]+)/);
+    if (!m) continue;
+    const alt = (a.querySelector('img') || {}).alt || '';
+    const video = m[1] === 'reel' || /^Video by /.test(alt) || !!a.querySelector('svg[aria-label="Clip"], svg[aria-label="Video"], svg[aria-label="Reel"]');
+    const u = 'https://www.instagram.com/' + m[1] + '/' + m[2] + '/';
+    if (video && !seen.has(u)) { seen.add(u); videos.push({ u, t: alt }); }
+  }
+  return JSON.stringify({ posts: all.length, videos });
+})()
+""".trimIndent()
+
+    /** What [SCRIPT] returned (the web view hands it back JSON-quoted): posts shown and the videos among them. */
+    fun read(raw: String?): Pair<Int, List<BatchEntry>> {
+        var json = raw?.trim().orEmpty()
+        if (json.startsWith("\"")) json = runCatching { org.json.JSONTokener(json).nextValue() as? String }.getOrNull().orEmpty()
+        val o = runCatching { JSONObject(json) }.getOrNull() ?: return 0 to emptyList()
+        val dates = java.text.SimpleDateFormat("MMMM d, yyyy", java.util.Locale.US)
+        val videos = mutableListOf<BatchEntry>()
+        val a = o.optJSONArray("videos") ?: JSONArray()
+        for (i in 0 until a.length()) {
+            val v = a.optJSONObject(i) ?: continue
+            val url = v.optString("u")
+            if (!url.startsWith("https://www.instagram.com/")) continue
+            val text = v.optString("t")
+            val date = Regex(""" on ([A-Z][a-z]+ \d{1,2}, \d{4})""").find(text)?.let { m -> runCatching { dates.parse(m.groupValues[1])?.time }.getOrNull() }
+            var title = text.split(Regex("""\s+""")).filter { it.isNotEmpty() }.joinToString(" ")
+            if (title.length > 120) title = title.take(120) + "…"
+            videos += BatchEntry(url, title.ifEmpty { url }, null, date, if ("/reel/" in url) "shorts" else "video")
+        }
+        return o.optInt("posts") to videos
+    }
+
+    fun note(posts: Int) = "Instagram shows visitors who are not signed in only the latest $posts posts of a profile; Nexonic took the videos among them."
+    const val NOTHING = "Instagram did not show any posts of this profile to a visitor who is not signed in (it may be private or not exist)."
+    fun noVideos(posts: Int) = "None of the latest $posts posts Instagram shows visitors of this profile is a video."
+}

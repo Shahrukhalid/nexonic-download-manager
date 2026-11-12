@@ -102,8 +102,17 @@ public static partial class Dialogs
             var proxy = HostProfiles.Match(m.Settings.HostProfiles, url)?.Proxy ?? m.Settings.Proxy;
             try
             {
-                scan = await Task.Run(() => ProfileBatch.Discover(url, proxy, filter.Max,
-                    (e, n) => { if (n % 10 == 0) f.Window.Dispatcher.BeginInvoke(() => status.Text = string.Format(L.T("{0} found so far…"), n)); }, cancel: token));
+                try
+                {
+                    scan = await Task.Run(() => ProfileBatch.Discover(url, proxy, filter.Max,
+                        (e, n) => { if (n % 10 == 0) f.Window.Dispatcher.BeginInvoke(() => status.Text = string.Format(L.T("{0} found so far…"), n)); }, cancel: token));
+                }
+                catch (InvalidOperationException) when (InstagramPage.User(url) is { } user && !token.IsCancellationRequested)
+                {
+                    // Instagram shows visitors its posts only through its own page: open it like a visitor's browser would.
+                    status.Text = L.T("Opening the Instagram profile like a visitor's browser…");
+                    scan = await InstagramWebView.Scan(url, user, token);
+                }
                 var seen = mode.SelectedIndex == 1 && Saved(url) is { } p ? new HashSet<string>(p.Seen) : null;
                 var (take, counts) = ProfileBatch.Choose(scan.Entries, filter, m.AlreadyDownloaded, seen);
                 if (export != null) export.IsEnabled = true;

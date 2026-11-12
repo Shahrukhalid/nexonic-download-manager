@@ -235,26 +235,40 @@ struct ProfileBatchView: View {
                 case .failure(let e) where e is CancellationError:
                     status = String(localized: "Stopped. The videos found so far are kept; Find Videos continues from there.")
                 case .failure(let e):
-                    status = e.localizedDescription
-                case .success(let s):
-                    scan = s
-                    var seen: Set<String>? = nil
-                    if mode == 1, let p = manager.profiles.first(where: { ProfileBatch.key($0.url) == ProfileBatch.key(url) }) { seen = Set(p.seen) }
-                    let (take, counts) = ProfileBatch.choose(s.entries, f, alreadyDownloaded: manager.alreadyDownloaded, seen: seen)
-                    if mode == 2 {
-                        preview = take; chosen = Set(take.map(\.url))
-                        var c = counts; c.queued = 0
-                        status = (s.owner.isEmpty ? "" : s.owner + ": ") + c.text
-                    } else if take.isEmpty {
-                        var c = counts; c.queued = 0
-                        status = (s.owner.isEmpty ? "" : s.owner + ": ") + c.text
-                    } else {
-                        download(take, counts)
+                    guard let user = InstagramPage.user(url) else { status = e.localizedDescription; return }
+                    // Instagram shows visitors its posts only through its own page: open it like a visitor's browser would.
+                    busy = true
+                    status = String(localized: "Opening the Instagram profile like a visitor's browser…")
+                    Task { @MainActor in
+                        do { show(try await InstagramWebView.scan(url, user: user, stop: { stopRequested }), url: url, filter: f) }
+                        catch is CancellationError { status = String(localized: "Stopped.") }
+                        catch { status = error.localizedDescription }
+                        busy = false
                     }
-                    if let note = s.note, !note.isEmpty { status += "\n" + note }  // what the site doesn't show visitors
+                case .success(let s):
+                    show(s, url: url, filter: f)
                 }
             }
         }
+    }
+
+    /// Shows a finished scan: the preview list, or the counts, or the queued downloads.
+    private func show(_ s: ProfileBatch.Scan, url: String, filter f: BatchFilter) {
+        scan = s
+        var seen: Set<String>? = nil
+        if mode == 1, let p = manager.profiles.first(where: { ProfileBatch.key($0.url) == ProfileBatch.key(url) }) { seen = Set(p.seen) }
+        let (take, counts) = ProfileBatch.choose(s.entries, f, alreadyDownloaded: manager.alreadyDownloaded, seen: seen)
+        if mode == 2 {
+            preview = take; chosen = Set(take.map(\.url))
+            var c = counts; c.queued = 0
+            status = (s.owner.isEmpty ? "" : s.owner + ": ") + c.text
+        } else if take.isEmpty {
+            var c = counts; c.queued = 0
+            status = (s.owner.isEmpty ? "" : s.owner + ": ") + c.text
+        } else {
+            download(take, counts)
+        }
+        if let note = s.note, !note.isEmpty { status += "\n" + note }  // what the site doesn't show visitors
     }
 
     private func export(_ format: String) {

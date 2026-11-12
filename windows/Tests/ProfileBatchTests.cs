@@ -97,6 +97,26 @@ public class ProfileBatchTests
     }
 
     [Fact]
+    public void InstagramProfilePagesAreReadLikeAVisitorSeesThem()
+    {
+        Assert.Equal("nasa", InstagramPage.User("https://www.instagram.com/nasa/"));
+        Assert.Equal("natgeo", InstagramPage.User("https://instagram.com/natgeo/reels/"));
+        Assert.Null(InstagramPage.User("https://www.instagram.com/p/Dfc1mYxFevS/"));
+        Assert.Null(InstagramPage.User("https://www.youtube.com/@nasa"));
+        var json = "{\"posts\":12,\"videos\":[{\"u\":\"https://www.instagram.com/reel/Dfc1mYxFevS/\",\"t\":\"Video by NASA on November 07, 2026. May be an image\"},"
+            + "{\"u\":\"https://www.instagram.com/p/Dfdiuv0lI2K/\",\"t\":\"\"},{\"u\":\"https://evil.example/x\",\"t\":\"\"}]}";
+        foreach (var handed in new[] { json, System.Text.Json.JsonSerializer.Serialize(json) })
+        {
+            var (posts, videos) = InstagramPage.Read(handed);
+            Assert.Equal(12, posts);
+            Assert.Equal(2, videos.Count);
+            Assert.Equal(("shorts", "Dfc1mYxFevS", new DateTime(2026, 11, 7)), (videos[0].Kind, videos[0].Id, videos[0].Date!.Value));
+            Assert.Equal("video", videos[1].Kind);
+        }
+        Assert.Equal(0, InstagramPage.Read("not json").Posts);
+    }
+
+    [Fact]
     public void SavedProfilesAreDueOnTheirSchedule()
     {
         var p = new SavedProfile { CheckHours = 6 };

@@ -42,4 +42,16 @@ final class ProfileBatchTests: XCTestCase {
         XCTAssertEqual(a[a.firstIndex(of: "--playlist-end")! + 1], "100")
         XCTAssertFalse(a.contains("--username") || a.contains("--cookies") || a.contains("--cookies-from-browser"))
     }
+
+    func testInstagramProfilePagesAreReadLikeAVisitorSeesThem() {
+        XCTAssertEqual(InstagramPage.user("https://www.instagram.com/nasa/"), "nasa")
+        XCTAssertEqual(InstagramPage.user("https://instagram.com/natgeo/reels/"), "natgeo")
+        XCTAssertNil(InstagramPage.user("https://www.instagram.com/p/Dfc1mYxFevS/"))
+        let json = #"{"posts":12,"videos":[{"u":"https://www.instagram.com/reel/Dfc1mYxFevS/","t":"Video by NASA on November 07, 2026. May be an image"},{"u":"https://www.instagram.com/p/Dfdiuv0lI2K/","t":""},{"u":"https://evil.example/x","t":""}]}"#
+        let r = InstagramPage.read(json)
+        XCTAssertEqual(r.posts, 12)
+        XCTAssertEqual(r.videos.map(\.kind), ["shorts", "video"])
+        XCTAssertNotNil(r.videos[0].date)
+        XCTAssertEqual(InstagramPage.read("not json").posts, 0)
+    }
 }

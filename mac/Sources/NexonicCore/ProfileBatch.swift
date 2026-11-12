@@ -313,3 +313,80 @@ public enum SavedProfiles {
         try? JSONEncoder().encode(list).write(to: file, options: .atomic)
     }
 }
+
+/// Instagram shows visitors who are not signed in the latest posts of a profile, but only through its own page scripts.
+/// The app opens the profile page in a private web view (no cookies, no sign-in), like a visitor's browser, runs
+/// `script` and reads the video links the page shows. Nothing else of Instagram's is called.
+public enum InstagramPage {
+    static let reserved: Set<String> = ["p", "reel", "reels", "tv", "stories", "explore", "accounts", "direct", "about", "legal",
+                                        "developer", "api", "graphql", "web", "challenge", "emails", "session", "privacy", "terms"]
+
+    /// The user name of an Instagram profile link (instagram.com/name, /name/reels), or nil.
+    public static func user(_ link: String) -> String? {
+        let pattern = #"^https?://(?:www\.)?instagram\.com/([A-Za-z0-9._]{1,30})/?(?:reels/?|videos/?)?(?:[?#].*)?$"#
+        let text = link.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let re = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+              let m = re.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+              let r = Range(m.range(at: 1), in: text) else { return nil }
+        let name = String(text[r])
+        return reserved.contains(name.lowercased()) ? nil : name
+    }
+
+    /// Run in the loaded page: {"posts": links to posts shown, "videos": [{"u": link, "t": picture text}]}.
+    public static let script = #"""
+(() => {
+  const all = [...document.querySelectorAll('a[href*="/reel/"], a[href*="/p/"]')], seen = new Set(), videos = [];
+  for (const a of all) {
+    const link = new URL(a.getAttribute('href'), location.href);
+    const m = link.pathname.match(/\/(p|reel)\/([A-Za-z0-9_-]+)/);
+    if (!m) continue;
+    const alt = (a.querySelector('img') || {}).alt || '';
+    const video = m[1] === 'reel' || /^Video by /.test(alt) || !!a.querySelector('svg[aria-label="Clip"], svg[aria-label="Video"], svg[aria-label="Reel"]');
+    const u = 'https://www.instagram.com/' + m[1] + '/' + m[2] + '/';
+    if (video && !seen.has(u)) { seen.add(u); videos.push({ u, t: alt }); }
+  }
+  return JSON.stringify({ posts: all.length, videos });
+})()
+"""#
+
+    /// What `script` returned: the number of posts the page shows and its videos.
+    public static func read(_ json: String?) -> (posts: Int, videos: [BatchEntry]) {
+        guard let json, let o = (try? JSONSerialization.jsonObject(with: Data(json.utf8))) as? [String: Any] else { return (0, []) }
+        let posts = (o["posts"] as? NSNumber)?.intValue ?? 0
+        var videos: [BatchEntry] = []
+        let dates = DateFormatter()
+        dates.locale = Locale(identifier: "en_US_POSIX")
+        dates.dateFormat = "MMMM d, yyyy"
+        for v in o["videos"] as? [[String: Any]] ?? [] {
+            guard let url = v["u"] as? String, url.hasPrefix("https://www.instagram.com/") else { continue }
+            let text = (v["t"] as? String) ?? ""
+            var date: Date?
+            if let r = text.range(of: #" on [A-Z][a-z]+ \d{1,2}, \d{4}"#, options: .regularExpression) {
+                date = dates.date(from: String(text[r].dropFirst(4)))
+            }
+            var title = text.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+            if title.count > 120 { title = String(title.prefix(120)) + "…" }
+            videos.append(BatchEntry(url: url, title: title.isEmpty ? url : title, duration: nil, date: date,
+                                     kind: url.contains("/reel/") ? "shorts" : "video"))
+        }
+        return (posts, videos)
+    }
+
+    /// Shown with the result: Instagram shows visitors only the latest posts.
+    public static func note(_ posts: Int) -> String {
+        "Instagram shows visitors who are not signed in only the latest \(posts) posts of a profile; Nexonic took the videos among them."
+    }
+
+    /// The result for Profile Batch, as if the engine had listed it.
+    public static func scan(url: String, user: String, posts: Int, videos: [BatchEntry]) -> ProfileBatch.Scan {
+        var s = ProfileBatch.Scan()
+        s.url = url; s.owner = user; s.entries = videos; s.complete = true; s.note = note(posts)
+        return s
+    }
+
+    public static let nothing = "Instagram did not show any posts of this profile to a visitor who is not signed in (it may be private or not exist)."
+
+    public static func noVideos(_ posts: Int) -> String {
+        "None of the latest \(posts) posts Instagram shows visitors of this profile is a video."
+    }
+}

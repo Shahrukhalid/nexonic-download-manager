@@ -1,3 +1,14 @@
+## 0.31.0
+
+**Instagram profiles in Profile Batch** (Windows, Mac, Android)
+- Instagram stopped answering the request Nexonic used to read profiles. Nexonic now opens the profile page the way
+  any visitor's browser does, in a hidden private web view (Windows: the system's Edge WebView2; no sign-in, no
+  cookies), and takes the videos and reels the page shows. Checked on a home connection with @nasa: Instagram showed
+  the latest 12 posts, 6 of them videos.
+- Instagram shows visitors who are not signed in only a profile's latest posts (12 here); the result says so.
+- Linux has no built-in web view: there, open the profile in your browser, right-click the page and choose
+  "Download all links with Nexonic".
+
 ## 0.30.1
 
 Fixes for 0.30.0:

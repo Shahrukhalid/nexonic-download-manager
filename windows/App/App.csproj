@@ -15,6 +15,10 @@
     <Resource Include="app.ico" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Instagram profiles open in a hidden private web view (the system's Edge WebView2 Runtime). -->
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />
   </ItemGroup>
 </Project>

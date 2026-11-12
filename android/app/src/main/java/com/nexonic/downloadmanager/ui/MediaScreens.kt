@@ -154,7 +154,7 @@ fun ProfileBatchSheet(link: String, onDismiss: () -> Unit, message: (String) -> 
                 runCatching { Downloads.discover(url, f.max, false, stopId) { n -> if (n > 0) scope.launch { status = tr("%d found so far…").format(n) } } }
             }
             busy = false
-            r.onSuccess { (entries, name) ->
+            fun show(entries: List<com.nexonic.downloadmanager.core.BatchEntry>, name: String, note: String) {
                 found = entries; owner = name
                 val (take, counts) = pb.choose(entries, f, Downloads::alreadyDownloaded, if (mode == "new") saved(url)?.seen else null)
                 when {
@@ -162,10 +162,26 @@ fun ProfileBatchSheet(link: String, onDismiss: () -> Unit, message: (String) -> 
                     take.isEmpty() -> status = (if (name.isEmpty()) "" else "$name: ") + counts.copy(queued = 0).text
                     else -> download(url, take, counts)
                 }
-                com.nexonic.downloadmanager.video.VideoEngine.lastNote.takeIf { it.isNotEmpty() }?.let { status += "\n" + it }
-            }.onFailure {
-                status = if (it is com.yausername.youtubedl_android.YoutubeDL.CanceledException) tr("Stopped. The videos found so far are kept; Find videos continues from there.")
-                else it.message ?: tr("The list of videos could not be read.")
+                note.takeIf { it.isNotEmpty() }?.let { status += "\n" + it }
+            }
+            r.onSuccess { (entries, name) -> show(entries, name, com.nexonic.downloadmanager.video.VideoEngine.lastNote) }
+            r.onFailure {
+                val user = com.nexonic.downloadmanager.core.InstagramPage.user(url)
+                if (it is com.yausername.youtubedl_android.YoutubeDL.CanceledException) status = tr("Stopped. The videos found so far are kept; Find videos continues from there.")
+                else if (user == null) status = it.message ?: tr("The list of videos could not be read.")
+                else {
+                    // Instagram shows visitors its posts only through its own page: open it like a visitor's browser would.
+                    busy = true
+                    status = tr("Opening the Instagram profile like a visitor's browser…")
+                    val (posts, videos) = runCatching { com.nexonic.downloadmanager.video.InstagramWebView.read(context, user) { !busy } }.getOrDefault(0 to emptyList())
+                    busy = false
+                    val ig = com.nexonic.downloadmanager.core.InstagramPage
+                    when {
+                        posts == 0 -> status = ig.NOTHING
+                        videos.isEmpty() -> status = ig.noVideos(posts)
+                        else -> show(videos, user, ig.note(posts))
+                    }
+                }
             }
         }
     }
