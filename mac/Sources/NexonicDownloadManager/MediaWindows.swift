@@ -108,6 +108,8 @@ struct ProfileBatchView: View {
     init(link: String) { _link = State(initialValue: link); windowLink = link }
 
     @State private var lastLink = ""
+    /// The signed-in search whose result this window shows (its profile address), so it is shown once.
+    @State private var shownSearch = ""
     /// The link this window was opened with (its entry among the Profile Batch windows).
     private let windowLink: String
     @State private var quality = "best"
@@ -227,13 +229,19 @@ struct ProfileBatchView: View {
         .frame(minWidth: 600, minHeight: 560)
         .onAppear { lastLink = link; if !link.isEmpty { find() } }
         // A background listing finished while this window is open: show it (or what visitors see).
+        // The signed-in search of this window's profile is the truth: its count while it runs, its result when it's done
+        // (never what visitors see while it exists).
         .onReceive(manager.$listings) { all in
             let key = ProfileBatch.key(link.trimmingCharacters(in: .whitespacesAndNewlines))
-            if busy, let l = all[key], l.running, l.found > 0 {
-                status = String(format: String(localized: "%d photos and videos found so far. You can close this window: the search keeps going in the downloads list; double-click it there to come back."), l.found)
+            guard let l = all[key], !l.stopped else { return }
+            if l.running {
+                busy = true
+                if l.found > 0 {
+                    status = String(format: String(localized: "%d photos and videos found so far. You can close this window: the search keeps going in the downloads list; double-click it there to come back."), l.found)
+                }
+            } else if l.scan != nil, shownSearch != key {
+                DispatchQueue.main.async { find() }  // after the change is stored
             }
-            guard busy, let l = all[key], !l.running, !l.stopped else { return }
-            DispatchQueue.main.async { find() }  // after the change is stored
         }
     }
 
@@ -278,7 +286,12 @@ struct ProfileBatchView: View {
         if let listing = manager.listings[key], !listing.running, let found = listing.scan {
             // Listed in the background (the extension's Download all): show it.
             busy = false
+            shownSearch = key
             show(found, url: url, filter: f)
+            return
+        }
+        if manager.listings[key]?.running == true {
+            status = String(localized: "Searching every photo and video with your browser's sign-in…")
             return
         }
         if manager.profileCookies[key] != nil {
@@ -300,6 +313,8 @@ struct ProfileBatchView: View {
                     var s = try await SocialWebView.scan(url, site: social.site, owner: social.owner, pages: social.pages, max: f.max,
                                                          found: { n in status = String(format: String(localized: "%d found so far…"), n) },
                                                          stop: { stopRequested })
+                    // A signed-in search of this profile started meanwhile: its result wins.
+                    if let l = manager.listings[key], l.running || l.scan != nil { return }
                     let why = signedInError.map { String(format: String(localized: "The search with your browser's sign-in didn't work (%@), so these are what visitors see."), $0) }
                     s.note = [s.note ?? "", why ?? String(localized: String.LocalizationValue(SocialPages.more(social.site)))].filter { !$0.isEmpty }.joined(separator: "\n")
                     show(s, url: url, filter: f)
