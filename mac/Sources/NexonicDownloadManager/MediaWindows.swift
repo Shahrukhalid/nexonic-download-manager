@@ -270,7 +270,7 @@ struct ProfileBatchView: View {
                     status += "\n" + String(localized: "Still searching with your browser's sign-in; what it finds later follows your choice. You can close this window: the search keeps going in the downloads list.")
                     if let w = l.waiting { status += "\n" + String(format: String(localized: "The site stopped answering for a while; the search continues from where it got to in %d min."), w) }
                 }
-            } else if l.scan != nil, shownSearch != key {
+            } else if l.scan != nil, shownSearch != key, !l.pageOnly {
                 DispatchQueue.main.async { find() }  // after the change is stored
             } else if l.visitorsOnly, busy {
                 DispatchQueue.main.async { find() }  // the signed-in search didn't work: what visitors see, and why
@@ -321,6 +321,34 @@ struct ProfileBatchView: View {
             : String(localized: "Looking for videos… (large profiles can take a few minutes)")
         let proxy = manager.settings.proxy, f = filter, stopFlag = { [self] in stopRequested }
         let key = ProfileBatch.key(url)
+        if let l = manager.listings[key], l.pageOnly, let social = SocialPages.find(url) {
+            // Facebook: the page is read in a hidden view with the browser's sign-in the extension handed over, scrolled
+            // down until it shows no more; each Find Videos reads it again and adds what is new.
+            let cookies = manager.profileCookies[key]?.cookies
+            shownSearch = key
+            status = String(format: String(localized: "Reading the %@ page in the background, scrolling until it shows no more…"), social.site.name)
+            Task { @MainActor in
+                do {
+                    let s = try await SocialWebView.scan(url, site: social.site, owner: social.owner, pages: social.pages, max: ProfileBatch.limit,
+                                                         cookies: cookies, seed: l.entries,
+                                                         found: { n in status = String(format: String(localized: "%d found so far…"), n) },
+                                                         stop: { stopRequested })
+                    manager.listings[key]?.entries = s.entries
+                    manager.listings[key]?.found = s.entries.count
+                    manager.listings[key]?.scan = s
+                    if let row = manager.items.first(where: { $0.listing == true && ProfileBatch.key($0.url.absoluteString) == key })?.id {
+                        manager.update(row) { $0.streamDone = s.entries.count }
+                    }
+                    show(s, url: url, filter: f)
+                } catch is CancellationError {
+                    status = String(localized: "Stopped.")
+                } catch {
+                    status = error.localizedDescription
+                }
+                busy = false
+            }
+            return
+        }
         if let listing = manager.listings[key], !listing.running, let found = listing.scan {
             // Listed in the background (the extension's Download all): show it.
             busy = false

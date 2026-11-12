@@ -20,6 +20,9 @@ struct ProfileListing {
     var owner = ""
     /// Everything found so far: the page's own posts first (from the extension), then what the search adds.
     var entries: [BatchEntry] = []
+    /// A page the gallery engine can't list (Facebook): Profile Batch reads it itself in a hidden view, each time Find
+    /// Videos is clicked, with the page's own posts as a start.
+    var pageOnly = false
     /// The site stopped answering for a while: the search continues from where it got to after this many minutes.
     var waiting: Int?
     /// What the user chose in Profile Batch: what the search finds later is added the same way.
@@ -80,7 +83,8 @@ extension DownloadManager {
         // is, without an error row; with none, Profile Batch takes what visitors see.
         guard GalleryDl.isProfile(url), signedIn != nil || browser != nil else {
             listing.running = false
-            if seed.isEmpty { listing.visitorsOnly = true }
+            if SocialPages.find(url) != nil { listing.pageOnly = true }  // read in Profile Batch's hidden view
+            else if seed.isEmpty { listing.visitorsOnly = true }
             else {
                 listing.scan = SocialPages.scan(url: url, owner: listing.owner, entries: seed,
                     note: String(localized: "This site lets Nexonic take only the videos the page has loaded. To add more, scroll further down the page and click Download all again."))
