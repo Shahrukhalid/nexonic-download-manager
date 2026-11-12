@@ -15,7 +15,8 @@ enum MediaWindows {
     /// downloads list, or what visitors see). Profile Batch in the toolbar, or double-clicking the search's row, shows it again.
     @MainActor static func closePlaylist(_ link: String) {
         let key = link.isEmpty ? "" : ProfileBatch.key(link)
-        guard let (k, w) = playlists[key].map({ (key, $0) }) ?? playlists.first(where: { $0.value.isKeyWindow }).map({ ($0.key, $0.value) }) else { return }
+        let k = playlists[key] != nil ? key : playlists.first(where: { $0.value.isKeyWindow })?.key
+        guard let k, let w = playlists[k] else { return }
         w.orderOut(nil)
         lastHidden = k
     }
