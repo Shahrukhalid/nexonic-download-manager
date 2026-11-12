@@ -23,21 +23,21 @@ public class GalleryEngineTests
     [Fact]
     public void AProfileListingBecomesPhotosAndVideosToChooseFrom()
     {
-        Assert.Equal(new[] { "-j", "--range", "1-300", "-o", GalleryDl.Pace, "--config", "/p/g.json", "--", "https://site.test/u" },
+        Assert.Equal(new[] { "-N", GalleryList.Format, "--range", "1-300", "-o", GalleryDl.Pace, "--config", "/p/g.json", "--", "https://site.test/u" },
             GalleryList.Arguments("https://site.test/u", 300, "/p/g.json"));
-        const string json = """
-            [[2, {"username": "u"}],
-             [3, "https://scontent.cdninstagram.com/v/a.jpg?sig=1", {"extension": "jpg", "post_shortcode": "AbC", "description": "Sunny day\nat home", "num": 1, "count": 2, "date": "2025-03-25 10:00:00"}],
-             [3, "https://scontent.cdninstagram.com/v/b.mp4?sig=2", {"extension": "mp4", "post_shortcode": "AbC", "description": "Sunny day\nat home", "num": 2, "count": 2}],
-             [3, "https://scontent.cdninstagram.com/v/b.mp4?sig=2", {"extension": "mp4"}],
-             [6, "https://site.test/other", {}]]
+        const string lines = """
+            ["https://scontent.cdninstagram.com/v/a.jpg?sig=1", "jpg", "AbC", null, null, "1", "a", "Sunny day\nat home", null, null, null, 1, 2, "2025-03-25 10:00:00", null, "amna"]
+            ["https://scontent.cdninstagram.com/v/b.mp4?sig=2", "mp4", "AbC", null, null, "2", "b", null, null, null, null, 2, 2, null, 12.5, "amna"]
+            ["https://scontent.cdninstagram.com/v/b.mp4?sig=2", "mp4", null, null, null, null, null, null, null, null, null, null, null, null, null, null]
+            not json
             """;
-        var list = GalleryList.Entries(json, "u");
+        var (list, owner) = GalleryList.Entries(lines);
+        Assert.Equal("amna", owner);
         Assert.Equal(2, list.Count);
         Assert.Equal(("Sunny day at home [AbC-1].jpg", "photo", true), (list[0].Title, list[0].Kind, list[0].Direct));
-        Assert.Equal(("Sunny day at home [AbC-2].mp4", "video"), (list[1].Title, list[1].Kind));
+        Assert.Equal(("amna [AbC-2].mp4", "video", (double?)12.5), (list[1].Title, list[1].Kind, list[1].Duration));
         Assert.Equal(new DateTime(2025, 3, 25, 10, 0, 0, DateTimeKind.Utc), list[0].Date);
-        Assert.Empty(GalleryList.Entries("not json", "u"));
+        Assert.Empty(GalleryList.Entries("not json").Entries);
         // Signed addresses of the same picture count as one file.
         Assert.Equal(ProfileBatch.Key("https://scontent.cdninstagram.com/v/a.jpg?sig=1"), ProfileBatch.Key("https://scontent.cdninstagram.com/v/a.jpg?sig=9"));
     }

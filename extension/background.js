@@ -283,8 +283,8 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
         // One link the user picked (video button, popup, page menu): the app shows its download window.
         const extra = { referrer, later: !!msg.later, browser: true };
         if (msg.stream) Object.assign(extra, { stream: true, fileName: msg.fileName });
-        else if (msg.site && !msg.audioOnly && /^https:\/\/([a-z]+\.)?instagram\.com\/(?:[^/]+\/)?(p|reel|tv)\//.test(msg.url)) {
-          // An Instagram post: Profile Batch opens with it and lists its video or photos with this browser's sign-in (the
+        else if (msg.site && !msg.audioOnly && /^https:\/\/([a-z]+\.)?instagram\.com\/(?:[^/]+\/)?(p|reel|tv)\//.test(msg.url) || msg.site && !msg.audioOnly && /^https:\/\/([a-z]+\.)?instagram\.com\//.test(msg.url) && profileOf(msg.url)) {
+          // An Instagram post (or a whole profile, from "This page's video" on a profile page): Profile Batch opens with it and lists its video or photos with this browser's sign-in (the
           // video engine can't read Instagram posts for signed-in browsers); the user picks Download Now or Add to Queue.
           return { ok: await send(msg.url, { referrer, profile: true }) };
         }

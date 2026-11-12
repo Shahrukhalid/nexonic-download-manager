@@ -122,51 +122,47 @@ public enum GalleryDl {
 public extension GalleryDl {
     static let videoExtensions: Set<String> = ["mp4", "webm", "mov", "m4v", "mkv"]
 
-    /// The engine's arguments for listing: one JSON document of every file, at most `max` of them.
+    /// One line per file while listing: its address and the details used for its name, as a JSON array (the engine
+    /// writes them as it finds them, so the count can be shown).
+    static let listFormat = "[{_url!j},{extension!j},{post_shortcode!j},{shortcode!j},{post_id!j},{id!j},{filename!j},{description!j},{content!j},{title!j},{desc!j},{num!j},{count!j},{date!j},{duration!j},{username!j}]"
+
+    /// The engine's arguments for listing: a line per file (nothing downloaded), at most `max` of them.
     static func listArguments(url: String, max: Int, settingsFile: String?) -> [String] {
-        var args = ["-j", "--range", "1-\(Swift.max(1, max))", "-o", pace]
+        var args = ["-N", listFormat, "--range", "1-\(Swift.max(1, max))", "-o", pace]
         if let settingsFile { args += ["--config", settingsFile] }
         return args + ["--", url]
     }
 
-    /// The files in the engine's listing: the picture or video address, named "description [post id].ext".
-    static func entries(_ data: Data, owner: String) -> [BatchEntry] {
-        guard let messages = try? JSONSerialization.jsonObject(with: data) as? [Any] else { return [] }
+    /// The files in the engine's listing (its lines): the picture or video address, named "description [post id].ext";
+    /// and the account they belong to (their folder), "" when it doesn't say.
+    static func entries(_ text: String, owner fallback: String = "") -> (entries: [BatchEntry], owner: String) {
+        let iso = ISO8601DateFormatter()
         let df = DateFormatter(); df.dateFormat = "yyyy-MM-dd HH:mm:ss"; df.locale = Locale(identifier: "en_US_POSIX")
         df.timeZone = TimeZone(identifier: "UTC")
-        var list: [BatchEntry] = [], seen = Set<String>()
-        for case let m as [Any] in messages {
-            guard m.count >= 3, (m[0] as? Int) == 3, let url = m[1] as? String, url.hasPrefix("https://"),
-                  let kw = m[2] as? [String: Any], seen.insert(url).inserted else { continue }
-            let text = { (k: String) -> String in (kw[k] as? String) ?? (kw[k] as? NSNumber)?.stringValue ?? "" }
-            let ext = text("extension").lowercased().isEmpty ? "jpg" : text("extension").lowercased()
-            let post = ["post_shortcode", "shortcode", "post_id", "id", "filename"].map(text).first { !$0.isEmpty } ?? ""
-            let num = (kw["num"] as? Int) ?? 0, count = (kw["count"] as? Int) ?? 0
-            let words = ["description", "content", "title", "desc"].map(text).first { !$0.isEmpty } ?? ""
-            var caption = words.replacingOccurrences(of: "\n", with: " ").trimmingCharacters(in: .whitespaces)
+        var list: [BatchEntry] = [], seen = Set<String>(), owner = ""
+        for line in text.split(whereSeparator: \.isNewline) {
+            guard let f = (try? JSONSerialization.jsonObject(with: Data(line.utf8))) as? [Any], f.count >= 16,
+                  let url = f[0] as? String, url.hasPrefix("https://"), seen.insert(url).inserted else { continue }
+            let text = { (i: Int) -> String in (f[i] as? String) ?? (f[i] as? NSNumber)?.stringValue ?? "" }
+            if owner.isEmpty { owner = text(15) }
+            let ext = text(1).lowercased().isEmpty ? "jpg" : text(1).lowercased()
+            let post = [2, 3, 4, 5, 6].map(text).first { !$0.isEmpty } ?? ""
+            let num = (f[11] as? Int) ?? 0, count = (f[12] as? Int) ?? 0
+            var caption = ([7, 8, 9, 10].map(text).first { !$0.isEmpty } ?? "").replacingOccurrences(of: "\n", with: " ").trimmingCharacters(in: .whitespaces)
             if caption.count > 100 { caption = String(caption.prefix(100)).trimmingCharacters(in: .whitespaces) }
-            let label = caption.isEmpty ? owner : caption
+            let label = caption.isEmpty ? (owner.isEmpty ? fallback : owner) : caption
             let name = FileNames.sanitize("\(label) [\(post)\(count > 1 && num > 0 ? "-\(num)" : "")].\(ext)")
-            list.append(BatchEntry(url: url, title: name, duration: (kw["duration"] as? NSNumber)?.doubleValue,
-                                   date: df.date(from: text("date")), kind: videoExtensions.contains(ext) ? "video" : "photo",
-                                   available: true, direct: true))
+            list.append(BatchEntry(url: url, title: name, duration: (f[14] as? NSNumber)?.doubleValue,
+                                   date: df.date(from: text(13)) ?? iso.date(from: text(13) + (text(13).contains("+") || text(13).hasSuffix("Z") ? "" : "Z")),
+                                   kind: videoExtensions.contains(ext) ? "video" : "photo", available: true, direct: true))
         }
-        return list
-    }
-
-    /// The account the listed files belong to (its folder), from the engine's details: "" when it doesn't say.
-    static func owner(_ data: Data) -> String {
-        guard let messages = try? JSONSerialization.jsonObject(with: data) as? [Any] else { return "" }
-        for case let m as [Any] in messages {
-            guard let kw = m.last as? [String: Any] else { continue }
-            for k in ["username", "owner_username", "author", "user"] { if let v = kw[k] as? String, !v.isEmpty { return v } }
-        }
-        return ""
+        return (list, owner)
     }
 
     /// Lists a profile with the engine (nil when it can't: not installed, or the site or address isn't one it knows).
+    /// `found(count)` reports progress as the engine finds files.
     static func list(_ url: String, cookies: String?, userAgent: String?, proxy: ProxySettings?, max: Int,
-                     stop: @escaping () -> Bool) throws -> (entries: [BatchEntry], owner: String)? {
+                     found: @escaping (Int) -> Void = { _ in }, stop: @escaping () -> Bool) throws -> (entries: [BatchEntry], owner: String)? {
         guard ensureInstalled() else { return nil }
         let settingsFile = try writeSettings(settings(cookies: cookies, userAgent: userAgent, username: nil, password: nil,
                                                       proxyURL: proxy.flatMap(SiteVideo.proxyURL)))
@@ -174,18 +170,36 @@ public extension GalleryDl {
         let p = Process()
         p.executableURL = program
         p.arguments = listArguments(url: url, max: max, settingsFile: settingsFile?.path)
+        var env = ProcessInfo.processInfo.environment; env["PYTHONIOENCODING"] = "utf-8"; p.environment = env
         let out = Pipe()
         p.standardOutput = out
         p.standardError = FileHandle.nullDevice
         try p.run()
-        final class Box: @unchecked Sendable { var data = Data() }
-        let box = Box(), done = DispatchSemaphore(value: 0), handle = out.fileHandleForReading
-        DispatchQueue.global(qos: .userInitiated).async { box.data = handle.readDataToEndOfFile(); done.signal() }
-        while done.wait(timeout: .now() + 0.5) == .timedOut { if stop() { p.terminate(); throw CancellationError() } }
+        final class Box: @unchecked Sendable {
+            let lock = NSLock(); var data = Data(); var done = false
+            var lines: Int { lock.lock(); defer { lock.unlock() }; return data.reduce(0) { $1 == 10 ? $0 + 1 : $0 } }
+        }
+        let box = Box(), handle = out.fileHandleForReading
+        DispatchQueue.global(qos: .userInitiated).async {
+            while true {
+                let chunk = handle.availableData
+                box.lock.lock()
+                if chunk.isEmpty { box.done = true; box.lock.unlock(); break }
+                box.data.append(chunk); box.lock.unlock()
+            }
+        }
+        var last = -1
+        while true {
+            Thread.sleep(forTimeInterval: 0.5)
+            if stop() { p.terminate(); throw CancellationError() }
+            let n = box.lines
+            if n != last { last = n; found(n) }
+            box.lock.lock(); let finished = box.done; box.lock.unlock()
+            if finished { break }
+        }
         p.waitUntilExit()
-        let who = owner(box.data)
-        let found = entries(box.data, owner: who)
-        return found.isEmpty ? nil : (found, who)
+        let listed = entries(String(decoding: box.data, as: UTF8.self))
+        return listed.entries.isEmpty ? nil : listed
     }
 }
 

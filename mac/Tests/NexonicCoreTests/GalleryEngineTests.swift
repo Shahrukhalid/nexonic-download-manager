@@ -19,17 +19,19 @@ final class GalleryEngineTests: XCTestCase {
 
     func testAProfileListingBecomesPhotosAndVideosToChooseFrom() {
         XCTAssertEqual(GalleryDl.listArguments(url: "https://s.test/u", max: 300, settingsFile: nil),
-                       ["-j", "--range", "1-300", "-o", GalleryDl.pace, "--", "https://s.test/u"])
-        let json = #"""
-        [[2, {"username": "u"}],
-         [3, "https://scontent.cdninstagram.com/v/a.jpg?sig=1", {"extension": "jpg", "post_shortcode": "AbC", "description": "Sunny day\nat home", "num": 1, "count": 2}],
-         [3, "https://scontent.cdninstagram.com/v/b.mp4?sig=2", {"extension": "mp4", "post_shortcode": "AbC", "num": 2, "count": 2}],
-         [6, "https://s.test/other", {}]]
+                       ["-N", GalleryDl.listFormat, "--range", "1-300", "-o", GalleryDl.pace, "--", "https://s.test/u"])
+        let lines = #"""
+        ["https://scontent.cdninstagram.com/v/a.jpg?sig=1", "jpg", "AbC", null, null, "1", "a", "Sunny day\nat home", null, null, null, 1, 2, "2025-03-25 10:00:00", null, "amna"]
+        ["https://scontent.cdninstagram.com/v/b.mp4?sig=2", "mp4", "AbC", null, null, "2", "b", null, null, null, null, 2, 2, null, 12.5, "amna"]
+        ["https://scontent.cdninstagram.com/v/b.mp4?sig=2", "mp4", null, null, null, null, null, null, null, null, null, null, null, null, null, null]
+        not json
         """#
-        let list = GalleryDl.entries(Data(json.utf8), owner: "u")
-        XCTAssertEqual(list.map(\.title), ["Sunny day at home [AbC-1].jpg", "u [AbC-2].mp4"])
-        XCTAssertEqual(list.map(\.kind), ["photo", "video"])
-        XCTAssertEqual(list.first?.direct, true)
+        let listed = GalleryDl.entries(lines)
+        XCTAssertEqual(listed.owner, "amna")
+        XCTAssertEqual(listed.entries.map(\.title), ["Sunny day at home [AbC-1].jpg", "amna [AbC-2].mp4"])
+        XCTAssertEqual(listed.entries.map(\.kind), ["photo", "video"])
+        XCTAssertEqual(listed.entries.first?.direct, true)
+        XCTAssertNotNil(listed.entries.first?.date)
         XCTAssertEqual(ProfileBatch.key("https://scontent.cdninstagram.com/v/a.jpg?sig=1"), ProfileBatch.key("https://scontent.cdninstagram.com/v/a.jpg?sig=9"))
     }
 

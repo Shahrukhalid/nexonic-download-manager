@@ -8,6 +8,8 @@ enum MediaWindows {
     @MainActor private static var playlist: NSWindow?
     @MainActor private static var playlistLink = ""
 
+    @MainActor static func closePlaylist() { playlist?.close() }
+
     /// Profile Batch is open with this link.
     @MainActor static func isShowing(_ link: String) -> Bool { playlist != nil && ProfileBatch.key(playlistLink) == ProfileBatch.key(link) }
     @MainActor private static var library: NSWindow?
@@ -15,7 +17,7 @@ enum MediaWindows {
     /// Lists a playlist's or channel's videos; the chosen ones open in the Add window.
     @MainActor static func showPlaylist(_ link: String = "", replace: Bool = false) {
         if let w = playlist {
-            if !replace { w.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true); return }
+            if !replace { NSApp.activate(ignoringOtherApps: true); w.makeKeyAndOrderFront(nil); w.orderFrontRegardless(); return }
             w.close(); playlist = nil
         }
         let start = link.isEmpty ? (NSPasteboard.general.string(forType: .string).flatMap { DownloadJob(url: $0.trimmingCharacters(in: .whitespacesAndNewlines)).validURL != nil ? $0 : nil } ?? "") : link
@@ -30,8 +32,9 @@ enum MediaWindows {
         NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: w, queue: .main) { _ in
             Task { @MainActor in playlist = nil }
         }
-        w.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        w.makeKeyAndOrderFront(nil)
+        w.orderFrontRegardless()  // in front of the downloads window, also when the browser handed the profile over
     }
 
     /// Finished videos and music with preview pictures.
@@ -195,6 +198,8 @@ struct ProfileBatchView: View {
                     Button("JSON") { export("json") }
                 }.disabled(scan == nil).fixedSize()
                 Spacer()
+                // While a profile is listed in the background, Close leaves it running (Nexonic reopens Profile Batch).
+                Button("Close") { MediaWindows.closePlaylist() }
                 Button("Stop") {
                     stopRequested = true
                     let key = ProfileBatch.key(link.trimmingCharacters(in: .whitespacesAndNewlines))
@@ -215,6 +220,9 @@ struct ProfileBatchView: View {
         // A background listing finished while this window is open: show it (or what visitors see).
         .onReceive(manager.$listings) { all in
             let key = ProfileBatch.key(link.trimmingCharacters(in: .whitespacesAndNewlines))
+            if busy, let l = all[key], l.running, l.found > 0 {
+                status = String(format: String(localized: "%d photos and videos found so far… You can close this window: Nexonic keeps going and opens Profile Batch again when it's done."), l.found)
+            }
             guard busy, let l = all[key], !l.running, !l.stopped else { return }
             DispatchQueue.main.async { find() }  // after the change is stored
         }

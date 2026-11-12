@@ -15,6 +15,7 @@ struct ProfileListing {
     let stop = StopFlag()
     var stopped = false
     var visitorsOnly = false
+    var found = 0
     var scan: ProfileBatch.Scan?
 }
 
@@ -56,7 +57,8 @@ extension DownloadManager {
         let stop = listing.stop
         DispatchQueue.global(qos: .userInitiated).async {
             let result = Result { try GalleryDl.list(SocialPages.listable(url), cookies: signedIn.cookies, userAgent: signedIn.userAgent, proxy: proxy,
-                                                     max: max, stop: { stop.isSet }) }
+                                                     max: max,
+                                                     found: { n in Task { @MainActor in self.listings[key]?.found = n } }, stop: { stop.isSet }) }
             Task { @MainActor in
                 var l = self.listings[key] ?? ProfileListing(url: url)
                 l.running = false

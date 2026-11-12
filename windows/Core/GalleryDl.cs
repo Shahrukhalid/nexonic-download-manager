@@ -152,67 +152,59 @@ public static class GalleryList
 {
     static readonly HashSet<string> VideoExtensions = new(StringComparer.OrdinalIgnoreCase) { "mp4", "webm", "mov", "m4v", "mkv" };
 
-    /// <summary>The engine's arguments for listing: one JSON document of every file, at most <paramref name="max"/> of them.</summary>
+    /// <summary>
+    /// One line per file while listing: its address and the details used for its name, as a JSON array (the engine writes
+    /// them as it finds them).
+    /// </summary>
+    public const string Format = "[{_url!j},{extension!j},{post_shortcode!j},{shortcode!j},{post_id!j},{id!j},{filename!j},{description!j},{content!j},{title!j},{desc!j},{num!j},{count!j},{date!j},{duration!j},{username!j}]";
+
+    /// <summary>The engine's arguments for listing: a line per file (nothing downloaded), at most <paramref name="max"/> of them.</summary>
     public static List<string> Arguments(string url, int max, string? settingsFile)
     {
-        var args = new List<string> { "-j", "--range", "1-" + Math.Max(1, max), "-o", GalleryDl.Pace };
+        var args = new List<string> { "-N", Format, "--range", "1-" + Math.Max(1, max), "-o", GalleryDl.Pace };
         if (settingsFile != null) args.AddRange(new[] { "--config", settingsFile });
         args.Add("--");
         args.Add(url);
         return args;
     }
 
-    /// <summary>The files in the engine's listing: the picture or video address, named "description [post id].ext".</summary>
-    public static List<BatchEntry> Entries(string json, string owner)
+    /// <summary>
+    /// The files in the engine's listing (its lines): the picture or video address, named "description [post id].ext";
+    /// and the account they belong to (their folder), "" when it doesn't say.
+    /// </summary>
+    public static (List<BatchEntry> Entries, string Owner) Entries(string lines, string fallback = "")
     {
         var list = new List<BatchEntry>();
         var seen = new HashSet<string>();
-        JsonDocument doc;
-        try { doc = JsonDocument.Parse(json); } catch (JsonException) { return list; }
-        using (doc)
+        var owner = "";
+        foreach (var line in lines.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
-            if (doc.RootElement.ValueKind != JsonValueKind.Array) return list;
-            foreach (var m in doc.RootElement.EnumerateArray())
+            JsonDocument doc;
+            try { doc = JsonDocument.Parse(line); } catch (JsonException) { continue; }
+            using (doc)
             {
-                if (m.ValueKind != JsonValueKind.Array || m.GetArrayLength() < 3 || m[0].ValueKind != JsonValueKind.Number || m[0].GetInt32() != 3
-                    || m[1].ValueKind != JsonValueKind.String || m[2].ValueKind != JsonValueKind.Object) continue;
-                var url = m[1].GetString()!;
+                var f = doc.RootElement;
+                if (f.ValueKind != JsonValueKind.Array || f.GetArrayLength() < 16 || f[0].ValueKind != JsonValueKind.String) continue;
+                var url = f[0].GetString()!;
                 if (!url.StartsWith("https://", StringComparison.Ordinal) || !seen.Add(url)) continue;
-                var kw = m[2];
-                string Text(string k) => kw.TryGetProperty(k, out var v) ? v.ValueKind switch
-                { JsonValueKind.String => v.GetString() ?? "", JsonValueKind.Number => v.GetRawText(), _ => "" } : "";
-                int Int(string k) => kw.TryGetProperty(k, out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetInt32(out var n) ? n : 0;
-                var ext = Text("extension").ToLowerInvariant();
+                string Text(int i) => f[i].ValueKind switch { JsonValueKind.String => f[i].GetString() ?? "", JsonValueKind.Number => f[i].GetRawText(), _ => "" };
+                int Int(int i) => f[i].ValueKind == JsonValueKind.Number && f[i].TryGetInt32(out var n) ? n : 0;
+                if (owner.Length == 0) owner = Text(15);
+                var ext = Text(1).ToLowerInvariant();
                 if (ext.Length == 0) ext = "jpg";
-                var post = new[] { "post_shortcode", "shortcode", "post_id", "id", "filename" }.Select(Text).FirstOrDefault(x => x.Length > 0) ?? "";
-                var caption = (new[] { "description", "content", "title", "desc" }.Select(Text).FirstOrDefault(x => x.Length > 0) ?? "")
-                    .Replace('\n', ' ').Replace('\r', ' ').Trim();
+                var post = new[] { 2, 3, 4, 5, 6 }.Select(Text).FirstOrDefault(x => x.Length > 0) ?? "";
+                var caption = (new[] { 7, 8, 9, 10 }.Select(Text).FirstOrDefault(x => x.Length > 0) ?? "").Replace('\n', ' ').Replace('\r', ' ').Trim();
                 if (caption.Length > 100) caption = caption[..100].Trim();
-                var part = Int("count") > 1 && Int("num") > 0 ? "-" + Int("num") : "";
-                var name = FileNames.Sanitize($"{(caption.Length > 0 ? caption : owner)} [{post}{part}].{ext}");
-                DateTime? date = DateTime.TryParseExact(Text("date"), "yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture,
+                var part = Int(12) > 1 && Int(11) > 0 ? "-" + Int(11) : "";
+                var label = caption.Length > 0 ? caption : owner.Length > 0 ? owner : fallback;
+                var name = FileNames.Sanitize($"{label} [{post}{part}].{ext}");
+                DateTime? date = DateTime.TryParse(Text(13), System.Globalization.CultureInfo.InvariantCulture,
                     System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out var d) ? d : null;
-                double? seconds = kw.TryGetProperty("duration", out var du) && du.ValueKind == JsonValueKind.Number ? du.GetDouble() : null;
+                double? seconds = f[14].ValueKind == JsonValueKind.Number ? f[14].GetDouble() : null;
                 list.Add(new BatchEntry(url, name, seconds, date, VideoExtensions.Contains(ext) ? "video" : "photo", Direct: true));
             }
         }
-        return list;
-    }
-
-    /// <summary>The account the listed files belong to (its folder), from the engine's details: "" when it doesn't say.</summary>
-    public static string Owner(string json)
-    {
-        try
-        {
-            using var doc = JsonDocument.Parse(json);
-            if (doc.RootElement.ValueKind != JsonValueKind.Array) return "";
-            foreach (var m in doc.RootElement.EnumerateArray())
-                if (m.ValueKind == JsonValueKind.Array && m.GetArrayLength() > 0 && m[m.GetArrayLength() - 1] is { ValueKind: JsonValueKind.Object } kw)
-                    foreach (var k in new[] { "username", "owner_username", "author", "user" })
-                        if (kw.TryGetProperty(k, out var v) && v.ValueKind == JsonValueKind.String && v.GetString() is { Length: > 0 } name) return name;
-        }
-        catch (JsonException) { }
-        return "";
+        return (list, owner);
     }
 
     /// <summary>Lists a profile with the engine; null when it can't (no build here, not installed, or a site or address it doesn't know).</summary>
@@ -235,9 +227,8 @@ public static class GalleryList
             var output = await p.StandardOutput.ReadToEndAsync(cancel);
             await p.WaitForExitAsync(cancel);
             _ = await errors;
-            var owner = Owner(output);
-            var found = Entries(output, owner);
-            return found.Count == 0 ? null : (found, owner);
+            var listed = Entries(output);
+            return listed.Entries.Count == 0 ? null : listed;
         }
         finally { if (settingsFile != null) try { File.Delete(settingsFile); } catch { } }
     }
