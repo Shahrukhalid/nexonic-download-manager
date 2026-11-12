@@ -143,7 +143,7 @@ public static partial class Dialogs
                 if (m.Listings.TryGetValue(key, out var listing) && listing.Scan is { } listed && (!listing.Running || listing.Follow == null))
                     scan = listed;  // done, or the page's own posts while the rest is found (they can be downloaded now)
                 else if (listing is { Running: true }) { status.Text = searching; return; }
-                else if (m.ProfileCookies.ContainsKey(key))
+                else if (m.ProfileCookies.ContainsKey(key) && GalleryList.IsProfile(url))
                 {
                     status.Text = searching;
                     m.StartListing(url, filter.Max);

@@ -152,6 +152,21 @@ public static class GalleryList
 {
     static readonly HashSet<string> VideoExtensions = new(StringComparer.OrdinalIgnoreCase) { "mp4", "webm", "mov", "m4v", "mkv" };
 
+    /// <summary>Sites whose profiles the engine lists completely with a browser's sign-in (Facebook pages are not among them).</summary>
+    static readonly string[] ProfileSites = { "instagram.com", "tiktok.com", "x.com", "twitter.com", "threads.net", "threads.com", "pinterest.com",
+        "reddit.com", "tumblr.com", "bsky.app", "vk.com", "flickr.com", "deviantart.com" };
+
+    /// <summary>A profile (not a single post) on one of those sites.</summary>
+    public static bool IsProfile(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var u)) return false;
+        var host = u.Host.ToLowerInvariant();
+        if (!ProfileSites.Any(s => host == s || host.EndsWith("." + s))) return false;
+        var first = u.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.ToLowerInvariant() ?? "";
+        return first.Length > 0 && !new[] { "p", "reel", "tv", "stories", "explore", "accounts", "direct", "video", "status", "i", "home", "search",
+            "settings", "messages", "notifications", "login", "share", "hashtag", "tag", "watch" }.Contains(first);
+    }
+
     /// <summary>
     /// One line per file while listing: its address and the details used for its name, as a JSON array (the engine writes
     /// them as it finds them).

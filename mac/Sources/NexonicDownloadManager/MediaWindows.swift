@@ -130,6 +130,8 @@ struct ProfileBatchView: View {
     @State private var pending: [BatchEntry] = []
     @State private var pendingCounts: BatchCounts?
     @State private var ownFolder = true
+    /// Where this batch is saved (the downloads folder until another is chosen).
+    @State private var saveFolder: URL?
     @State private var parallel = 2
     @State private var useFrom = false
     @State private var useTo = false
@@ -179,7 +181,13 @@ struct ProfileBatchView: View {
                 }
                 LabeledContent("Save to") {
                     HStack {
-                        Text(manager.settings.startFolder.path).lineLimit(1).truncationMode(.middle)
+                        Text((saveFolder ?? manager.settings.startFolder).path).lineLimit(1).truncationMode(.middle)
+                        Button("Choose…") {
+                            let panel = NSOpenPanel()
+                            panel.canChooseDirectories = true; panel.canChooseFiles = false; panel.canCreateDirectories = true
+                            panel.directoryURL = saveFolder ?? manager.settings.startFolder
+                            if panel.runModal() == .OK, let u = panel.url { saveFolder = u }
+                        }
                         Toggle("A folder for each profile", isOn: $ownFolder)
                     }
                 }
@@ -269,7 +277,8 @@ struct ProfileBatchView: View {
     }
 
     private func target(_ s: ProfileBatch.Scan) -> URL {
-        ownFolder ? ProfileBatch.folder(base: manager.settings.startFolder, owner: s.owner, url: s.url) : manager.settings.startFolder
+        let base = saveFolder ?? manager.settings.startFolder
+        return ownFolder ? ProfileBatch.folder(base: base, owner: s.owner, url: s.url) : base
     }
 
     /// Download Now or Add to Queue: the chosen videos of the preview, or everything that was found.

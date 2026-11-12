@@ -74,10 +74,15 @@ extension DownloadManager {
         var listing = ProfileListing(url: url, running: true)
         listing.owner = SocialPages.find(url)?.owner ?? ""
         listing.entries = seed; listing.found = seed.count
-        guard signedIn != nil || browser != nil else {
-            // No sign-in to search with: the page's own posts are what there is.
+        // Facebook and other sites the engine can't list (or no sign-in to list with): the page's own posts are what there
+        // is, without an error row; with none, Profile Batch takes what visitors see.
+        guard GalleryDl.isProfile(url), signedIn != nil || browser != nil else {
             listing.running = false
-            if !seed.isEmpty { listing.scan = SocialPages.scan(url: url, owner: listing.owner, entries: seed, note: "") }
+            if seed.isEmpty { listing.visitorsOnly = true }
+            else {
+                listing.scan = SocialPages.scan(url: url, owner: listing.owner, entries: seed,
+                    note: String(localized: "This site lets Nexonic take only the videos the page has loaded. To add more, scroll further down the page and click Download all again."))
+            }
             listings[key] = listing
             return
         }
@@ -157,8 +162,8 @@ extension DownloadManager {
     /// the default browser's sign-in can be read (and an earlier try didn't fail).
     func canSearchSignedIn(_ url: String) -> Bool {
         let key = ProfileBatch.key(url)
-        if profileCookies[key] != nil { return true }
-        return GalleryDl.isProfile(url) && defaultBrowser != nil && listings[key]?.visitorsOnly != true
+        guard GalleryDl.isProfile(url), listings[key]?.visitorsOnly != true else { return false }
+        return profileCookies[key] != nil || defaultBrowser != nil
     }
 
     func alreadyDownloaded(_ url: String) -> Bool {

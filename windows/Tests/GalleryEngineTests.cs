@@ -93,4 +93,12 @@ public class GalleryEngineTests
         Assert.Equal(1234, r.Received);
         Assert.True(new DownloadProviders().Create(r, new DownloadContext(1, new(), false, new() { Mode = ProxyMode.None }, new())) is GalleryTransfer);
     }
+
+    [Fact]
+    public void FacebookPagesAreNotHandedToTheEngine()
+    {
+        Assert.True(GalleryList.IsProfile("https://www.instagram.com/someone/"));
+        Assert.False(GalleryList.IsProfile("https://www.instagram.com/p/AbC/"));
+        Assert.False(GalleryList.IsProfile("https://www.facebook.com/krunchix/reels/"));
+    }
 }

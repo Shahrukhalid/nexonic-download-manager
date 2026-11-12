@@ -79,7 +79,19 @@ public sealed partial class DownloadManager
         var listing = Listings[key] = new ProfileListing { Url = url, Running = true };
         seed ??= new();
         if (seed.Count > 0) listing.Scan = new ProfileBatch.Scan { Url = url, Owner = social?.Owner ?? "", Entries = seed };
-        if (!ProfileCookies.TryGetValue(key, out var signedIn)) { listing.Running = false; return; }
+        // Facebook and other sites the engine can't list (or no sign-in to list with): the page's own posts are what there
+        // is; with none, Profile Batch takes what visitors see.
+        if (!GalleryList.IsProfile(url) || !ProfileCookies.TryGetValue(key, out var signedIn))
+        {
+            listing.Running = false;
+            if (listing.Scan != null)
+            {
+                listing.Scan.Complete = true;
+                listing.Scan.Note = L.T("This site lets Nexonic take only the videos the page has loaded. To add more, scroll further down the page and click Download all again.");
+            }
+            else { listing.VisitorsOnly = true; ProfileCookies.Remove(key); }
+            return;
+        }
         var proxy = HostProfiles.Match(Settings.HostProfiles, url)?.Proxy ?? Settings.Proxy;
         (List<BatchEntry> Entries, string Owner)? found = null;
         var problem = "";
