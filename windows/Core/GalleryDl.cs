@@ -224,30 +224,73 @@ public static class GalleryList
     }
 
     /// <summary>Lists a profile with the engine; null when it can't (no build here, not installed, or a site or address it doesn't know).</summary>
-    public static async Task<(List<BatchEntry> Entries, string Owner)?> ListAsync(string url, string? cookies, string? userAgent, ProxySettings? proxy, int max, CancellationToken cancel)
+    public static async Task<(List<BatchEntry> Entries, string Owner)?> ListAsync(string url, string? cookies, string? userAgent, ProxySettings? proxy, int max,
+        CancellationToken cancel, Action<int>? waiting = null)
     {
         if (GalleryDl.Asset == null || !await Task.Run(() => GalleryDl.EnsureInstalled(), cancel)) return null;
         var settingsFile = GalleryDl.WriteSettings(GalleryDl.Settings(cookies, userAgent, null, null, proxy == null ? null : SiteVideo.ProxyUrl(proxy, url)));
         try
         {
-            var psi = new ProcessStartInfo(GalleryDl.Program)
+            var all = new List<BatchEntry>();
+            var seen = new HashSet<string>();
+            var owner = "";
+            foreach (var part in Parts(url))
             {
-                CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true,
-                StandardOutputEncoding = Encoding.UTF8,
-            };
-            psi.Environment["PYTHONIOENCODING"] = "utf-8";
-            foreach (var a in Arguments(url, max, settingsFile)) psi.ArgumentList.Add(a);
-            using var p = Process.Start(psi)!;
-            using var kill = cancel.Register(() => { try { p.Kill(true); } catch { } });
-            var errors = p.StandardError.ReadToEndAsync(cancel);
-            var output = await p.StandardOutput.ReadToEndAsync(cancel);
-            await p.WaitForExitAsync(cancel);
-            _ = await errors;
-            var listed = Entries(output);
-            return listed.Entries.Count == 0 ? null : listed;
+                string? cursor = null;
+                for (var tries = 0; ; tries++)
+                {
+                    var args = Arguments(part, max, settingsFile);
+                    if (cursor != null) args.InsertRange(args.Count - 2, new[] { "-o", "cursor=" + cursor });
+                    var (output, errors) = await RunAsync(args, cancel);
+                    var listed = Entries(output, owner);
+                    if (owner.Length == 0) owner = listed.Owner;
+                    all.AddRange(listed.Entries.Where(e => seen.Add(ProfileBatch.Key(e.Url))));
+                    // The site stopped answering partway (it limits how much one account may read in a row): the engine
+                    // says where it got to; after a pause the search continues from there, a few times, longer each time.
+                    cursor = ResumeCursor(errors);
+                    if (cursor == null || tries >= 6 || all.Count >= max) break;
+                    var pause = 60 << tries;
+                    waiting?.Invoke(pause);
+                    await Task.Delay(TimeSpan.FromSeconds(pause), cancel);
+                }
+            }
+            return all.Count == 0 ? null : (all, owner);
         }
         finally { if (settingsFile != null) try { File.Delete(settingsFile); } catch { } }
     }
+
+    static async Task<(string Output, string Errors)> RunAsync(List<string> args, CancellationToken cancel)
+    {
+        var psi = new ProcessStartInfo(GalleryDl.Program)
+        {
+            CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true,
+            StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8,
+        };
+        psi.Environment["PYTHONIOENCODING"] = "utf-8";
+        foreach (var a in args) psi.ArgumentList.Add(a);
+        using var p = Process.Start(psi)!;
+        using var kill = cancel.Register(() => { try { p.Kill(true); } catch { } });
+        var errors = p.StandardError.ReadToEndAsync(cancel);
+        var output = await p.StandardOutput.ReadToEndAsync(cancel);
+        await p.WaitForExitAsync(cancel);
+        return (output, await errors);
+    }
+
+    /// <summary>
+    /// The parts of a profile that are listed one after the other: an Instagram profile's posts, then its reels (videos
+    /// that are not on the posts grid); anything else as it is.
+    /// </summary>
+    public static List<string> Parts(string url)
+    {
+        if (!IsProfile(url) || !Uri.TryCreate(url, UriKind.Absolute, out var u) || !u.Host.EndsWith("instagram.com", StringComparison.OrdinalIgnoreCase))
+            return new() { url };
+        var user = u.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries)[0];
+        return new() { $"https://www.instagram.com/{user}/posts/", $"https://www.instagram.com/{user}/reels/" };
+    }
+
+    /// <summary>Where an interrupted listing got to, as the engine says it ("Use '-o cursor=…' to continue").</summary>
+    public static string? ResumeCursor(string errors) =>
+        System.Text.RegularExpressions.Regex.Match(errors, @"-o cursor=([^'""\s]+)") is { Success: true } m ? m.Groups[1].Value : null;
 }
 
 /// <summary>Runs the gallery engine for one gallery: the list row counts files and bytes; pausing stops it and resuming

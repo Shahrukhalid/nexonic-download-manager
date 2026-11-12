@@ -75,4 +75,12 @@ final class GalleryEngineTests: XCTestCase {
         r.streamBytes = 42
         XCTAssertEqual(r.received, 42)
     }
+
+    func testInstagramIsListedPostsThenReelsAndContinuesWhereItStopped() {
+        XCTAssertEqual(GalleryDl.listParts("https://www.instagram.com/someone/"),
+                       ["https://www.instagram.com/someone/posts/", "https://www.instagram.com/someone/reels/"])
+        XCTAssertEqual(GalleryDl.listParts("https://www.tiktok.com/@someone"), ["https://www.tiktok.com/@someone"])
+        XCTAssertEqual(GalleryDl.resumeCursor("[instagram][info] Use '-o cursor=QVFE_x-1' to continue downloading from the current position"), "QVFE_x-1")
+        XCTAssertNil(GalleryDl.resumeCursor("[instagram][error] HttpError"))
+    }
 }

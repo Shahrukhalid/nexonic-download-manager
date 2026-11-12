@@ -101,4 +101,13 @@ public class GalleryEngineTests
         Assert.False(GalleryList.IsProfile("https://www.instagram.com/p/AbC/"));
         Assert.False(GalleryList.IsProfile("https://www.facebook.com/krunchix/reels/"));
     }
+
+    [Fact]
+    public void InstagramIsListedPostsThenReelsAndContinuesWhereItStopped()
+    {
+        Assert.Equal(new[] { "https://www.instagram.com/someone/posts/", "https://www.instagram.com/someone/reels/" }, GalleryList.Parts("https://www.instagram.com/someone/"));
+        Assert.Equal(new[] { "https://www.tiktok.com/@someone" }, GalleryList.Parts("https://www.tiktok.com/@someone"));
+        Assert.Equal("QVFE_x-1", GalleryList.ResumeCursor("[instagram][info] Use '-o cursor=QVFE_x-1' to continue downloading from the current position"));
+        Assert.Null(GalleryList.ResumeCursor("[instagram][error] HttpError"));
+    }
 }

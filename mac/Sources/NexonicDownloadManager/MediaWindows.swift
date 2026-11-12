@@ -260,6 +260,7 @@ struct ProfileBatchView: View {
                 status = l.running
                     ? String(format: String(localized: "%d photos and videos found so far; new ones are added as you chose. You can close this window: the search keeps going in the downloads list."), l.found)
                     : String(format: String(localized: "%d photos and videos found; all added as you chose."), l.found)
+                if let w = l.waiting, l.running { status += "\n" + String(format: String(localized: "The site stopped answering for a while; the search continues from where it got to in %d min."), w) }
                 if !l.running { shownSearch = key }
             } else if l.running {
                 busy = true
@@ -267,6 +268,7 @@ struct ProfileBatchView: View {
                 if !l.entries.isEmpty, mode != 2 || preview.isEmpty {
                     show(SocialPages.scan(url: l.url, owner: l.owner, entries: l.entries, note: ""), url: l.url, filter: filter)
                     status += "\n" + String(localized: "Still searching with your browser's sign-in; what it finds later follows your choice. You can close this window: the search keeps going in the downloads list.")
+                    if let w = l.waiting { status += "\n" + String(format: String(localized: "The site stopped answering for a while; the search continues from where it got to in %d min."), w) }
                 }
             } else if l.scan != nil, shownSearch != key {
                 DispatchQueue.main.async { find() }  // after the change is stored

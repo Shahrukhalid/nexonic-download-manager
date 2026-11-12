@@ -20,6 +20,8 @@ struct ProfileListing {
     var owner = ""
     /// Everything found so far: the page's own posts first (from the extension), then what the search adds.
     var entries: [BatchEntry] = []
+    /// The site stopped answering for a while: the search continues from where it got to after this many minutes.
+    var waiting: Int?
     /// What the user chose in Profile Batch: what the search finds later is added the same way.
     var follow: Follow?
     struct Follow { var folder: URL; var quality: String; var parallel: Int; var start: Bool }
@@ -101,6 +103,7 @@ extension DownloadManager {
             let result = Result {
                 try GalleryDl.list(url, cookies: signedIn?.cookies, browser: browser, userAgent: signedIn?.userAgent, proxy: proxy, max: max,
                                    found: { fresh, owner in Task { @MainActor in self.listingFound(key, row: row, fresh, owner: owner) } },
+                                   waiting: { seconds in Task { @MainActor in self.listings[key]?.waiting = seconds / 60 } },
                                    stop: { stop.isSet })
             }
             Task { @MainActor in
@@ -143,6 +146,7 @@ extension DownloadManager {
         let posts = Set(l.entries.compactMap { $0.kind == "post" ? ProfileBatch.postCode($0.url) : nil })
         let added = fresh.filter { e in !(e.post.map { posts.contains($0) } ?? false) }
         l.entries += added
+        l.waiting = nil
         l.found = l.entries.count
         listings[key] = l
         if let row { update(row) { $0.streamDone = l.found; $0.status = .downloading } }

@@ -193,14 +193,61 @@ public extension GalleryDl {
     /// Lists a profile with the engine. `found(new, owner)` hands over the files as the engine finds them, so they can be
     /// shown (and downloaded) at once. Throws `GalleryListError` with the engine's own words when it found nothing.
     static func list(_ url: String, cookies: String?, browser: String? = nil, userAgent: String?, proxy: ProxySettings?, max: Int,
-                     found: @escaping ([BatchEntry], String) -> Void = { _, _ in }, stop: @escaping () -> Bool) throws -> (entries: [BatchEntry], owner: String) {
+                     found: @escaping ([BatchEntry], String) -> Void = { _, _ in }, waiting: @escaping (Int) -> Void = { _ in },
+                     stop: @escaping () -> Bool) throws -> (entries: [BatchEntry], owner: String) {
         guard ensureInstalled() else { throw GalleryListError(message: missing) }
         let settingsFile = try writeSettings(settings(cookies: cookies, userAgent: userAgent, username: nil, password: nil,
                                                       proxyURL: proxy.flatMap(SiteVideo.proxyURL)))
         defer { if let settingsFile { try? FileManager.default.removeItem(at: settingsFile) } }
+        var all: [BatchEntry] = [], seen = Set<String>(), owner = "", lastError = ""
+        for part in listParts(url) {
+            var cursor: String?, tries = 0
+            repeat {
+                var args = listArguments(url: part, max: max, settingsFile: settingsFile?.path, browser: cookies == nil ? browser : nil)
+                if let cursor { args.insert(contentsOf: ["-o", "cursor=\(cursor)"], at: args.count - 2) }
+                let errors = try runList(args) { listed in
+                    if owner.isEmpty { owner = listed.owner }
+                    let fresh = listed.entries.filter { seen.insert(ProfileBatch.key($0.url)).inserted }
+                    if !fresh.isEmpty { all += fresh; found(fresh, owner) }
+                } stop: { stop() || all.count >= max }
+                lastError = errors
+                // The site stopped answering partway (it limits how much one account may read in a row): the engine says
+                // where it got to; after a pause the search continues from there, a few times, longer each time.
+                cursor = resumeCursor(errors)
+                guard cursor != nil, tries < 6, all.count < max else { break }
+                tries += 1
+                let pause = 60 * (1 << (tries - 1))  // 1, 2, 4, 8, 16, 32 minutes
+                waiting(pause)
+                for _ in 0..<pause { if stop() { throw CancellationError() }; Thread.sleep(forTimeInterval: 1) }
+            } while true
+            if stop() { throw CancellationError() }
+        }
+        if all.isEmpty {
+            let said = lastError.split(whereSeparator: \.isNewline).last { $0.contains("error") || $0.contains("Error") } ?? lastError.split(whereSeparator: \.isNewline).last
+            throw GalleryListError(message: said.map { String($0).replacingOccurrences(of: "[error] ", with: "") } ?? "")
+        }
+        return (all, owner)
+    }
+
+    /// The parts of a profile that are listed one after the other: an Instagram profile's posts, then its reels (videos
+    /// that are not on the posts grid); anything else as it is.
+    static func listParts(_ url: String) -> [String] {
+        guard isProfile(url), let u = URL(string: url), u.host?.lowercased().hasSuffix("instagram.com") == true,
+              let user = u.pathComponents.dropFirst().first else { return [url] }
+        return ["https://www.instagram.com/\(user)/posts/", "https://www.instagram.com/\(user)/reels/"]
+    }
+
+    /// Where an interrupted listing got to, as the engine says it ("Use '-o cursor=…' to continue").
+    static func resumeCursor(_ errors: String) -> String? {
+        guard let r = errors.range(of: #"-o cursor=([^'"\s]+)"#, options: .regularExpression) else { return nil }
+        return String(errors[r].dropFirst("-o cursor=".count))
+    }
+
+    /// Runs one listing, handing over what it lists as it arrives; returns what the engine said on its error output.
+    private static func runList(_ args: [String], found: @escaping ((entries: [BatchEntry], owner: String)) -> Void, stop: @escaping () -> Bool) throws -> String {
         let p = Process()
         p.executableURL = program
-        p.arguments = listArguments(url: url, max: max, settingsFile: settingsFile?.path, browser: cookies == nil ? browser : nil)
+        p.arguments = args
         var env = ProcessInfo.processInfo.environment; env["PYTHONIOENCODING"] = "utf-8"; p.environment = env
         let out = Pipe(), err = Pipe()
         p.standardOutput = out
@@ -220,7 +267,7 @@ public extension GalleryDl {
                 box.data.append(chunk); box.lock.unlock()
             }
         }
-        var handed = 0, all: [BatchEntry] = [], owner = ""
+        var handed = 0, owner = ""
         func handOver(final: Bool) {
             box.lock.lock(); let data = box.data; box.lock.unlock()
             // Only whole lines; the last one may still be arriving.
@@ -228,24 +275,21 @@ public extension GalleryDl {
             let listed = entries(String(decoding: data[handed..<end], as: UTF8.self), owner: owner)
             handed = end
             if owner.isEmpty { owner = listed.owner }
-            let fresh = listed.entries.filter { e in !all.contains { $0.url == e.url } }
-            if !fresh.isEmpty { all += fresh; found(fresh, owner) }
+            found(listed)
         }
         while true {
             Thread.sleep(forTimeInterval: 0.3)
-            if stop() { p.terminate(); throw CancellationError() }
+            if stop() { p.terminate(); p.waitUntilExit(); handOver(final: true); return "" }
             handOver(final: false)
             box.lock.lock(); let finished = box.done; box.lock.unlock()
             if finished { break }
         }
         p.waitUntilExit()
         handOver(final: true)
-        if all.isEmpty {
-            box.lock.lock(); let text = String(decoding: box.errors, as: UTF8.self); box.lock.unlock()
-            let said = text.split(whereSeparator: \.isNewline).last { $0.contains("error") || $0.contains("Error") } ?? text.split(whereSeparator: \.isNewline).last
-            throw GalleryListError(message: said.map { String($0).replacingOccurrences(of: "[error] ", with: "") } ?? "")
-        }
-        return (all, owner)
+        // The error output is read to its end once the engine has exited.
+        for _ in 0..<20 { box.lock.lock(); let ready = !box.errors.isEmpty; box.lock.unlock(); if ready { break }; Thread.sleep(forTimeInterval: 0.05) }
+        box.lock.lock(); defer { box.lock.unlock() }
+        return String(decoding: box.errors, as: UTF8.self)
     }
 }
 

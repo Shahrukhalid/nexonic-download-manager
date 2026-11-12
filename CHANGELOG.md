@@ -23,6 +23,8 @@
   to choose the folder and quality, then Download Now or Add to Queue. On a profile Nexonic meanwhile finds the rest in
   the background with your browser's sign-in, and what it finds joins that choice (a row in the list shows the count).
   Facebook: the videos the page shows. The popup remembers what it sent for a page.
+- Instagram profiles are searched for their posts and then their reels; when Instagram stops answering partway, the
+  search waits and continues from where it got to (a few times, longer each time) instead of ending there.
 - Profile Batch on the Mac: **Close** only hides the window; what it was doing keeps going, and Profile Batch in the
   toolbar (or double-clicking a search's row) brings it back.
 - Instagram posts from the extension (the video button and "This page's video") open the download window and are saved
