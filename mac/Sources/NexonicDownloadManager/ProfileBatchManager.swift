@@ -57,14 +57,12 @@ extension DownloadManager {
         let stop = listing.stop
         // Its row: "Photos and videos of <name>", in the list until removed.
         let name = SocialPages.find(url)?.owner ?? URL(string: url).map { ($0.host ?? "") + $0.path } ?? url
-        items.removeAll { $0.listing == true && ProfileBatch.key($0.url.absoluteString) == key }
         let row: UUID?
         if let u = URL(string: url) {
             var r = DownloadRecord(url: u, folder: settings.folder, fileName: String(format: String(localized: "Photos and videos of %@"), name))
             r.listing = true; r.status = .probing; r.streamDone = 0
-            items.insert(r, at: 0)
+            putListingRow(r)
             row = r.id
-            persist()
         } else { row = nil }
         DispatchQueue.global(qos: .userInitiated).async {
             let result = Result { try GalleryDl.list(SocialPages.listable(url), cookies: signedIn.cookies, userAgent: signedIn.userAgent, proxy: proxy,

@@ -397,6 +397,14 @@ final class DownloadManager: ObservableObject {
         schedule()
     }
 
+    /// A Profile Batch search's row (ProfileBatchManager): at the top of the list, replacing an earlier one of that profile.
+    func putListingRow(_ r: DownloadRecord) {
+        let key = ProfileBatch.key(r.url.absoluteString)
+        items.removeAll { $0.listing == true && ProfileBatch.key($0.url.absoluteString) == key }
+        items.insert(r, at: 0)
+        persist()
+    }
+
     func remove(_ id: UUID, deleteFile: Bool = false) {
         if let r = items.first(where: { $0.id == id }), r.listing == true {  // a Profile Batch search: stop it, nothing to delete
             listings[ProfileBatch.key(r.url.absoluteString)]?.stop.set()
