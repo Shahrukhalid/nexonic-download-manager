@@ -17,6 +17,17 @@ final class GalleryEngineTests: XCTestCase {
         XCTAssertNil(GalleryDl.pick(releaseJSON, asset: "other"))
     }
 
+    func testProfilesAreSearchedWithTheDefaultBrowsersSignIn() {
+        XCTAssertTrue(GalleryDl.isProfile("https://www.instagram.com/maheeenn10/reels/"))
+        XCTAssertTrue(GalleryDl.isProfile("https://www.tiktok.com/@name"))
+        XCTAssertFalse(GalleryDl.isProfile("https://www.instagram.com/p/AbC/"))
+        XCTAssertFalse(GalleryDl.isProfile("https://www.facebook.com/TheSmuggers/reels/"))
+        XCTAssertEqual(GalleryDl.browserName(bundleID: "com.google.Chrome"), "chrome")
+        XCTAssertNil(GalleryDl.browserName(bundleID: "com.example.other"))
+        XCTAssertEqual(Array(GalleryDl.listArguments(url: "https://s.test/u", max: 5, settingsFile: nil, browser: "chrome").suffix(4)),
+                       ["--cookies-from-browser", "chrome", "--", "https://s.test/u"])
+    }
+
     func testAProfileListingBecomesPhotosAndVideosToChooseFrom() {
         XCTAssertEqual(GalleryDl.listArguments(url: "https://s.test/u", max: 300, settingsFile: nil),
                        ["-N", GalleryDl.listFormat, "--range", "1-300", "-o", GalleryDl.pace, "--", "https://s.test/u"])

@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import NexonicCore
 
@@ -53,7 +54,12 @@ extension DownloadManager {
     /// double-clicking the row opens it again with what was found.
     func startListing(_ url: String, max: Int) {
         let key = ProfileBatch.key(url)
-        guard let signedIn = profileCookies[key], listings[key]?.running != true else { return }
+        guard listings[key]?.running != true else { return }
+        // The extension's cookies when it handed the profile over; otherwise the default browser's own sign-in (macOS asks
+        // once to let Nexonic read it), so pasting a link is enough.
+        let signedIn = profileCookies[key]
+        let browser = signedIn == nil ? defaultBrowser : nil
+        guard signedIn != nil || browser != nil else { return }
         let proxy = settings.proxy
         var listing = ProfileListing(url: url, running: true)
         listing.owner = SocialPages.find(url)?.owner ?? ""
@@ -69,7 +75,7 @@ extension DownloadManager {
         }
         DispatchQueue.global(qos: .userInitiated).async {
             let result = Result {
-                try GalleryDl.list(url, cookies: signedIn.cookies, userAgent: signedIn.userAgent, proxy: proxy, max: max,
+                try GalleryDl.list(url, cookies: signedIn?.cookies, browser: browser, userAgent: signedIn?.userAgent, proxy: proxy, max: max,
                                    found: { fresh, owner in Task { @MainActor in self.listingFound(key, row: row, fresh, owner: owner) } },
                                    stop: { stop.isSet })
             }
@@ -108,6 +114,20 @@ extension DownloadManager {
         l.found += fresh.count
         listings[key] = l
         if let row { update(row) { $0.streamDone = l.found; $0.status = .downloading } }
+    }
+
+    /// The browser that opens web links here, as the gallery engine names it (nil: one it can't read).
+    var defaultBrowser: String? {
+        let app = NSWorkspace.shared.urlForApplication(toOpen: URL(string: "https://example.com")!)
+        return GalleryDl.browserName(bundleID: app.flatMap { Bundle(url: $0)?.bundleIdentifier })
+    }
+
+    /// A signed-in search can run for this link: the extension handed it over, or it is a profile the engine can list and
+    /// the default browser's sign-in can be read (and an earlier try didn't fail).
+    func canSearchSignedIn(_ url: String) -> Bool {
+        let key = ProfileBatch.key(url)
+        if profileCookies[key] != nil { return true }
+        return GalleryDl.isProfile(url) && defaultBrowser != nil && listings[key]?.visitorsOnly != true
     }
 
     func alreadyDownloaded(_ url: String) -> Bool {

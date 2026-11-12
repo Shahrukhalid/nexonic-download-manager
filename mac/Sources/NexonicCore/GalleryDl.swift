@@ -127,10 +127,40 @@ public extension GalleryDl {
     static let listFormat = "[{_url!j},{extension!j},{post_shortcode!j},{shortcode!j},{post_id!j},{id!j},{filename!j},{description!j},{content!j},{title!j},{desc!j},{num!j},{count!j},{date!j},{duration!j},{username!j}]"
 
     /// The engine's arguments for listing: a line per file (nothing downloaded), at most `max` of them.
-    static func listArguments(url: String, max: Int, settingsFile: String?) -> [String] {
+    static func listArguments(url: String, max: Int, settingsFile: String?, browser: String? = nil) -> [String] {
         var args = ["-N", listFormat, "--range", "1-\(Swift.max(1, max))", "-o", pace]
         if let settingsFile { args += ["--config", settingsFile] }
+        if let browser { args += ["--cookies-from-browser", browser] }
         return args + ["--", url]
+    }
+
+    /// Sites whose profiles the engine lists completely (photos and videos) with a browser's sign-in. Facebook pages
+    /// are not among them: the engine can't list them.
+    static let profileSites = ["instagram.com", "tiktok.com", "x.com", "twitter.com", "threads.net", "threads.com", "pinterest.com",
+                               "reddit.com", "tumblr.com", "bsky.app", "vk.com", "flickr.com", "deviantart.com"]
+
+    /// A profile (not a single post) on one of those sites.
+    static func isProfile(_ url: String) -> Bool {
+        guard let u = URL(string: url), let host = u.host?.lowercased(), profileSites.contains(where: { host == $0 || host.hasSuffix("." + $0) })
+        else { return false }
+        let first = u.pathComponents.dropFirst().first?.lowercased() ?? ""
+        return !first.isEmpty && !["p", "reel", "tv", "stories", "explore", "accounts", "direct", "video", "status", "i", "home", "search",
+                                   "settings", "messages", "notifications", "login", "share", "hashtag", "tag", "watch"].contains(first)
+    }
+
+    /// The engine's name for the browser that opens web links on this Mac (its sign-ins are used), nil when it can't read it.
+    static func browserName(bundleID: String?) -> String? {
+        switch bundleID?.lowercased() {
+        case "com.google.chrome", "com.google.chrome.beta", "com.google.chrome.canary": return "chrome"
+        case "com.microsoft.edgemac", "com.microsoft.edgemac.beta": return "edge"
+        case "com.brave.browser": return "brave"
+        case "org.mozilla.firefox", "org.mozilla.firefoxdeveloperedition": return "firefox"
+        case "com.operasoftware.opera": return "opera"
+        case "com.vivaldi.vivaldi": return "vivaldi"
+        case "org.chromium.chromium": return "chromium"
+        case "com.apple.safari": return "safari"
+        default: return nil
+        }
     }
 
     /// The files in the engine's listing (its lines): the picture or video address, named "description [post id].ext";
@@ -161,7 +191,7 @@ public extension GalleryDl {
 
     /// Lists a profile with the engine. `found(new, owner)` hands over the files as the engine finds them, so they can be
     /// shown (and downloaded) at once. Throws `GalleryListError` with the engine's own words when it found nothing.
-    static func list(_ url: String, cookies: String?, userAgent: String?, proxy: ProxySettings?, max: Int,
+    static func list(_ url: String, cookies: String?, browser: String? = nil, userAgent: String?, proxy: ProxySettings?, max: Int,
                      found: @escaping ([BatchEntry], String) -> Void = { _, _ in }, stop: @escaping () -> Bool) throws -> (entries: [BatchEntry], owner: String) {
         guard ensureInstalled() else { throw GalleryListError(message: missing) }
         let settingsFile = try writeSettings(settings(cookies: cookies, userAgent: userAgent, username: nil, password: nil,
@@ -169,7 +199,7 @@ public extension GalleryDl {
         defer { if let settingsFile { try? FileManager.default.removeItem(at: settingsFile) } }
         let p = Process()
         p.executableURL = program
-        p.arguments = listArguments(url: url, max: max, settingsFile: settingsFile?.path)
+        p.arguments = listArguments(url: url, max: max, settingsFile: settingsFile?.path, browser: cookies == nil ? browser : nil)
         var env = ProcessInfo.processInfo.environment; env["PYTHONIOENCODING"] = "utf-8"; p.environment = env
         let out = Pipe(), err = Pipe()
         p.standardOutput = out

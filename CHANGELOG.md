@@ -6,6 +6,9 @@
   - Profile Batch takes what visitors see as soon as you paste the link (a hidden private web view on Windows, Mac
     and Android): on a Mac with a home connection, a Facebook profile's reels showed 19 (the old way found 1) and an
     Instagram profile its latest 12 posts. It then says how to get the rest.
+- Profile Batch on the Mac: paste a link to an Instagram, TikTok, X, Threads, Pinterest, Reddit or similar profile and
+  it finds every video and photo with your default browser's sign-in (Chrome, Edge, Brave, Firefox, Opera, Vivaldi or
+  Safari); macOS asks once to let Nexonic use it. Nexonic never sees your password.
 - Browser extension: **Download all** on a profile (Instagram, TikTok, X, Threads, Pinterest, Reddit, Tumblr, Bluesky
   and more) opens it in Profile Batch, which lists every photo and video with your browser's sign-in for that site (the
   extension hands over its cookies; Nexonic never sees your password); then choose **Download Now** or **Add to Queue**,

@@ -146,7 +146,7 @@ struct ProfileBatchView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Paste one link to a profile, channel, playlist, gallery or page on any site the video engine supports. Nexonic finds every video that is open to everyone (no login needed) as soon as you paste, skips the ones you already have and downloads the rest in their own queue. Instagram and Facebook show visitors only the latest posts; for all of them, use the Nexonic extension's Download all on the profile in your signed-in browser.")
+            Text("Paste a link to a profile, channel, playlist, gallery or page. Nexonic finds every video (and, on Instagram, TikTok, X and similar sites, every photo) using your browser's sign-in, skips the ones you already have and downloads the rest in their own queue. Facebook pages: what visitors see.")
                 .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             TextField("Link", text: $link).textFieldStyle(.roundedBorder).onSubmit(find)
                 // Pasting a whole link starts Find Videos straight away (typing one doesn't, until Return).
@@ -241,6 +241,8 @@ struct ProfileBatchView: View {
                 }
             } else if l.scan != nil, shownSearch != key {
                 DispatchQueue.main.async { find() }  // after the change is stored
+            } else if l.visitorsOnly, busy {
+                DispatchQueue.main.async { find() }  // the signed-in search didn't work: what visitors see, and why
             }
         }
     }
@@ -294,10 +296,10 @@ struct ProfileBatchView: View {
             status = String(localized: "Searching every photo and video with your browser's sign-in…")
             return
         }
-        if manager.profileCookies[key] != nil {
+        if manager.canSearchSignedIn(url) {
             // Opened by the extension's Download all: the gallery engine lists every photo and video with the browser's
             // sign-in, a request every 1-2 seconds, in the background; this window may close meanwhile.
-            status = String(localized: "Searching every photo and video with your browser's sign-in, a request every 1–2 seconds. You can close this window: the search keeps going in the downloads list (\"Photos and videos of …\"); double-click it there to come back.")
+            status = String(localized: "Searching every photo and video with your browser's sign-in, a request every 1–2 seconds (the first time, macOS asks to let Nexonic use that sign-in). You can close this window: the search keeps going in the downloads list (\"Photos and videos of …\"); double-click it there to come back.")
             manager.startListing(url, max: f.max)
             return
         }
