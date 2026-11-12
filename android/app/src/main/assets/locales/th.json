@@ -343,6 +343,9 @@
     "Title contains (words; !word leaves it out)": "หัวข้อมี (คำ;! คำจะถูกลบออก)",
     "To (YYYY-MM-DD)": "ถึง (YYYY- MM- DD)",
     "Videos": "วิดีโอ",
-    "Opening the Instagram profile like a visitor's browser…": "Opening the Instagram profile like a visitor's browser…"
+    "Opening the Instagram profile like a visitor's browser…": "Opening the Instagram profile like a visitor's browser…",
+    "Add to queue": "Add to queue",
+    "Download now": "Download now",
+    "Choose Download now, or Add to queue to start them later.": "Choose Download now, or Add to queue to start them later."
   }
 }

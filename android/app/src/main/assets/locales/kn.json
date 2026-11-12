@@ -343,6 +343,9 @@
     "Title contains (words; !word leaves it out)": "ಶೀರ್ಷಿಕೆಯಲ್ಲಿ (ವಾಕ್ಯಗಳು;! word ಅದನ್ನು ಹೊರಗಿಡುತ್ತದೆ) ಇದೆ",
     "To (YYYY-MM-DD)": "ವರೆಗೆ (YYYY-MM-DD)",
     "Videos": "ವೀಡಿಯೊಗಳುName",
-    "Opening the Instagram profile like a visitor's browser…": "Opening the Instagram profile like a visitor's browser…"
+    "Opening the Instagram profile like a visitor's browser…": "Opening the Instagram profile like a visitor's browser…",
+    "Add to queue": "Add to queue",
+    "Download now": "Download now",
+    "Choose Download now, or Add to queue to start them later.": "Choose Download now, or Add to queue to start them later."
   }
 }

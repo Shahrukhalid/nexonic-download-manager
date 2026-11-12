@@ -1,13 +1,20 @@
 ## 0.31.0
 
-**Instagram profiles in Profile Batch** (Windows, Mac, Android)
-- Instagram stopped answering the request Nexonic used to read profiles. Nexonic now opens the profile page the way
-  any visitor's browser does, in a hidden private web view (Windows: the system's Edge WebView2; no sign-in, no
-  cookies), and takes the videos and reels the page shows. Checked on a home connection with @nasa: Instagram showed
-  the latest 12 posts, 6 of them videos.
-- Instagram shows visitors who are not signed in only a profile's latest posts (12 here); the result says so.
-- Linux has no built-in web view: there, open the profile in your browser, right-click the page and choose
-  "Download all links with Nexonic".
+**Profile Batch**
+- Instagram profiles (Windows, Mac, Android): Instagram stopped answering the request Nexonic used to read profiles.
+  Nexonic now opens the profile page the way any visitor's browser does, in a hidden private web view (Windows: the
+  system's Edge WebView2; no sign-in, no cookies), and takes the videos and reels the page shows. Instagram shows
+  visitors who are not signed in only a profile's latest 12 posts, and the result says so. Checked on a Mac with a home
+  connection: 12 reels found and added, and they downloaded.
+- Snapchat profiles (all apps): the Spotlight videos a public profile shows visitors (snapchat.com/@name).
+- Nothing starts by itself any more: after Find Videos, choose **Download Now** or **Add to Queue** (added, waiting
+  until you start them). This replaces the "Start downloading straight away" switch.
+- Downloads in a chosen quality (Best, 8K…480p) are always saved as MP4; only "Original quality" may still give MKV
+  for formats MP4 can't hold.
+- Instagram, Facebook, X, Snapchat and Threads videos are named after their caption plus the video's id. Before, they
+  were all named "Video by <name>", so the engine skipped every video after the first as "already downloaded".
+- Linux has no built-in web view: for Instagram there, open the profile in your browser, right-click the page and
+  choose "Download all links with Nexonic".
 
 ## 0.30.1
 

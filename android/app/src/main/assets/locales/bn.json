@@ -343,6 +343,9 @@
     "Title contains (words; !word leaves it out)": "শিরোনামে রয়েছে (শব্দ;!শব্দটি বাদ দেওয়া হয়েছে)",
     "To (YYYY-MM-DD)": "পর্যন্ত (YYYY-MM-DD)",
     "Videos": "ভিডিও",
-    "Opening the Instagram profile like a visitor's browser…": "Opening the Instagram profile like a visitor's browser…"
+    "Opening the Instagram profile like a visitor's browser…": "Opening the Instagram profile like a visitor's browser…",
+    "Add to queue": "Add to queue",
+    "Download now": "Download now",
+    "Choose Download now, or Add to queue to start them later.": "Choose Download now, or Add to queue to start them later."
   }
 }

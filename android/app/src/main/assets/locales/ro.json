@@ -343,6 +343,9 @@
     "Title contains (words; !word leaves it out)": "Titlul conține (cuvinte;!word îl omite)",
     "To (YYYY-MM-DD)": "Până la (AAAA-LL-ZZ)",
     "Videos": "Videoclipuri",
-    "Opening the Instagram profile like a visitor's browser…": "Opening the Instagram profile like a visitor's browser…"
+    "Opening the Instagram profile like a visitor's browser…": "Opening the Instagram profile like a visitor's browser…",
+    "Add to queue": "Add to queue",
+    "Download now": "Download now",
+    "Choose Download now, or Add to queue to start them later.": "Choose Download now, or Add to queue to start them later."
   }
 }

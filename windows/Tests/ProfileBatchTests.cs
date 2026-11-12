@@ -117,6 +117,17 @@ public class ProfileBatchTests
     }
 
     [Fact]
+    public void ChosenQualitiesAreMp4AndCaptionSitesGetUniqueNames()
+    {
+        Assert.Equal("mp4", SiteVideo.Format(false, 1080)[^1]);
+        Assert.Equal("mp4/mkv", SiteVideo.Format(false, SiteVideo.OriginalQuality)[^1]);
+        Assert.Contains("%(title).120B [%(id)s].%(ext)s", SiteVideo.Naming("https://www.instagram.com/reel/Dfc1mYxFevS/"));
+        Assert.Contains("--parse-metadata", SiteVideo.Naming("https://m.facebook.com/reel/1"));
+        Assert.Equal(new[] { "-o", "%(title).150B.%(ext)s" }, SiteVideo.Naming("https://www.youtube.com/watch?v=x"));
+        Assert.Equal(new[] { "-o", "%(title).150B.%(ext)s" }, SiteVideo.Naming("https://notinstagram.com/x"));
+    }
+
+    [Fact]
     public void SavedProfilesAreDueOnTheirSchedule()
     {
         var p = new SavedProfile { CheckHours = 6 };

@@ -26,7 +26,6 @@ public static partial class Dialogs
         var box = f.Text("Link", link.Length > 0 ? link : ClipboardLink());
         var quality = f.Field("Quality", new ComboBox { ItemsSource = ProfileBatch.Qualities.Select(q => L.T(q.Title)).ToList(), SelectedIndex = 0 });
         var mode = f.Field("Download", new ComboBox { ItemsSource = new[] { L.T("All videos I don't have yet"), L.T("Only new videos (not seen on this profile before)"), L.T("Let me preview and choose") }, SelectedIndex = 0 });
-        var autoStart = f.Check("Start downloading straight away", true);
         var folder = f.Folder(m.Settings.StartFolder);
         var own = f.Check("Put each profile in a folder of its own", true);
         var parallel = f.Field("Downloads at the same time", new ComboBox { ItemsSource = new[] { "1", "2", "3", "4", "5", "6" }, SelectedIndex = 1 });
@@ -55,7 +54,9 @@ public static partial class Dialogs
         var checks = new List<(CheckBox Box, BatchEntry Entry)>();
         ProfileBatch.Scan? scan = null;
         System.Threading.CancellationTokenSource? cancel = null;
-        Button? go = null, export = null;
+        Button? go = null, export = null, now = null, later = null;
+        List<BatchEntry> pending = new();
+        BatchCounts? pendingCounts = null;
         int[] hours = { 0, 1, 6, 24, 168 };
 
         BatchFilter Filter() => new()
@@ -69,10 +70,38 @@ public static partial class Dialogs
         string Target() => own.IsChecked == true && scan != null ? ProfileBatch.FolderFor(folder.Text.Trim(), scan.Owner, scan.Url) : folder.Text.Trim();
         SavedProfile? Saved(string url) => m.Profiles.FirstOrDefault(p => ProfileBatch.Key(p.Url) == ProfileBatch.Key(url));
 
-        void Download(List<BatchEntry> take, BatchCounts counts)
+        // Nothing starts by itself: after Find Videos the user picks Download Now or Add to Queue.
+        void Offer(List<BatchEntry> take, BatchCounts counts)
+        {
+            pending = take; pendingCounts = counts;
+            if (now != null) now.IsEnabled = take.Count > 0;
+            if (later != null) later.IsEnabled = take.Count > 0;
+            status.Text = (scan!.Owner.Length > 0 ? scan.Owner + ": " : "") + (counts with { Queued = 0 }).Text
+                + (take.Count > 0 ? "\n" + L.T("Choose Download Now, or Add to Queue to start them later.") : "");
+        }
+
+        void Hand(bool start)
+        {
+            if (scan == null) return;
+            var take = pending;
+            var counts = pendingCounts ?? new BatchCounts(take.Count, 0, 0, 0, 0);
+            if (mode.SelectedIndex == 2 && checks.Count > 0)
+            {
+                var chosen = checks.Where(c => c.Box.IsChecked == true).Select(c => c.Entry).ToList();
+                (take, counts) = ProfileBatch.Choose(chosen, new BatchFilter { Max = ProfileBatch.Limit }, m.AlreadyDownloaded);
+                list.Visibility = Visibility.Collapsed; checks.Clear();
+            }
+            if (take.Count == 0) return;
+            Download(take, counts, start);
+            pending = new(); pendingCounts = null;
+            if (now != null) now.IsEnabled = false;
+            if (later != null) later.IsEnabled = false;
+        }
+
+        void Download(List<BatchEntry> take, BatchCounts counts, bool start)
         {
             var url = scan!.Url;
-            var added = m.QueueBatch(scan.Owner, take, Target(), QualityKey(), (parallel.SelectedIndex + 1), autoStart.IsChecked == true);
+            var added = m.QueueBatch(scan.Owner, take, Target(), QualityKey(), (parallel.SelectedIndex + 1), start);
             status.Text = (counts with { Queued = added }).Text;
             var every = hours[Math.Max(0, check?.SelectedIndex ?? 0)];
             var saved = Saved(url);
@@ -126,11 +155,8 @@ public static partial class Dialogs
                         checks.Add((c, e)); list.Items.Add(c);
                     }
                     list.Visibility = Visibility.Visible;
-                    status.Text = (scan.Owner.Length > 0 ? scan.Owner + ": " : "") + (counts with { Queued = 0 }).Text;
-                    if (go != null) go.Content = L.T("Download Selected");
                 }
-                else if (take.Count == 0) status.Text = (scan.Owner.Length > 0 ? scan.Owner + ": " : "") + (counts with { Queued = 0 }).Text;
-                else Download(take, counts);
+                Offer(take, counts);
                 if (scan.Note.Length > 0) status.Text += "\n" + scan.Note;  // what the site doesn't show visitors
             }
             catch (OperationCanceledException) { status.Text = L.T("Stopped. The videos found so far are kept; Find Videos continues from there."); }
@@ -149,18 +175,10 @@ public static partial class Dialogs
             File.WriteAllText(d.FileName, ProfileBatch.Export(scan.Entries, d.FilterIndex switch { 2 => "csv", 3 => "json", _ => "txt" }));
         });
         export.IsEnabled = false;
-        go = f.AddButton("Find Videos", () =>
-        {
-            if (mode.SelectedIndex == 2 && scan != null && checks.Count > 0)
-            {
-                var chosen = checks.Where(c => c.Box.IsChecked == true).Select(c => c.Entry).ToList();
-                var (take, counts) = ProfileBatch.Choose(chosen, new BatchFilter { Max = ProfileBatch.Limit }, m.AlreadyDownloaded);
-                Download(take, counts);
-                list.Visibility = Visibility.Collapsed; checks.Clear(); go!.Content = L.T("Find Videos");
-                return;
-            }
-            Read();
-        }, isDefault: true);
+        later = f.AddButton("Add to Queue", () => Hand(false));
+        now = f.AddButton("Download Now", () => Hand(true));
+        later.IsEnabled = now.IsEnabled = false;
+        go = f.AddButton("Find Videos", Read, isDefault: true);
         f.Show();
     }
 

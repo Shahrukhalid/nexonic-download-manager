@@ -155,7 +155,21 @@ public static class SiteVideo
         if (audioOnly) return new[] { "-f", "ba[ext=m4a]/ba/b" };
         if (maxHeight == OriginalQuality) return new[] { "-f", "bv*+ba/b", "-S", "res,fps,hdr:12", "--merge-output-format", "mp4/mkv" };
         var res = maxHeight is int h && h > 0 ? $"res:{h}" : "res";
-        return new[] { "-f", "bv*+ba/b", "-S", $"{res},fps,hdr:12,vcodec:avc,acodec:m4a", "--merge-output-format", "mp4/mkv" };
+        // A chosen quality is always saved as MP4 (the container every app opens); "Original" keeps MKV for codecs MP4 can't hold.
+        return new[] { "-f", "bv*+ba/b", "-S", $"{res},fps,hdr:12,vcodec:avc,acodec:m4a", "--merge-output-format", "mp4" };
+    }
+
+    /// <summary>
+    /// Sites whose videos all have the same title ("Video by name"): the file is named after the caption instead, with the
+    /// video's id so two videos never share a name (the engine would skip the second as "already downloaded").
+    /// </summary>
+    public static string[] Naming(string url)
+    {
+        var host = Uri.TryCreate(url, UriKind.Absolute, out var u) ? u.Host.ToLowerInvariant() : "";
+        string[] captioned = { "instagram.com", "facebook.com", "fb.watch", "x.com", "twitter.com", "snapchat.com", "threads.net", "threads.com" };
+        return captioned.Any(d => host == d || host.EndsWith("." + d))
+            ? new[] { "--parse-metadata", "%(description,title)s:(?s)(?P<title>.+)", "-o", "%(title).120B [%(id)s].%(ext)s" }
+            : new[] { "-o", "%(title).150B.%(ext)s" };
     }
 
     /// <summary>One picture quality a video is offered in. Height is the picture's shorter side (1080 for 1080p, also for upright videos); Size is picture and sound together, approximate.</summary>
@@ -339,11 +353,11 @@ public static class SiteVideo
             "--progress-template", $"download:{ProgressTag} %(progress.downloaded_bytes)s %(progress.total_bytes)s %(progress.total_bytes_estimate)s %(progress.speed)s %(info.format_id)s %(info.height)s %(info.vcodec)s",
             "--print", $"after_move:{FileTag} %(filepath)s",
             "-P", $"home:{folder}", "-P", $"temp:{temp}",
-            "-o", "%(title).150B.%(ext)s",
             "--concurrent-fragments", "4",
             "--js-runtimes", "node",
             "--encoding", "utf-8",
         };
+        a.AddRange(Naming(url));
         if (quickJs != null) a.AddRange(new[] { "--js-runtimes", $"quickjs:{quickJs}" });
         if (ffmpeg != null) a.AddRange(new[] { "--ffmpeg-location", Path.GetDirectoryName(ffmpeg)! }); // folder: ffmpeg and ffprobe
         a.AddRange(Format(audioOnly, maxHeight));

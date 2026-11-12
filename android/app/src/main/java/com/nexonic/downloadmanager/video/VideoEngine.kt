@@ -129,7 +129,15 @@ object VideoEngine {
         dir.mkdirs()
         val req = base(resolve(url), userAgent, referer).apply {
             addOption("-f", choice.selector)
-            addOption("-o", File(dir, "%(title).100B.%(ext)s").absolutePath)
+            // Sites whose videos all have the same title ("Video by name"): named after the caption, with the video's id
+            // so two videos never share a name (the engine would skip the second as "already downloaded").
+            val captioned = runCatching { java.net.URI(url).host?.lowercase().orEmpty() }.getOrDefault("").let { h ->
+                listOf("instagram.com", "facebook.com", "fb.watch", "x.com", "twitter.com", "snapchat.com", "threads.net", "threads.com").any { h == it || h.endsWith(".$it") }
+            }
+            if (captioned) {
+                addOption("--parse-metadata", "%(description,title)s:(?s)(?P<title>.+)")
+                addOption("-o", File(dir, "%(title).100B [%(id)s].%(ext)s").absolutePath)
+            } else addOption("-o", File(dir, "%(title).100B.%(ext)s").absolutePath)
             addOption("--concurrent-fragments", "4")
             if (choice.audioOnly) addOption("--no-keep-video") else addOption("--merge-output-format", "mp4")
             // Title, artist, date, description and chapters stay inside the saved file (as on the desktop apps).

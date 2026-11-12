@@ -204,3 +204,41 @@ class NexonicXProfileIE(InfoExtractor):
 
         self.report_warning(N + 'X shows visitors who are not signed in only the latest posts of a profile.')
         return self.playlist_result(entries(), user, user)
+
+
+class NexonicSnapchatProfileIE(InfoExtractor):
+    IE_NAME = 'snapchat:profile'
+    IE_DESC = 'Snapchat public profile (its Spotlight videos)'
+    _VALID_URL = r'https?://(?:www\.)?snapchat\.com/(?:@|add/)(?P<id>[\w.-]{2,32})/?(?:[?#]|$)'
+
+    def _real_extract(self, url):
+        user = self._match_id(url)
+        html = self._download_webpage(f'https://www.snapchat.com/@{user}', user, 'Reading the public profile')
+        data = self._search_json(r'<script[^>]+id="__NEXT_DATA__"[^>]*>', html, 'profile', user, default={})
+        page = traverse_obj(data, ('props', 'pageProps')) or {}
+        details = {}
+        for m in page.get('spotlightStoryMetadata') or []:
+            link = traverse_obj(m, ('oneLinkParams', 'deepLinkUrl')) or ''
+            sid = link.rstrip('/').rsplit('/', 1)[-1] if '/spotlight/' in link else None
+            if sid:
+                details[sid] = m.get('videoMetadata') or {}
+        seen = []
+        for h in page.get('spotlightHighlights') or []:
+            for s in h.get('snapList') or []:
+                sid = traverse_obj(s, ('snapId', 'value'))
+                if sid and sid not in seen:
+                    seen.append(sid)
+        if not seen:
+            raise ExtractorError(N + 'Snapchat did not show any Spotlight videos of this profile to a visitor who is not '
+                                 'signed in (it may have none, or be private).', expected=True)
+        self.report_warning(N + 'Snapchat shows visitors who are not signed in only a profile\'s latest Spotlight videos.')
+
+        def entries():
+            for sid in seen:
+                v = next((d for k, d in details.items() if k.startswith(sid[:20])), {})
+                yield {'_type': 'url', 'ie_key': 'SnapchatSpotlight', 'id': sid, 'url': f'https://www.snapchat.com/spotlight/{sid}',
+                       'title': _title(v.get('description') or v.get('name'), f'Snapchat Spotlight {sid[:12]}'),
+                       'duration': (int_or_none(v.get('durationMs')) or 0) / 1000 or None,
+                       'timestamp': (int_or_none(v.get('uploadDateMs')) or 0) // 1000 or None}
+
+        return self.playlist_result(entries(), user, (traverse_obj(page, ('userProfile', 'publicProfileInfo', 'title')) or user))

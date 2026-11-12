@@ -91,7 +91,9 @@ struct ProfileBatchView: View {
 
     @State private var quality = "best"
     @State private var mode = 0  // 0 all, 1 new only, 2 preview
-    @State private var autoStart = true
+    // Found videos wait here until the user picks Download Now or Add to Queue: nothing starts by itself.
+    @State private var pending: [BatchEntry] = []
+    @State private var pendingCounts: BatchCounts?
     @State private var ownFolder = true
     @State private var parallel = 2
     @State private var useFrom = false
@@ -135,7 +137,6 @@ struct ProfileBatchView: View {
                     Text("Only new videos (not seen on this profile before)").tag(1)
                     Text("Let me preview and choose").tag(2)
                 }
-                Toggle("Start downloading straight away", isOn: $autoStart)
                 LabeledContent("Save to") {
                     HStack {
                         Text(manager.settings.startFolder.path).lineLimit(1).truncationMode(.middle)
@@ -181,8 +182,10 @@ struct ProfileBatchView: View {
                 }.disabled(scan == nil).fixedSize()
                 Spacer()
                 Button("Stop") { stopRequested = true }.disabled(!busy)
-                if !preview.isEmpty {
-                    Button("Download Selected") { download(preview.filter { chosen.contains($0.url) }, nil) }.keyboardShortcut(.defaultAction)
+                if !preview.isEmpty || !pending.isEmpty {
+                    Button("Add to Queue") { hand(start: false) }
+                    Button("Download Now") { hand(start: true) }.keyboardShortcut(.defaultAction)
+                    Button("Find Videos", action: find).disabled(busy)
                 } else {
                     Button("Find Videos", action: find).keyboardShortcut(.defaultAction).disabled(busy)
                 }
@@ -197,10 +200,17 @@ struct ProfileBatchView: View {
         ownFolder ? ProfileBatch.folder(base: manager.settings.startFolder, owner: s.owner, url: s.url) : manager.settings.startFolder
     }
 
-    private func download(_ take: [BatchEntry], _ counts: BatchCounts?) {
+    /// Download Now or Add to Queue: the chosen videos of the preview, or everything that was found.
+    private func hand(start: Bool) {
+        if !preview.isEmpty { download(preview.filter { chosen.contains($0.url) }, nil, start: start) }
+        else { download(pending, pendingCounts, start: start) }
+        pending = []; pendingCounts = nil
+    }
+
+    private func download(_ take: [BatchEntry], _ counts: BatchCounts?, start: Bool) {
         guard let s = scan else { return }
         var c = counts ?? ProfileBatch.choose(take, BatchFilter(), alreadyDownloaded: manager.alreadyDownloaded).counts
-        c.queued = manager.queueBatch(owner: s.owner, take, folder: target(s), quality: quality, maxActive: parallel, start: autoStart)
+        c.queued = manager.queueBatch(owner: s.owner, take, folder: target(s), quality: quality, maxActive: parallel, start: start)
         status = (s.owner.isEmpty ? "" : s.owner + ": ") + c.text
         preview = []
         let key = ProfileBatch.key(s.url)
@@ -218,7 +228,7 @@ struct ProfileBatchView: View {
     private func find() {
         let url = link.trimmingCharacters(in: .whitespacesAndNewlines)
         guard DownloadJob(url: url).validURL != nil else { status = String(localized: "Paste a web link (http or https)."); return }
-        busy = true; stopRequested = false; preview = []
+        busy = true; stopRequested = false; preview = []; pending = []; pendingCounts = nil
         let earlier = ProfileBatch.loadScan(url).map { $0.complete ? 0 : $0.entries.count } ?? 0
         status = earlier > 0 ? String(format: String(localized: "Continuing an interrupted scan (%d found before)…"), earlier)
             : String(localized: "Looking for videos… (large profiles can take a few minutes)")
@@ -266,7 +276,9 @@ struct ProfileBatchView: View {
             var c = counts; c.queued = 0
             status = (s.owner.isEmpty ? "" : s.owner + ": ") + c.text
         } else {
-            download(take, counts)
+            pending = take; pendingCounts = counts
+            var c = counts; c.queued = 0
+            status = (s.owner.isEmpty ? "" : s.owner + ": ") + c.text + "\n" + String(localized: "Choose Download Now, or Add to Queue to start them later.")
         }
         if let note = s.note, !note.isEmpty { status += "\n" + note }  // what the site doesn't show visitors
     }

@@ -8,6 +8,7 @@ FB = _mod.NexonicFacebookPageIE
 IG = _mod.NexonicInstagramProfileIE
 RD = _mod.NexonicRedditListingIE
 X = _mod.NexonicXProfileIE
+SC = _mod.NexonicSnapchatProfileIE
 
 
 def m(ie, url):
@@ -23,6 +24,8 @@ class Profiles(unittest.TestCase):
              ['https://www.reddit.com/r/videos/comments/abc/title/']),
             (FB, ['https://www.facebook.com/NASA/', 'https://www.facebook.com/NASA/videos', 'https://www.facebook.com/NASA/reels/', 'https://www.facebook.com/profile.php?id=100064'],
              ['https://www.facebook.com/watch/?v=1', 'https://www.facebook.com/reel/123456789', 'https://www.facebook.com/NASA/videos/123456789/']),
+            (SC, ['https://www.snapchat.com/@nasa', 'https://snapchat.com/add/nasa/', 'https://www.snapchat.com/@nasa?locale=en'],
+             ['https://www.snapchat.com/spotlight/W7_EDlXWTBiX', 'https://www.snapchat.com/discover/x/1']),
             (X, ['https://x.com/NASA', 'https://twitter.com/NASA/media', 'https://x.com/NASA/'],
              ['https://x.com/NASA/status/1', 'https://x.com/i/status/1', 'https://x.com/home', 'https://x.com/search?q=a']),
         ]:

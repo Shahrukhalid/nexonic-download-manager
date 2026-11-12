@@ -343,6 +343,9 @@
     "Title contains (words; !word leaves it out)": "തലക്കെട്ടില്‍ അടങ്ങിയിരിക്കുന്നു (വാക്കുകള്‍;!word അത് ഒഴിവാക്കുന്നു)",
     "To (YYYY-MM-DD)": "വരെ (YYYY-MM-DD)",
     "Videos": "വീഡിയോകള്‍",
-    "Opening the Instagram profile like a visitor's browser…": "Opening the Instagram profile like a visitor's browser…"
+    "Opening the Instagram profile like a visitor's browser…": "Opening the Instagram profile like a visitor's browser…",
+    "Add to queue": "Add to queue",
+    "Download now": "Download now",
+    "Choose Download now, or Add to queue to start them later.": "Choose Download now, or Add to queue to start them later."
   }
 }
