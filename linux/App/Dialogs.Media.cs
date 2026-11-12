@@ -137,12 +137,30 @@ public static partial class Dialogs
             var proxy = HostProfiles.Match(m.Settings.HostProfiles, url)?.Proxy ?? m.Settings.Proxy;
             try
             {
-                // Instagram and Facebook show visitors only their latest posts (the video engine takes those); the note says how
-                // to get the rest (the extension's Download all in the user's signed-in browser; Nexonic never signs in).
-                var social = SocialPages.Find(url);
-                scan = await Task.Run(() => ProfileBatch.Discover(url, proxy, filter.Max,
-                    (e, n) => { if (n % 10 == 0) Avalonia.Threading.Dispatcher.UIThread.Post(() => status.Text = string.Format(L.T("{0} found so far…"), n)); }, cancel: token));
-                if (social != null) scan.Note += (scan.Note.Length > 0 ? "\n" : "") + L.T(SocialPages.More(social.Value.Site));
+                // Opened by the extension's Download all: the gallery engine lists every photo and video with the browser's
+                // sign-in for the site, a request every 2-4 seconds; nothing is downloaded until Download Now or Add to Queue.
+                List<BatchEntry>? listed = null;
+                if (m.ProfileCookies.TryGetValue(ProfileBatch.Key(url), out var signedIn))
+                {
+                    status.Text = L.T("Listing every photo and video with your browser's sign-in… (a request every 2–4 seconds, so a large profile takes a few minutes)");
+                    listed = await GalleryList.ListAsync(url, signedIn.Cookies, signedIn.UserAgent, proxy, filter.Max, token);
+                    if (listed is not { Count: > 0 }) m.ProfileCookies.Remove(ProfileBatch.Key(url));  // a site it doesn't know
+                }
+                if (listed is { Count: > 0 })
+                {
+                    var videos = listed.Count(x => x.Kind == "video");
+                    scan = new ProfileBatch.Scan { Url = url, Owner = ProfileBatch.OwnerOf(url), Entries = listed, Complete = true,
+                        Note = string.Format(L.T("Found {0} videos and {1} photos with your browser's sign-in."), videos, listed.Count - videos) };
+                }
+                else
+                {
+                    // Instagram and Facebook show visitors only their latest posts (the video engine takes those); the note
+                    // says how to get the rest (the extension's Download all in the user's signed-in browser).
+                    var social = SocialPages.Find(url);
+                    scan = await Task.Run(() => ProfileBatch.Discover(url, proxy, filter.Max,
+                        (e, n) => { if (n % 10 == 0) Avalonia.Threading.Dispatcher.UIThread.Post(() => status.Text = string.Format(L.T("{0} found so far…"), n)); }, cancel: token));
+                    if (social != null) scan.Note += (scan.Note.Length > 0 ? "\n" : "") + L.T(SocialPages.More(social.Value.Site));
+                }
                 var seen = mode.SelectedIndex == 1 && Saved(url) is { } p ? new HashSet<string>(p.Seen) : null;
                 var (take, counts) = ProfileBatch.Choose(scan.Entries, filter, m.AlreadyDownloaded, seen);
                 if (export != null) export.IsEnabled = true;
@@ -167,6 +185,8 @@ public static partial class Dialogs
         }
 
         f.Window.Closed += (_, _) => cancel?.Cancel();
+        // Opened with a link (the extension's Download all, or a link handed over): Find Videos starts by itself.
+        if (link.Length > 0) f.Window.Opened += (_, _) => Read();
         f.AddButton("Close", f.Close, isCancel: true);
         f.AddButton("Stop", () => cancel?.Cancel());
         export = f.AddButton("Export…", async () =>

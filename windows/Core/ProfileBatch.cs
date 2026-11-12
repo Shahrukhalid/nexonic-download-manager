@@ -7,8 +7,9 @@ using System.Text.RegularExpressions;
 namespace Nexonic.Core;
 
 /// <summary>One video (or sound, or picture post) found on a profile, channel, playlist or page.</summary>
+/// <summary>Kind: video, shorts, live or photo. Direct (added in 0.31.0): the file itself, from a gallery engine listing.</summary>
 public sealed record BatchEntry(string Url, string Title, double? Duration = null, DateTime? Date = null, string Kind = "video",
-    bool Available = true, string Id = "");
+    bool Available = true, string Id = "", bool Direct = false);
 
 /// <summary>Which of the found videos to keep. Values a site does not report (a date, a length) never exclude a video.</summary>
 public sealed class BatchFilter
@@ -133,9 +134,20 @@ public static class ProfileBatch
     }
 
     /// <summary>The address without the engine's internal additions and fragments, to recognise the same video.</summary>
+    static readonly string[] CdnHosts = { "cdninstagram.com", "fbcdn.net", "tiktokcdn.com", "tiktokcdn-us.com", "twimg.com", "pinimg.com" };
+
+    /// <summary>The profile's name (its folder): Instagram's or Facebook's owner, else the address's first part ("@name" → "name").</summary>
+    public static string OwnerOf(string url) =>
+        SocialPages.Find(url) is { } s ? s.Owner
+        : Uri.TryCreate(url, UriKind.Absolute, out var u) && u.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries) is { Length: > 0 } parts
+            ? parts[0].TrimStart('@') : "";
+
     public static string Key(string url)
     {
         var u = url.Split('#')[0].Trim();
+        // The sites' picture and video servers sign every address anew; the file is the same without the signature.
+        if (Uri.TryCreate(u, UriKind.Absolute, out var a) && CdnHosts.Any(h => a.Host.EndsWith(h, StringComparison.OrdinalIgnoreCase)))
+            u = a.GetLeftPart(UriPartial.Path);
         return Duplicates.Normalize(u);
     }
 

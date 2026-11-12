@@ -122,6 +122,9 @@ final class DownloadManager: ObservableObject {
     /// Profile Batch: profiles saved to be checked again, and the ones being checked now.
     @Published var profiles: [SavedProfile] = SavedProfiles.load()
     var checkingProfiles: Set<String> = []
+    /// The browser's cookies for profiles the extension opened in Profile Batch (Download all), by profile address; kept in
+    /// memory only, for listing that profile as the user sees it.
+    var profileCookies: [String: (cookies: String?, userAgent: String?)] = [:]
     private var lastMinute = ""
     private var clipboardCount = NSPasteboard.general.changeCount
     private let limiter = SpeedLimiter()
@@ -321,6 +324,13 @@ final class DownloadManager: ObservableObject {
             if job.fromBrowser == true { browserJob = true }
             if let dup = items.first(where: { $0.url.absoluteString == job.url && ($0.status.isActive || $0.status == .queued) }) {
                 if settings.showProgressWindow && job.fromBrowser == true { ProgressWindow.show(dup.id, manager: self) }
+                continue
+            }
+            if job.profile == true {
+                // The extension's Download all: Profile Batch lists the profile with the browser's cookies, then the user
+                // picks Download Now or Add to Queue.
+                profileCookies[ProfileBatch.key(job.url)] = (job.cookies, job.userAgent)
+                MediaWindows.showPlaylist(job.url, replace: true)
                 continue
             }
             if job.gallery == true {

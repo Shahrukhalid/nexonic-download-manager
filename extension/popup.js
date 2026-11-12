@@ -107,13 +107,11 @@ if (tab && isVideoSite(tab.url)) {
 // gallery engine with this browser's sign-in for the site (see "Download all" in background.js). Nothing scrolls.
 if (tab && (await ask({ type: "profile-check", url: tab.url }))?.ok) {
   $("profileBox").hidden = false;
-  const start = (later) => async () => {
-    const r = await ask({ type: "profile-all", url: tab.url, later });
-    $("profileCount").textContent = t(r && r.ok ? "Sent to Nexonic" : "Open Nexonic first");
-    $("profileAll").disabled = $("profileLater").disabled = true;
+  $("profileAll").onclick = async () => {
+    const r = await ask({ type: "profile-all", url: tab.url });
+    $("profileCount").textContent = t(r && r.ok ? "Opened in Nexonic's Profile Batch" : "Open Nexonic first");
+    $("profileAll").disabled = true;
   };
-  $("profileAll").onclick = start(false);
-  $("profileLater").onclick = start(true);
 }
 
 // Media seen on this tab

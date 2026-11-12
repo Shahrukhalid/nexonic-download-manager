@@ -283,6 +283,11 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
         // One link the user picked (video button, popup, page menu): the app shows its download window.
         const extra = { referrer, later: !!msg.later, browser: true };
         if (msg.stream) Object.assign(extra, { stream: true, fileName: msg.fileName });
+        else if (msg.site && !msg.audioOnly && /^https:\/\/([a-z]+\.)?instagram\.com\/(?:[^/]+\/)?(p|reel|tv)\//.test(msg.url)) {
+          // An Instagram post: the gallery engine saves its video or photos with this browser's sign-in (the video engine
+          // can't read Instagram posts for signed-in browsers).
+          extra.gallery = true;
+        }
         else if (msg.site) {
           Object.assign(extra, { site: true, audioOnly: !!msg.audioOnly });
           if (Number.isInteger(msg.maxHeight) && msg.maxHeight >= 100 && !msg.audioOnly) extra.maxHeight = msg.maxHeight;
@@ -293,10 +298,11 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
       case "profile-check":
         return { ok: !!profileOf(msg.url || "") };
       case "profile-all": {
-        // The popup's "Download all" on a profile: the app's gallery engine saves every photo and video of it with this
-        // browser's cookies for the site, at a person's pace (2-4 seconds between its requests). Nothing scrolls here.
+        // The popup's "Download all" on a profile: Nexonic's Profile Batch opens with it and lists every photo and video
+        // with this browser's cookies for the site, at a person's pace (2-4 seconds between requests); the user then picks
+        // Download Now or Add to Queue. Nothing scrolls here.
         if (!profileOf(msg.url || "")) return { ok: false };
-        return { ok: await send(msg.url, { referrer: msg.url, gallery: true, browser: true, later: !!msg.later }) };
+        return { ok: await send(msg.url, { referrer: msg.url, profile: true }) };
       }
       case "send-links": {
         let sent = 0;

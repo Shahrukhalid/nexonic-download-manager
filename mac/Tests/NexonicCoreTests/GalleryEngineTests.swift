@@ -17,6 +17,22 @@ final class GalleryEngineTests: XCTestCase {
         XCTAssertNil(GalleryDl.pick(releaseJSON, asset: "other"))
     }
 
+    func testAProfileListingBecomesPhotosAndVideosToChooseFrom() {
+        XCTAssertEqual(GalleryDl.listArguments(url: "https://s.test/u", max: 300, settingsFile: nil),
+                       ["-j", "--range", "1-300", "-o", GalleryDl.pace, "--", "https://s.test/u"])
+        let json = #"""
+        [[2, {"username": "u"}],
+         [3, "https://scontent.cdninstagram.com/v/a.jpg?sig=1", {"extension": "jpg", "post_shortcode": "AbC", "description": "Sunny day\nat home", "num": 1, "count": 2}],
+         [3, "https://scontent.cdninstagram.com/v/b.mp4?sig=2", {"extension": "mp4", "post_shortcode": "AbC", "num": 2, "count": 2}],
+         [6, "https://s.test/other", {}]]
+        """#
+        let list = GalleryDl.entries(Data(json.utf8), owner: "u")
+        XCTAssertEqual(list.map(\.title), ["Sunny day at home [AbC-1].jpg", "u [AbC-2].mp4"])
+        XCTAssertEqual(list.map(\.kind), ["photo", "video"])
+        XCTAssertEqual(list.first?.direct, true)
+        XCTAssertEqual(ProfileBatch.key("https://scontent.cdninstagram.com/v/a.jpg?sig=1"), ProfileBatch.key("https://scontent.cdninstagram.com/v/a.jpg?sig=9"))
+    }
+
     func testArgumentsAndOutput() {
         XCTAssertEqual(GalleryDl.arguments(url: "https://s.test/a", folder: "/d", speedLimitKBps: 200, referrer: nil),
                        ["--directory", "/d", "-o", GalleryDl.pace, "--limit-rate", "200k", "--", "https://s.test/a"])

@@ -15,12 +15,13 @@ extension DownloadManager {
         var n = 0
         for e in take {
             var job = DownloadJob(url: e.url)
-            job.site = true
+            job.site = e.direct != true  // a gallery engine listing gives the file itself
             job.maxHeight = audio ? nil : height
             job.audioOnly = audio
             job.fileName = e.title.isEmpty || e.title == e.url ? nil : e.title
             var o = AddOptions()
-            o.folder = folder; o.queueID = qid; o.start = start; o.audioOnly = audio; o.maxHeight = height
+            o.folder = folder; o.queueID = qid; o.start = start
+            if e.direct != true { o.audioOnly = audio; o.maxHeight = height }
             if add(job, options: o) != nil { n += 1 }
         }
         return n

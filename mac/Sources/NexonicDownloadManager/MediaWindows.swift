@@ -9,8 +9,11 @@ enum MediaWindows {
     @MainActor private static var library: NSWindow?
 
     /// Lists a playlist's or channel's videos; the chosen ones open in the Add window.
-    @MainActor static func showPlaylist(_ link: String = "") {
-        if let w = playlist { w.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true); return }
+    @MainActor static func showPlaylist(_ link: String = "", replace: Bool = false) {
+        if let w = playlist {
+            if !replace { w.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true); return }
+            w.close(); playlist = nil
+        }
         let start = link.isEmpty ? (NSPasteboard.general.string(forType: .string).flatMap { DownloadJob(url: $0.trimmingCharacters(in: .whitespacesAndNewlines)).validURL != nil ? $0 : nil } ?? "") : link
         let w = NSWindow(contentViewController: NSHostingController(rootView: ProfileBatchView(link: start).environmentObject(DownloadManager.shared)))
         w.title = String(localized: "Profile Batch")
@@ -239,6 +242,35 @@ struct ProfileBatchView: View {
         status = earlier > 0 ? String(format: String(localized: "Continuing an interrupted scan (%d found before)…"), earlier)
             : String(localized: "Looking for videos… (large profiles can take a few minutes)")
         let proxy = manager.settings.proxy, f = filter, stopFlag = { [self] in stopRequested }
+        if let signedIn = manager.profileCookies[ProfileBatch.key(url)] {
+            // Opened by the extension's Download all: the gallery engine lists every photo and video with the browser's
+            // sign-in for the site, a request every 2-4 seconds; nothing is downloaded until Download Now or Add to Queue.
+            status = String(localized: "Listing every photo and video with your browser's sign-in… (a request every 2–4 seconds, so a large profile takes a few minutes)")
+            // The profile's name (its folder): the first part of the address, e.g. "@name" on TikTok.
+            let owner = SocialPages.find(url)?.owner
+                ?? URL(string: url)?.pathComponents.dropFirst().first.map { $0.trimmingCharacters(in: CharacterSet(charactersIn: "@")) } ?? ""
+            DispatchQueue.global(qos: .userInitiated).async {
+                let result = Result { try GalleryDl.list(url, cookies: signedIn.cookies, userAgent: signedIn.userAgent, proxy: proxy, max: f.max,
+                                                         stop: { DispatchQueue.main.sync { stopFlag() } }) }
+                DispatchQueue.main.async {
+                    busy = false
+                    switch result {
+                    case .success(let found?) where !found.isEmpty:
+                        let videos = found.filter { $0.kind == "video" }.count
+                        show(SocialPages.scan(url: url, owner: owner, entries: found,
+                                              note: String(format: String(localized: "Found %d videos and %d photos with your browser's sign-in."), videos, found.count - videos)),
+                             url: url, filter: f)
+                    case .failure(is CancellationError):
+                        status = String(localized: "Stopped.")
+                    default:
+                        // The gallery engine doesn't know this site or address: what visitors see, as usual.
+                        manager.profileCookies[ProfileBatch.key(url)] = nil
+                        find()
+                    }
+                }
+            }
+            return
+        }
         if let social = SocialPages.find(url) {
             // Instagram and Facebook show visitors only their latest posts: Nexonic takes those straight away and says how to
             // get the rest (the extension's Download all in the user's signed-in browser; Nexonic never signs in).

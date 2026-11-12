@@ -37,7 +37,8 @@ computer.
 
 **Data:** the extension collects nothing and sends nothing anywhere except to the app on the same computer. When you
 choose "Download all" on a profile (Instagram, Facebook, TikTok, X …), it hands the profile's address and your
-cookies for that site to the app, whose gallery engine saves the profile's photos and videos at a person's pace. No
+cookies for that site to the app, whose Profile Batch lists the profile's photos and videos at a person's pace for you
+to download. No
 analytics, no accounts. Privacy policy: the "Privacy and terms" section of the README and TERMS.md.
 
 The owner submits the uploads; this repository never publishes to a store automatically.

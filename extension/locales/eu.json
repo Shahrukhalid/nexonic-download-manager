@@ -66,7 +66,8 @@
     "Button colour": "Botoiaren kolorea",
     "Show the button's text (off = arrow only)": "Erakutsi botoiaren testua (desgaitu = gezia bakarrik)",
     "This profile": "This profile",
-    "Saves every photo and video of this profile in Nexonic, using what this browser is signed in to. Nothing scrolls here: Nexonic asks the site for the profile's posts at a person's pace (a request every 2–4 seconds) and only reads; nothing is liked, followed or posted.": "Saves every photo and video of this profile in Nexonic, using what this browser is signed in to. Nothing scrolls here: Nexonic asks the site for the profile's posts at a person's pace (a request every 2–4 seconds) and only reads; nothing is liked, followed or posted.",
-    "Download all": "Download all"
+    "Lists every photo and video of this profile in Nexonic's Profile Batch, using what this browser is signed in to; then choose Download Now or Add to Queue there. Nothing scrolls here: Nexonic asks the site for the posts at a person's pace (a request every 2–4 seconds) and only reads; nothing is liked, followed or posted.": "Lists every photo and video of this profile in Nexonic's Profile Batch, using what this browser is signed in to; then choose Download Now or Add to Queue there. Nothing scrolls here: Nexonic asks the site for the posts at a person's pace (a request every 2–4 seconds) and only reads; nothing is liked, followed or posted.",
+    "Download all": "Download all",
+    "Opened in Nexonic's Profile Batch": "Opened in Nexonic's Profile Batch"
   }
 }

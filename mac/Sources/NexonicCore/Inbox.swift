@@ -24,6 +24,8 @@ public struct DownloadJob: Codable, Equatable, Sendable {
     public var infoJSON: String?
     // Added in 0.31.0: a whole profile or gallery for the gallery engine, with the browser's cookies (the extension's Download all)
     public var gallery: Bool?
+    // Added in 0.31.0: a profile to open in Profile Batch, listed with the browser's cookies (the extension's Download all)
+    public var profile: Bool?
 
     public init(url: String, fileName: String? = nil, referrer: String? = nil, cookies: String? = nil, userAgent: String? = nil) {
         self.url = url

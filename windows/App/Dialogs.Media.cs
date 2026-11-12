@@ -132,7 +132,22 @@ public static partial class Dialogs
             var proxy = HostProfiles.Match(m.Settings.HostProfiles, url)?.Proxy ?? m.Settings.Proxy;
             try
             {
-                if (SocialPages.Find(url) is { } social)
+                // Opened by the extension's Download all: the gallery engine lists every photo and video with the browser's
+                // sign-in for the site, a request every 2-4 seconds; nothing is downloaded until Download Now or Add to Queue.
+                List<BatchEntry>? listed = null;
+                if (m.ProfileCookies.TryGetValue(ProfileBatch.Key(url), out var signedIn))
+                {
+                    status.Text = L.T("Listing every photo and video with your browser's sign-in… (a request every 2–4 seconds, so a large profile takes a few minutes)");
+                    listed = await GalleryList.ListAsync(url, signedIn.Cookies, signedIn.UserAgent, proxy, filter.Max, token);
+                    if (listed is not { Count: > 0 }) m.ProfileCookies.Remove(ProfileBatch.Key(url));  // a site it doesn't know
+                }
+                if (listed is { Count: > 0 })
+                {
+                    var videos = listed.Count(x => x.Kind == "video");
+                    scan = new ProfileBatch.Scan { Url = url, Owner = ProfileBatch.OwnerOf(url), Entries = listed, Complete = true,
+                        Note = string.Format(L.T("Found {0} videos and {1} photos with your browser's sign-in."), videos, listed.Count - videos) };
+                }
+                else if (SocialPages.Find(url) is { } social)
                 {
                     // Instagram and Facebook show visitors only their latest posts: Nexonic takes those straight away and says
                     // how to get the rest (the extension's Download all in the user's signed-in browser; Nexonic never signs in).
@@ -169,6 +184,8 @@ public static partial class Dialogs
         }
 
         f.Window.Closed += (_, _) => cancel?.Cancel();
+        // Opened with a link (the extension's Download all, or a link handed over): Find Videos starts by itself.
+        if (link.Length > 0) f.Window.Loaded += (_, _) => Read();
         f.AddButton("Close", f.Close, isCancel: true);
         f.AddButton("Stop", () => cancel?.Cancel());
         export = f.AddButton("Export…", () =>

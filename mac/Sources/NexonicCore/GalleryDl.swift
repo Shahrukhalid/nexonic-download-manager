@@ -117,6 +117,67 @@ public enum GalleryDl {
     }
 }
 
+/// Profile Batch with the gallery engine: the photos and videos of a profile, listed (not downloaded) with the browser's
+/// cookies for the site, at a person's pace. The user then picks Download Now or Add to Queue.
+public extension GalleryDl {
+    static let videoExtensions: Set<String> = ["mp4", "webm", "mov", "m4v", "mkv"]
+
+    /// The engine's arguments for listing: one JSON document of every file, at most `max` of them.
+    static func listArguments(url: String, max: Int, settingsFile: String?) -> [String] {
+        var args = ["-j", "--range", "1-\(Swift.max(1, max))", "-o", pace]
+        if let settingsFile { args += ["--config", settingsFile] }
+        return args + ["--", url]
+    }
+
+    /// The files in the engine's listing: the picture or video address, named "description [post id].ext".
+    static func entries(_ data: Data, owner: String) -> [BatchEntry] {
+        guard let messages = try? JSONSerialization.jsonObject(with: data) as? [Any] else { return [] }
+        let df = DateFormatter(); df.dateFormat = "yyyy-MM-dd HH:mm:ss"; df.locale = Locale(identifier: "en_US_POSIX")
+        df.timeZone = TimeZone(identifier: "UTC")
+        var list: [BatchEntry] = [], seen = Set<String>()
+        for case let m as [Any] in messages {
+            guard m.count >= 3, (m[0] as? Int) == 3, let url = m[1] as? String, url.hasPrefix("https://"),
+                  let kw = m[2] as? [String: Any], seen.insert(url).inserted else { continue }
+            let text = { (k: String) -> String in (kw[k] as? String) ?? (kw[k] as? NSNumber)?.stringValue ?? "" }
+            let ext = text("extension").lowercased().isEmpty ? "jpg" : text("extension").lowercased()
+            let post = ["post_shortcode", "shortcode", "post_id", "id", "filename"].map(text).first { !$0.isEmpty } ?? ""
+            let num = (kw["num"] as? Int) ?? 0, count = (kw["count"] as? Int) ?? 0
+            let words = ["description", "content", "title", "desc"].map(text).first { !$0.isEmpty } ?? ""
+            var caption = words.replacingOccurrences(of: "\n", with: " ").trimmingCharacters(in: .whitespaces)
+            if caption.count > 100 { caption = String(caption.prefix(100)).trimmingCharacters(in: .whitespaces) }
+            let label = caption.isEmpty ? owner : caption
+            let name = FileNames.sanitize("\(label) [\(post)\(count > 1 && num > 0 ? "-\(num)" : "")].\(ext)")
+            list.append(BatchEntry(url: url, title: name, duration: (kw["duration"] as? NSNumber)?.doubleValue,
+                                   date: df.date(from: text("date")), kind: videoExtensions.contains(ext) ? "video" : "photo",
+                                   available: true, direct: true))
+        }
+        return list
+    }
+
+    /// Lists a profile with the engine (nil when it can't: not installed, or the site or address isn't one it knows).
+    static func list(_ url: String, cookies: String?, userAgent: String?, proxy: ProxySettings?, max: Int,
+                     stop: @escaping () -> Bool) throws -> [BatchEntry]? {
+        guard ensureInstalled() else { return nil }
+        let settingsFile = try writeSettings(settings(cookies: cookies, userAgent: userAgent, username: nil, password: nil,
+                                                      proxyURL: proxy.flatMap(SiteVideo.proxyURL)))
+        defer { if let settingsFile { try? FileManager.default.removeItem(at: settingsFile) } }
+        let p = Process()
+        p.executableURL = program
+        p.arguments = listArguments(url: url, max: max, settingsFile: settingsFile?.path)
+        let out = Pipe()
+        p.standardOutput = out
+        p.standardError = FileHandle.nullDevice
+        try p.run()
+        final class Box: @unchecked Sendable { var data = Data() }
+        let box = Box(), done = DispatchSemaphore(value: 0), handle = out.fileHandleForReading
+        DispatchQueue.global(qos: .userInitiated).async { box.data = handle.readDataToEndOfFile(); done.signal() }
+        while done.wait(timeout: .now() + 0.5) == .timedOut { if stop() { p.terminate(); throw CancellationError() } }
+        p.waitUntilExit()
+        let found = entries(box.data, owner: "")
+        return found.isEmpty && p.terminationStatus != 0 ? nil : found
+    }
+}
+
 /// Runs the gallery engine for one gallery: the list row counts files and bytes; pausing stops it and resuming continues
 /// (files already saved are skipped).
 public final class GalleryTransfer: Downloader, @unchecked Sendable {

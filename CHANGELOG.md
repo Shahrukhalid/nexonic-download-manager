@@ -6,12 +6,16 @@
   - Profile Batch takes what visitors see as soon as you paste the link (a hidden private web view on Windows, Mac
     and Android): on a Mac with a home connection, a Facebook profile's reels showed 19 (the old way found 1) and an
     Instagram profile its latest 12 posts. It then says how to get the rest.
-- Browser extension: **Download all** on a profile (Instagram, Facebook, TikTok, X, Threads, Pinterest, Reddit, Tumblr,
-  Bluesky and more) saves every photo and video of it in Nexonic. The app's gallery engine lists the whole profile with
-  your browser's sign-in for that site (its cookies, handed over by the extension); nothing scrolls in the browser and
-  Nexonic never sees your password. Files go into a folder per site and profile.
+- Browser extension: **Download all** on a profile (Instagram, TikTok, X, Threads, Pinterest, Reddit, Tumblr, Bluesky
+  and more) opens it in Profile Batch, which lists every photo and video with your browser's sign-in for that site (the
+  extension hands over its cookies; Nexonic never sees your password) and shows the result: choose **Download Now** or
+  **Add to Queue**, or preview and pick. Photos are saved as they are, named after their description; videos too.
+  Nothing scrolls in the browser. Where the listing can't read a site (Facebook pages, for now), Profile Batch takes
+  what visitors see, as before.
   - It stays polite, so it never looks or acts like a bot: it only reads (never likes, follows, comments, messages or
     posts) and waits 2–4 seconds between its requests to the site, like a person. All galleries now keep that pace.
+- Instagram posts from the extension (the video button and "This page's video") are saved by the gallery engine with
+  your browser's sign-in, photos included; the video engine couldn't read them.
 - The **Download this video** button now also appears on players covered by see-through layers (Instagram, Facebook,
   TikTok and others), not only on YouTube.
 - Pasting a link in Profile Batch starts Find Videos straight away.

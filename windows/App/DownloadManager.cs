@@ -342,12 +342,7 @@ public sealed partial class DownloadManager
                 if (Settings.ShowProgressWindow && j.FromBrowser == true) ProgressRequested?.Invoke(dup);
                 continue;
             }
-            if (j.Gallery == true)
-            {
-                // The extension's Download all: the whole profile with the gallery engine and the browser's cookies.
-                Add(j with { FromBrowser = null }, new AddOptions { Gallery = true });
-                continue;
-            }
+            if (TakeBrowserRequest(j)) continue;
             if (j.FromBrowser == true && Settings.ShowDownloadDialog && DownloadDialogRequested != null)
             {
                 DownloadDialogRequested(j);

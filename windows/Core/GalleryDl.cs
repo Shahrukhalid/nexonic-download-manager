@@ -144,6 +144,88 @@ public static class GalleryDl
     }
 }
 
+/// <summary>
+/// Profile Batch with the gallery engine: the photos and videos of a profile, listed (not downloaded) with the browser's
+/// cookies for the site, at a person's pace. The user then picks Download Now or Add to Queue.
+/// </summary>
+public static class GalleryList
+{
+    static readonly HashSet<string> VideoExtensions = new(StringComparer.OrdinalIgnoreCase) { "mp4", "webm", "mov", "m4v", "mkv" };
+
+    /// <summary>The engine's arguments for listing: one JSON document of every file, at most <paramref name="max"/> of them.</summary>
+    public static List<string> Arguments(string url, int max, string? settingsFile)
+    {
+        var args = new List<string> { "-j", "--range", "1-" + Math.Max(1, max), "-o", GalleryDl.Pace };
+        if (settingsFile != null) args.AddRange(new[] { "--config", settingsFile });
+        args.Add("--");
+        args.Add(url);
+        return args;
+    }
+
+    /// <summary>The files in the engine's listing: the picture or video address, named "description [post id].ext".</summary>
+    public static List<BatchEntry> Entries(string json, string owner)
+    {
+        var list = new List<BatchEntry>();
+        var seen = new HashSet<string>();
+        JsonDocument doc;
+        try { doc = JsonDocument.Parse(json); } catch (JsonException) { return list; }
+        using (doc)
+        {
+            if (doc.RootElement.ValueKind != JsonValueKind.Array) return list;
+            foreach (var m in doc.RootElement.EnumerateArray())
+            {
+                if (m.ValueKind != JsonValueKind.Array || m.GetArrayLength() < 3 || m[0].ValueKind != JsonValueKind.Number || m[0].GetInt32() != 3
+                    || m[1].ValueKind != JsonValueKind.String || m[2].ValueKind != JsonValueKind.Object) continue;
+                var url = m[1].GetString()!;
+                if (!url.StartsWith("https://", StringComparison.Ordinal) || !seen.Add(url)) continue;
+                var kw = m[2];
+                string Text(string k) => kw.TryGetProperty(k, out var v) ? v.ValueKind switch
+                { JsonValueKind.String => v.GetString() ?? "", JsonValueKind.Number => v.GetRawText(), _ => "" } : "";
+                int Int(string k) => kw.TryGetProperty(k, out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetInt32(out var n) ? n : 0;
+                var ext = Text("extension").ToLowerInvariant();
+                if (ext.Length == 0) ext = "jpg";
+                var post = new[] { "post_shortcode", "shortcode", "post_id", "id", "filename" }.Select(Text).FirstOrDefault(x => x.Length > 0) ?? "";
+                var caption = (new[] { "description", "content", "title", "desc" }.Select(Text).FirstOrDefault(x => x.Length > 0) ?? "")
+                    .Replace('\n', ' ').Replace('\r', ' ').Trim();
+                if (caption.Length > 100) caption = caption[..100].Trim();
+                var part = Int("count") > 1 && Int("num") > 0 ? "-" + Int("num") : "";
+                var name = FileNames.Sanitize($"{(caption.Length > 0 ? caption : owner)} [{post}{part}].{ext}");
+                DateTime? date = DateTime.TryParseExact(Text("date"), "yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out var d) ? d : null;
+                double? seconds = kw.TryGetProperty("duration", out var du) && du.ValueKind == JsonValueKind.Number ? du.GetDouble() : null;
+                list.Add(new BatchEntry(url, name, seconds, date, VideoExtensions.Contains(ext) ? "video" : "photo", Direct: true));
+            }
+        }
+        return list;
+    }
+
+    /// <summary>Lists a profile with the engine; null when it can't (no build here, not installed, or a site or address it doesn't know).</summary>
+    public static async Task<List<BatchEntry>?> ListAsync(string url, string? cookies, string? userAgent, ProxySettings? proxy, int max, CancellationToken cancel)
+    {
+        if (GalleryDl.Asset == null || !await Task.Run(() => GalleryDl.EnsureInstalled(), cancel)) return null;
+        var settingsFile = GalleryDl.WriteSettings(GalleryDl.Settings(cookies, userAgent, null, null, proxy == null ? null : SiteVideo.ProxyUrl(proxy, url)));
+        try
+        {
+            var psi = new ProcessStartInfo(GalleryDl.Program)
+            {
+                CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true,
+                StandardOutputEncoding = Encoding.UTF8,
+            };
+            psi.Environment["PYTHONIOENCODING"] = "utf-8";
+            foreach (var a in Arguments(url, max, settingsFile)) psi.ArgumentList.Add(a);
+            using var p = Process.Start(psi)!;
+            using var kill = cancel.Register(() => { try { p.Kill(true); } catch { } });
+            var errors = p.StandardError.ReadToEndAsync(cancel);
+            var output = await p.StandardOutput.ReadToEndAsync(cancel);
+            await p.WaitForExitAsync(cancel);
+            _ = await errors;
+            var found = Entries(output, "");
+            return found.Count == 0 && p.ExitCode != 0 ? null : found;
+        }
+        finally { if (settingsFile != null) try { File.Delete(settingsFile); } catch { } }
+    }
+}
+
 /// <summary>Runs the gallery engine for one gallery: the list row counts files and bytes; pausing stops it and resuming
 /// continues (files already saved are skipped).</summary>
 public sealed class GalleryTransfer(DownloadRecord record, bool sortIntoCategories, int speedLimitKBps, ProxySettings? proxy) : IDownloader

@@ -97,6 +97,8 @@ public sealed class App : Application
         m.DownloadDialogRequested += job => DownloadWindows.ShowInfo(m, job);
         m.TorrentRequested += source => { ShowWindow(); _ = Dialogs.Torrent(window, m, source, DownloadQueue.MainId); };
         m.ProgressRequested += row => DownloadWindows.ShowProgress(m, row);
+        // The extension's Download all: Profile Batch lists the profile, then the user picks Download Now or Add to Queue.
+        m.ProfileRequested += link => { ShowWindow(); _ = Dialogs.ProfileBatchWindow(window, m, link); };
         m.ShowRequested += ShowWindow;
         m.Notify += (title, body) => { if (m.Settings.Notifications) LinuxSystem.Notify(title, body, IconPath); };
         m.Finished += r =>

@@ -26,13 +26,46 @@ public sealed partial class DownloadManager
         var n = 0;
         foreach (var e in take)
         {
-            var job = new DownloadJob(e.Url, e.Title.Length > 0 && e.Title != e.Url ? FileNames.Sanitize(e.Title) : null)
-            { Site = true, MaxHeight = audio ? null : height, AudioOnly = audio, Folder = folder, Start = start };
-            if (Add(job, new AddOptions { QueueId = queueId, Folder = folder, Start = start, AudioOnly = audio, MaxHeight = height }) != null) n++;
+            var name = e.Title.Length > 0 && e.Title != e.Url ? FileNames.Sanitize(e.Title) : null;
+            // A gallery engine listing gives the file itself: downloaded as it is, not by the video engine.
+            var job = e.Direct ? new DownloadJob(e.Url, name) { Folder = folder, Start = start }
+                : new DownloadJob(e.Url, name) { Site = true, MaxHeight = audio ? null : height, AudioOnly = audio, Folder = folder, Start = start };
+            var options = e.Direct ? new AddOptions { QueueId = queueId, Folder = folder, Start = start }
+                : new AddOptions { QueueId = queueId, Folder = folder, Start = start, AudioOnly = audio, MaxHeight = height };
+            if (Add(job, options) != null) n++;
         }
         Save();
         Schedule();
         return n;
+    }
+
+    /// <summary>
+    /// The browser's cookies for profiles the extension opened in Profile Batch (Download all), by profile address; kept in
+    /// memory only, for listing that profile as the user sees it.
+    /// </summary>
+    public Dictionary<string, (string? Cookies, string? UserAgent)> ProfileCookies { get; } = new();
+
+    /// <summary>The extension's Download all: open Profile Batch with this profile.</summary>
+    public event Action<string>? ProfileRequested;
+
+    /// <summary>
+    /// The extension's requests that are not single downloads: a profile for Profile Batch (listed with the browser's
+    /// cookies, then the user picks Download Now or Add to Queue), or one post for the gallery engine. True when handled.
+    /// </summary>
+    bool TakeBrowserRequest(DownloadJob j)
+    {
+        if (j.Profile == true)
+        {
+            ProfileCookies[ProfileBatch.Key(j.Url)] = (j.Cookies, j.UserAgent);
+            ProfileRequested?.Invoke(j.Url);
+            return true;
+        }
+        if (j.Gallery == true)
+        {
+            Add(j with { FromBrowser = null }, new AddOptions { Gallery = true });
+            return true;
+        }
+        return false;
     }
 
     public bool AlreadyDownloaded(string url) =>

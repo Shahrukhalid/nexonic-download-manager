@@ -6,8 +6,10 @@ public struct BatchEntry: Codable, Equatable, Sendable, Identifiable {
     public var title: String
     public var duration: Double?
     public var date: Date?
-    public var kind: String = "video"  // video, shorts or live
+    public var kind: String = "video"  // video, shorts, live or photo
     public var available = true
+    /// Added in 0.31.0: the file itself (a gallery engine listing), downloaded as it is rather than by the video engine.
+    public var direct: Bool?
     public var id: String { url }
 }
 
@@ -109,6 +111,8 @@ public enum ProfileBatch {
         let base = url.split(separator: "#", maxSplits: 1).first.map(String.init) ?? url
         guard var c = URLComponents(string: base.trimmingCharacters(in: .whitespaces)) else { return base }
         c.host = c.host?.lowercased(); c.scheme = c.scheme?.lowercased()
+        // The sites' picture and video servers sign every address anew; the file is the same without the signature.
+        if let h = c.host, ["cdninstagram.com", "fbcdn.net", "tiktokcdn.com", "tiktokcdn-us.com", "twimg.com", "pinimg.com"].contains(where: { h.hasSuffix($0) }) { c.query = nil }
         return c.string ?? base
     }
 
