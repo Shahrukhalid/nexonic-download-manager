@@ -1,8 +1,13 @@
-# Offline checks of the profile listers in engine/nexonic (run: python3 scripts/test-profile-listers.py).
+# Offline checks of the profile listers in engine/nexonic_profiles.py (run: python3 scripts/test-profile-listers.py).
 import os, re, sys, unittest
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'engine', 'nexonic'))
-from yt_dlp_plugins.extractor.nexonic_profiles import (NexonicFacebookPageIE as FB, NexonicInstagramProfileIE as IG,
-                                                       NexonicRedditListingIE as RD, NexonicXProfileIE as X)
+import importlib.util
+_spec = importlib.util.spec_from_file_location('nexonic_profiles', os.path.join(os.path.dirname(__file__), '..', 'engine', 'nexonic_profiles.py'))
+_mod = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_mod)
+FB = _mod.NexonicFacebookPageIE
+IG = _mod.NexonicInstagramProfileIE
+RD = _mod.NexonicRedditListingIE
+X = _mod.NexonicXProfileIE
 
 
 def m(ie, url):

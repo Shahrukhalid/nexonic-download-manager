@@ -1,0 +1,12 @@
+# The language bar on GitHub counts only the apps themselves: the website, docs, build and release scripts, packaging
+# and branding are left out (they stay in the repository as they are).
+site/** linguist-documentation
+docs/** linguist-documentation
+scripts/** linguist-vendored
+packaging/** linguist-vendored
+bucket/** linguist-vendored
+branding/** linguist-vendored
+docker/** linguist-vendored
+.github/** linguist-vendored
+**/Tests/** linguist-vendored
+**/tests/** linguist-vendored

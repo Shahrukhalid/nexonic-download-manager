@@ -229,12 +229,12 @@ object VideoEngine {
         private set
 
     /**
-     * The profile listers Nexonic adds to the video engine (engine/nexonic, shipped as an app asset): they only read what
+     * The profile listers Nexonic adds to the video engine (engine/nexonic_profiles.py, shipped as an app asset): they only read what
      * a site shows visitors who are not signed in. Copied to the app's files when missing or changed.
      */
     private fun plugins(): String? = runCatching {
         val rel = "nexonic/yt_dlp_plugins/extractor/nexonic_profiles.py"
-        val bytes = app.assets.open(rel).use { it.readBytes() }
+        val bytes = app.assets.open("nexonic_profiles.py").use { it.readBytes() }
         val root = java.io.File(app.filesDir, "engine-plugins")
         val file = java.io.File(root, rel)
         if (!file.exists() || !file.readBytes().contentEquals(bytes)) { file.parentFile?.mkdirs(); file.writeBytes(bytes) }

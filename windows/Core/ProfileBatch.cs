@@ -319,7 +319,7 @@ public static class SavedProfiles
 }
 
 /// <summary>
-/// The profile listers Nexonic adds to the video engine (engine/nexonic, a plugin for sites whose own lister needs an
+/// The profile listers Nexonic adds to the video engine (engine/nexonic_profiles.py, a plugin for sites whose own lister needs an
 /// account or stopped working). They only read what the site shows to visitors who are not signed in. The file is
 /// written next to the video tools when missing or changed, and handed to the engine with --plugin-dirs.
 /// </summary>
