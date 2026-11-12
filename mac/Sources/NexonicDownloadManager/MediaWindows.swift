@@ -209,12 +209,12 @@ struct ProfileBatchView: View {
                 Spacer()
                 // While a profile is listed in the background, Close leaves it running (Nexonic reopens Profile Batch).
                 Button("Close") { MediaWindows.closePlaylist(windowLink) }
-                Button("Stop") {
+                Button("Stop Search") {
                     stopRequested = true
                     let key = ProfileBatch.key(link.trimmingCharacters(in: .whitespacesAndNewlines))
                     if let l = manager.listings[key], l.running { l.stop.set(); busy = false; status = String(localized: "Stopped.") }
                 }.disabled(!busy)
-                if !preview.isEmpty || !pending.isEmpty || searchFound > 0 {
+                if !preview.isEmpty || !pending.isEmpty {
                     Button("Add to Queue") { hand(start: false) }
                     Button("Download Now") { hand(start: true) }.keyboardShortcut(.defaultAction)
                     Button("Find Videos", action: find).disabled(busy)
@@ -230,9 +230,7 @@ struct ProfileBatchView: View {
         .onReceive(manager.$listings) { all in
             let key = ProfileBatch.key(link.trimmingCharacters(in: .whitespacesAndNewlines))
             if busy, let l = all[key], l.running, l.found > 0 {
-                status = l.follow != nil
-                    ? String(format: String(localized: "%d found so far, each one added as it is found. You can close this window."), l.found)
-                    : String(format: String(localized: "%d photos and videos found so far. Download Now or Add to Queue starts them already; the rest follow as they are found. You can close this window: the search keeps going in the downloads list."), l.found)
+                status = String(format: String(localized: "%d photos and videos found so far. You can close this window: the search keeps going in the downloads list; double-click it there to come back."), l.found)
             }
             guard busy, let l = all[key], !l.running, !l.stopped else { return }
             DispatchQueue.main.async { find() }  // after the change is stored
@@ -244,21 +242,7 @@ struct ProfileBatchView: View {
     }
 
     /// Download Now or Add to Queue: the chosen videos of the preview, or everything that was found.
-    /// Files found so far by a signed-in search that is still running for this window's link (0 = none running).
-    private var searchFound: Int {
-        guard let l = manager.listings[ProfileBatch.key(link.trimmingCharacters(in: .whitespacesAndNewlines))], l.running else { return 0 }
-        return l.found
-    }
-
     private func hand(start: Bool) {
-        let url = link.trimmingCharacters(in: .whitespacesAndNewlines), key = ProfileBatch.key(url)
-        if let l = manager.listings[key], l.running {
-            // While the search runs: what was found so far now, the rest as it is found.
-            let folder = ownFolder ? ProfileBatch.folder(base: manager.settings.startFolder, owner: l.owner, url: url) : manager.settings.startFolder
-            manager.followListing(key, folder: folder, quality: quality, parallel: parallel, start: start)
-            status = String(format: String(localized: "%d added; the rest are added as they are found. You can close this window."), l.found)
-            return
-        }
         if !preview.isEmpty { download(preview.filter { chosen.contains($0.url) }, nil, start: start) }
         else { download(pending, pendingCounts, start: start) }
         pending = []; pendingCounts = nil

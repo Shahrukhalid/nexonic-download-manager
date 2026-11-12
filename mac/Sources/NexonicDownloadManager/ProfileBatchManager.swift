@@ -16,14 +16,9 @@ struct ProfileListing {
     var stopped = false
     var visitorsOnly = false
     var found = 0
-    /// What was found so far (in order), and whose it is.
-    var entries: [BatchEntry] = []
     var owner = ""
-    /// Download Now or Add to Queue while the search runs: everything found so far, then each new file as it is found.
-    var follow: Follow?
     /// Why the signed-in search found nothing, in the gallery engine's own words.
     var error: String?
-    struct Follow { var folder: URL; var quality: String; var parallel: Int; var start: Bool }
     var scan: ProfileBatch.Scan?
 }
 
@@ -55,8 +50,7 @@ extension DownloadManager {
 
     /// Starts searching a profile with the gallery engine and the browser's cookies (the extension's Download all), in
     /// the background, as a row in the downloads list: several can run at once, the Profile Batch window may close, and
-    /// double-clicking the row opens it again. Files show up as they are found, and Download Now or Add to Queue can
-    /// start them before the search ends (see follow).
+    /// double-clicking the row opens it again with what was found.
     func startListing(_ url: String, max: Int) {
         let key = ProfileBatch.key(url)
         guard let signedIn = profileCookies[key], listings[key]?.running != true else { return }
@@ -75,7 +69,7 @@ extension DownloadManager {
         }
         DispatchQueue.global(qos: .userInitiated).async {
             let result = Result {
-                try GalleryDl.list(SocialPages.listable(url), cookies: signedIn.cookies, userAgent: signedIn.userAgent, proxy: proxy, max: max,
+                try GalleryDl.list(url, cookies: signedIn.cookies, userAgent: signedIn.userAgent, proxy: proxy, max: max,
                                    found: { fresh, owner in Task { @MainActor in self.listingFound(key, row: row, fresh, owner: owner) } },
                                    stop: { stop.isSet })
             }
@@ -107,30 +101,13 @@ extension DownloadManager {
         }
     }
 
-    /// New files from a running search: counted on its row, and queued at once when the user already chose Download Now
-    /// or Add to Queue.
+    /// New files from a running search: counted on its row.
     private func listingFound(_ key: String, row: UUID?, _ fresh: [BatchEntry], owner: String) {
         guard var l = listings[key] else { return }
         if l.owner.isEmpty { l.owner = owner }
-        l.entries += fresh
-        l.found = l.entries.count
+        l.found += fresh.count
         listings[key] = l
         if let row { update(row) { $0.streamDone = l.found; $0.status = .downloading } }
-        if let f = l.follow { queueFound(fresh, of: l, follow: f) }
-    }
-
-    /// Download Now or Add to Queue during a search: what was found so far now, and the rest as it is found.
-    func followListing(_ key: String, folder: URL, quality: String, parallel: Int, start: Bool) {
-        guard var l = listings[key] else { return }
-        let f = ProfileListing.Follow(folder: folder, quality: quality, parallel: parallel, start: start)
-        l.follow = f
-        listings[key] = l
-        queueFound(l.entries, of: l, follow: f)
-    }
-
-    private func queueFound(_ entries: [BatchEntry], of l: ProfileListing, follow f: ProfileListing.Follow) {
-        let take = entries.filter { !alreadyDownloaded($0.url) }
-        if !take.isEmpty { queueBatch(owner: l.owner, take, folder: f.folder, quality: f.quality, maxActive: f.parallel, start: f.start) }
     }
 
     func alreadyDownloaded(_ url: String) -> Bool {

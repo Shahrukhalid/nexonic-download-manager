@@ -440,21 +440,6 @@ public sealed record SocialSite(string Name, string LoginUrl, string Domain, str
 public static class SocialPages
 {
     /// <summary>
-    /// The address the gallery engine lists a profile from: a Facebook page's own address rather than one of its tabs
-    /// (reels, videos, photos), which it doesn't read; other sites' addresses as they are.
-    /// </summary>
-    public static string Listable(string url)
-    {
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var u) || !(u.Host.Equals("facebook.com", StringComparison.OrdinalIgnoreCase)
-            || u.Host.EndsWith(".facebook.com", StringComparison.OrdinalIgnoreCase))) return url;
-        var parts = u.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
-        var path = parts.Length >= 2 && new[] { "reels", "videos", "photos", "photos_by", "reels_tab" }.Contains(parts[1].ToLowerInvariant())
-            ? "/" + parts[0] + "/" : u.AbsolutePath;
-        var id = System.Web.HttpUtility.ParseQueryString(u.Query)["id"];
-        return $"{u.Scheme}://{u.Host}{path}" + (id != null ? "?id=" + Uri.EscapeDataString(id) : "");
-    }
-
-    /// <summary>
     /// Added under what a visitor sees: how to get the rest. The Nexonic extension's "Download all" on the profile, in a
     /// browser signed in to the site, hands the whole profile to the gallery engine with the browser's cookies (read-only, a person's pace) and sends every
     /// video and photo here. Nexonic itself never signs in.

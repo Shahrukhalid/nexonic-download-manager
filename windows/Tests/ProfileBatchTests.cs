@@ -153,9 +153,6 @@ public class ProfileBatchTests
     [Fact]
     public void VisitorsAreToldHowToGetTheRestThroughTheirOwnBrowser()
     {
-        Assert.Equal("https://www.facebook.com/themacshacuk/", SocialPages.Listable("https://www.facebook.com/themacshacuk/reels/"));
-        Assert.Equal("https://www.facebook.com/profile.php?id=100066819891059", SocialPages.Listable("https://www.facebook.com/profile.php?id=100066819891059&sk=reels_tab"));
-        Assert.Equal("https://www.instagram.com/u/reels/", SocialPages.Listable("https://www.instagram.com/u/reels/"));
         var more = SocialPages.More(SocialPages.Instagram);
         Assert.Contains("signed in to Instagram", more);
         Assert.Contains("Download all", more);

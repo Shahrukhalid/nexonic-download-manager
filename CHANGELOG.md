@@ -8,19 +8,15 @@
     Instagram profile its latest 12 posts. It then says how to get the rest.
 - Browser extension: **Download all** on a profile (Instagram, TikTok, X, Threads, Pinterest, Reddit, Tumblr, Bluesky
   and more) opens it in Profile Batch, which lists every photo and video with your browser's sign-in for that site (the
-  extension hands over its cookies; Nexonic never sees your password) and shows the result: choose **Download Now** or
-  **Add to Queue**, or preview and pick. On the Mac the search is a row in the downloads list ("Photos and videos
-  of …", with the count found so far): close the window, start more searches on other profiles at the same time, and
-  double-click a row to come back to its result. Files show up as they are found, and Download Now or Add to Queue
-  works during the search: what was found so far starts at once and the rest follow as they are found. When the
-  signed-in search can't read a site, Profile Batch says why and takes what visitors see. On Windows and Linux the
-  window keeps the search. Photos are saved as they are, named after their
-  description; videos too. Nothing scrolls in the browser. Facebook pages are listed from the page itself (their reels
-  tab can't be read); where a site can't be listed at all, Profile Batch takes what visitors see, as before.
+  extension hands over its cookies; Nexonic never sees your password); then choose **Download Now** or **Add to Queue**,
+  or preview and pick. On the Mac the search is a row in the downloads list ("Photos and videos of …", with the count
+  so far): close the window, run searches on several profiles at once, and double-click a row to come back. When the
+  signed-in search can't read a site, Profile Batch says why and takes what visitors see. Facebook pages can't be
+  listed this way; Profile Batch takes what visitors see there, and single Facebook videos download as before.
   - It stays polite, so it never looks or acts like a bot: it only reads (never likes, follows, comments, messages or
-    posts) and waits 1–2 seconds between its requests to the site, like a person. All galleries now keep that pace.
-- Instagram posts from the extension (the video button and "This page's video") open in Profile Batch the same way,
-  photos included, so you choose Download Now or Add to Queue; the video engine couldn't read them.
+    posts) and waits 1–2 seconds between its requests to the site, like a person. All galleries keep that pace.
+- Instagram posts from the extension (the video button and "This page's video") open the download window and are saved
+  by the gallery engine with your browser's sign-in, photos included; the video engine couldn't read them.
 - The **Download this video** button now also appears on players covered by see-through layers (Instagram, Facebook,
   TikTok and others), not only on YouTube.
 - Pasting a link in Profile Batch starts Find Videos straight away.

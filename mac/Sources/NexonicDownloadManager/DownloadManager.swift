@@ -340,13 +340,13 @@ final class DownloadManager: ObservableObject {
                 MediaWindows.showPlaylist(job.url)
                 continue
             }
-            if job.gallery == true {
-                // The extension's Download all: the whole profile with the gallery engine and the browser's cookies.
+            if DownloadInfoWindow.isOpen(for: job.url) { continue }
+            if job.gallery == true && !(job.fromBrowser == true && settings.showDownloadDialog) {
+                // An Instagram post from the extension, without the download window: its video or photos, straight away.
                 var o = AddOptions(); o.gallery = true
                 add(job, options: o)
                 continue
             }
-            if DownloadInfoWindow.isOpen(for: job.url) { continue }
             if job.fromBrowser == true && settings.showDownloadDialog {
                 DownloadInfoWindow.show(job, manager: self)
                 continue

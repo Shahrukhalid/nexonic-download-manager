@@ -69,7 +69,7 @@ struct DownloadInfoView: View {
     }
 
     private var url: URL? { job.validURL }
-    private var isSiteVideo: Bool { job.site == true || (url.map(SiteVideo.isSupported) ?? false) }
+    private var isSiteVideo: Bool { job.gallery != true && (job.site == true || (url.map(SiteVideo.isSupported) ?? false)) }
     private var category: FileCategory { FileCategory(fileName: name) }
 
     var body: some View {
@@ -142,10 +142,10 @@ struct DownloadInfoView: View {
         folder = manager.settings.startFolder
         quality = job.audioOnly == true ? -1 : (job.maxHeight ?? 0)
         if let n = job.fileName, !n.isEmpty { name = FileNames.sanitize(n) }
-        else if let url { name = isSiteVideo ? "Video from \(url.host ?? "site")" : FileNames.fromURL(url) }
+        else if let url { name = job.gallery == true ? "Post from \(url.host ?? "site")" : isSiteVideo ? "Video from \(url.host ?? "site")" : FileNames.fromURL(url) }
         size = job.size
         if isSiteVideo, let url { lookUpVideo(url) }
-        else if size == nil, job.stream != true, let url { probe(url) }
+        else if size == nil, job.stream != true, job.gallery != true, let url { probe(url) }
     }
 
     /// Looks the video up while the window is open (title, size, best quality), like a file's size is checked.
@@ -239,6 +239,7 @@ struct DownloadInfoView: View {
         o.queueID = queueID
         o.start = start
         o.audioOnly = quality == -1
+        o.gallery = job.gallery == true  // an Instagram post: its video or photos, with the browser's sign-in
         let id = manager.add(job, options: o)
         if start, let id, manager.settings.showProgressWindow { ProgressWindow.show(id, manager: manager) }
         close()

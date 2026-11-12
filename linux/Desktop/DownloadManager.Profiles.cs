@@ -63,7 +63,7 @@ public sealed partial class DownloadManager
         var listing = Listings[key] = new ProfileListing { Url = url, Running = true };
         var proxy = HostProfiles.Match(Settings.HostProfiles, url)?.Proxy ?? Settings.Proxy;
         (List<BatchEntry> Entries, string Owner)? found = null;
-        try { found = await GalleryList.ListAsync(SocialPages.Listable(url), signedIn.Cookies, signedIn.UserAgent, proxy, max, listing.Stop.Token); }
+        try { found = await GalleryList.ListAsync(url, signedIn.Cookies, signedIn.UserAgent, proxy, max, listing.Stop.Token); }
         catch (OperationCanceledException) { listing.Stopped = true; }
         catch (Exception e) when (e is System.IO.IOException or InvalidOperationException or System.ComponentModel.Win32Exception) { }
         listing.Running = false;

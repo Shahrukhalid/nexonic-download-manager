@@ -283,9 +283,13 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
         // One link the user picked (video button, popup, page menu): the app shows its download window.
         const extra = { referrer, later: !!msg.later, browser: true };
         if (msg.stream) Object.assign(extra, { stream: true, fileName: msg.fileName });
-        else if (msg.site && !msg.audioOnly && /^https:\/\/([a-z]+\.)?instagram\.com\/(?:[^/]+\/)?(p|reel|tv)\//.test(msg.url) || msg.site && !msg.audioOnly && /^https:\/\/([a-z]+\.)?instagram\.com\//.test(msg.url) && profileOf(msg.url)) {
-          // An Instagram post (or a whole profile, from "This page's video" on a profile page): Profile Batch opens with it and lists its video or photos with this browser's sign-in (the
-          // video engine can't read Instagram posts for signed-in browsers); the user picks Download Now or Add to Queue.
+        else if (msg.site && !msg.audioOnly && /^https:\/\/([a-z]+\.)?instagram\.com\/(?:[^/]+\/)?(p|reel|tv)\//.test(msg.url)) {
+          // An Instagram post: the gallery engine saves its video or photos with this browser's sign-in (the video engine
+          // can't read Instagram posts for signed-in browsers); the app shows its download window first.
+          extra.gallery = true;
+        }
+        else if (msg.site && !msg.audioOnly && /^https:\/\/([a-z]+\.)?instagram\.com\//.test(msg.url) && profileOf(msg.url)) {
+          // "This page's video" on an Instagram profile page: the whole profile, in Profile Batch.
           return { ok: await send(msg.url, { referrer, profile: true }) };
         }
         else if (msg.site) {
@@ -336,7 +340,7 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
 
 // ---- Download all: a whole profile with the app's gallery engine ----
 // Sites whose profiles the gallery engine lists completely (photos and videos), with the browser's own sign-in.
-const PROFILE_SITES = /(^|\.)(instagram\.com|facebook\.com|tiktok\.com|x\.com|twitter\.com|threads\.net|threads\.com|pinterest\.[a-z.]+|reddit\.com|tumblr\.com|bsky\.app|vk\.com|flickr\.com|deviantart\.com)$/;
+const PROFILE_SITES = /(^|\.)(instagram\.com|tiktok\.com|x\.com|twitter\.com|threads\.net|threads\.com|pinterest\.[a-z.]+|reddit\.com|tumblr\.com|bsky\.app|vk\.com|flickr\.com|deviantart\.com)$/;
 
 /** A profile page's address on one of those sites, or null (single posts, feeds and settings pages are not profiles). */
 function profileOf(url) {
