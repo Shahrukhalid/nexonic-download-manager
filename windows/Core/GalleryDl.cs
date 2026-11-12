@@ -181,6 +181,10 @@ public static class GalleryList
         // TikTok: its own listing first through the video engine, then the gallery engine's own way.
         if (Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Host.EndsWith("tiktok.com", StringComparison.OrdinalIgnoreCase))
             args.AddRange(new[] { "-o", "extractor.tiktok.ytdl=true" });
+        // Instagram videos as one file each (not as separate picture and sound streams), so they are listed and saved
+        // like the photos.
+        if (u != null && u.Host.EndsWith("instagram.com", StringComparison.OrdinalIgnoreCase))
+            args.AddRange(new[] { "-o", "extractor.instagram.videos=merged" });
         args.Add("--");
         args.Add(url);
         return args;

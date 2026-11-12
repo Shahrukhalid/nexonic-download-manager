@@ -60,7 +60,7 @@ public sealed record BatchCounts(int Discovered, int Queued, int Duplicates, int
 /// </summary>
 public static class ProfileBatch
 {
-    public const int DefaultMax = 500, Limit = 5000;
+    public const int DefaultMax = 500, Limit = 20000;
 
     public static readonly (string Key, string Title, int? Height, bool Audio)[] Qualities =
     {

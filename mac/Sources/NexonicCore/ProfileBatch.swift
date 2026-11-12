@@ -56,7 +56,7 @@ public struct BatchCounts: Equatable, Sendable {
 /// Profile Batch: every video the video engine can list at one link (it follows the site's pages itself), read without any
 /// login, cookies or keys. Nothing behind a login, paywall or CAPTCHA is reached; such videos are counted as not accessible.
 public enum ProfileBatch {
-    public static let defaultMax = 500, limit = 5000
+    public static let defaultMax = 500, limit = 20000
 
     public static let qualities: [(key: String, title: String, height: Int?, audio: Bool)] = [
         ("best", "Best", nil, false), ("8k", "8K", 4320, false), ("4k", "4K", 2160, false), ("1080", "1080p", 1080, false),

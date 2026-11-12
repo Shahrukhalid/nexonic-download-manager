@@ -133,6 +133,9 @@ public extension GalleryDl {
         if let browser { args += ["--cookies-from-browser", browser] }
         // TikTok: its own listing first through the video engine, then the gallery engine's own way.
         if URL(string: url)?.host?.lowercased().hasSuffix("tiktok.com") == true { args += ["-o", "extractor.tiktok.ytdl=true"] }
+        // Instagram videos as one file each (not as separate picture and sound streams), so they are listed and saved
+        // like the photos.
+        if URL(string: url)?.host?.lowercased().hasSuffix("instagram.com") == true { args += ["-o", "extractor.instagram.videos=merged"] }
         return args + ["--", url]
     }
 

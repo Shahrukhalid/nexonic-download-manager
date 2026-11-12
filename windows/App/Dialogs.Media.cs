@@ -141,7 +141,10 @@ public static partial class Dialogs
                 var key = ProfileBatch.Key(url);
                 var searching = L.T("Listing every photo and video with your browser's sign-in, a request every 1–2 seconds. A large profile takes a few minutes: you can close this window, Nexonic keeps going and opens Profile Batch again when it's done.");
                 if (m.Listings.TryGetValue(key, out var listing) && listing.Scan is { } listed && (!listing.Running || listing.Follow == null))
+                {
                     scan = listed;  // done, or the page's own posts while the rest is found (they can be downloaded now)
+                    filter.Max = ProfileBatch.Limit;  // files, not videos: all of them are offered (a carousel alone holds 20)
+                }
                 else if (listing is { Running: true }) { status.Text = searching; return; }
                 else if (m.ProfileCookies.ContainsKey(key) && GalleryList.IsProfile(url))
                 {

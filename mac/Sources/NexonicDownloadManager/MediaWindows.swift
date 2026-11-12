@@ -387,8 +387,11 @@ struct ProfileBatchView: View {
     }
 
     /// Shows a finished scan: the preview list, or the counts, or the queued downloads.
-    private func show(_ s: ProfileBatch.Scan, url: String, filter f: BatchFilter) {
+    private func show(_ s: ProfileBatch.Scan, url: String, filter: BatchFilter) {
         scan = s
+        // A signed-in search lists files, not videos: all of them are offered (a carousel post alone can hold 20).
+        var f = filter
+        if manager.listings[ProfileBatch.key(url)] != nil { f.max = ProfileBatch.limit }
         var seen: Set<String>? = nil
         if mode == 1, let p = manager.profiles.first(where: { ProfileBatch.key($0.url) == ProfileBatch.key(url) }) { seen = Set(p.seen) }
         let (take, counts) = ProfileBatch.choose(s.entries, f, alreadyDownloaded: manager.alreadyDownloaded, seen: seen)
