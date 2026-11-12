@@ -201,7 +201,8 @@ public static class GalleryList
                 DateTime? date = DateTime.TryParse(Text(13), System.Globalization.CultureInfo.InvariantCulture,
                     System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out var d) ? d : null;
                 double? seconds = f[14].ValueKind == JsonValueKind.Number ? f[14].GetDouble() : null;
-                list.Add(new BatchEntry(url, name, seconds, date, VideoExtensions.Contains(ext) ? "video" : "photo", Direct: true));
+                list.Add(new BatchEntry(url, name, seconds, date, VideoExtensions.Contains(ext) ? "video" : "photo",
+                    Id: Text(2).Length > 0 ? Text(2) : Text(3), Direct: true));
             }
         }
         return (list, owner);

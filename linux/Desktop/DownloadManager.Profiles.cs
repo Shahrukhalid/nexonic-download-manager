@@ -28,9 +28,15 @@ public sealed partial class DownloadManager
         {
             var name = e.Title.Length > 0 && e.Title != e.Url ? FileNames.Sanitize(e.Title) : null;
             // A gallery engine listing gives the file itself: downloaded as it is, not by the video engine.
-            var job = e.Direct ? new DownloadJob(e.Url, name) { Folder = folder, Start = start }
+            // A post from the page (Instagram): the gallery engine downloads its video or photos.
+            var post = e.Kind == "post";
+            // A post goes with the sign-in the extension handed over for that site, as the browser would open it.
+            var signedIn = post ? ProfileCookies.FirstOrDefault(c => Host(c.Key) == Host(e.Url)).Value : default;
+            var job = post ? new DownloadJob(e.Url, null, null, signedIn.Cookies, signedIn.UserAgent) { Gallery = true, Folder = folder, Start = start }
+                : e.Direct ? new DownloadJob(e.Url, name) { Folder = folder, Start = start }
                 : new DownloadJob(e.Url, name) { Site = true, MaxHeight = audio ? null : height, AudioOnly = audio, Folder = folder, Start = start };
-            var options = e.Direct ? new AddOptions { QueueId = queueId, Folder = folder, Start = start }
+            var options = post ? new AddOptions { QueueId = queueId, Folder = folder, Start = start, Gallery = true }
+                : e.Direct ? new AddOptions { QueueId = queueId, Folder = folder, Start = start }
                 : new AddOptions { QueueId = queueId, Folder = folder, Start = start, AudioOnly = audio, MaxHeight = height };
             if (Add(job, options) != null) n++;
         }
@@ -38,6 +44,8 @@ public sealed partial class DownloadManager
         Schedule();
         return n;
     }
+
+    static string Host(string url) => Uri.TryCreate(url, UriKind.Absolute, out var u) ? u.Host : "";
 
     /// <summary>
     /// The browser's cookies for profiles the extension opened in Profile Batch (Download all), by profile address; kept in
@@ -48,63 +56,87 @@ public sealed partial class DownloadManager
     /// <summary>The extension's Download all: open Profile Batch with this profile (also when its background listing is done).</summary>
     public event Action<string>? ProfileRequested;
 
+    /// <summary>A background listing ended (its profile address): an open Profile Batch window shows the result.</summary>
+    public event Action<string>? ListingDone;
+
+    /// <summary>Profile addresses with a Profile Batch window open (the window keeps this up to date).</summary>
+    public HashSet<string> ProfileWindows { get; } = new();
+
     /// <summary>Profiles being listed (or listed) with those cookies, by profile address (see <see cref="StartListing"/>).</summary>
     public Dictionary<string, ProfileListing> Listings { get; } = new();
 
     /// <summary>
     /// Starts listing a profile with the gallery engine and the browser's cookies, in the background: the Profile Batch
-    /// window may close meanwhile. When it is done Nexonic says so and opens Profile Batch again with what was found (or
-    /// with what visitors see, when the engine can't read the site). Call on the UI thread.
+    /// window may close meanwhile. <paramref name="seed"/> (the page's own posts, from the extension) is shown at once. When
+    /// the user already chose in Profile Batch, what is found is added that way; otherwise Profile Batch opens again with it
+    /// (or with what visitors see, when the engine can't read the site). Call on the UI thread.
     /// </summary>
-    public async void StartListing(string url, int max, bool auto = false)
+    public async void StartListing(string url, int max, List<BatchEntry>? seed = null)
     {
         var key = ProfileBatch.Key(url);
-        if (!ProfileCookies.TryGetValue(key, out var signedIn) || Listings.TryGetValue(key, out var busy) && busy.Running) return;
+        if (Listings.TryGetValue(key, out var busy) && busy.Running) return;
+        var social = SocialPages.Find(url);
         var listing = Listings[key] = new ProfileListing { Url = url, Running = true };
+        seed ??= new();
+        if (seed.Count > 0) listing.Scan = new ProfileBatch.Scan { Url = url, Owner = social?.Owner ?? "", Entries = seed };
+        if (!ProfileCookies.TryGetValue(key, out var signedIn)) { listing.Running = false; return; }
         var proxy = HostProfiles.Match(Settings.HostProfiles, url)?.Proxy ?? Settings.Proxy;
         (List<BatchEntry> Entries, string Owner)? found = null;
+        var problem = "";
         try { found = await GalleryList.ListAsync(url, signedIn.Cookies, signedIn.UserAgent, proxy, max, listing.Stop.Token); }
         catch (OperationCanceledException) { listing.Stopped = true; }
-        catch (Exception e) when (e is System.IO.IOException or InvalidOperationException or System.ComponentModel.Win32Exception) { }
+        catch (Exception e) when (e is System.IO.IOException or InvalidOperationException or System.ComponentModel.Win32Exception) { problem = e.Message; }
         listing.Running = false;
         if (listing.Stopped) return;
         if (found is { } listed)
         {
-            var videos = listed.Entries.Count(x => x.Kind == "video");
             // The profile's name (its folder): Instagram's or Facebook's owner, else the account the files belong to.
-            var owner = SocialPages.Find(url) is { } social ? social.Owner : listed.Owner;
-            listing.Scan = new ProfileBatch.Scan { Url = url, Owner = owner, Entries = listed.Entries, Complete = true,
-                Note = string.Format(L.T("Found {0} videos and {1} photos with your browser's sign-in."), videos, listed.Entries.Count - videos) };
-            Notify?.Invoke(L.T("Profile Batch"), (owner.Length > 0 ? owner + ": " : "") + string.Format(L.T("{0} videos and {1} photos found"), videos, listed.Entries.Count - videos));
-            if (auto)
+            var owner = social?.Owner ?? listed.Owner;
+            // A post the page already gave is not listed twice.
+            var posts = seed.Where(e => e.Kind == "post").Select(e => e.Id).ToHashSet();
+            var fresh = listed.Entries.Where(e => e.Id.Length == 0 || !posts.Contains(e.Id)).ToList();
+            var all = seed.Concat(fresh).ToList();
+            var videos = all.Count(x => x.Kind is "video" or "shorts");
+            listing.Scan = new ProfileBatch.Scan { Url = url, Owner = owner, Entries = all, Complete = true,
+                Note = string.Format(L.T("Found {0} videos and {1} photos with your browser's sign-in."), videos, all.Count - videos) };
+            Notify?.Invoke(L.T("Profile Batch"), (owner.Length > 0 ? owner + ": " : "") + string.Format(L.T("{0} videos and {1} photos found"), videos, all.Count - videos));
+            if (listing.Follow is { } f)
             {
-                // Download all: everything not already in the list goes into the profile's queue and starts.
-                var take = listed.Entries.Where(e => !AlreadyDownloaded(e.Url)).ToList();
-                if (take.Count > 0) QueueBatch(owner, take, ProfileBatch.FolderFor(Settings.StartFolder, owner, url), "best", 2, true);
+                // Chosen in Profile Batch while it searched: the rest goes the same way.
+                var take = fresh.Where(e => !AlreadyDownloaded(e.Url)).ToList();
+                if (take.Count > 0) QueueBatch(owner, take, f.Folder, f.Quality, f.Parallel, f.Start);
+                ListingDone?.Invoke(key);
                 return;
             }
         }
-        else if (auto) { ProfileCookies.Remove(key); return; }  // nothing more than the page's own videos
+        else if (seed.Count > 0)
+        {
+            listing.Scan = new ProfileBatch.Scan { Url = url, Owner = social?.Owner ?? "", Entries = seed, Complete = true,
+                Note = string.Format(L.T("Only the posts the page showed: {0}"), problem) };
+            if (listing.Follow != null) { ListingDone?.Invoke(key); return; }
+        }
         else
         {
             listing.VisitorsOnly = true;  // the engine can't read this site or address
             ProfileCookies.Remove(key);
         }
-        ProfileRequested?.Invoke(url);
+        ListingDone?.Invoke(key);
+        if (!ProfileWindows.Contains(key)) ProfileRequested?.Invoke(url);
     }
 
     /// <summary>
-    /// The extension's requests that are not single downloads: a profile for Profile Batch (listed with the browser's
-    /// cookies, then the user picks Download Now or Add to Queue), or one post for the gallery engine. True when handled.
+    /// The extension's requests that are not single downloads: Download all (Profile Batch opens with the page's own posts
+    /// while the rest is found with the browser's cookies; the user picks the folder and quality), or one post for the
+    /// gallery engine. True when handled.
     /// </summary>
     bool TakeBrowserRequest(DownloadJob j)
     {
         if (j.Profile == true)
         {
             ProfileCookies[ProfileBatch.Key(j.Url)] = (j.Cookies, j.UserAgent);
-            // The one-button Download all: the rest of the profile is found in the background and downloaded; otherwise
-            // Profile Batch opens to choose.
-            if (j.Auto == true) StartListing(j.Url, ProfileBatch.Limit, auto: true);
+            var key = ProfileBatch.Key(j.Url);
+            StartListing(j.Url, ProfileBatch.Limit, ProfileBatch.PageEntries(j.Links));
+            if (ProfileWindows.Contains(key)) ListingDone?.Invoke(key);  // its window, already open, shows them
             else ProfileRequested?.Invoke(j.Url);
             return true;
         }
@@ -167,5 +199,7 @@ public sealed class ProfileListing
     public bool Stopped { get; set; }
     public bool VisitorsOnly { get; set; }
     public ProfileBatch.Scan? Scan { get; set; }
+    /// <summary>What the user chose in Profile Batch while it searched: what is found is added the same way.</summary>
+    public (string Folder, string Quality, int Parallel, bool Start)? Follow { get; set; }
     public System.Threading.CancellationTokenSource Stop { get; } = new();
 }

@@ -26,8 +26,8 @@ public struct DownloadJob: Codable, Equatable, Sendable {
     public var gallery: Bool?
     // Added in 0.31.0: a profile to open in Profile Batch, listed with the browser's cookies (the extension's Download all)
     public var profile: Bool?
-    // Added in 0.31.0: with profile, download everything found straight away (the extension's one-button Download all)
-    public var auto: Bool?
+    // Added in 0.31.0: with profile, the posts and videos on the page (the extension's Download all)
+    public var links: [String]?
 
     public init(url: String, fileName: String? = nil, referrer: String? = nil, cookies: String? = nil, userAgent: String? = nil) {
         self.url = url

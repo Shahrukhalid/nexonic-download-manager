@@ -136,6 +136,32 @@ public static class ProfileBatch
     /// <summary>The address without the engine's internal additions and fragments, to recognise the same video.</summary>
     static readonly string[] CdnHosts = { "cdninstagram.com", "fbcdn.net", "tiktokcdn.com", "tiktokcdn-us.com", "twimg.com", "pinimg.com" };
 
+    /// <summary>An Instagram post's short code (/p/, /reel/ or /tv/), to match it with the files the gallery engine lists.</summary>
+    public static string? PostCode(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var u)) return null;
+        var parts = u.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var i = Array.FindIndex(parts, p => p is "p" or "reel" or "reels" or "tv");
+        return i >= 0 && i + 1 < parts.Length ? parts[i + 1] : null;
+    }
+
+    /// <summary>
+    /// The page's own posts and videos, sent by the extension with Download all: an Instagram post is downloaded by the
+    /// gallery engine (its video or photos), anything else by the video engine.
+    /// </summary>
+    public static List<BatchEntry> PageEntries(IEnumerable<string>? links)
+    {
+        var keys = new HashSet<string>();
+        var list = new List<BatchEntry>();
+        foreach (var l in links ?? [])
+        {
+            if (!Uri.TryCreate(l, UriKind.Absolute, out var u) || !u.Scheme.StartsWith("http") || !keys.Add(Key(l))) continue;
+            var instagram = u.Host.EndsWith("instagram.com", StringComparison.OrdinalIgnoreCase);
+            list.Add(new BatchEntry(l, l, Kind: instagram ? "post" : l.Contains("/reel") ? "shorts" : "video", Id: instagram ? PostCode(l) ?? "" : ""));
+        }
+        return list;
+    }
+
     public static string Key(string url)
     {
         var u = url.Split('#')[0].Trim();

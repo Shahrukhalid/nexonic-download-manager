@@ -18,8 +18,11 @@ struct ProfileListing {
     var visitorsOnly = false
     var found = 0
     var owner = ""
-    /// Download everything as it is found (the extension's one-button Download all).
-    var auto = false
+    /// Everything found so far: the page's own posts first (from the extension), then what the search adds.
+    var entries: [BatchEntry] = []
+    /// What the user chose in Profile Batch: what the search finds later is added the same way.
+    var follow: Follow?
+    struct Follow { var folder: URL; var quality: String; var parallel: Int; var start: Bool }
     /// Why the signed-in search found nothing, in the gallery engine's own words.
     var error: String?
     var scan: ProfileBatch.Scan?
@@ -39,13 +42,20 @@ extension DownloadManager {
         var n = 0
         for e in take {
             var job = DownloadJob(url: e.url)
-            job.site = e.direct != true  // a gallery engine listing gives the file itself
+            // A post from the page (Instagram): the gallery engine downloads its video or photos.
+            let post = e.kind == "post"
+            job.gallery = post ? true : nil
+            job.site = e.direct != true && !post  // a gallery engine listing gives the file itself
+            // With the sign-in the extension handed over for that site, as the browser would open it.
+            if post, let c = profileCookies.first(where: { URL(string: $0.key)?.host == URL(string: e.url)?.host })?.value {
+                job.cookies = c.cookies; job.userAgent = c.userAgent
+            }
             job.maxHeight = audio ? nil : height
             job.audioOnly = audio
             job.fileName = e.title.isEmpty || e.title == e.url ? nil : e.title
             var o = AddOptions()
-            o.folder = folder; o.queueID = qid; o.start = start; o.rememberFolder = false
-            if e.direct != true { o.audioOnly = audio; o.maxHeight = height }
+            o.folder = folder; o.queueID = qid; o.start = start; o.rememberFolder = false; o.gallery = post
+            if e.direct != true && !post { o.audioOnly = audio; o.maxHeight = height }
             if add(job, options: o) != nil { n += 1 }
         }
         return n
@@ -54,18 +64,24 @@ extension DownloadManager {
     /// Starts searching a profile with the gallery engine and the browser's cookies (the extension's Download all), in
     /// the background, as a row in the downloads list: several can run at once, the Profile Batch window may close, and
     /// double-clicking the row opens it again with what was found.
-    func startListing(_ url: String, max: Int, auto: Bool = false) {
+    func startListing(_ url: String, max: Int, seed: [BatchEntry] = []) {
         let key = ProfileBatch.key(url)
         guard listings[key]?.running != true else { return }
         // The extension's cookies when it handed the profile over; otherwise the default browser's own sign-in (macOS asks
         // once to let Nexonic read it), so pasting a link is enough.
         let signedIn = profileCookies[key]
         let browser = signedIn == nil ? defaultBrowser : nil
-        guard signedIn != nil || browser != nil else { return }
-        let proxy = settings.proxy
         var listing = ProfileListing(url: url, running: true)
         listing.owner = SocialPages.find(url)?.owner ?? ""
-        listing.auto = auto
+        listing.entries = seed; listing.found = seed.count
+        guard signedIn != nil || browser != nil else {
+            // No sign-in to search with: the page's own posts are what there is.
+            listing.running = false
+            if !seed.isEmpty { listing.scan = SocialPages.scan(url: url, owner: listing.owner, entries: seed, note: "") }
+            listings[key] = listing
+            return
+        }
+        let proxy = settings.proxy
         listings[key] = listing
         let stop = listing.stop
         // Its row: "Photos and videos of <name>", in the list until removed.
@@ -88,7 +104,7 @@ extension DownloadManager {
                 switch result {
                 case .success(let listed):
                     let owner = l.owner.isEmpty ? listed.owner : l.owner
-                    let found = listed.entries
+                    let found = l.entries
                     let videos = found.filter { $0.kind == "video" }.count
                     l.scan = SocialPages.scan(url: url, owner: owner, entries: found,
                         note: String(format: String(localized: "Found %d videos and %d photos with your browser's sign-in."), videos, found.count - videos))
@@ -98,6 +114,10 @@ extension DownloadManager {
                 case .failure(is CancellationError):
                     l.stopped = true
                     if let row { self.update(row) { $0.status = .paused } }
+                case .failure(let e) where !l.entries.isEmpty:
+                    // The engine couldn't search further: the page's own posts are the result, and the reason is said.
+                    l.scan = SocialPages.scan(url: url, owner: l.owner, entries: l.entries, note: String(format: String(localized: "Only the posts the page showed: %@"), e.localizedDescription))
+                    if let row { self.update(row) { $0.status = .finished; $0.streamDone = l.entries.count; $0.error = nil } }
                 case .failure(let e):
                     // The engine couldn't search this site or address: Profile Batch takes what visitors see, and says why.
                     l.visitorsOnly = true
@@ -110,22 +130,20 @@ extension DownloadManager {
         }
     }
 
-    /// New files from a running search: counted on its row.
+    /// New files from a running search: kept with the page's own posts (a post already there is not listed twice), counted
+    /// on its row, and added the way the user chose when they already chose.
     private func listingFound(_ key: String, row: UUID?, _ fresh: [BatchEntry], owner: String) {
         guard var l = listings[key] else { return }
         if l.owner.isEmpty { l.owner = owner }
-        l.found += fresh.count
+        let posts = Set(l.entries.compactMap { $0.kind == "post" ? ProfileBatch.postCode($0.url) : nil })
+        let added = fresh.filter { e in !(e.post.map { posts.contains($0) } ?? false) }
+        l.entries += added
+        l.found = l.entries.count
         listings[key] = l
         if let row { update(row) { $0.streamDone = l.found; $0.status = .downloading } }
-        // Download all: straight into the profile's queue, except posts already in the list (the page's own videos were
-        // sent a moment earlier) and files already downloaded.
-        if l.auto {
-            let have = items.map(\.url.absoluteString)
-            let take = fresh.filter { e in !alreadyDownloaded(e.url) && !(e.post.map { p in have.contains { $0.contains("/\(p)/") } } ?? false) }
-            if !take.isEmpty {
-                queueBatch(owner: l.owner, take, folder: ProfileBatch.folder(base: settings.startFolder, owner: l.owner, url: l.url),
-                           quality: "best", maxActive: 2, start: true)
-            }
+        if let f = l.follow {
+            let take = added.filter { !alreadyDownloaded($0.url) }
+            if !take.isEmpty { queueBatch(owner: l.owner, take, folder: f.folder, quality: f.quality, maxActive: f.parallel, start: f.start) }
         }
     }
 

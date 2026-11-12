@@ -94,6 +94,9 @@ public static partial class Dialogs
             }
             if (take.Count == 0) return;
             Download(take, counts, start);
+            // A search still running: what it finds later goes the same way (folder, quality, now or later).
+            if (m.Listings.TryGetValue(ProfileBatch.Key(scan.Url), out var running) && running.Running)
+                running.Follow = (Target(), QualityKey(), parallel.SelectedIndex + 1, start);
             pending = new(); pendingCounts = null;
             if (now != null) now.IsEnabled = false;
             if (later != null) later.IsEnabled = false;
@@ -136,11 +139,13 @@ public static partial class Dialogs
                 // sign-in for the site, a request every 1-2 seconds, in the background (the manager's StartListing); this
                 // window may close meanwhile. Nothing is downloaded until Download Now or Add to Queue.
                 var key = ProfileBatch.Key(url);
-                if (m.Listings.TryGetValue(key, out var listing) && listing is { Running: false, Scan: { } listed })
-                    scan = listed;
+                var searching = L.T("Listing every photo and video with your browser's sign-in, a request every 1–2 seconds. A large profile takes a few minutes: you can close this window, Nexonic keeps going and opens Profile Batch again when it's done.");
+                if (m.Listings.TryGetValue(key, out var listing) && listing.Scan is { } listed && (!listing.Running || listing.Follow == null))
+                    scan = listed;  // done, or the page's own posts while the rest is found (they can be downloaded now)
+                else if (listing is { Running: true }) { status.Text = searching; return; }
                 else if (m.ProfileCookies.ContainsKey(key))
                 {
-                    status.Text = L.T("Listing every photo and video with your browser's sign-in, a request every 1–2 seconds. A large profile takes a few minutes: you can close this window, Nexonic keeps going and opens Profile Batch again when it's done.");
+                    status.Text = searching;
                     m.StartListing(url, filter.Max);
                     return;
                 }
@@ -174,13 +179,19 @@ public static partial class Dialogs
                 }
                 Offer(take, counts);
                 if (scan.Note.Length > 0) status.Text += "\n" + scan.Note;  // what the site doesn't show visitors
+                if (listing is { Running: true }) status.Text += "\n" + L.T("Still searching with your browser's sign-in; what it finds later follows your choice.");
             }
             catch (OperationCanceledException) { status.Text = L.T("Stopped. The videos found so far are kept; Find Videos continues from there."); }
             catch (Exception e) { if (!token.IsCancellationRequested) status.Text = e.Message; }
             finally { busy.Visibility = Visibility.Collapsed; }
         }
 
-        f.Window.Closed += (_, _) => cancel?.Cancel();
+        // A background search of this window's profile ended: show what it found here (no second window).
+        var shownKey = ProfileBatch.Key(box.Text.Trim());
+        void Done(string k) { if (k == ProfileBatch.Key(box.Text.Trim())) Read(); }
+        m.ProfileWindows.Add(shownKey);
+        m.ListingDone += Done;
+        f.Window.Closed += (_, _) => { cancel?.Cancel(); m.ListingDone -= Done; m.ProfileWindows.Remove(shownKey); };
         // Opened with a link (the extension's Download all, or a link handed over): Find Videos starts by itself.
         if (link.Length > 0) f.Window.Loaded += (_, _) => Read();
         f.AddButton("Close", f.Close, isCancel: true);

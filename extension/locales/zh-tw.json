@@ -65,8 +65,8 @@
     "Large": "Large",
     "Button colour": "Button colour",
     "Show the button's text (off = arrow only)": "Show the button's text (off = arrow only)",
-    "Downloads every video on this page at once. On an Instagram, TikTok, X or similar profile, Nexonic then finds the rest in the background with this browser's sign-in (a request every 1–2 seconds; nothing is liked, followed or posted) and adds them as it goes.": "Downloads every video on this page at once. On an Instagram, TikTok, X or similar profile, Nexonic then finds the rest in the background with this browser's sign-in (a request every 1–2 seconds; nothing is liked, followed or posted) and adds them as it goes.",
+    "Opens Nexonic with every video and photo on this page, to choose the folder and quality. On an Instagram, TikTok, X or similar profile, Nexonic also finds the rest in the background with this browser's sign-in (a request every 1–2 seconds; nothing is liked, followed or posted) and adds them the same way.": "Opens Nexonic with every video and photo on this page, to choose the folder and quality. On an Instagram, TikTok, X or similar profile, Nexonic also finds the rest in the background with this browser's sign-in (a request every 1–2 seconds; nothing is liked, followed or posted) and adds them the same way.",
     "Download all": "Download all",
-    "Sent {count}; Nexonic is finding the rest of this profile": "Sent {count}; Nexonic is finding the rest of this profile"
+    "Opened in Nexonic with {count} from this page; choose the folder and quality there": "Opened in Nexonic with {count} from this page; choose the folder and quality there"
   }
 }

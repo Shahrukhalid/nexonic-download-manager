@@ -103,15 +103,25 @@ if (tab && isVideoSite(tab.url)) {
   $("siteAudio").onclick = go(true, $("siteAudio"));
 }
 
-// Download all (Instagram, Facebook, TikTok, YouTube, X …): every video on this page starts downloading at once, and on
-// a profile Nexonic keeps finding the rest of it in the background with this browser's sign-in (see background.js).
+// Download all (Instagram, Facebook, TikTok, YouTube, X …): Nexonic's window opens with this page's videos listed, to
+// choose the folder and quality, and finds the rest in the background with this browser's sign-in (see background.js).
+// What was sent for this page is remembered while the browser is open, so switching tabs doesn't ask again.
 if (tab && isVideoSite(tab.url)) {
   $("profileBox").hidden = false;
+  const key = "all:" + tab.url;
+  const say = (r) => {
+    $("profileAll").disabled = true;
+    $("profileCount").textContent = r && r.ok ? t("Opened in Nexonic with {count} from this page; choose the folder and quality there", { count: r.sent })
+      : t("Open Nexonic first");
+  };
+  const done = (await chrome.storage.session.get(key).catch(() => ({})))[key];
+  if (done) say(done);
   $("profileAll").onclick = async () => {
     $("profileAll").disabled = true;
     const r = await ask({ type: "download-all", url: tab.url, tabId: tab.id });
-    $("profileCount").textContent = !r || !r.ok ? t("Open Nexonic first")
-      : r.more ? t("Sent {count}; Nexonic is finding the rest of this profile", { count: r.sent }) : t("Sent {count}", { count: r.sent });
+    if (r && r.ok) await chrome.storage.session.set({ [key]: r }).catch(() => {});
+    say(r);
+    if (!r || !r.ok) $("profileAll").disabled = false;
   };
 }
 

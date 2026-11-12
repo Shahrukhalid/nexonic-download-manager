@@ -337,9 +337,10 @@ final class DownloadManager: ObservableObject {
                 // The extension's Download all: Profile Batch lists the profile with the browser's cookies, then the user
                 // picks Download Now or Add to Queue.
                 profileCookies[ProfileBatch.key(job.url)] = (job.cookies, job.userAgent)
-                // The one-button Download all: the rest of the profile is found in the background and downloaded as it is
-                // found (a row shows the count); otherwise Profile Batch opens to choose.
-                if job.auto == true { startListing(job.url, max: ProfileBatch.limit, auto: true) } else { MediaWindows.showPlaylist(job.url) }
+                // Download all: Profile Batch opens with the page's own posts listed while the rest is found in the background
+                // (a row shows the count); the user picks the folder and quality, and what is found later follows that choice.
+                startListing(job.url, max: ProfileBatch.limit, seed: ProfileBatch.pageEntries(job.links ?? []))
+                MediaWindows.showPlaylist(job.url)
                 continue
             }
             if DownloadInfoWindow.isOpen(for: job.url) { continue }

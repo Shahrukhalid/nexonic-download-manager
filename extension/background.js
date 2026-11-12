@@ -300,17 +300,13 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
         return { ok: await send(msg.url, extra) };
       }
       case "download-all": {
-        // The popup's one button: every post and video this page shows goes to the app now (downloading at once), and on
-        // a profile the app's gallery engine finds the rest with this browser's sign-in and adds them as it goes.
+        // Nexonic's Profile Batch window opens with this page's posts and videos listed (the user picks the folder and
+        // quality there) while its gallery engine finds the rest with this browser's sign-in, in the background.
         if (!Number.isInteger(tabId)) return { ok: false };
         const [{ result: posts = [] } = {}] = await chrome.scripting.executeScript({ target: { tabId }, func: videosOnPage }).catch(() => []);
-        let sent = 0;
-        for (const p of posts.slice(0, 500)) {
-          const instagram = /^https:\/\/(www\.)?instagram\.com\//.test(p.url);
-          if (await send(p.url, { referrer: msg.url, ...(instagram ? { gallery: true } : { site: true }) })) sent++;
-        }
-        const more = !!profileOf(msg.url || "") && await send(msg.url, { referrer: msg.url, profile: true, auto: true });
-        return { ok: sent > 0 || more, sent, more };
+        const links = [...new Set(posts.map((p) => p.url))].slice(0, 1000);
+        const ok = await send(msg.url, { referrer: msg.url, profile: true, links });
+        return { ok, sent: links.length };
       }
       case "send-links": {
         let sent = 0;

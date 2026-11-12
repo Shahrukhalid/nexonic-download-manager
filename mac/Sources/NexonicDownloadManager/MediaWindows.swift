@@ -246,10 +246,19 @@ struct ProfileBatchView: View {
         .onReceive(manager.$listings) { all in
             let key = ProfileBatch.key(link.trimmingCharacters(in: .whitespacesAndNewlines))
             guard let l = all[key], !l.stopped else { return }
-            if l.running {
+            if l.follow != nil {
+                // Chosen already: what the search finds is added that way; this window only counts.
+                busy = l.running
+                status = l.running
+                    ? String(format: String(localized: "%d photos and videos found so far; new ones are added as you chose. You can close this window: the search keeps going in the downloads list."), l.found)
+                    : String(format: String(localized: "%d photos and videos found; all added as you chose."), l.found)
+                if !l.running { shownSearch = key }
+            } else if l.running {
                 busy = true
-                if l.found > 0 {
-                    status = String(format: String(localized: "%d photos and videos found so far. You can close this window: the search keeps going in the downloads list; double-click it there to come back."), l.found)
+                // The page's posts and what the search found so far, ready to download now; more join as they are found.
+                if !l.entries.isEmpty, mode != 2 || preview.isEmpty {
+                    show(SocialPages.scan(url: l.url, owner: l.owner, entries: l.entries, note: ""), url: l.url, filter: filter)
+                    status += "\n" + String(localized: "Still searching with your browser's sign-in; what it finds later follows your choice. You can close this window: the search keeps going in the downloads list.")
                 }
             } else if l.scan != nil, shownSearch != key {
                 DispatchQueue.main.async { find() }  // after the change is stored
@@ -268,6 +277,10 @@ struct ProfileBatchView: View {
         if !preview.isEmpty { download(preview.filter { chosen.contains($0.url) }, nil, start: start) }
         else { download(pending, pendingCounts, start: start) }
         pending = []; pendingCounts = nil
+        // A search still running: what it finds later goes the same way (folder, quality, now or later).
+        if let s = scan, manager.listings[ProfileBatch.key(s.url)]?.running == true {
+            manager.listings[ProfileBatch.key(s.url)]?.follow = ProfileListing.Follow(folder: target(s), quality: quality, parallel: parallel, start: start)
+        }
     }
 
     private func download(_ take: [BatchEntry], _ counts: BatchCounts?, start: Bool) {
@@ -304,8 +317,9 @@ struct ProfileBatchView: View {
             show(found, url: url, filter: f)
             return
         }
-        if manager.listings[key]?.running == true {
+        if let l = manager.listings[key], l.running {
             status = String(localized: "Searching every photo and video with your browser's sign-in…")
+            if l.follow == nil, !l.entries.isEmpty { show(SocialPages.scan(url: l.url, owner: l.owner, entries: l.entries, note: ""), url: url, filter: f) }
             return
         }
         if manager.canSearchSignedIn(url) {

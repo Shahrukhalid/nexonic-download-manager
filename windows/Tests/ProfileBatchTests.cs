@@ -170,4 +170,17 @@ public class ProfileBatchTests
         Assert.True(p.Due(DateTime.Now));
         Assert.False(new SavedProfile { CheckHours = 0 }.Due(DateTime.Now));
     }
+
+    [Fact]
+    public void ThePagesOwnPostsGoToTheRightEngine()
+    {
+        var e = ProfileBatch.PageEntries(new[] { "https://www.instagram.com/p/AbC123/", "https://www.instagram.com/p/AbC123/",
+            "https://www.facebook.com/reel/42", "javascript:x" });
+        Assert.Equal(2, e.Count);
+        Assert.Equal("post", e[0].Kind);
+        Assert.Equal("AbC123", e[0].Id);
+        Assert.Equal("shorts", e[1].Kind);
+        Assert.Equal("XyZ", ProfileBatch.PostCode("https://www.instagram.com/reel/XyZ/?igsh=1"));
+        Assert.Null(ProfileBatch.PostCode("https://www.instagram.com/someone/"));
+    }
 }

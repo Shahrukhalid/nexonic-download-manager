@@ -36,8 +36,8 @@ computer.
 | host access (all sites) | downloads and videos can come from any site |
 
 **Data:** the extension collects nothing and sends nothing anywhere except to the app on the same computer. When you
-choose "Download all" on a profile (Instagram, Facebook, TikTok, X …), it hands the profile's address and your
-cookies for that site to the app, whose Profile Batch lists the profile's photos and videos at a person's pace for you
+choose "Download all" on a profile (Instagram, Facebook, TikTok, X …), it hands the page's address, the links of the
+videos and posts on it, and your cookies for that site to the app, whose Profile Batch lists the profile's photos and videos at a person's pace for you
 to download. No
 analytics, no accounts. Privacy policy: the "Privacy and terms" section of the README and TERMS.md.
 

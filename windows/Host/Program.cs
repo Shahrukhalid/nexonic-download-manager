@@ -139,7 +139,8 @@ while (NativeMessaging.Read(input) is { } msg)
                   FromBrowser = msg["browser"]?.GetValue<bool>() == true ? true : null,
                   Gallery = msg["gallery"]?.GetValue<bool>() == true ? true : null,
                   Profile = msg["profile"]?.GetValue<bool>() == true ? true : null,
-                  Auto = msg["auto"]?.GetValue<bool>() == true ? true : null };
+                  Links = msg["links"] is System.Text.Json.Nodes.JsonArray la && la.Count > 0
+                      ? la.Select(x => x is System.Text.Json.Nodes.JsonValue v && v.TryGetValue<string>(out var s) ? s : null).OfType<string>().Take(1000).ToArray() : null };
             if (!job.IsValid)
             {
                 NativeMessaging.Write(output, new { ok = false, error = "Only http and https links can be downloaded" });

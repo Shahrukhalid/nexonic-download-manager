@@ -118,6 +118,24 @@ public enum ProfileBatch {
         return c.string ?? base
     }
 
+    /// An Instagram post's short code (/p/, /reel/ or /tv/), to match it with the files the gallery engine lists for it.
+    public static func postCode(_ url: String) -> String? {
+        let parts = (URL(string: url)?.path ?? "").split(separator: "/").map(String.init)
+        guard let i = parts.firstIndex(where: { ["p", "reel", "reels", "tv"].contains($0) }), i + 1 < parts.count else { return nil }
+        return parts[i + 1]
+    }
+
+    /// The page's own posts and videos, sent by the extension with Download all: an Instagram post is downloaded by the
+    /// gallery engine (its video or photos), anything else by the video engine.
+    public static func pageEntries(_ links: [String]) -> [BatchEntry] {
+        var keys = Set<String>()
+        return links.compactMap { l in
+            guard URL(string: l)?.scheme?.hasPrefix("http") == true, keys.insert(key(l)).inserted else { return nil }
+            let instagram = URL(string: l)?.host?.hasSuffix("instagram.com") == true
+            return BatchEntry(url: l, title: l, kind: instagram ? "post" : (l.contains("/reel") ? "shorts" : "video"))
+        }
+    }
+
     public static func matches(_ e: BatchEntry, _ f: BatchFilter) -> Bool {
         let cal = Calendar.current
         if let d = e.date {

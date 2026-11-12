@@ -68,4 +68,12 @@ final class ProfileBatchTests: XCTestCase {
         XCTAssertFalse(SocialPages.merge(&all, order: &order, page, max: 10))
         XCTAssertEqual(order.count, 2)
     }
+
+    func testThePagesOwnPostsGoToTheRightEngine() {
+        let e = ProfileBatch.pageEntries(["https://www.instagram.com/p/AbC123/", "https://www.instagram.com/p/AbC123/",
+                                          "https://www.facebook.com/reel/42", "javascript:x"])
+        XCTAssertEqual(e.map(\.kind), ["post", "shorts"])
+        XCTAssertEqual(ProfileBatch.postCode("https://www.instagram.com/reel/XyZ/?igsh=1"), "XyZ")
+        XCTAssertNil(ProfileBatch.postCode("https://www.instagram.com/someone/"))
+    }
 }
