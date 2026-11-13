@@ -239,9 +239,9 @@ struct ProfileBatchView: View {
                 if !preview.isEmpty || !pending.isEmpty {
                     Button("Add to Queue") { hand(start: false) }
                     Button("Download Now") { hand(start: true) }.keyboardShortcut(.defaultAction)
-                    Button("Find Videos", action: find).disabled(busy)
+                    Button("Find Videos") { find(again: true) }.disabled(busy)
                 } else {
-                    Button("Find Videos", action: find).keyboardShortcut(.defaultAction).disabled(busy)
+                    Button("Find Videos") { find(again: true) }.keyboardShortcut(.defaultAction).disabled(busy)
                 }
             }
         }
@@ -312,7 +312,9 @@ struct ProfileBatchView: View {
         manager.saveProfiles()
     }
 
-    private func find() {
+    /// Shows what was found for the link, or looks for it. `again` (the Find Videos button): searches the site again even
+    /// when a search was done, and adds what is new.
+    private func find(again: Bool = false) {
         let url = link.trimmingCharacters(in: .whitespacesAndNewlines)
         guard DownloadJob(url: url).validURL != nil else { status = String(localized: "Paste a web link (http or https)."); return }
         busy = true; stopRequested = false; preview = []; pending = []; pendingCounts = nil
@@ -347,6 +349,11 @@ struct ProfileBatchView: View {
                 }
                 busy = false
             }
+            return
+        }
+        if again, let l = manager.listings[key], !l.running, !l.pageOnly, manager.canSearchSignedIn(url) {
+            status = String(localized: "Searching again with your browser's sign-in; what is new is added to the list.")
+            manager.startListing(url, max: ProfileBatch.limit, seed: l.entries)
             return
         }
         if let listing = manager.listings[key], !listing.running, let found = listing.scan {

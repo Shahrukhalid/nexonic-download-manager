@@ -155,7 +155,8 @@ extension DownloadManager {
         guard var l = listings[key] else { return }
         if l.owner.isEmpty { l.owner = owner }
         let posts = Set(l.entries.compactMap { $0.kind == "post" ? ProfileBatch.postCode($0.url) : nil })
-        let added = fresh.filter { e in !(e.post.map { posts.contains($0) } ?? false) }
+        var have = Set(l.entries.map { ProfileBatch.key($0.url) })
+        let added = fresh.filter { e in !(e.post.map { posts.contains($0) } ?? false) && have.insert(ProfileBatch.key(e.url)).inserted }
         l.entries += added
         l.waiting = nil
         l.found = l.entries.count
