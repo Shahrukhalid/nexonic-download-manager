@@ -127,7 +127,7 @@ extension DownloadManager {
                     let videos = found.filter { $0.kind == "video" }.count
                     l.scan = SocialPages.scan(url: url, owner: owner, entries: found,
                         note: String(format: String(localized: "Found %d videos and %d photos with your browser's sign-in."), videos, found.count - videos))
-                    if let row { self.update(row) { $0.status = .finished; $0.streamDone = found.count; $0.error = nil } }
+                    if let row { self.update(row) { $0.status = .finished; $0.streamDone = found.count; $0.streamTotal = ProfileBatch.postCount(found); $0.error = nil } }
                     self.post(String(localized: "Profile Batch"), (owner.isEmpty ? "" : owner + ": ")
                               + String(format: String(localized: "%d videos and %d photos found."), videos, found.count - videos))
                 case .failure(is CancellationError):
@@ -161,7 +161,8 @@ extension DownloadManager {
         l.waiting = nil
         l.found = l.entries.count
         listings[key] = l
-        if let row { update(row) { $0.streamDone = l.found; $0.status = .downloading } }
+        let posts = ProfileBatch.postCount(l.entries)
+        if let row { update(row) { $0.streamDone = l.found; $0.streamTotal = posts; $0.status = .downloading } }
         if let f = l.follow {
             let take = added.filter { !alreadyDownloaded($0.url) }
             if !take.isEmpty { queueBatch(owner: l.owner, take, folder: f.folder, quality: f.quality, maxActive: f.parallel, start: f.start) }

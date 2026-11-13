@@ -501,8 +501,16 @@ func isPreparingVideo(_ r: DownloadRecord) -> Bool {
 func statusText(_ r: DownloadRecord) -> String {
     if r.listing == true {  // a Profile Batch search
         switch r.status {
-        case .probing, .downloading: return String(format: String(localized: "Searching: %d found"), r.streamDone ?? 0)
-        case .finished: return String(format: String(localized: "%d found · double-click"), r.streamDone ?? 0)
+        case .probing, .downloading:
+            if let posts = r.streamTotal, posts > 0, posts != r.streamDone {
+                return String(format: String(localized: "Searching: %d posts, %d files"), posts, r.streamDone ?? 0)
+            }
+            return String(format: String(localized: "Searching: %d found"), r.streamDone ?? 0)
+        case .finished:
+            if let posts = r.streamTotal, posts > 0, posts != r.streamDone {
+                return String(format: String(localized: "%d posts, %d files · double-click"), posts, r.streamDone ?? 0)
+            }
+            return String(format: String(localized: "%d found · double-click"), r.streamDone ?? 0)
         case .failed: return r.isCanceled ? "Canceled" : "Error"
         default: return "Stopped"
         }

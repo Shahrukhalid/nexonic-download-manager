@@ -76,4 +76,11 @@ final class ProfileBatchTests: XCTestCase {
         XCTAssertEqual(ProfileBatch.postCode("https://www.instagram.com/reel/XyZ/?igsh=1"), "XyZ")
         XCTAssertNil(ProfileBatch.postCode("https://www.instagram.com/someone/"))
     }
+
+    func testFilesAreCountedBesidePosts() {
+        var a = BatchEntry(url: "https://cdn.test/1.jpg", title: "a"); a.post = "P1"
+        var b = BatchEntry(url: "https://cdn.test/2.jpg", title: "b"); b.post = "P1"
+        let c = BatchEntry(url: "https://www.instagram.com/p/P2/", title: "c", kind: "post")
+        XCTAssertEqual(ProfileBatch.postCount([a, b, c]), 2)
+    }
 }

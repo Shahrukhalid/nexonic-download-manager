@@ -125,6 +125,12 @@ public enum ProfileBatch {
         return parts[i + 1]
     }
 
+    /// How many posts the found files come from (a carousel post holds up to 20 photos and videos), to set beside the
+    /// number of posts the site shows.
+    public static func postCount(_ entries: [BatchEntry]) -> Int {
+        Set(entries.map { $0.post ?? postCode($0.url) ?? key($0.url) }).count
+    }
+
     /// The page's own posts and videos, sent by the extension with Download all: an Instagram post is downloaded by the
     /// gallery engine (its video or photos), anything else by the video engine.
     public static func pageEntries(_ links: [String]) -> [BatchEntry] {

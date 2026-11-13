@@ -453,6 +453,11 @@ struct ProfileBatchView: View {
             var c = counts; c.queued = 0
             status = (s.owner.isEmpty ? "" : s.owner + ": ") + c.text + "\n" + String(localized: "Choose Download Now, or Add to Queue to start them later.")
         }
+        // Files, set beside the posts they come from (the site counts posts; a carousel post holds up to 20 files).
+        let posts = ProfileBatch.postCount(s.entries)
+        if posts > 0, posts != s.entries.count {
+            status = String(format: String(localized: "%d posts: %d photos and videos (a post with several photos or videos counts each one)."), posts, s.entries.count) + "\n" + status
+        }
         if let note = s.note, !note.isEmpty { status += "\n" + note }  // what the site doesn't show visitors
     }
 
