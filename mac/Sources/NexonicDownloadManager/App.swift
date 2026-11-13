@@ -22,6 +22,9 @@ struct NexonicDownloadManagerApp: App {
                 .frame(minWidth: 900, minHeight: 480)
                 .liveLanguage()
         }
+        // Links from the browser never open or bring up this window (AppDelegate handles them): like a classic download
+        // manager, Nexonic stays in the menu bar and only the Download File Info window appears.
+        .handlesExternalEvents(matching: [])
         .commands {
             AppCommands()
             MainMenus()
@@ -57,6 +60,24 @@ struct NexonicDownloadManagerApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Settings key: keep Nexonic in the menu bar only (no Dock icon) while none of its windows are open.
     static let menuBarOnlyKey = "menuBarOnly"
+    /// Started by the browser helper (a nexonicdm:// link) rather than by the user: the main window stays closed.
+    static var launchedForLink = false
+
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        // In the menu bar only by default (the Dock icon shows while a window is open); Settings can change it.
+        UserDefaults.standard.register(defaults: [Self.menuBarOnlyKey: true])
+        Self.launchedForLink = NSAppleEventManager.shared().currentAppleEvent?.eventID == AEEventID(kAEGetURL)
+    }
+
+    /// Closes the main window SwiftUI opens at launch when the browser helper started the app.
+    static func closeMainWindowIfLaunchedForLink() {
+        guard launchedForLink else { return }
+        launchedForLink = false
+        DispatchQueue.main.async {
+            NSApp.windows.filter { $0.identifier?.rawValue.hasPrefix("main") == true && !($0 is NSPanel) }.forEach { $0.close() }
+            updateDockIcon()
+        }
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Updater.start()
