@@ -1,13 +1,23 @@
 name: Release verification
-# Adds proof to a published release, without touching how it is built: GitHub build attestations for every file,
-# SHA256SUMS.txt signed with Sigstore (keyless) and a software bill of materials (docs/VERIFY.md).
+# Verifies a release before anyone can download it, then publishes it. The Release workflow leaves the release as a
+# draft and starts this one; it waits until every file is attached, then:
+#   1. computes SHA256SUMS.txt and checks it against the digests in latest.json (what the apps' updaters trust),
+#   2. makes GitHub build attestations for every file and signs SHA256SUMS.txt with Sigstore (keyless),
+#   3. makes the software bill of materials (sbom.spdx.json),
+#   4. checks all of that (attestations, signature, SBOM) and attaches it,
+#   5. publishes the release as the latest only if every step passed. Any failure leaves it a draft (fail closed).
+# The schedule is a safety net: a draft whose hand-over failed is verified later; a published release without proof
+# gets it (older releases), without being changed otherwise. See docs/VERIFY.md.
 on:
   schedule:
-    - cron: "17 */6 * * *"   # releases are published by the release workflow, which can't trigger this one directly
+    - cron: "17 */6 * * *"
   workflow_dispatch:
     inputs:
       tag:
-        description: Release tag (empty = latest)
+        description: Release tag (empty = the newest release)
+        required: false
+      run:
+        description: Release workflow run to wait for (set by the Release workflow)
         required: false
 
 permissions:
@@ -21,40 +31,92 @@ jobs:
       contents: write
       id-token: write
       attestations: write
+      actions: read
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 120
     env:
       GH_TOKEN: ${{ github.token }}
+      REQUIRED: >-
+        NexonicDownloadManager-Mac.dmg NexonicDownloadManager-Mac.zip
+        NexonicDownloadManager-Windows-Setup.exe NexonicDownloadManager-Windows-Portable.zip
+        NexonicDownloadManager-Windows-ARM64-Setup.exe NexonicDownloadManager-Windows-ARM64-Portable.zip
+        NexonicDownloadManager-Linux-x86_64.AppImage NexonicDownloadManager-Linux-aarch64.AppImage
+        NexonicExtension-Chrome.zip NexonicAddon-Firefox.xpi
+        NexonicDownloadManager-Android.apk NexonicDownloadManager-Android-32bit.apk
+        Android-GPL-Sources.tar.gz latest.json
     steps:
-      - name: Pick the release
+      - name: Pick the release and wait until every file is attached
         id: pick
         env:
           INPUT_TAG: ${{ inputs.tag }}
+          INPUT_RUN: ${{ inputs.run }}
         run: |
+          set -euo pipefail
+          R="$GITHUB_REPOSITORY"
           tag="$INPUT_TAG"
-          [ -n "$tag" ] || tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName -q .tagName)
-          assets=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets -q '.assets[].name')
-          if echo "$assets" | grep -qx 'SHA256SUMS.txt.sigstore.json' && [ -z "$INPUT_TAG" ]; then
+          [ -n "$tag" ] || tag=$(gh release list --repo "$R" --limit 1 --json tagName -q '.[0].tagName')
+          draft=$(gh release view "$tag" --repo "$R" --json isDraft -q .isDraft)
+          assets=$(gh release view "$tag" --repo "$R" --json assets -q '.assets[].name')
+          if [ "$draft" = false ] && echo "$assets" | grep -qx 'SHA256SUMS.txt.sigstore.json' && [ -z "$INPUT_TAG" ]; then
             echo "Already verified: $tag"; echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          # Wait until the release is complete (Android, Windows and Mac files are added by separate jobs).
-          for f in NexonicDownloadManager-Android.apk Android-GPL-Sources.tar.gz; do
-            echo "$assets" | grep -qx "$f" || { echo "Not complete yet ($f missing): $tag"; echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0; }
+          # On the schedule, a draft still being built is left to the Release workflow's own hand-over.
+          if [ "$draft" = true ] && [ -z "$INPUT_TAG" ]; then
+            made=$(gh release view "$tag" --repo "$R" --json createdAt -q .createdAt)
+            if [ $(( $(date +%s) - $(date -d "$made" +%s) )) -lt 10800 ]; then
+              echo "Draft $tag is less than 3 hours old"; echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
+            fi
+          fi
+          # The Release run's other jobs (the unsigned iPhone app among them) attach files too: wait for them to end.
+          if [ -n "$INPUT_RUN" ]; then
+            for i in $(seq 1 90); do
+              open=$(gh run view "$INPUT_RUN" --repo "$R" --json jobs -q '[.jobs[] | select(.status != "completed")] | length')
+              [ "$open" = 0 ] && break
+              echo "Waiting for $open Release job(s) to finish"; sleep 30
+            done
+          fi
+          for i in $(seq 1 120); do
+            assets=$(gh release view "$tag" --repo "$R" --json assets -q '.assets[] | select(.state == "uploaded" and .size > 0) | .name')
+            missing=""
+            for f in $REQUIRED; do echo "$assets" | grep -qx "$f" || missing="$missing $f"; done
+            [ -z "$missing" ] && break
+            if [ -z "$INPUT_TAG" ]; then echo "Not complete yet:$missing"; echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+            echo "Waiting for:$missing"; sleep 30
           done
+          [ -z "$missing" ] || { echo "::error::$tag is incomplete (missing:$missing); it stays a draft."; exit 1; }
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "draft=$draft" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: steps.pick.outputs.skip != 'true'
         with:
           ref: ${{ steps.pick.outputs.tag }}
           path: source
-      - name: Download the release files
+          persist-credentials: false
+      - name: Download the release files and check them against latest.json
         if: steps.pick.outputs.skip != 'true'
+        env:
+          TAG: ${{ steps.pick.outputs.tag }}
         run: |
+          set -euo pipefail
           mkdir dist
-          gh release download "${{ steps.pick.outputs.tag }}" --repo "$GITHUB_REPOSITORY" --dir dist
+          for try in 1 2 3 4 5; do
+            gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir dist --clobber && break
+            [ "$try" = 5 ] && { echo "::error::Could not download the release files"; exit 1; }
+            sleep $((try * 15))
+          done
           rm -f dist/SHA256SUMS.txt dist/SHA256SUMS.txt.sigstore.json dist/sbom.spdx.json
           (cd dist && sha256sum -- * > ../SHA256SUMS.txt)
           cat SHA256SUMS.txt
+          # Every file the apps update from must match the digest they will trust.
+          python3 - <<'PY'
+          import json, sys
+          sums = {l.split()[1].lstrip("*"): l.split()[0] for l in open("SHA256SUMS.txt") if l.strip()}
+          bad = [a["name"] for a in json.load(open("dist/latest.json"))["assets"]
+                 if sums.get(a["name"]) != a["digest"].removeprefix("sha256:")]
+          if bad:
+              sys.exit(f"::error::latest.json digests do not match the attached files: {', '.join(bad)}")
+          print(f"latest.json matches {len(sums)} files")
+          PY
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4
         if: steps.pick.outputs.skip != 'true'
         with:
@@ -72,8 +134,32 @@ jobs:
           output-file: sbom.spdx.json
           upload-artifact: false
           upload-release-assets: false
-      - name: Attach to the release
+      - name: Check the attestations, the signature and the SBOM
         if: steps.pick.outputs.skip != 'true'
         run: |
-          gh release upload "${{ steps.pick.outputs.tag }}" SHA256SUMS.txt SHA256SUMS.txt.sigstore.json sbom.spdx.json \
-            --clobber --repo "$GITHUB_REPOSITORY"
+          set -euo pipefail
+          for f in dist/*; do
+            gh attestation verify "$f" --repo "$GITHUB_REPOSITORY" --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/verify-release.yml" >/dev/null \
+              || { echo "::error::Attestation check failed for $(basename "$f")"; exit 1; }
+          done
+          cosign verify-blob SHA256SUMS.txt --bundle SHA256SUMS.txt.sigstore.json \
+            --certificate-identity-regexp "^https://github.com/$GITHUB_REPOSITORY/\.github/workflows/verify-release\.yml@" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com
+          python3 -c "import json,sys; d=json.load(open('sbom.spdx.json')); n=len(d.get('packages',[])); assert d.get('spdxVersion','').startswith('SPDX-') and n>0, 'empty SBOM'; print(f'SBOM: {n} packages')"
+          (cd dist && sha256sum --quiet -c ../SHA256SUMS.txt)
+      - name: Attach the proof
+        if: steps.pick.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          for try in 1 2 3; do
+            gh release upload "${{ steps.pick.outputs.tag }}" SHA256SUMS.txt SHA256SUMS.txt.sigstore.json sbom.spdx.json \
+              --clobber --repo "$GITHUB_REPOSITORY" && break
+            [ "$try" = 3 ] && exit 1; sleep 20
+          done
+          # Attached as built: the uploaded copies must be the checked ones.
+          mkdir back && gh release download "${{ steps.pick.outputs.tag }}" --repo "$GITHUB_REPOSITORY" --dir back \
+            -p SHA256SUMS.txt -p SHA256SUMS.txt.sigstore.json -p sbom.spdx.json
+          cmp back/SHA256SUMS.txt SHA256SUMS.txt && cmp back/SHA256SUMS.txt.sigstore.json SHA256SUMS.txt.sigstore.json && cmp back/sbom.spdx.json sbom.spdx.json
+      - name: Publish the verified release
+        if: steps.pick.outputs.skip != 'true' && steps.pick.outputs.draft == 'true'
+        run: gh release edit "${{ steps.pick.outputs.tag }}" --repo "$GITHUB_REPOSITORY" --draft=false --latest

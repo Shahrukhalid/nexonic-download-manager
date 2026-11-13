@@ -301,7 +301,7 @@
     "Light or dark text and panels for your scheme.": "Textus clarus aut obscurus et paneles pro tuis schematis.",
     "Accent (#RRGGBB)": "(Anglice) (Italiane)",
     "Background (#RRGGBB)": "Pagina officialis (Graece)",
-    "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).": "Haec ratio est 1:1 (1:1 = 1:1000) et in hoc caso 1:1000 = 1.",
+    "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).": "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).",
     "%d found so far…": "%d found so far…",
     "%d found · %d added · %d already downloaded · %d left out by filters · %d not accessible": "%d repertus · %d aedificatus · %d denuo inscriptus · %d per filtrum expugnatus · %d non accessibilis",
     "1080p": "1080 pp.",

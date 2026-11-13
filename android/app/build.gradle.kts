@@ -92,6 +92,8 @@ dependencies {
     val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
     implementation(composeBom)
     implementation("androidx.core:core-ktx:1.15.0")
+    // Profile Batch reads a profile like a visitor in a WebView profile of its own, apart from the browser's sign-in.
+    implementation("androidx.webkit:webkit:1.12.1")
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")

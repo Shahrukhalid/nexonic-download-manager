@@ -301,7 +301,7 @@
     "Light or dark text and panels for your scheme.": "உங்கள் திட்டத்திற்கான வெளிர் அல்லது இருண்ட உரை மற்றும் பலகங்கள்.",
     "Accent (#RRGGBB)": "உச்சரிப்பு (# RRGGBB)",
     "Background (#RRGGBB)": "பின்னணி (#RRGGBB)",
-    "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).": "இந்த பின்னணியில் ஒலியைக் காண மிகவும் கடினமாக உள்ளது (வேறுபாடு%. 1f: 1, குறைந்தபட்சம் 3: 1 தேவை).",
+    "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).": "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).",
     "%d found so far…": "%d found so far…",
     "%d found · %d added · %d already downloaded · %d left out by filters · %d not accessible": "%d கிடைத்தது · %d சேர்க்கப்பட்டது · %d ஏற்கனவே பதிவிறக்கப்பட்டது · %d வடிகட்டிகளால் நீக்கப்பட்டது · %d அணுக முடியவில்லை",
     "1080p": "1080p",

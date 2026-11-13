@@ -274,7 +274,7 @@
     "Vibrate": "ټينګښت",
     "When the app starts, finished downloads whose file was deleted or moved leave the list.": "کله چې د غوښتنلیک پیل شي، بشپړ شوي ډاونلوډونه چې دوتنه یې ړنګ شوې یا لیږدول شوي لیست پریږدي.",
     "With the finished and failed notifications.": ".د بشپړو او پاتې راغلو خبرتياوو سره",
-    "file[01-50].jpg makes 50 links; {jpg,png} tries each": "دوتنه [01-50].jpg 50 تړنې جوړوي؛ {jpg،png} هر یو هڅه کوي",
+    "file[01-50].jpg makes 50 links; {jpg,png} tries each": "file[01-50].jpg makes 50 links; {jpg,png} tries each",
     "Just now": "اوس",
     "%d min ago": "%d min ago",
     "%d h ago": "%d ساعت مخکې",

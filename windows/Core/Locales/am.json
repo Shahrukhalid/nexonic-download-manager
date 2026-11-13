@@ -118,7 +118,7 @@
     "Torrent blocklist: a file or an https:// address (empty = none)": "የቶሬንቶች ዝርዝር: ፋይል ወይም https:// አድራሻ (ባዶ = የለም)",
     "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day.": "ቶሬንቶች ወደዚህ ዝርዝር አድራሻዎች አይገናኙም. P2P, DAT እና CIDR ዝርዝሮች ይሠራሉ፣ እንደ.gzም ይሠራሉ። አድራሻው በየቀኑ አንድ ጊዜ ይወርዳል",
     "The blocklist address must start with https://": "የግድግዳ ዝርዝር አድራሻው በ https:// መጀመሩ ያስፈልጋል",
-    "The blocklist file was not found.": "ፋይል \"%s\" አልተገኘም",
+    "The blocklist file was not found.": "The blocklist file was not found.",
     "RSS Feeds": "የRSS ፍሰቶች",
     "New items of these feeds are downloaded when their title matches the rule: files and videos, and torrents when torrents are on. A rule lists words that must all be in the title, or a /regular expression/.": "የዚህ ፍሰት አዲስ ነገሮች አጠራራቸውን ከደንቡ ጋር ሲመሳሰል ሲወርዱ ነው: ፋይሎች እና ቪዲዮዎች, እና ቶሬንቶች ቶሬንቶች በተዘጋጁ ጊዜ. ደንቡ ቃላትን ሁሉንም በአጠራራቸው ውስጥ መሆን ያለባቸውን ወይም /regular expression/ን ይዘረዝራል.",
     "Feeds": "ፍሰቶች",

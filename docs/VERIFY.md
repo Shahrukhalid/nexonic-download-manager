@@ -3,6 +3,9 @@
 Nexonic Download Manager is free and is not sold through Apple or Microsoft, so macOS and Windows show a warning the
 first time you open it. You can check yourself that the file you downloaded is the one this repository built.
 
+A release becomes public only after these proofs are made, attached and checked: until then it stays a draft that
+nobody can download. If any check fails, it stays a draft.
+
 ## 1. Compare the checksum (quick)
 
 Each release has `SHA256SUMS.txt` (all files) and, for Linux, `SHA256SUMS-linux-x64.txt` and

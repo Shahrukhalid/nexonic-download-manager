@@ -311,7 +311,7 @@
 "Torrent blocklist: a file or an https:// address (empty = none)" = "Torrent blocklist: a file or a https:// address (empty = none)";
 "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day." = "Torrents e le'i feso'ota'i i tua atu o tuatusi i lenei lisi. P2P, DAT ma CIDR lisi e galue, e pei foi o.gz. E toe downloadina se tuatusi i le aso.";
 "The blocklist address must start with https://" = "E tatau ona amataina le tuatusi o le 'blocklist' ma le https://";
-"The blocklist file was not found." = "E leʻi maua le faila o le '%s'.";
+"The blocklist file was not found." = "The blocklist file was not found.";
 "Appearance" = "Fesoasoani";
 "Same as macOS" = "E tutusa lava ma le macOS";
 "Same as the phone" = "E tutusa lava ma le telefoni";

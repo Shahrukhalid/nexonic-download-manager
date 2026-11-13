@@ -42,6 +42,7 @@ object VideoEngine {
                 YoutubeDL.getInstance().init(app)
                 // Versions up to 0.27 unpacked a large FFmpeg here; the app now runs its own from the library folder.
                 File(app.noBackupFilesDir, "youtubedl-android/packages/ffmpeg").takeIf { it.exists() }?.deleteRecursively()
+                forgetCookieFiles()
             } catch (e: Throwable) {
                 Log.e(TAG, "video engine start failed", e)
                 throw VideoException(VideoPages.engineError(e.javaClass.simpleName, e.message))
@@ -78,16 +79,31 @@ object VideoEngine {
         val domain = "." + host.lowercase().removePrefix("www.").removePrefix("m.")
         val lines = VideoPages.netscapeCookies(domain, header)
         if (lines.isEmpty()) return null
-        File(app.cacheDir, "video-cookies.txt").apply {
-            writeText("# Netscape HTTP Cookie File\n" + lines.joinToString("\n") + "\n")
+        // One file per request, readable only by the app and deleted when the request ends ([withCookies]): two
+        // downloads never share one, and no sign-in is left behind in the cache.
+        val dir = File(app.noBackupFilesDir, "video-cookies").apply { mkdirs() }
+        File.createTempFile("c", ".txt", dir).apply {
             setReadable(false, false); setReadable(true, true)
+            writeText("# Netscape HTTP Cookie File\n" + lines.joinToString("\n") + "\n")
         }
     }.getOrNull()
 
-    private fun base(url: String, userAgent: String?, referer: String?) = YoutubeDLRequest(url).apply {
+    /** Runs [block] with the browser's cookies for [url] in a file of its own (null: none), deleted afterwards. */
+    private inline fun <T> withCookies(url: String, block: (File?) -> T): T {
+        val file = cookiesFile(url)
+        try { return block(file) } finally { file?.delete() }
+    }
+
+    /** Cookie files an earlier run could not delete (the app was stopped mid-download), and the old shared one. */
+    private fun forgetCookieFiles() {
+        File(app.cacheDir, "video-cookies.txt").delete()
+        File(app.noBackupFilesDir, "video-cookies").listFiles()?.forEach { it.delete() }
+    }
+
+    private fun base(url: String, userAgent: String?, referer: String?, cookies: File?) = YoutubeDLRequest(url).apply {
         addOption("--no-playlist")
         com.nexonic.downloadmanager.data.Vpn.sourceAddress()?.let { addOption("--source-address", it) }
-        cookiesFile(url)?.let { addOption("--cookies", it.absolutePath) }
+        cookies?.let { addOption("--cookies", it.absolutePath) }
         addOption("--no-mtime")
         addOption("--socket-timeout", "30")
         userAgent?.let { addOption("--user-agent", it) }
@@ -97,8 +113,9 @@ object VideoEngine {
     /** Reads the page: title and quality choices. Throws [VideoException] with a readable message. */
     fun read(url: String, userAgent: String? = null, referer: String? = null): VideoPage {
         ensure()
+        val target = resolve(url)
         val info = try {
-            YoutubeDL.getInstance().getInfo(base(resolve(url), userAgent, referer))
+            withCookies(target) { YoutubeDL.getInstance().getInfo(base(target, userAgent, referer, it)) }
         } catch (e: Exception) {
             Log.w(TAG, "read failed", e)
             throw VideoException(VideoPages.friendlyError(e.message))
@@ -127,7 +144,9 @@ object VideoEngine {
                  subtitles: Boolean = false, audioFormat: String = "original", progress: (Float, Long, Long?, Long?) -> Unit): File {
         ensure()
         dir.mkdirs()
-        val req = base(resolve(url), userAgent, referer).apply {
+        val target = resolve(url)
+        val cookies = cookiesFile(target)
+        val req = base(target, userAgent, referer, cookies).apply {
             addOption("-f", choice.selector)
             // Sites whose videos all have the same title ("Video by name"): named after the caption, with the video's id
             // so two videos never share a name (the engine would skip the second as "already downloaded").
@@ -164,6 +183,8 @@ object VideoEngine {
         } catch (e: Throwable) {
             Log.e(TAG, "download failed", e)
             throw VideoException(VideoPages.engineError(e.javaClass.simpleName, e.message))
+        } finally {
+            cookies?.delete()
         }
         return dir.listFiles()?.filter { it.isFile && !it.name.endsWith(".part") && !it.name.endsWith(".ytdl") && it.length() > 0 }
             ?.maxByOrNull { it.length() }
@@ -183,8 +204,9 @@ object VideoEngine {
             addOption("-J")
             addOption("--playlist-end", Playlists.MAX_ENTRIES.toString())
             addOption("--socket-timeout", "30")
-            cookiesFile(target)?.let { addOption("--cookies", it.absolutePath) }
         }
+        val cookies = cookiesFile(target)
+        cookies?.let { req.addOption("--cookies", it.absolutePath) }
         val pid = "playlist-" + System.nanoTime()
         val timer = Thread({
             try { Thread.sleep(120_000); cancel(pid) } catch (e: InterruptedException) { }
@@ -199,6 +221,7 @@ object VideoEngine {
             throw VideoException(VideoPages.engineError(e.javaClass.simpleName, e.message))
         } finally {
             timer.interrupt()
+            cookies?.delete()
         }
         val r = Playlists.parse(out) ?: throw VideoException("The list of videos could not be read.")
         if (r.entries.isEmpty()) throw VideoException("No videos were found at this link.")

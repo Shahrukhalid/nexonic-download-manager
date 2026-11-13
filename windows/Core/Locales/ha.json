@@ -229,7 +229,7 @@
     "The data is already in this folder.": "An riga an adana bayanan cikin wannan fassarar.",
     "Choose a folder that is not inside the current data folder (or the other way round).": "@ action",
     "Choose an empty folder.": "Ka zaɓa wata ƙofar akwatin saƙo.",
-    "Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. A list in braces, {jpg,png}, tries each. Several ranges multiply.": "Ka sanya wani yanki a cikin ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan ƙananan",
+    "Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. A list in braces, {jpg,png}, tries each. Several ranges multiply.": "Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. A list in braces, {jpg,png}, tries each. Several ranges multiply.",
     "Keep only (optional)": "@ action",
     "Words find links that contain them; * and ? are wildcards; a leading ! leaves links out. Example: *.jpg !*thumb*": "Kalmomi suna neman alaƙa waɗanda suke da su; * da? sune wildcards;! mai farawa yana barin alaƙa. Misali: *.jpg!*thumb *",
     "Links to download (you can edit them)": "Maɓallan da za'a saukar (za ka iya canza su)",

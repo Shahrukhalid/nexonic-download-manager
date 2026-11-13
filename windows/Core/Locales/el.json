@@ -229,7 +229,7 @@
     "The data is already in this folder.": "Τα δεδομένα βρίσκονται ήδη σε αυτόν το φάκελο.",
     "Choose a folder that is not inside the current data folder (or the other way round).": "Επιλέξτε ένα φάκελο που δεν βρίσκεται μέσα στον τρέχοντα φάκελο δεδομένων (ή το αντίστροφο).",
     "Choose an empty folder.": "Επιλέξτε έναν κενό φάκελο.",
-    "Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. A list in braces, {jpg,png}, tries each. Several ranges multiply.": "Βάλτε ένα εύρος σε αγκύλες: [001-100] κρατάει τρία ψηφία, [1-100] δεν κρατάει, [α-ω] χρησιμοποιεί γράμματα και [0-100:5] μετρά σε πέντε.Μια λίστα σε αγκύλες, {Διαφορετικά πεδία πολλαπλασιάζονται.",
+    "Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. A list in braces, {jpg,png}, tries each. Several ranges multiply.": "Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. A list in braces, {jpg,png}, tries each. Several ranges multiply.",
     "Keep only (optional)": "Διατήρηση μόνο (προαιρετικά)",
     "Words find links that contain them; * and ? are wildcards; a leading ! leaves links out. Example: *.jpg !*thumb*": "Οι λέξεις βρίσκουν τους συνδέσμους που τις περιέχουν. * και? είναι μπαλαντέρ. Ένα αρχικό! αφήνει τους συνδέσμους έξω. Παράδειγμα: *.jpg!*thumb*",
     "Links to download (you can edit them)": "Σύνδεσμοι για λήψη (μπορείτε να τους επεξεργαστείτε)",

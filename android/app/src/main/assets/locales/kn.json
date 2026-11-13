@@ -301,7 +301,7 @@
     "Light or dark text and panels for your scheme.": "ನಿಮ್ಮ ಪದ್ಧತಿಗೆ (ಸ್ಕೀಮ್) ಹಗುರ ಅಥವ ಕಪ್ಪಾದ ಪಠ್ಯ ಹಾಗು ಫಲಕಗಳು.",
     "Accent (#RRGGBB)": "ಘಾತಚಿಹ್ನೆ (# RRGGBB)",
     "Background (#RRGGBB)": "ಹಿನ್ನೆಲೆ (# RRGGBB)",
-    "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).": "ಈ ಹಿನ್ನೆಲೆಯಲ್ಲಿ ಅಕ್ಷರಶೈಲಿಯನ್ನು ಕಾಣುವುದು ಕಷ್ಟ (ವ್ಯತ್ಯಾಸ%. 1f: 1, ಕನಿಷ್ಠ ೩: ೧ ಅಗತ್ಯವಿದೆ).",
+    "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).": "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).",
     "%d found so far…": "%d found so far…",
     "%d found · %d added · %d already downloaded · %d left out by filters · %d not accessible": "%d ಕಂಡುಬಂದಿದೆ · %d ಸೇರಿಸಲಾಗಿದೆ · %d ಈಗಾಗಲೇ ನಕಲಿಳಿಸಲಾಯಿತು · %d ಶೋಧಕಗಳಿಂದ ಹೊರಗಿಡಲಾಗಿದೆ · %d ನಿಲುಕಿಸಿಕೊಳ್ಳಲಾಗಿಲ್ಲ",
     "1080p": "1080 ಪಿಕ್ಸೆಲ್",

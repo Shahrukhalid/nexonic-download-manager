@@ -304,7 +304,7 @@
     "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).": "در این زمینه، دیده شدن لهجه دشوار است (تضاد %.1f:۱، حداقل ۳:۱ مورد نیاز است).",
     "%d found so far…": "%d found so far…",
     "%d found · %d added · %d already downloaded · %d left out by filters · %d not accessible": "%d یافت شد · %d اضافه شد · %d از قبل بارگیری شد · %d توسط فیلترها حذف شد · %d در دسترس نیست",
-    "1080p": "۱۰۸۰p",
+    "1080p": "1080p",
     "480p": "۴۸۰ پیکسل",
     "4K": "۴کی",
     "720p": "۷۲۰ پیکسل",

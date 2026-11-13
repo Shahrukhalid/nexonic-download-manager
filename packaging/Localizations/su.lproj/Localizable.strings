@@ -69,7 +69,7 @@
 "File types" = "Jenis Fail";
 "File types (empty = every file)" = "Jenis berkas (kosong = saben berkas)";
 "Files in this queue" = "Berkas ing gulungan iki";
-"Folder" = "Буфер";
+"Folder" = "Folder";
 "Folders by type" = "Direktori miturut Jenis";
 "Found on this page" = "Ditemu ing kaca iki";
 "Free, open-source download manager for Mac and Windows." = "Free, open-source download manager kanggo Mac lan Windows.";
@@ -290,7 +290,7 @@
 "Peers and trackers can see your IP address. Files are checked piece by piece and get a SHA-256 when finished." = "Peers jeung trackers bisa ningali alamat IP anjeun. Berkas dicek sapotong demi sapotong sarta meunangkeun SHA-256 nalika réngsé.";
 "KB/s (0 = no limit)" = "KB/s (0 = ora ana wates)";
 "Connections" = "Sambungan";
-"per torrent (0 = no limit)" = "%s: %s (%s = %s)";
+"per torrent (0 = no limit)" = "per torrent (0 = no limit)";
 "How many peers this torrent may connect to at once." = "Kapan file bisa disambungake.";
 "Upload slots" = "Ngunggah slot";
 "peers you upload to at once (0 = no limit)" = "Peer sing sampeyan unggah ing wektu sing padha (0 = ora ana wates)";
@@ -304,7 +304,7 @@
 "Bandwidth" = "Bandwidth";
 "Seeding" = "Seeding";
 "Trackers (one per line)" = "Trackers (siji saben baris)";
-"Files" = "Файлдар";
+"Files" = "Files";
 "Network adapter" = "Adaptor Jaringan";
 "Any adapter" = "Apa wae adapter";
 "Downloads, videos and torrents use only this adapter (for example your VPN). If it disconnects, downloads stop instead of using another connection." = "Unduh, video, jeung torrent ngan nganggo adaptor ieu (contona VPN anjeun). Upami éta dipisahkeun, unduhan bakal dieureunkeun tibatan nganggo sambungan séjén.";
@@ -350,7 +350,7 @@
 "Can Resume" = "Bisa dilanjutkan";
 "A link seems to include a private access key (for example a token or signature). Anyone who scans the code can use it until it expires, so share it only with your own phone." = "Sahiji tautan kasampak ngawengku konci aksés pribadi (misalna token atawa tanda tangan). Saha waé anu milari kodena bisa ngagunakeunana nepi ka kadaluwarsa, ku kituna ngan bisa dibagikeun ka telepon anjeun sorangan.";
 "Colour scheme" = "Skema warna";
-"A scheme sets light or dark and the accent colour; None follows Appearance." = "Warna-warna anu digunakeun nyaéta biru, hideung, hideung-putih, hideung-putih, hideung-putih, hideung-putih, hideung-putih.";
+"A scheme sets light or dark and the accent colour; None follows Appearance." = "A scheme sets light or dark and the accent colour; None follows Appearance.";
 "Ocean" = "Laut";
 "Forest" = "Forest";
 "Midnight" = "Tengah malam";

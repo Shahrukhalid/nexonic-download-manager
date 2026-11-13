@@ -96,7 +96,7 @@ jobs:
           path: cache
           merge-multiple: true
       - name: Write every app's language files
-        run: python3 scripts/translate/translate.py apply --cache cache
+        run: python3 scripts/translate/translate.py apply --cache cache && python3 scripts/check-translations.py --fix
       - name: Push to i18n/machine-translations
         run: |
           git config user.name "Shahrukh Khalid"

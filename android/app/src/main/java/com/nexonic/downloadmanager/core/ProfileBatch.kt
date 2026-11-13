@@ -82,9 +82,17 @@ object ProfileBatch {
         return BatchEntry(url, title, n("duration"), date, kind, available) to (s("playlist_title") ?: s("playlist_uploader") ?: s("channel") ?: s("uploader"))
     }
 
+    /** The sites' picture and video servers sign every address anew; the file is the same without the signature. */
+    private val cdnHosts = listOf("cdninstagram.com", "fbcdn.net", "tiktokcdn.com", "tiktokcdn-us.com", "twimg.com", "pinimg.com")
+
     fun key(url: String): String {
         val base = url.substringBefore('#').trim()
-        return runCatching { val u = java.net.URI(base); java.net.URI(u.scheme?.lowercase(), u.authority?.lowercase(), u.path, u.query, null).toString() }.getOrDefault(base)
+        return runCatching {
+            val u = java.net.URI(base)
+            val host = u.host?.lowercase().orEmpty()
+            val signed = cdnHosts.any { host == it || host.endsWith(".$it") }
+            java.net.URI(u.scheme?.lowercase(), u.authority?.lowercase(), u.path, if (signed) null else u.query, null).toString()
+        }.getOrDefault(base)
     }
 
     private fun day(t: Long) = t / 86_400_000L

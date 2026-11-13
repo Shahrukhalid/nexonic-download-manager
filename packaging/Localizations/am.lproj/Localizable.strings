@@ -92,7 +92,7 @@
 "New queue" = "አዲስ መስመር";
 "Nexonic Download Manager Help" = "Nexonic Download Manager እርዳታ";
 "Next" = "ቀጣይ";
-"No active downloads" = "%sን ያውርዱ";
+"No active downloads" = "No active downloads";
 "None" = "ምንም";
 "Notifications" = "ማስታወቂያዎች";
 "OK" = "አዎ";
@@ -311,7 +311,7 @@
 "Torrent blocklist: a file or an https:// address (empty = none)" = "የቶሬንቶች ዝርዝር: ፋይል ወይም https:// አድራሻ (ባዶ = የለም)";
 "Torrents never connect to the addresses in this list. P2P, DAT and CIDR lists work, also as .gz. An address is downloaded again once a day." = "ቶሬንቶች ወደዚህ ዝርዝር አድራሻዎች አይገናኙም. P2P, DAT እና CIDR ዝርዝሮች ይሠራሉ፣ እንደ.gzም ይሠራሉ። አድራሻው በየቀኑ አንድ ጊዜ ይወርዳል";
 "The blocklist address must start with https://" = "የግድግዳ ዝርዝር አድራሻው በ https:// መጀመሩ ያስፈልጋል";
-"The blocklist file was not found." = "ፋይል \"%s\" አልተገኘም";
+"The blocklist file was not found." = "The blocklist file was not found.";
 "Appearance" = "ቅርጽ";
 "Same as macOS" = "እንደ macOS እኩል";
 "Same as the phone" = "እንደ ስልክ";
