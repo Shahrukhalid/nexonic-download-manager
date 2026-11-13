@@ -64,6 +64,9 @@
     "Normal": "सामान्य",
     "Large": "ठूलो",
     "Button colour": "बटन रङ",
-    "Show the button's text (off = arrow only)": "बटनको पाठ देखाउनुहोस् ( बन्द = बाँण मात्र)"
+    "Show the button's text (off = arrow only)": "बटनको पाठ देखाउनुहोस् ( बन्द = बाँण मात्र)",
+    "Opens Nexonic with every video and photo on this page, to choose the folder and quality. On an Instagram, TikTok, X or similar profile, Nexonic also finds the rest in the background with this browser's sign-in (a request every 1–2 seconds; nothing is liked, followed or posted) and adds them the same way.": "Opens Nexonic with every video and photo on this page, to choose the folder and quality. On an Instagram, TikTok, X or similar profile, Nexonic also finds the rest in the background with this browser's sign-in (a request every 1–2 seconds; nothing is liked, followed or posted) and adds them the same way.",
+    "Download all": "Download all",
+    "Opened in Nexonic with {count} from this page; choose the folder and quality there": "Opened in Nexonic with {count} from this page; choose the folder and quality there"
   }
 }

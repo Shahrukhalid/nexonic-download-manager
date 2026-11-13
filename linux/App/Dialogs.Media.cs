@@ -25,11 +25,11 @@ public static partial class Dialogs
     {
         var f = new Form(owner, "Profile Batch", 680);
         f.Note("Paste one link to a profile, channel, playlist, gallery or page on any site the video engine supports. Nexonic finds every video " +
-               "that is open to everyone (no login needed), skips the ones you already have and downloads the rest in their own queue.");
+               "that is open to everyone (no login needed) as soon as you paste, skips the ones you already have and downloads the rest in their own queue. " +
+               "Instagram and Facebook show visitors only the latest posts; for all of them, use the Nexonic extension's Download all on the profile in your signed-in browser.");
         var box = f.Text("Link", link.Length > 0 ? link : await Ui.ClipboardLink(owner));
         var quality = f.Field("Quality", new ComboBox { ItemsSource = ProfileBatch.Qualities.Select(q => L.T(q.Title)).ToList(), SelectedIndex = 0, MinWidth = 260 });
         var mode = f.Field("Download", new ComboBox { ItemsSource = new[] { L.T("All videos I don't have yet"), L.T("Only new videos (not seen on this profile before)"), L.T("Let me preview and choose") }, SelectedIndex = 0, MinWidth = 260 });
-        var autoStart = f.Check("Start downloading straight away", true);
         var folder = f.Folder(m.Settings.StartFolder);
         var own = f.Check("Put each profile in a folder of its own", true);
         var parallel = f.Field("Downloads at the same time", new ComboBox { ItemsSource = new[] { "1", "2", "3", "4", "5", "6" }, SelectedIndex = 1 });
@@ -59,7 +59,9 @@ public static partial class Dialogs
         var checks = new List<(CheckBox Box, BatchEntry Entry)>();
         ProfileBatch.Scan? scan = null;
         CancellationTokenSource? cancel = null;
-        Button? go = null, export = null;
+        Button? go = null, export = null, now = null, later = null;
+        List<BatchEntry> pending = new();
+        BatchCounts? pendingCounts = null;
         int[] hours = { 0, 1, 6, 24, 168 };
 
         BatchFilter Filter() => new()
@@ -74,10 +76,41 @@ public static partial class Dialogs
         string Target() => own.IsChecked == true && scan != null ? ProfileBatch.FolderFor(Base(), scan.Owner, scan.Url) : Base();
         SavedProfile? Saved(string url) => m.Profiles.FirstOrDefault(p => ProfileBatch.Key(p.Url) == ProfileBatch.Key(url));
 
-        void Download(List<BatchEntry> take, BatchCounts counts)
+        // Nothing starts by itself: after Find Videos the user picks Download Now or Add to Queue.
+        void Offer(List<BatchEntry> take, BatchCounts counts)
+        {
+            pending = take; pendingCounts = counts;
+            if (now != null) now.IsEnabled = take.Count > 0;
+            if (later != null) later.IsEnabled = take.Count > 0;
+            status.Text = (scan!.Owner.Length > 0 ? scan.Owner + ": " : "") + (counts with { Queued = 0 }).Text
+                + (take.Count > 0 ? "\n" + L.T("Choose Download Now, or Add to Queue to start them later.") : "");
+        }
+
+        void Hand(bool start)
+        {
+            if (scan == null) return;
+            var take = pending;
+            var counts = pendingCounts ?? new BatchCounts(take.Count, 0, 0, 0, 0);
+            if (mode.SelectedIndex == 2 && checks.Count > 0)
+            {
+                var chosen = checks.Where(c => c.Box.IsChecked == true).Select(c => c.Entry).ToList();
+                (take, counts) = ProfileBatch.Choose(chosen, new BatchFilter { Max = ProfileBatch.Limit }, m.AlreadyDownloaded);
+                scroll.IsVisible = false; checks.Clear();
+            }
+            if (take.Count == 0) return;
+            Download(take, counts, start);
+            // A search still running: what it finds later goes the same way (folder, quality, now or later).
+            if (m.Listings.TryGetValue(ProfileBatch.Key(scan.Url), out var running) && running.Running)
+                running.Follow = (Target(), QualityKey(), parallel.SelectedIndex + 1, start);
+            pending = new(); pendingCounts = null;
+            if (now != null) now.IsEnabled = false;
+            if (later != null) later.IsEnabled = false;
+        }
+
+        void Download(List<BatchEntry> take, BatchCounts counts, bool start)
         {
             var url = scan!.Url;
-            var added = m.QueueBatch(scan.Owner, take, Target(), QualityKey(), parallel.SelectedIndex + 1, autoStart.IsChecked == true);
+            var added = m.QueueBatch(scan.Owner, take, Target(), QualityKey(), parallel.SelectedIndex + 1, start);
             status.Text = (counts with { Queued = added }).Text;
             var every = hours[Math.Max(0, check?.SelectedIndex ?? 0)];
             var saved = Saved(url);
@@ -107,12 +140,35 @@ public static partial class Dialogs
             var proxy = HostProfiles.Match(m.Settings.HostProfiles, url)?.Proxy ?? m.Settings.Proxy;
             try
             {
-                scan = await Task.Run(() => ProfileBatch.Discover(url, proxy, filter.Max,
-                    (e, n) => { if (n % 10 == 0) Avalonia.Threading.Dispatcher.UIThread.Post(() => status.Text = string.Format(L.T("{0} found so far…"), n)); }, cancel: token));
+                // Opened by the extension's Download all: the gallery engine lists every photo and video with the browser's
+                // sign-in for the site, a request every 1-2 seconds, in the background (the manager's StartListing); this
+                // window may close meanwhile. Nothing is downloaded until Download Now or Add to Queue.
+                var key = ProfileBatch.Key(url);
+                var searching = L.T("Listing every photo and video with your browser's sign-in, a request every 1–2 seconds. A large profile takes a few minutes: you can close this window, Nexonic keeps going and opens Profile Batch again when it's done.");
+                if (m.Listings.TryGetValue(key, out var listing) && listing.Scan is { } listed && (!listing.Running || listing.Follow == null))
+                {
+                    scan = listed;  // done, or the page's own posts while the rest is found (they can be downloaded now)
+                    filter.Max = ProfileBatch.Limit;  // files, not videos: all of them are offered (a carousel alone holds 20)
+                }
+                else if (listing is { Running: true }) { status.Text = searching; return; }
+                else if (m.ProfileCookies.ContainsKey(key) && GalleryList.IsProfile(url))
+                {
+                    status.Text = searching;
+                    m.StartListing(url, filter.Max);
+                    return;
+                }
+                else
+                {
+                    // Instagram and Facebook show visitors only their latest posts (the video engine takes those); the note
+                    // says how to get the rest (the extension's Download all in the user's signed-in browser).
+                    var social = SocialPages.Find(url);
+                    scan = await Task.Run(() => ProfileBatch.Discover(url, proxy, filter.Max,
+                        (e, n) => { if (n % 10 == 0) Avalonia.Threading.Dispatcher.UIThread.Post(() => status.Text = string.Format(L.T("{0} found so far…"), n)); }, cancel: token));
+                    if (social != null) scan.Note += (scan.Note.Length > 0 ? "\n" : "") + L.T(SocialPages.More(social.Value.Site));
+                }
                 var seen = mode.SelectedIndex == 1 && Saved(url) is { } p ? new HashSet<string>(p.Seen) : null;
                 var (take, counts) = ProfileBatch.Choose(scan.Entries, filter, m.AlreadyDownloaded, seen);
                 if (export != null) export.IsEnabled = true;
-                var prefix = scan.Owner.Length > 0 ? scan.Owner + ": " : "";
                 if (mode.SelectedIndex == 2)
                 {
                     checks.Clear(); rows.Children.Clear();
@@ -124,21 +180,30 @@ public static partial class Dialogs
                         checks.Add((c, e)); rows.Children.Add(c);
                     }
                     scroll.IsVisible = true;
-                    status.Text = prefix + (counts with { Queued = 0 }).Text;
-                    if (go != null) go.Content = L.T("Download Selected");
                 }
-                else if (take.Count == 0) status.Text = prefix + (counts with { Queued = 0 }).Text;
-                else Download(take, counts);
+                Offer(take, counts);
                 if (scan.Note.Length > 0) status.Text += "\n" + scan.Note;  // what the site doesn't show visitors
+                if (listing is { Running: true }) status.Text += "\n" + L.T("Still searching with your browser's sign-in; what it finds later follows your choice.");
             }
             catch (OperationCanceledException) { status.Text = L.T("Stopped. The videos found so far are kept; Find Videos continues from there."); }
             catch (Exception e) { if (!token.IsCancellationRequested) status.Text = e.Message; }
             finally { busy.IsVisible = false; }
         }
 
-        f.Window.Closed += (_, _) => cancel?.Cancel();
+        // A background search of this window's profile ended: show what it found here (no second window).
+        var shownKey = ProfileBatch.Key(box.Text.Trim());
+        void Done(string k) { if (k == ProfileBatch.Key(box.Text.Trim())) Read(); }
+        m.ProfileWindows.Add(shownKey);
+        m.ListingDone += Done;
+        f.Window.Closed += (_, _) => { cancel?.Cancel(); m.ListingDone -= Done; m.ProfileWindows.Remove(shownKey); };
+        // Opened with a link (the extension's Download all, or a link handed over): Find Videos starts by itself.
+        if (link.Length > 0) f.Window.Opened += (_, _) => Read();
         f.AddButton("Close", f.Close, isCancel: true);
-        f.AddButton("Stop", () => cancel?.Cancel());
+        f.AddButton("Stop", () =>
+        {
+            cancel?.Cancel();
+            if (m.Listings.TryGetValue(ProfileBatch.Key((box.Text ?? "").Trim()), out var listing) && listing.Running) listing.Stop.Cancel();
+        });
         export = f.AddButton("Export…", async () =>
         {
             if (scan == null) return;
@@ -157,18 +222,19 @@ public static partial class Dialogs
             await File.WriteAllTextAsync(path, ProfileBatch.Export(scan.Entries, ext is "csv" or "json" ? ext : "txt"));
         });
         export.IsEnabled = false;
-        go = f.AddButton("Find Videos", () =>
+        later = f.AddButton("Add to Queue", () => Hand(false));
+        now = f.AddButton("Download Now", () => Hand(true));
+        later.IsEnabled = now.IsEnabled = false;
+        go = f.AddButton("Find Videos", Read, isDefault: true);
+        // Pasting a whole link starts Find Videos straight away (typing one doesn't, until Enter or Find Videos).
+        var lastLink = box.Text ?? "";
+        box.TextChanged += (_, _) =>
         {
-            if (mode.SelectedIndex == 2 && scan != null && checks.Count > 0)
-            {
-                var chosen = checks.Where(c => c.Box.IsChecked == true).Select(c => c.Entry).ToList();
-                var (take, counts) = ProfileBatch.Choose(chosen, new BatchFilter { Max = ProfileBatch.Limit }, m.AlreadyDownloaded);
-                Download(take, counts);
-                scroll.IsVisible = false; checks.Clear(); go!.Content = L.T("Find Videos");
-                return;
-            }
-            Read();
-        }, isDefault: true);
+            var text = box.Text ?? "";
+            var pasted = text.Length - lastLink.Length > 8 && new DownloadJob(text.Trim()).IsValid;
+            lastLink = text;
+            if (pasted) Read();
+        };
         await f.Show();
     }
 

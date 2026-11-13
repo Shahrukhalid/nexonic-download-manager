@@ -156,3 +156,110 @@ object ProfileBatch {
         }
     }.getOrDefault(emptyList())
 }
+
+/**
+ * Instagram shows visitors who are not signed in the latest posts of a profile, but only through its own page scripts.
+ * The app opens the profile page in a hidden web view, like a visitor's browser, runs [SCRIPT] and reads the video links
+ * the page shows. Nothing else of Instagram's is called.
+ */
+object InstagramPage {
+    private val reserved = setOf("p", "reel", "reels", "tv", "stories", "explore", "accounts", "direct", "about", "legal",
+        "developer", "api", "graphql", "web", "challenge", "emails", "session", "privacy", "terms")
+    private val profile = Regex("""^https?://(?:www\.)?instagram\.com/([A-Za-z0-9._]{1,30})/?(?:reels/?|videos/?)?(?:[?#].*)?$""", RegexOption.IGNORE_CASE)
+
+    /** The user name of an Instagram profile link (instagram.com/name, /name/reels), or null. */
+    fun user(link: String): String? = profile.find(link.trim())?.groupValues?.get(1)?.takeIf { it.lowercase() !in reserved }
+
+    /** Run in the loaded page: {"posts": links to posts shown, "videos": [{"u": link, "t": picture text}]}. */
+    val SCRIPT = """
+(() => {
+  const all = [...document.querySelectorAll('a[href*="/reel/"], a[href*="/p/"]')], seen = new Set(), videos = [];
+  for (const a of all) {
+    const link = new URL(a.getAttribute('href'), location.href);
+    const m = link.pathname.match(/\/(p|reel)\/([A-Za-z0-9_-]+)/);
+    if (!m) continue;
+    const alt = (a.querySelector('img') || {}).alt || '';
+    const video = m[1] === 'reel' || /^Video by /.test(alt) || !!a.querySelector('svg[aria-label="Clip"], svg[aria-label="Video"], svg[aria-label="Reel"]');
+    const u = 'https://www.instagram.com/' + m[1] + '/' + m[2] + '/';
+    if (video && !seen.has(u)) { seen.add(u); videos.push({ u, t: alt }); }
+  }
+  return JSON.stringify({ posts: all.length, videos });
+})()
+""".trimIndent()
+
+    /** What [SCRIPT] returned (the web view hands it back JSON-quoted): posts shown and the videos among them. */
+    fun read(raw: String?): Pair<Int, List<BatchEntry>> {
+        var json = raw?.trim().orEmpty()
+        if (json.startsWith("\"")) json = runCatching { org.json.JSONTokener(json).nextValue() as? String }.getOrNull().orEmpty()
+        val o = runCatching { JSONObject(json) }.getOrNull() ?: return 0 to emptyList()
+        val dates = java.text.SimpleDateFormat("MMMM d, yyyy", java.util.Locale.US)
+        val videos = mutableListOf<BatchEntry>()
+        val a = o.optJSONArray("videos") ?: JSONArray()
+        for (i in 0 until a.length()) {
+            val v = a.optJSONObject(i) ?: continue
+            val url = v.optString("u")
+            if (!url.startsWith("https://www.instagram.com/") && !url.startsWith("https://www.facebook.com/")) continue
+            val text = v.optString("t")
+            val date = Regex(""" on ([A-Z][a-z]+ \d{1,2}, \d{4})""").find(text)?.let { m -> runCatching { dates.parse(m.groupValues[1])?.time }.getOrNull() }
+            var title = text.split(Regex("""\s+""")).filter { it.isNotEmpty() }.joinToString(" ")
+            if (title.length > 120) title = title.take(120) + "…"
+            videos += BatchEntry(url, title.ifEmpty { url }, null, date, if ("/reel/" in url) "shorts" else "video")
+        }
+        return o.optInt("posts") to videos
+    }
+
+    fun note(posts: Int) = "Instagram shows visitors who are not signed in only the latest $posts posts of a profile; Nexonic took the videos among them."
+    const val NOTHING = "Instagram did not show any posts of this profile to a visitor who is not signed in (it may be private or not exist)."
+    fun noVideos(posts: Int) = "None of the latest $posts posts Instagram shows visitors of this profile is a video."
+}
+
+/**
+ * Instagram and Facebook profiles in Profile Batch. Their profile pages show visitors who are not signed in only the
+ * latest posts; the app takes what its hidden web view shows (on computers, the browser extension finds every video).
+ */
+data class SocialSite(val name: String, val loginUrl: String, val domain: String, val sessionCookie: String, val script: String)
+
+object SocialPages {
+    val instagram = SocialSite("Instagram", "https://www.instagram.com/accounts/login/", "instagram.com", "sessionid", InstagramPage.SCRIPT)
+    val facebook = SocialSite("Facebook", "https://www.facebook.com/login/", "facebook.com", "c_user", "")
+    private val fbProfile = Regex("""^https?://(?:www\.|m\.|web\.)?facebook\.com/(?:profile\.php\?id=(\d+)|(?!(?:watch|reel|videos|groups|events|share|story\.php|photo|permalink\.php|login|marketplace|gaming|people|pages)\b)([A-Za-z0-9.\-]{2,80}))""", RegexOption.IGNORE_CASE)
+
+    /** The site, the profile's name and the pages that list its videos; null for other links. */
+    fun find(link: String): Triple<SocialSite, String, List<String>>? {
+        InstagramPage.user(link)?.let { return Triple(instagram, it, listOf("https://www.instagram.com/$it/")) }
+        val m = fbProfile.find(link.trim()) ?: return null
+        val id = m.groupValues[1]
+        if (id.isNotEmpty()) return Triple(fbSite, id, listOf("https://www.facebook.com/profile.php?id=$id&sk=reels_tab", "https://www.facebook.com/profile.php?id=$id&sk=videos"))
+        val name = m.groupValues[2].ifEmpty { return null }
+        return Triple(fbSite, name, listOf("https://www.facebook.com/$name/reels/", "https://www.facebook.com/$name/videos/"))
+    }
+
+    /** Run in a loaded Facebook page: its reels and videos, as [InstagramPage.SCRIPT] reports them. */
+    val FACEBOOK_SCRIPT = """
+(() => {
+  const seen = new Set(), videos = [];
+  for (const a of document.querySelectorAll('a[href*="/reel/"], a[href*="/videos/"], a[href*="watch/?v="], a[href*="watch?v="]')) {
+    const link = new URL(a.getAttribute('href'), location.href);
+    let id = null, reel = false, m;
+    if ((m = link.pathname.match(/\/reel\/(\d+)/))) { id = m[1]; reel = true; }
+    else if ((m = link.pathname.match(/\/videos\/(?:[^/]+\/)?(\d{6,})/))) id = m[1];
+    else if (/^\d{6,}${"$"}/.test(link.searchParams.get('v') || '')) id = link.searchParams.get('v');
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    const u = reel ? 'https://www.facebook.com/reel/' + id + '/' : 'https://www.facebook.com/watch/?v=' + id;
+    videos.push({ u, t: (a.getAttribute('aria-label') || a.innerText || '').trim().slice(0, 200) });
+  }
+  return JSON.stringify({ posts: videos.length, videos });
+})()
+""".trimIndent()
+
+    val fbSite get() = facebook.copy(script = FACEBOOK_SCRIPT)
+
+
+    /** Adds what a page shows now to what was found before; true when anything new came. Stops at [max]. */
+    fun merge(found: LinkedHashMap<String, BatchEntry>, now: List<BatchEntry>, max: Int): Boolean {
+        var grew = false
+        for (e in now) if (found.size < max && !found.containsKey(e.url)) { found[e.url] = e; grew = true }
+        return grew
+    }
+}

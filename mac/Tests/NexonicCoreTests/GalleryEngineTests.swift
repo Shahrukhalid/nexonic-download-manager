@@ -17,11 +17,40 @@ final class GalleryEngineTests: XCTestCase {
         XCTAssertNil(GalleryDl.pick(releaseJSON, asset: "other"))
     }
 
+    func testProfilesAreSearchedWithTheDefaultBrowsersSignIn() {
+        XCTAssertTrue(GalleryDl.isProfile("https://www.instagram.com/maheeenn10/reels/"))
+        XCTAssertTrue(GalleryDl.isProfile("https://www.tiktok.com/@name"))
+        XCTAssertFalse(GalleryDl.isProfile("https://www.instagram.com/p/AbC/"))
+        XCTAssertFalse(GalleryDl.isProfile("https://www.facebook.com/TheSmuggers/reels/"))
+        XCTAssertEqual(GalleryDl.browserName(bundleID: "com.google.Chrome"), "chrome")
+        XCTAssertNil(GalleryDl.browserName(bundleID: "com.example.other"))
+        XCTAssertEqual(Array(GalleryDl.listArguments(url: "https://s.test/u", max: 5, settingsFile: nil, browser: "chrome").suffix(4)),
+                       ["--cookies-from-browser", "chrome", "--", "https://s.test/u"])
+    }
+
+    func testAProfileListingBecomesPhotosAndVideosToChooseFrom() {
+        XCTAssertEqual(GalleryDl.listArguments(url: "https://s.test/u", max: 300, settingsFile: nil),
+                       ["-N", GalleryDl.listFormat, "--range", "1-300", "-o", GalleryDl.pace, "--", "https://s.test/u"])
+        let lines = #"""
+        ["https://scontent.cdninstagram.com/v/a.jpg?sig=1", "jpg", "AbC", null, null, "1", "a", "Sunny day\nat home", null, null, null, 1, 2, "2025-03-25 10:00:00", null, "amna"]
+        ["https://scontent.cdninstagram.com/v/b.mp4?sig=2", "mp4", "AbC", null, null, "2", "b", null, null, null, null, 2, 2, null, 12.5, "amna"]
+        ["https://scontent.cdninstagram.com/v/b.mp4?sig=2", "mp4", null, null, null, null, null, null, null, null, null, null, null, null, null, null]
+        not json
+        """#
+        let listed = GalleryDl.entries(lines)
+        XCTAssertEqual(listed.owner, "amna")
+        XCTAssertEqual(listed.entries.map(\.title), ["Sunny day at home [AbC-1].jpg", "amna [AbC-2].mp4"])
+        XCTAssertEqual(listed.entries.map(\.kind), ["photo", "video"])
+        XCTAssertEqual(listed.entries.first?.direct, true)
+        XCTAssertNotNil(listed.entries.first?.date)
+        XCTAssertEqual(ProfileBatch.key("https://scontent.cdninstagram.com/v/a.jpg?sig=1"), ProfileBatch.key("https://scontent.cdninstagram.com/v/a.jpg?sig=9"))
+    }
+
     func testArgumentsAndOutput() {
         XCTAssertEqual(GalleryDl.arguments(url: "https://s.test/a", folder: "/d", speedLimitKBps: 200, referrer: nil),
-                       ["--directory", "/d", "--limit-rate", "200k", "--", "https://s.test/a"])
+                       ["--directory", "/d", "-o", GalleryDl.pace, "--limit-rate", "200k", "--", "https://s.test/a"])
         XCTAssertEqual(GalleryDl.arguments(url: "https://s.test/a", folder: "/d", speedLimitKBps: 0, referrer: nil, settingsFile: "/p/g.json"),
-                       ["--directory", "/d", "--config", "/p/g.json", "--", "https://s.test/a"])
+                       ["--directory", "/d", "-o", GalleryDl.pace, "--config", "/p/g.json", "--", "https://s.test/a"])
         XCTAssertEqual(GalleryDl.savedFile("/d/a.jpg")?.saved, true)
         XCTAssertEqual(GalleryDl.savedFile("# /d/a.jpg")?.path, "/d/a.jpg")
         XCTAssertNil(GalleryDl.savedFile("[gallery-dl][error] Unsupported URL"))
@@ -45,5 +74,15 @@ final class GalleryEngineTests: XCTestCase {
         r.gallery = true
         r.streamBytes = 42
         XCTAssertEqual(r.received, 42)
+    }
+
+    func testInstagramIsListedPostsThenReelsAndContinuesWhereItStopped() {
+        XCTAssertEqual(GalleryDl.listParts("https://www.instagram.com/someone/"),
+                       ["https://www.instagram.com/someone/posts/", "https://www.instagram.com/someone/reels/"])
+        XCTAssertEqual(GalleryDl.listParts("https://www.tiktok.com/@someone"), ["https://www.tiktok.com/@someone"])
+        XCTAssertEqual(GalleryDl.resumeCursor("[instagram][info] Use '-o cursor=QVFE_x-1' to continue downloading from the current position"), "QVFE_x-1")
+        XCTAssertNil(GalleryDl.resumeCursor("[instagram][error] HttpError"))
+        XCTAssertTrue(GalleryDl.throttled("[instagram][error] HTTP redirect to home page (https://www.instagram.com/)"))
+        XCTAssertFalse(GalleryDl.throttled("[instagram][error] Unsupported URL"))
     }
 }

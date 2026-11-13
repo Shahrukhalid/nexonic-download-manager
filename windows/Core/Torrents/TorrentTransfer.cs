@@ -39,7 +39,16 @@ public sealed class TorrentMetadata
         return values;
     }
     [System.Text.Json.Serialization.JsonIgnore]
-    public long SelectedSize => Files.Zip(Priorities()).Where(pair => pair.Second > 0).Sum(pair => pair.First.Size);
+    public long SelectedSize
+    {
+        get
+        {
+            // Before the file list is known, the whole torrent's size.
+            if (Files.Count == 0) return Size;
+            var chosen = Files.Zip(Priorities()).Where(pair => pair.Second > 0).Sum(pair => pair.First.Size);
+            return chosen > 0 ? chosen : Size;
+        }
+    }
     public long Received { get; set; }
     public int Peers { get; set; }
     public int Seeds { get; set; }
@@ -312,7 +321,8 @@ public sealed class TorrentTransfer : IDownloader
                     var status = snapshot.GetProperty("state").GetString();
                     if (status == "failed") throw new InvalidOperationException(snapshot.GetProperty("error").GetString());
                     var metadata = TorrentRuntime.ReadMetadata(snapshot);
-                    torrent.Name = metadata.Name; torrent.Files = metadata.Files; torrent.Size = metadata.Size;
+                    // A progress report without the file list keeps the list already known.
+                    torrent.Name = metadata.Name; if (metadata.Files.Count > 0) torrent.Files = metadata.Files; if (metadata.Size > 0) torrent.Size = metadata.Size;
                     Record.FileName = torrent.Name; Record.Size = torrent.SelectedSize;
                     torrent.Received = snapshot.GetProperty("received").GetInt64();
                     torrent.Peers = snapshot.GetProperty("peers").GetInt32(); torrent.Seeds = snapshot.GetProperty("seeds").GetInt32();

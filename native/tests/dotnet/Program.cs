@@ -34,12 +34,14 @@ try
     new Random(42).NextBytes(bytes);
     await File.WriteAllBytesAsync(Path.Combine(source, "selected.bin"), bytes);
     await File.WriteAllTextAsync(Path.Combine(source, "skipped.txt"), "Legal Nexonic test data\n");
-    using var seed = new NativeTorrentSession(Path.Combine(root, "seed-state"), true, false, library);
+    using var seed = new NativeTorrentSession(Path.Combine(root, "seed-state"), true, false, library, bind: "127.0.0.1");
     var metadata = seed.Invoke(new { action = "create_torrent", path = source }).GetProperty("metainfo").GetString()!;
     seed.Invoke(new { action = "add", id = "seed", source = "fixture", metainfo = metadata, preview = false,
         destination = Path.GetDirectoryName(source), seed = true, ratio_limit = 0, upload_limit = 0 });
     seed.Invoke(new { action = "resume", id = "seed" });
     var seedStatus = await Wait(seed, "seed", s => s.GetProperty("state").GetString() == "seeding");
+    // Every session here is held to the loopback adapter: on Windows "all adapters" gives each adapter its own port,
+    // and the one reported need not be the loopback one the peers connect to.
     // The listen socket opens shortly after seeding starts: wait for its port (0 until then).
     var port = 0;
     for (var tries = 0; port <= 0 && tries < 150; tries++)
@@ -59,7 +61,7 @@ try
     var priorities = files.Select(f => f.GetProperty("path").GetString()!.EndsWith("selected.bin") ? 7 : 0).ToArray();
     var stateDirectory = Path.Combine(root, "downloader-state");
     var destination = Path.Combine(root, "downloaded");
-    using (var client = new NativeTorrentSession(stateDirectory, true, false, library))
+    using (var client = new NativeTorrentSession(stateDirectory, true, false, library, bind: "127.0.0.1"))
     {
         client.Invoke(new { action = "add", id = "preview", source = seedStatus.GetProperty("magnet").GetString() });
         client.Invoke(new { action = "connect_peer", id = "preview", port });
@@ -77,7 +79,7 @@ try
         client.Invoke(new { action = "pause", id = "download" });
         client.Invoke(new { action = "flush" });
     }
-    using (var client = new NativeTorrentSession(stateDirectory, true, false, library))
+    using (var client = new NativeTorrentSession(stateDirectory, true, false, library, bind: "127.0.0.1"))
     {
         client.Invoke(new { action = "restore", id = "download" });
         client.Invoke(new { action = "configure", id = "download", download_limit = 0 });

@@ -6,8 +6,12 @@ public struct BatchEntry: Codable, Equatable, Sendable, Identifiable {
     public var title: String
     public var duration: Double?
     public var date: Date?
-    public var kind: String = "video"  // video, shorts or live
+    public var kind: String = "video"  // video, shorts, live or photo
     public var available = true
+    /// Added in 0.31.0: the file itself (a gallery engine listing), downloaded as it is rather than by the video engine.
+    public var direct: Bool?
+    /// Added in 0.31.0: the post a listed file belongs to (its short code), so a post already downloaded is not added again.
+    public var post: String?
     public var id: String { url }
 }
 
@@ -52,7 +56,7 @@ public struct BatchCounts: Equatable, Sendable {
 /// Profile Batch: every video the video engine can list at one link (it follows the site's pages itself), read without any
 /// login, cookies or keys. Nothing behind a login, paywall or CAPTCHA is reached; such videos are counted as not accessible.
 public enum ProfileBatch {
-    public static let defaultMax = 500, limit = 5000
+    public static let defaultMax = 500, limit = 20000
 
     public static let qualities: [(key: String, title: String, height: Int?, audio: Bool)] = [
         ("best", "Best", nil, false), ("8k", "8K", 4320, false), ("4k", "4K", 2160, false), ("1080", "1080p", 1080, false),
@@ -109,7 +113,33 @@ public enum ProfileBatch {
         let base = url.split(separator: "#", maxSplits: 1).first.map(String.init) ?? url
         guard var c = URLComponents(string: base.trimmingCharacters(in: .whitespaces)) else { return base }
         c.host = c.host?.lowercased(); c.scheme = c.scheme?.lowercased()
+        // The sites' picture and video servers sign every address anew; the file is the same without the signature.
+        if let h = c.host, ["cdninstagram.com", "fbcdn.net", "tiktokcdn.com", "tiktokcdn-us.com", "twimg.com", "pinimg.com"].contains(where: { h.hasSuffix($0) }) { c.query = nil }
         return c.string ?? base
+    }
+
+    /// An Instagram post's short code (/p/, /reel/ or /tv/), to match it with the files the gallery engine lists for it.
+    public static func postCode(_ url: String) -> String? {
+        let parts = (URL(string: url)?.path ?? "").split(separator: "/").map(String.init)
+        guard let i = parts.firstIndex(where: { ["p", "reel", "reels", "tv"].contains($0) }), i + 1 < parts.count else { return nil }
+        return parts[i + 1]
+    }
+
+    /// How many posts the found files come from (a carousel post holds up to 20 photos and videos), to set beside the
+    /// number of posts the site shows.
+    public static func postCount(_ entries: [BatchEntry]) -> Int {
+        Set(entries.map { $0.post ?? postCode($0.url) ?? key($0.url) }).count
+    }
+
+    /// The page's own posts and videos, sent by the extension with Download all: an Instagram post is downloaded by the
+    /// gallery engine (its video or photos), anything else by the video engine.
+    public static func pageEntries(_ links: [String]) -> [BatchEntry] {
+        var keys = Set<String>()
+        return links.compactMap { l in
+            guard URL(string: l)?.scheme?.hasPrefix("http") == true, keys.insert(key(l)).inserted else { return nil }
+            let instagram = URL(string: l)?.host?.hasSuffix("instagram.com") == true
+            return BatchEntry(url: l, title: l, kind: instagram ? "post" : (l.contains("/reel") ? "shorts" : "video"))
+        }
     }
 
     public static func matches(_ e: BatchEntry, _ f: BatchFilter) -> Bool {
@@ -311,5 +341,152 @@ public enum SavedProfiles {
     public static func save(_ list: [SavedProfile]) {
         try? FileManager.default.createDirectory(at: AppPaths.support, withIntermediateDirectories: true)
         try? JSONEncoder().encode(list).write(to: file, options: .atomic)
+    }
+}
+
+/// Instagram shows visitors who are not signed in the latest posts of a profile, but only through its own page scripts.
+/// The app opens the profile page in a private web view (no cookies, no sign-in), like a visitor's browser, runs
+/// `script` and reads the video links the page shows. Nothing else of Instagram's is called.
+public enum InstagramPage {
+    static let reserved: Set<String> = ["p", "reel", "reels", "tv", "stories", "explore", "accounts", "direct", "about", "legal",
+                                        "developer", "api", "graphql", "web", "challenge", "emails", "session", "privacy", "terms"]
+
+    /// The user name of an Instagram profile link (instagram.com/name, /name/reels), or nil.
+    public static func user(_ link: String) -> String? {
+        let pattern = #"^https?://(?:www\.)?instagram\.com/([A-Za-z0-9._]{1,30})/?(?:reels/?|videos/?)?(?:[?#].*)?$"#
+        let text = link.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let re = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+              let m = re.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+              let r = Range(m.range(at: 1), in: text) else { return nil }
+        let name = String(text[r])
+        return reserved.contains(name.lowercased()) ? nil : name
+    }
+
+    /// Run in the loaded page: {"posts": links to posts shown, "videos": [{"u": link, "t": picture text}]}.
+    public static let script = #"""
+(() => {
+  const all = [...document.querySelectorAll('a[href*="/reel/"], a[href*="/p/"]')], seen = new Set(), videos = [];
+  for (const a of all) {
+    const link = new URL(a.getAttribute('href'), location.href);
+    const m = link.pathname.match(/\/(p|reel)\/([A-Za-z0-9_-]+)/);
+    if (!m) continue;
+    const alt = (a.querySelector('img') || {}).alt || '';
+    const video = m[1] === 'reel' || /^Video by /.test(alt) || !!a.querySelector('svg[aria-label="Clip"], svg[aria-label="Video"], svg[aria-label="Reel"]');
+    const u = 'https://www.instagram.com/' + m[1] + '/' + m[2] + '/';
+    if (video && !seen.has(u)) { seen.add(u); videos.push({ u, t: alt }); }
+  }
+  return JSON.stringify({ posts: all.length, videos });
+})()
+"""#
+
+    /// What `script` returned: the number of posts the page shows and its videos.
+    public static func read(_ json: String?) -> (posts: Int, videos: [BatchEntry]) {
+        guard let json, let o = (try? JSONSerialization.jsonObject(with: Data(json.utf8))) as? [String: Any] else { return (0, []) }
+        let posts = (o["posts"] as? NSNumber)?.intValue ?? 0
+        var videos: [BatchEntry] = []
+        let dates = DateFormatter()
+        dates.locale = Locale(identifier: "en_US_POSIX")
+        dates.dateFormat = "MMMM d, yyyy"
+        for v in o["videos"] as? [[String: Any]] ?? [] {
+            guard let url = v["u"] as? String, url.hasPrefix("https://www.instagram.com/") || url.hasPrefix("https://www.facebook.com/") else { continue }
+            let text = (v["t"] as? String) ?? ""
+            var date: Date?
+            if let r = text.range(of: #" on [A-Z][a-z]+ \d{1,2}, \d{4}"#, options: .regularExpression) {
+                date = dates.date(from: String(text[r].dropFirst(4)))
+            }
+            var title = text.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+            if title.count > 120 { title = String(title.prefix(120)) + "…" }
+            videos.append(BatchEntry(url: url, title: title.isEmpty ? url : title, duration: nil, date: date,
+                                     kind: url.contains("/reel/") ? "shorts" : "video"))
+        }
+        return (posts, videos)
+    }
+
+    /// Shown with the result: Instagram shows visitors only the latest posts.
+    public static func note(_ posts: Int) -> String {
+        "Instagram shows visitors who are not signed in only the latest \(posts) posts of a profile; Nexonic took the videos among them."
+    }
+
+    /// The result for Profile Batch, as if the engine had listed it.
+    public static func scan(url: String, user: String, posts: Int, videos: [BatchEntry]) -> ProfileBatch.Scan {
+        var s = ProfileBatch.Scan()
+        s.url = url; s.owner = user; s.entries = videos; s.complete = true; s.note = note(posts)
+        return s
+    }
+
+    public static let nothing = "Instagram did not show any posts of this profile to a visitor who is not signed in (it may be private or not exist)."
+
+    public static func noVideos(_ posts: Int) -> String {
+        "None of the latest \(posts) posts Instagram shows visitors of this profile is a video."
+    }
+}
+
+/// Instagram and Facebook profiles in Profile Batch. Their profile pages show visitors who are not signed in only the
+/// latest posts; the rest come through the user's own signed-in browser and the Nexonic extension (see more(_:)).
+public struct SocialSite: Sendable, Equatable {
+    public let name: String, loginURL: String, domain: String, sessionCookie: String, script: String
+}
+
+public enum SocialPages {
+    /// Added under what a visitor sees: how to get the rest. The Nexonic extension's "Download all" on the profile, in a
+    /// browser signed in to the site, hands the whole profile to the gallery engine with the browser's cookies (read-only, a person's pace) and sends every
+    /// video and photo here. Nexonic itself never signs in.
+    public static func more(_ site: SocialSite) -> String {
+        "To get every video and photo: open this profile in Chrome, Edge or Firefox where you are signed in to \(site.name), click the Nexonic extension and choose Download all. Nexonic then saves the whole profile with that sign-in, a request every 1-2 seconds like a person, and only reads; it never sees your password."
+    }
+
+    public static let instagram = SocialSite(name: "Instagram", loginURL: "https://www.instagram.com/accounts/login/", domain: "instagram.com",
+                                             sessionCookie: "sessionid", script: InstagramPage.script)
+    public static let facebook = SocialSite(name: "Facebook", loginURL: "https://www.facebook.com/login/", domain: "facebook.com",
+                                            sessionCookie: "c_user", script: facebookScript)
+
+    /// The site, the profile's name and the pages that list its videos; nil for other links.
+    public static func find(_ link: String) -> (site: SocialSite, owner: String, pages: [String])? {
+        if let user = InstagramPage.user(link) { return (instagram, user, ["https://www.instagram.com/\(user)/"]) }
+        let pattern = #"^https?://(?:www\.|m\.|web\.)?facebook\.com/(?:profile\.php\?id=(\d+)|(?!(?:watch|reel|videos|groups|events|share|story\.php|photo|permalink\.php|login|marketplace|gaming|people|pages)\b)([A-Za-z0-9.\-]{2,80}))"#
+        let text = link.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let re = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+              let m = re.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) else { return nil }
+        if let r = Range(m.range(at: 1), in: text) {
+            let id = String(text[r])
+            return (facebook, id, ["https://www.facebook.com/profile.php?id=\(id)&sk=reels_tab", "https://www.facebook.com/profile.php?id=\(id)&sk=videos"])
+        }
+        guard let r = Range(m.range(at: 2), in: text) else { return nil }
+        let name = String(text[r])
+        return (facebook, name, ["https://www.facebook.com/\(name)/reels/", "https://www.facebook.com/\(name)/videos/"])
+    }
+
+    /// Run in a loaded Facebook page: its reels and videos, as InstagramPage.script reports them.
+    public static let facebookScript = #"""
+(() => {
+  const seen = new Set(), videos = [];
+  for (const a of document.querySelectorAll('a[href*="/reel/"], a[href*="/videos/"], a[href*="watch/?v="], a[href*="watch?v="]')) {
+    const link = new URL(a.getAttribute('href'), location.href);
+    let id = null, reel = false, m;
+    if ((m = link.pathname.match(/\/reel\/(\d+)/))) { id = m[1]; reel = true; }
+    else if ((m = link.pathname.match(/\/videos\/(?:[^/]+\/)?(\d{6,})/))) id = m[1];
+    else if (/^\d{6,}$/.test(link.searchParams.get('v') || '')) id = link.searchParams.get('v');
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    const u = reel ? 'https://www.facebook.com/reel/' + id + '/' : 'https://www.facebook.com/watch/?v=' + id;
+    videos.push({ u, t: (a.getAttribute('aria-label') || a.innerText || '').trim().slice(0, 200) });
+  }
+  return JSON.stringify({ posts: videos.length, videos });
+})()
+"""#
+
+
+    /// Adds what a page shows now to what was found before; true when anything new came. Stops at max.
+    public static func merge(_ found: inout [String: BatchEntry], order: inout [String], _ now: [BatchEntry], max: Int) -> Bool {
+        var grew = false
+        for e in now where found.count < max && found[e.url] == nil { found[e.url] = e; order.append(e.url); grew = true }
+        return grew
+    }
+
+    /// The result for Profile Batch.
+    public static func scan(url: String, owner: String, entries: [BatchEntry], note: String) -> ProfileBatch.Scan {
+        var s = ProfileBatch.Scan()
+        s.url = url; s.owner = owner; s.entries = entries; s.complete = true; s.note = note
+        return s
     }
 }

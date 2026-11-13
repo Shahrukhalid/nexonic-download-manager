@@ -21,11 +21,33 @@ public class GalleryEngineTests
     }
 
     [Fact]
+    public void AProfileListingBecomesPhotosAndVideosToChooseFrom()
+    {
+        Assert.Equal(new[] { "-N", GalleryList.Format, "--range", "1-300", "-o", GalleryDl.Pace, "--config", "/p/g.json", "--", "https://site.test/u" },
+            GalleryList.Arguments("https://site.test/u", 300, "/p/g.json"));
+        const string lines = """
+            ["https://scontent.cdninstagram.com/v/a.jpg?sig=1", "jpg", "AbC", null, null, "1", "a", "Sunny day\nat home", null, null, null, 1, 2, "2025-03-25 10:00:00", null, "amna"]
+            ["https://scontent.cdninstagram.com/v/b.mp4?sig=2", "mp4", "AbC", null, null, "2", "b", null, null, null, null, 2, 2, null, 12.5, "amna"]
+            ["https://scontent.cdninstagram.com/v/b.mp4?sig=2", "mp4", null, null, null, null, null, null, null, null, null, null, null, null, null, null]
+            not json
+            """;
+        var (list, owner) = GalleryList.Entries(lines);
+        Assert.Equal("amna", owner);
+        Assert.Equal(2, list.Count);
+        Assert.Equal(("Sunny day at home [AbC-1].jpg", "photo", true), (list[0].Title, list[0].Kind, list[0].Direct));
+        Assert.Equal(("amna [AbC-2].mp4", "video", (double?)12.5), (list[1].Title, list[1].Kind, list[1].Duration));
+        Assert.Equal(new DateTime(2025, 3, 25, 10, 0, 0, DateTimeKind.Utc), list[0].Date);
+        Assert.Empty(GalleryList.Entries("not json").Entries);
+        // Signed addresses of the same picture count as one file.
+        Assert.Equal(ProfileBatch.Key("https://scontent.cdninstagram.com/v/a.jpg?sig=1"), ProfileBatch.Key("https://scontent.cdninstagram.com/v/a.jpg?sig=9"));
+    }
+
+    [Fact]
     public void ArgumentsEndWithTheAddress()
     {
         var args = GalleryDl.Arguments("https://site.test/user/a", "/data/Gallery", 500, "https://site.test/", "/p/g.json");
-        Assert.Equal(new[] { "--directory", "/data/Gallery", "--config", "/p/g.json", "--limit-rate", "500k", "-o", "extractor.referer=https://site.test/", "--", "https://site.test/user/a" }, args);
-        Assert.Equal(new[] { "--directory", "/d", "--", "-x" }, GalleryDl.Arguments("-x", "/d", 0, null));
+        Assert.Equal(new[] { "--directory", "/data/Gallery", "-o", GalleryDl.Pace, "--config", "/p/g.json", "--limit-rate", "500k", "-o", "extractor.referer=https://site.test/", "--", "https://site.test/user/a" }, args);
+        Assert.Equal(new[] { "--directory", "/d", "-o", GalleryDl.Pace, "--", "-x" }, GalleryDl.Arguments("-x", "/d", 0, null));
     }
 
     [Fact]
@@ -70,5 +92,24 @@ public class GalleryEngineTests
         Assert.Equal(DownloadEngine.Gallery, DownloadProviders.EngineOf(r));
         Assert.Equal(1234, r.Received);
         Assert.True(new DownloadProviders().Create(r, new DownloadContext(1, new(), false, new() { Mode = ProxyMode.None }, new())) is GalleryTransfer);
+    }
+
+    [Fact]
+    public void FacebookPagesAreNotHandedToTheEngine()
+    {
+        Assert.True(GalleryList.IsProfile("https://www.instagram.com/someone/"));
+        Assert.False(GalleryList.IsProfile("https://www.instagram.com/p/AbC/"));
+        Assert.False(GalleryList.IsProfile("https://www.facebook.com/krunchix/reels/"));
+    }
+
+    [Fact]
+    public void InstagramIsListedPostsThenReelsAndContinuesWhereItStopped()
+    {
+        Assert.Equal(new[] { "https://www.instagram.com/someone/posts/", "https://www.instagram.com/someone/reels/" }, GalleryList.Parts("https://www.instagram.com/someone/"));
+        Assert.Equal(new[] { "https://www.tiktok.com/@someone" }, GalleryList.Parts("https://www.tiktok.com/@someone"));
+        Assert.Equal("QVFE_x-1", GalleryList.ResumeCursor("[instagram][info] Use '-o cursor=QVFE_x-1' to continue downloading from the current position"));
+        Assert.Null(GalleryList.ResumeCursor("[instagram][error] HttpError"));
+        Assert.True(GalleryList.Throttled("[instagram][error] HTTP redirect to home page (https://www.instagram.com/)"));
+        Assert.False(GalleryList.Throttled("[instagram][error] Unsupported URL"));
     }
 }

@@ -122,6 +122,11 @@ final class DownloadManager: ObservableObject {
     /// Profile Batch: profiles saved to be checked again, and the ones being checked now.
     @Published var profiles: [SavedProfile] = SavedProfiles.load()
     var checkingProfiles: Set<String> = []
+    /// The browser's cookies for profiles the extension opened in Profile Batch (Download all), by profile address; kept in
+    /// memory only, for listing that profile as the user sees it.
+    var profileCookies: [String: (cookies: String?, userAgent: String?)] = [:]
+    /// Profiles being listed (or listed) with those cookies, by profile address (see startListing).
+    @Published var listings: [String: ProfileListing] = [:]
     private var lastMinute = ""
     private var clipboardCount = NSPasteboard.general.changeCount
     private let limiter = SpeedLimiter()
@@ -154,7 +159,11 @@ final class DownloadManager: ObservableObject {
         var qs = Self.load([DownloadQueue].self, from: AppPaths.queues) ?? []
         if !qs.contains(where: \.isMain) { qs.insert(.main, at: 0) }
         queues = qs
-        for i in items.indices where items[i].status.isActive { items[i].status = .queued }  // interrupted by quit
+        for i in items.indices where items[i].status.isActive {
+            if items[i].listing == true {  // a Profile Batch search interrupted by quit: double-click searches again
+                items[i].status = .failed; items[i].error = "Interrupted. Double-click to search again."
+            } else { items[i].status = .queued }  // interrupted by quit
+        }
         applySpeedLimit()
         Self.applyAppearance(settings.appearance, scheme: settings.colorScheme)
         settings.debrid.key = Debrid.loadKey()
@@ -195,6 +204,7 @@ final class DownloadManager: ObservableObject {
         var maxHeight: Int?  // a single video link's highest picture quality (nil = best)
         var infoJSON: String?  // a single video link's details, already looked up in the Add window
         var gallery = false    // the whole gallery with the gallery engine
+        var rememberFolder = true  // false for Profile Batch: its per-profile folder is not "the last folder used"
         var package: String?   // Link Grabber package name
         var unpack = false     // unpack the package's archives when all of it is done
     }
@@ -274,7 +284,7 @@ final class DownloadManager: ObservableObject {
         if !o.gallery, TorrentSource.isTorrent(url.absoluteString) { record.torrent = TorrentTask(source: url.absoluteString) }
         if o.gallery { record.gallery = true }
         if let p = o.package, !p.isEmpty { record.package = p; record.unpackWhenDone = o.unpack ? true : nil }
-        if let f = o.folder, o.package == nil, settings.rememberLastFolder,
+        if let f = o.folder, o.package == nil, o.rememberFolder, settings.rememberLastFolder,
            f.standardizedFileURL.path != settings.startFolder.standardizedFileURL.path { settings.usedFolder(f) }
         if stream { record.isStream = true }
         if site {
@@ -323,7 +333,23 @@ final class DownloadManager: ObservableObject {
                 if settings.showProgressWindow && job.fromBrowser == true { ProgressWindow.show(dup.id, manager: self) }
                 continue
             }
+            if job.profile == true {
+                // The extension's Download all: Profile Batch lists the profile with the browser's cookies, then the user
+                // picks Download Now or Add to Queue.
+                profileCookies[ProfileBatch.key(job.url)] = (job.cookies, job.userAgent)
+                // Download all: Profile Batch opens with the page's own posts listed while the rest is found in the background
+                // (a row shows the count); the user picks the folder and quality, and what is found later follows that choice.
+                startListing(job.url, max: ProfileBatch.limit, seed: ProfileBatch.pageEntries(job.links ?? []))
+                MediaWindows.showPlaylist(job.url)
+                continue
+            }
             if DownloadInfoWindow.isOpen(for: job.url) { continue }
+            if job.gallery == true && !(job.fromBrowser == true && settings.showDownloadDialog) {
+                // An Instagram post from the extension, without the download window: its video or photos, straight away.
+                var o = AddOptions(); o.gallery = true
+                add(job, options: o)
+                continue
+            }
             if job.fromBrowser == true && settings.showDownloadDialog {
                 DownloadInfoWindow.show(job, manager: self)
                 continue
@@ -340,13 +366,17 @@ final class DownloadManager: ObservableObject {
 
     /// Downloads canceled while their transfer was still stopping.
     private var canceled = Set<UUID>()
+    /// Downloads a site refused for a while (Instagram's "redirect to home page"), and how often they were tried again.
+    private var siteRetries: [UUID: Int] = [:]
 
     func pause(_ id: UUID) {
+        if let r = items.first(where: { $0.id == id }), r.listing == true { listings[ProfileBatch.key(r.url.absoluteString)]?.stop.set(); return }
         manual.remove(id)
         if let t = transfers[id] { t.pause() } else { update(id) { if $0.status != .finished { $0.status = .paused } } }
     }
 
     func resume(_ id: UUID) {
+        if let r = items.first(where: { $0.id == id }), r.listing == true { MediaWindows.showPlaylist(r.url.absoluteString); return }
         canceled.remove(id)
         update(id) { if [.paused, .failed].contains($0.status) { $0.status = .queued; $0.error = nil } }
         if UserDefaults.standard.integer(forKey: Self.manualKey) > 0 { manual.insert(id); schedule(); return }
@@ -373,7 +403,21 @@ final class DownloadManager: ObservableObject {
         schedule()
     }
 
+    /// A Profile Batch search's row (ProfileBatchManager): at the top of the list, replacing an earlier one of that profile.
+    func putListingRow(_ r: DownloadRecord) {
+        let key = ProfileBatch.key(r.url.absoluteString)
+        items.removeAll { $0.listing == true && ProfileBatch.key($0.url.absoluteString) == key }
+        items.insert(r, at: 0)
+        persist()
+    }
+
     func remove(_ id: UUID, deleteFile: Bool = false) {
+        if let r = items.first(where: { $0.id == id }), r.listing == true {  // a Profile Batch search: stop it, nothing to delete
+            listings[ProfileBatch.key(r.url.absoluteString)]?.stop.set()
+            items.removeAll { $0.id == id }
+            persist()
+            return
+        }
         transfers.removeValue(forKey: id)?.discard()
         if deleteFile, let path = items.first(where: { $0.id == id })?.savedPath {
             try? FileManager.default.trashItem(at: URL(fileURLWithPath: path), resultingItemURL: nil)
@@ -522,19 +566,22 @@ final class DownloadManager: ObservableObject {
         }
     }
 
-    private func afterQueue(_ q: DownloadQueue) {
-        switch q.afterDone {
+    private func afterQueue(_ q: DownloadQueue) { perform(q.afterDone, done: q.name) }
+
+    /// Quit, sleep or shut down once something is done (a queue, or a download's Options on completion).
+    private func perform(_ action: AfterQueue, done name: String) {
+        switch action {
         case .nothing:
             return
         case .quit:
             persist()
             NSApp.terminate(nil)
         case .sleep:
-            post("Queue finished", "\(q.name) is done. The Mac will sleep now.")
+            post("Finished", "\(name) is done. The Mac will sleep now.")
             run("/usr/bin/pmset", ["sleepnow"])
         case .shutDown:
             persist()
-            post("Queue finished", "\(q.name) is done. Shutting down.")
+            post("Finished", "\(name) is done. Shutting down.")
             var error: NSDictionary?
             NSAppleScript(source: "tell application \"System Events\" to shut down")?.executeAndReturnError(&error)
         }
@@ -545,7 +592,7 @@ final class DownloadManager: ObservableObject {
         for q in queues where q.running {
             let limit = q.isMain ? settings.maxActive : q.maxActive
             var slots = max(1, limit) - items.filter { $0.queue == q.id && $0.status.isActive && $0.status != .seeding }.count
-            for item in items where item.queue == q.id && item.status == .queued && slots > 0 && transfers[item.id] == nil && !manual.contains(item.id) {
+            for item in items where item.queue == q.id && item.status == .queued && slots > 0 && transfers[item.id] == nil && !manual.contains(item.id) && item.listing != true {
                 slots -= 1
                 startTransfer(item)
             }
@@ -601,6 +648,7 @@ final class DownloadManager: ObservableObject {
         // Fields edited in the app while the transfer runs stay as edited.
         rec.queueID = items[i].queueID
         rec.speedLimitKBps = items[i].speedLimitKBps
+        rec.onComplete = items[i].onComplete
         if let edited = items[i].torrent, rec.torrent != nil {  // torrent settings changed while it runs
             rec.torrent?.options = edited.options; rec.torrent?.priorities = edited.priorities
             rec.size = rec.torrent?.selectedSize
@@ -621,7 +669,19 @@ final class DownloadManager: ObservableObject {
         if before != rec.status, [.finished, .failed, .paused, .queued].contains(rec.status) {
             transfers.removeValue(forKey: rec.id)
             if rec.status == .finished, rec.torrent == nil { finished(rec) }
-            if rec.status == .failed { post("Download failed", "\(rec.fileName): \(rec.error ?? "")") }
+            if rec.status == .failed, GalleryDl.throttled(rec.error ?? ""), (siteRetries[rec.id] ?? 0) < 3 {
+                // The site refused for a while: tried again by itself after a pause (5, 10, then 15 minutes).
+                let n = (siteRetries[rec.id] ?? 0) + 1, id = rec.id
+                siteRetries[id] = n
+                items[i].error = String(format: String(localized: "The site refused for a while; trying again in %d min."), 5 * n)
+                Task { @MainActor [weak self] in
+                    try? await Task.sleep(nanoseconds: UInt64(5 * 60 * n) * 1_000_000_000)
+                    guard let self, !self.canceled.contains(id), self.items.first(where: { $0.id == id })?.status == .failed else { return }
+                    self.resume(id)
+                }
+            } else if rec.status == .failed {
+                post("Download failed", "\(rec.fileName): \(rec.error ?? "")")
+            }
             persist()
             schedule()
         }
@@ -677,6 +737,24 @@ final class DownloadManager: ObservableObject {
             unzip(URL(fileURLWithPath: archive))
         }
         if settings.showCompleteDialog { CompleteWindow.show(rec, manager: self) }
+        // The download's own Options on completion.
+        let action = rec.onComplete ?? ""
+        switch action {
+        case "open": NSWorkspace.shared.open(file)
+        case "folder": NSWorkspace.shared.activateFileViewerSelecting([file])
+        default: if let a = AfterQueue(rawValue: action) { perform(a, done: rec.fileName) }
+        }
+    }
+
+    /// The progress window's Speed Limiter: applies at once (a torrent takes it when it next starts).
+    func setSpeedLimit(_ id: UUID, kbps: Int) {
+        update(id) { $0.speedLimitKBps = kbps > 0 ? kbps : nil }
+        transfers[id]?.ownLimiter.setLimit(bytesPerSecond: max(0, kbps) * 1024)
+    }
+
+    /// The progress window's Options on completion.
+    func setOnComplete(_ id: UUID, _ action: String?) {
+        update(id) { $0.onComplete = action }
     }
 
     /// Lets macOS check the file the first time it is opened, as it does for browser downloads.
@@ -797,7 +875,7 @@ final class DownloadManager: ObservableObject {
 
     // MARK: timer
 
-    private func update(_ id: UUID, _ change: (inout DownloadRecord) -> Void) {
+    func update(_ id: UUID, _ change: (inout DownloadRecord) -> Void) {
         guard let i = items.firstIndex(where: { $0.id == id }) else { return }
         change(&items[i])
         persist()
@@ -900,7 +978,7 @@ final class DownloadManager: ObservableObject {
 
     // Secrets live only in the private secrets file, not in the lists. If it can't be written, the values from 0.6.1
     // files stay where they were and new ones are kept while the app runs; it is tried again on the next save.
-    private func persist() {
+    func persist() {
         var list = Secrets.stripped(items)
         if !syncSecrets() {
             var s = AppSettings()

@@ -97,6 +97,69 @@ public class ProfileBatchTests
     }
 
     [Fact]
+    public void InstagramProfilePagesAreReadLikeAVisitorSeesThem()
+    {
+        Assert.Equal("nasa", InstagramPage.User("https://www.instagram.com/nasa/"));
+        Assert.Equal("natgeo", InstagramPage.User("https://instagram.com/natgeo/reels/"));
+        Assert.Null(InstagramPage.User("https://www.instagram.com/p/Dfc1mYxFevS/"));
+        Assert.Null(InstagramPage.User("https://www.youtube.com/@nasa"));
+        var json = "{\"posts\":12,\"videos\":[{\"u\":\"https://www.instagram.com/reel/Dfc1mYxFevS/\",\"t\":\"Video by NASA on November 07, 2026. May be an image\"},"
+            + "{\"u\":\"https://www.instagram.com/p/Dfdiuv0lI2K/\",\"t\":\"\"},{\"u\":\"https://evil.example/x\",\"t\":\"\"}]}";
+        foreach (var handed in new[] { json, System.Text.Json.JsonSerializer.Serialize(json) })
+        {
+            var (posts, videos) = InstagramPage.Read(handed);
+            Assert.Equal(12, posts);
+            Assert.Equal(2, videos.Count);
+            Assert.Equal(("shorts", "Dfc1mYxFevS", new DateTime(2026, 11, 7)), (videos[0].Kind, videos[0].Id, videos[0].Date!.Value));
+            Assert.Equal("video", videos[1].Kind);
+        }
+        Assert.Equal(0, InstagramPage.Read("not json").Posts);
+    }
+
+    [Fact]
+    public void ChosenQualitiesAreMp4AndCaptionSitesGetUniqueNames()
+    {
+        Assert.Equal("mp4", SiteVideo.Format(false, 1080)[^1]);
+        Assert.Equal("mp4/mkv", SiteVideo.Format(false, SiteVideo.OriginalQuality)[^1]);
+        Assert.Contains("%(title).120B [%(id)s].%(ext)s", SiteVideo.Naming("https://www.instagram.com/reel/Dfc1mYxFevS/"));
+        Assert.Contains("--parse-metadata", SiteVideo.Naming("https://m.facebook.com/reel/1"));
+        Assert.Equal(new[] { "-o", "%(title).150B.%(ext)s" }, SiteVideo.Naming("https://www.youtube.com/watch?v=x"));
+        Assert.Equal(new[] { "-o", "%(title).150B.%(ext)s" }, SiteVideo.Naming("https://notinstagram.com/x"));
+    }
+
+    [Fact]
+    public void InstagramAndFacebookProfilesAreRecognised()
+    {
+        var ig = SocialPages.Find("https://www.instagram.com/alexvkino/")!.Value;
+        Assert.Equal(("Instagram", "alexvkino", "https://www.instagram.com/alexvkino/"), (ig.Site.Name, ig.Owner, ig.Pages[0]));
+        var id = SocialPages.Find("https://www.facebook.com/profile.php?id=100066819891059&sk=reels_tab")!.Value;
+        Assert.Equal(("Facebook", "100066819891059"), (id.Site.Name, id.Owner));
+        Assert.Equal("https://www.facebook.com/profile.php?id=100066819891059&sk=reels_tab", id.Pages[0]);
+        var name = SocialPages.Find("https://m.facebook.com/NASA/videos")!.Value;
+        Assert.Equal(("NASA", "https://www.facebook.com/NASA/reels/"), (name.Owner, name.Pages[0]));
+        Assert.Null(SocialPages.Find("https://www.facebook.com/watch/?v=123"));
+        Assert.Null(SocialPages.Find("https://www.facebook.com/reel/123456789"));
+        Assert.Null(SocialPages.Find("https://www.youtube.com/@nasa"));
+        var found = new Dictionary<string, BatchEntry>();
+        var page = new List<BatchEntry> { new("https://www.facebook.com/reel/1/", "a"), new("https://www.facebook.com/reel/2/", "b") };
+        Assert.True(SocialPages.Merge(found, page, 10));
+        Assert.False(SocialPages.Merge(found, page, 10));
+        Assert.True(SocialPages.Merge(found, new List<BatchEntry> { new("https://www.facebook.com/watch/?v=3", "c") }, 10));
+        Assert.Equal(3, found.Count);
+        var (_, fb) = InstagramPage.Read("{\"posts\":1,\"videos\":[{\"u\":\"https://www.facebook.com/watch/?v=12345678\",\"t\":\"x\"}]}");
+        Assert.Equal(("12345678", "video"), (fb[0].Id, fb[0].Kind));
+    }
+
+    [Fact]
+    public void VisitorsAreToldHowToGetTheRestThroughTheirOwnBrowser()
+    {
+        var more = SocialPages.More(SocialPages.Instagram);
+        Assert.Contains("signed in to Instagram", more);
+        Assert.Contains("Download all", more);
+        Assert.Contains("never sees your password", more);
+    }
+
+    [Fact]
     public void SavedProfilesAreDueOnTheirSchedule()
     {
         var p = new SavedProfile { CheckHours = 6 };
@@ -106,5 +169,18 @@ public class ProfileBatchTests
         p.LastChecked = DateTime.Now.AddHours(-7);
         Assert.True(p.Due(DateTime.Now));
         Assert.False(new SavedProfile { CheckHours = 0 }.Due(DateTime.Now));
+    }
+
+    [Fact]
+    public void ThePagesOwnPostsGoToTheRightEngine()
+    {
+        var e = ProfileBatch.PageEntries(new[] { "https://www.instagram.com/p/AbC123/", "https://www.instagram.com/p/AbC123/",
+            "https://www.facebook.com/reel/42", "javascript:x" });
+        Assert.Equal(2, e.Count);
+        Assert.Equal("post", e[0].Kind);
+        Assert.Equal("AbC123", e[0].Id);
+        Assert.Equal("shorts", e[1].Kind);
+        Assert.Equal("XyZ", ProfileBatch.PostCode("https://www.instagram.com/reel/XyZ/?igsh=1"));
+        Assert.Null(ProfileBatch.PostCode("https://www.instagram.com/someone/"));
     }
 }

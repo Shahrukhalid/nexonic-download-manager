@@ -342,6 +342,13 @@
     "The list of videos could not be read.": "Kāore i taea te whakaako i te rārangi o ngā ataata.",
     "Title contains (words; !word leaves it out)": "Kei roto i te taitara (ngā kupu;! Ka mahue te kupu i waho)",
     "To (YYYY-MM-DD)": "Ki (YYYY-MM-DD)",
-    "Videos": "Whakataki i ngā pou"
+    "Videos": "Whakataki i ngā pou",
+    "Opening the Instagram profile like a visitor's browser…": "Opening the Instagram profile like a visitor's browser…",
+    "Add to queue": "Add to queue",
+    "Download now": "Download now",
+    "Choose Download now, or Add to queue to start them later.": "Choose Download now, or Add to queue to start them later.",
+    "Opening the profile like a visitor's browser…": "Opening the profile like a visitor's browser…",
+    "no videos were shown to a visitor who is not signed in (the profile may be private or not exist).": "no videos were shown to a visitor who is not signed in (the profile may be private or not exist).",
+    "visitors who are not signed in see only the latest posts; Nexonic took the videos among them.": "visitors who are not signed in see only the latest posts; Nexonic took the videos among them."
   }
 }

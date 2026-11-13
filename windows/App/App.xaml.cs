@@ -52,6 +52,8 @@ public partial class App : Application
         manager.TorrentRequested += source => { ShowWindow(); Dialogs.Torrent(window!, manager, source, DownloadQueue.MainId); };
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ApplicationIdle, new Action(manager.CollectTorrents));
         manager.ProgressRequested += row => DownloadWindows.ShowProgress(manager, row);
+        // The extension's Download all: Profile Batch lists the profile, then the user picks Download Now or Add to Queue.
+        manager.ProfileRequested += link => { ShowWindow(); Dialogs.ProfileBatchWindow(window!, manager, link); };
         manager.ShowRequested += ShowWindow;
         tray = new TrayIcon("Nexonic Download Manager");
         tray.DoubleClick += ShowWindow;

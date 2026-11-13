@@ -1,5 +1,37 @@
+import AppKit
 import Foundation
 import NexonicCore
+
+/// A profile listed in the background with the browser's cookies (the extension's Download all).
+struct ProfileListing {
+    /// Stop, from the window; read by the listing on its own thread.
+    final class StopFlag: @unchecked Sendable {
+        private let lock = NSLock()
+        private var value = false
+        var isSet: Bool { lock.lock(); defer { lock.unlock() }; return value }
+        func set() { lock.lock(); value = true; lock.unlock() }
+    }
+    var url: String
+    var running = false
+    let stop = StopFlag()
+    var stopped = false
+    var visitorsOnly = false
+    var found = 0
+    var owner = ""
+    /// Everything found so far: the page's own posts first (from the extension), then what the search adds.
+    var entries: [BatchEntry] = []
+    /// A page the gallery engine can't list (Facebook): Profile Batch reads it itself in a hidden view, each time Find
+    /// Videos is clicked, with the page's own posts as a start.
+    var pageOnly = false
+    /// The site stopped answering for a while: the search continues from where it got to after this many minutes.
+    var waiting: Int?
+    /// What the user chose in Profile Batch: what the search finds later is added the same way.
+    var follow: Follow?
+    struct Follow { var folder: URL; var quality: String; var parallel: Int; var start: Bool }
+    /// Why the signed-in search found nothing, in the gallery engine's own words.
+    var error: String?
+    var scan: ProfileBatch.Scan?
+}
 
 /// Profile Batch: found videos go into a queue of their own; saved profiles are checked for new ones.
 extension DownloadManager {
@@ -15,15 +47,146 @@ extension DownloadManager {
         var n = 0
         for e in take {
             var job = DownloadJob(url: e.url)
-            job.site = true
+            // A post from the page (Instagram): the gallery engine downloads its video or photos.
+            let post = e.kind == "post"
+            job.gallery = post ? true : nil
+            job.site = e.direct != true && !post  // a gallery engine listing gives the file itself
+            // With the sign-in the extension handed over for that site, as the browser would open it.
+            if post, let c = profileCookies.first(where: { URL(string: $0.key)?.host == URL(string: e.url)?.host })?.value {
+                job.cookies = c.cookies; job.userAgent = c.userAgent
+            }
             job.maxHeight = audio ? nil : height
             job.audioOnly = audio
             job.fileName = e.title.isEmpty || e.title == e.url ? nil : e.title
             var o = AddOptions()
-            o.folder = folder; o.queueID = qid; o.start = start; o.audioOnly = audio; o.maxHeight = height
+            o.folder = folder; o.queueID = qid; o.start = start; o.rememberFolder = false; o.gallery = post
+            if e.direct != true && !post { o.audioOnly = audio; o.maxHeight = height }
             if add(job, options: o) != nil { n += 1 }
         }
         return n
+    }
+
+    /// Starts searching a profile with the gallery engine and the browser's cookies (the extension's Download all), in
+    /// the background, as a row in the downloads list: several can run at once, the Profile Batch window may close, and
+    /// double-clicking the row opens it again with what was found.
+    func startListing(_ url: String, max: Int, seed: [BatchEntry] = []) {
+        let key = ProfileBatch.key(url)
+        guard listings[key]?.running != true else { return }
+        // The extension's cookies when it handed the profile over; otherwise the default browser's own sign-in (macOS asks
+        // once to let Nexonic read it), so pasting a link is enough.
+        let signedIn = profileCookies[key]
+        let browser = signedIn == nil ? defaultBrowser : nil
+        var listing = ProfileListing(url: url, running: true)
+        listing.owner = SocialPages.find(url)?.owner ?? ""
+        listing.entries = seed; listing.found = seed.count
+        // Facebook and other sites the engine can't list (or no sign-in to list with): the page's own posts are what there
+        // is, without an error row; with none, Profile Batch takes what visitors see.
+        guard GalleryDl.isProfile(url), signedIn != nil || browser != nil else {
+            listing.running = false
+            if SocialPages.find(url) != nil { listing.pageOnly = true }  // read in Profile Batch's hidden view
+            else if seed.isEmpty { listing.visitorsOnly = true }
+            else {
+                listing.scan = SocialPages.scan(url: url, owner: listing.owner, entries: seed,
+                    note: String(localized: "This site lets Nexonic take only the videos the page has loaded. To add more, scroll further down the page and click Download all again."))
+            }
+            listings[key] = listing
+            // Its row, as for a search: double-clicking it opens Profile Batch with these.
+            if let u = URL(string: url) {
+                let name = SocialPages.find(url)?.owner ?? (u.host ?? "") + u.path
+                var r = DownloadRecord(url: u, folder: settings.folder, fileName: String(format: String(localized: "Photos and videos of %@"), name))
+                r.listing = true; r.status = .finished; r.streamDone = seed.count
+                putListingRow(r)
+            }
+            return
+        }
+        let proxy = settings.proxy
+        listings[key] = listing
+        let stop = listing.stop
+        // Its row: "Photos and videos of <name>", in the list until removed.
+        let name = SocialPages.find(url)?.owner ?? URL(string: url).map { ($0.host ?? "") + $0.path } ?? url
+        let row: UUID? = URL(string: url).map { u in
+            var r = DownloadRecord(url: u, folder: settings.folder, fileName: String(format: String(localized: "Photos and videos of %@"), name))
+            r.listing = true; r.status = .probing; r.streamDone = 0
+            putListingRow(r)
+            return r.id
+        }
+        DispatchQueue.global(qos: .userInitiated).async {
+            let result = Result {
+                try GalleryDl.list(url, cookies: signedIn?.cookies, browser: browser, userAgent: signedIn?.userAgent, proxy: proxy, max: max,
+                                   found: { fresh, owner in Task { @MainActor in self.listingFound(key, row: row, fresh, owner: owner) } },
+                                   waiting: { seconds in Task { @MainActor in self.listings[key]?.waiting = seconds / 60 } },
+                                   stop: { stop.isSet })
+            }
+            Task { @MainActor in
+                var l = self.listings[key] ?? ProfileListing(url: url)
+                l.running = false
+                switch result {
+                case .success(let listed):
+                    let owner = l.owner.isEmpty ? listed.owner : l.owner
+                    let found = l.entries
+                    let videos = found.filter { $0.kind == "video" }.count
+                    l.scan = SocialPages.scan(url: url, owner: owner, entries: found,
+                        note: String(format: String(localized: "Found %d videos and %d photos with your browser's sign-in."), videos, found.count - videos))
+                    if let row { self.update(row) { $0.status = .finished; $0.streamDone = found.count; $0.streamTotal = ProfileBatch.postCount(found); $0.error = nil } }
+                    self.post(String(localized: "Profile Batch"), (owner.isEmpty ? "" : owner + ": ")
+                              + String(format: String(localized: "%d videos and %d photos found."), videos, found.count - videos))
+                case .failure(is CancellationError):
+                    l.stopped = true
+                    if let row { self.update(row) { $0.status = .paused } }
+                case .failure(let e) where !l.entries.isEmpty:
+                    // The engine couldn't search further: the page's own posts are the result, and the reason is said.
+                    l.scan = SocialPages.scan(url: url, owner: l.owner, entries: l.entries, note: String(format: String(localized: "Only the posts the page showed: %@"), e.localizedDescription))
+                    if let row { self.update(row) { $0.status = .finished; $0.streamDone = l.entries.count; $0.error = nil } }
+                case .failure(let e):
+                    // The engine couldn't search this site or address: Profile Batch takes what visitors see, and says why.
+                    l.visitorsOnly = true
+                    l.error = e.localizedDescription
+                    self.profileCookies[key] = nil
+                    if let row { self.update(row) { $0.status = .failed; $0.error = String(localized: "Signed-in search didn't work; double-click for what visitors see.") } }
+                }
+                self.listings[key] = l
+            }
+        }
+    }
+
+    /// New files from a running search: kept with the page's own posts (a post already there is not listed twice), counted
+    /// on its row, and added the way the user chose when they already chose.
+    private func listingFound(_ key: String, row: UUID?, _ fresh: [BatchEntry], owner: String) {
+        guard var l = listings[key] else { return }
+        if l.owner.isEmpty { l.owner = owner }
+        // A post the page gave as a link: once the search lists its files, they take its place (saved as they are, without
+        // asking Instagram for the post again). After the user chose, the post was already added, so its files are not.
+        let freshPosts = Set(fresh.compactMap(\.post))
+        if l.follow == nil {
+            l.entries.removeAll { $0.kind == "post" && freshPosts.contains(ProfileBatch.postCode($0.url) ?? "") }
+        }
+        let posts = Set(l.entries.compactMap { $0.kind == "post" ? ProfileBatch.postCode($0.url) : nil })
+        var have = Set(l.entries.map { ProfileBatch.key($0.url) })
+        let added = fresh.filter { e in !(e.post.map { posts.contains($0) } ?? false) && have.insert(ProfileBatch.key(e.url)).inserted }
+        l.entries += added
+        l.waiting = nil
+        l.found = l.entries.count
+        listings[key] = l
+        let postsFound = ProfileBatch.postCount(l.entries)
+        if let row { update(row) { $0.streamDone = l.found; $0.streamTotal = postsFound; $0.status = .downloading } }
+        if let f = l.follow {
+            let take = added.filter { !alreadyDownloaded($0.url) }
+            if !take.isEmpty { queueBatch(owner: l.owner, take, folder: f.folder, quality: f.quality, maxActive: f.parallel, start: f.start) }
+        }
+    }
+
+    /// The browser that opens web links here, as the gallery engine names it (nil: one it can't read).
+    var defaultBrowser: String? {
+        let app = NSWorkspace.shared.urlForApplication(toOpen: URL(string: "https://example.com")!)
+        return GalleryDl.browserName(bundleID: app.flatMap { Bundle(url: $0)?.bundleIdentifier })
+    }
+
+    /// A signed-in search can run for this link: the extension handed it over, or it is a profile the engine can list and
+    /// the default browser's sign-in can be read (and an earlier try didn't fail).
+    func canSearchSignedIn(_ url: String) -> Bool {
+        let key = ProfileBatch.key(url)
+        guard GalleryDl.isProfile(url), listings[key]?.visitorsOnly != true else { return false }
+        return profileCookies[key] != nil || defaultBrowser != nil
     }
 
     func alreadyDownloaded(_ url: String) -> Bool {

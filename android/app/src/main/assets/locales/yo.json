@@ -342,6 +342,13 @@
     "The list of videos could not be read.": "Kò lè ka àtòjọ àwòrán.",
     "Title contains (words; !word leaves it out)": "Àkọ́lé ní (àwọ̀;!àwọ̀ náà tí a fi kùnà)",
     "To (YYYY-MM-DD)": "Lẹ́ẹ̀kù (YYYY-MM-DD)",
-    "Videos": "Àwọn Àwòrán"
+    "Videos": "Àwọn Àwòrán",
+    "Opening the Instagram profile like a visitor's browser…": "Opening the Instagram profile like a visitor's browser…",
+    "Add to queue": "Add to queue",
+    "Download now": "Download now",
+    "Choose Download now, or Add to queue to start them later.": "Choose Download now, or Add to queue to start them later.",
+    "Opening the profile like a visitor's browser…": "Opening the profile like a visitor's browser…",
+    "no videos were shown to a visitor who is not signed in (the profile may be private or not exist).": "no videos were shown to a visitor who is not signed in (the profile may be private or not exist).",
+    "visitors who are not signed in see only the latest posts; Nexonic took the videos among them.": "visitors who are not signed in see only the latest posts; Nexonic took the videos among them."
   }
 }

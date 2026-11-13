@@ -342,6 +342,13 @@
     "The list of videos could not be read.": "വീഡിയോകളുടെ പട്ടിക വായിക്കുവാന്‍ സാധ്യമായില്ല.",
     "Title contains (words; !word leaves it out)": "തലക്കെട്ടില്‍ അടങ്ങിയിരിക്കുന്നു (വാക്കുകള്‍;!word അത് ഒഴിവാക്കുന്നു)",
     "To (YYYY-MM-DD)": "വരെ (YYYY-MM-DD)",
-    "Videos": "വീഡിയോകള്‍"
+    "Videos": "വീഡിയോകള്‍",
+    "Opening the Instagram profile like a visitor's browser…": "Opening the Instagram profile like a visitor's browser…",
+    "Add to queue": "Add to queue",
+    "Download now": "Download now",
+    "Choose Download now, or Add to queue to start them later.": "Choose Download now, or Add to queue to start them later.",
+    "Opening the profile like a visitor's browser…": "Opening the profile like a visitor's browser…",
+    "no videos were shown to a visitor who is not signed in (the profile may be private or not exist).": "no videos were shown to a visitor who is not signed in (the profile may be private or not exist).",
+    "visitors who are not signed in see only the latest posts; Nexonic took the videos among them.": "visitors who are not signed in see only the latest posts; Nexonic took the videos among them."
   }
 }

@@ -342,6 +342,13 @@
     "The list of videos could not be read.": "وڊيوز جي فهرست پڙهي نه ٿي سگھي.",
     "Title contains (words; !word leaves it out)": "عنوان ۾ (شيون؛!شيون ان کي ڇڏي ٿو)",
     "To (YYYY-MM-DD)": "تائين (YYYY-MM-DD)",
-    "Videos": "وڊيوز"
+    "Videos": "وڊيوز",
+    "Opening the Instagram profile like a visitor's browser…": "Opening the Instagram profile like a visitor's browser…",
+    "Add to queue": "Add to queue",
+    "Download now": "Download now",
+    "Choose Download now, or Add to queue to start them later.": "Choose Download now, or Add to queue to start them later.",
+    "Opening the profile like a visitor's browser…": "Opening the profile like a visitor's browser…",
+    "no videos were shown to a visitor who is not signed in (the profile may be private or not exist).": "no videos were shown to a visitor who is not signed in (the profile may be private or not exist).",
+    "visitors who are not signed in see only the latest posts; Nexonic took the videos among them.": "visitors who are not signed in see only the latest posts; Nexonic took the videos among them."
   }
 }

@@ -342,6 +342,7 @@ public sealed partial class DownloadManager
                 if (Settings.ShowProgressWindow && j.FromBrowser == true) ProgressRequested?.Invoke(dup);
                 continue;
             }
+            if (TakeBrowserRequest(j)) continue;
             if (j.FromBrowser == true && Settings.ShowDownloadDialog && DownloadDialogRequested != null)
             {
                 DownloadDialogRequested(j);

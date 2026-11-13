@@ -283,12 +283,30 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
         // One link the user picked (video button, popup, page menu): the app shows its download window.
         const extra = { referrer, later: !!msg.later, browser: true };
         if (msg.stream) Object.assign(extra, { stream: true, fileName: msg.fileName });
+        else if (msg.site && !msg.audioOnly && /^https:\/\/([a-z]+\.)?instagram\.com\/(?:[^/]+\/)?(p|reel|tv)\//.test(msg.url)) {
+          // An Instagram post: the gallery engine saves its video or photos with this browser's sign-in (the video engine
+          // can't read Instagram posts for signed-in browsers); the app shows its download window first.
+          extra.gallery = true;
+        }
+        else if (msg.site && !msg.audioOnly && /^https:\/\/([a-z]+\.)?instagram\.com\//.test(msg.url) && profileOf(msg.url)) {
+          // "This page's video" on an Instagram profile page: the whole profile, in Profile Batch.
+          return { ok: await send(msg.url, { referrer, profile: true }) };
+        }
         else if (msg.site) {
           Object.assign(extra, { site: true, audioOnly: !!msg.audioOnly });
           if (Number.isInteger(msg.maxHeight) && msg.maxHeight >= 100 && !msg.audioOnly) extra.maxHeight = msg.maxHeight;
         }
         else if (msg.fileName) extra.fileName = msg.fileName;
         return { ok: await send(msg.url, extra) };
+      }
+      case "download-all": {
+        // Nexonic's Profile Batch window opens with this page's posts and videos listed (the user picks the folder and
+        // quality there) while its gallery engine finds the rest with this browser's sign-in, in the background.
+        if (!Number.isInteger(tabId)) return { ok: false };
+        const [{ result: posts = [] } = {}] = await chrome.scripting.executeScript({ target: { tabId }, func: videosOnPage }).catch(() => []);
+        const links = [...new Set(posts.map((p) => p.url))].slice(0, 1000);
+        const ok = await send(msg.url, { referrer: msg.url, profile: true, links });
+        return { ok, sent: links.length };
       }
       case "send-links": {
         let sent = 0;
@@ -319,3 +337,43 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
   run().then(respond, () => respond({ ok: false }));
   return true;
 });
+
+// ---- Download all: a whole profile with the app's gallery engine ----
+// Sites whose profiles the gallery engine lists completely (photos and videos), with the browser's own sign-in.
+const PROFILE_SITES = /(^|\.)(instagram\.com|tiktok\.com|x\.com|twitter\.com|threads\.net|threads\.com|pinterest\.[a-z.]+|reddit\.com|tumblr\.com|bsky\.app|vk\.com|flickr\.com|deviantart\.com)$/;
+
+/** A profile page's address on one of those sites, or null (single posts, feeds and settings pages are not profiles). */
+function profileOf(url) {
+  let u;
+  try { u = new URL(url); } catch (_) { return null; }
+  if (u.protocol !== "https:" || !PROFILE_SITES.test(u.hostname)) return null;
+  const path = u.pathname.split("/").filter(Boolean);
+  if (!path.length && u.pathname !== "/profile.php") return null;
+  if (/^(p|reel|reels|tv|stories|explore|accounts|direct|watch|search|settings|home|messages|notifications|i|login|share|hashtag|tag|video|status)$/i.test(path[0] || "")) return null;
+  return u.href;
+}
+
+/** Runs in the page: the links of the posts and videos it shows (self-contained). */
+function videosOnPage() {
+  const patterns = [
+    [/^https:\/\/(www\.)?instagram\.com\/(?:[^/]+\/)?(p|reel|tv)\/([\w-]+)/, (m) => `https://www.instagram.com/${m[2] === "p" ? "p" : "reel"}/${m[3]}/`],
+    [/^https:\/\/(www\.|web\.|m\.)?facebook\.com\/(?:[^/]+\/)?(?:reel|videos)\/(?:[^/]+\/)?(\d{6,})/, (m) => `https://www.facebook.com/reel/${m[2]}/`],
+    [/^https:\/\/(www\.|web\.|m\.)?facebook\.com\/watch\/?\?v=(\d{6,})/, (m) => `https://www.facebook.com/watch/?v=${m[2]}`],
+    [/^https:\/\/(www\.)?tiktok\.com\/@([\w.-]+)\/video\/(\d+)/, (m) => `https://www.tiktok.com/@${m[2]}/video/${m[3]}`],
+    [/^https:\/\/(www\.|m\.)?youtube\.com\/(?:watch\?v=|shorts\/)([\w-]{11})/, (m) => `https://www.youtube.com/watch?v=${m[2]}`],
+    [/^https:\/\/(x|twitter)\.com\/(\w{1,15})\/status\/(\d+)\/video/, (m) => `https://x.com/${m[2]}/status/${m[3]}`],
+  ];
+  const seen = new Map();
+  for (const href of [location.href, ...[...document.querySelectorAll("a[href]")].map((a) => a.href)]) {
+    for (const [re, link] of patterns) {
+      const m = href.match(re);
+      if (m && !seen.has(link(m))) {
+        const a = [...document.querySelectorAll("a[href]")].find((x) => x.href === href);
+        const label = ((a && (a.getAttribute("aria-label") || a.textContent || (a.querySelector("img") || {}).alt)) || "").trim().replace(/\s+/g, " ").slice(0, 80);
+        seen.set(link(m), label || link(m));
+      }
+    }
+    if (seen.size >= 500) break;
+  }
+  return [...seen].map(([url, label]) => ({ url, label }));
+}

@@ -42,4 +42,45 @@ final class ProfileBatchTests: XCTestCase {
         XCTAssertEqual(a[a.firstIndex(of: "--playlist-end")! + 1], "100")
         XCTAssertFalse(a.contains("--username") || a.contains("--cookies") || a.contains("--cookies-from-browser"))
     }
+
+    func testInstagramProfilePagesAreReadLikeAVisitorSeesThem() {
+        XCTAssertEqual(InstagramPage.user("https://www.instagram.com/nasa/"), "nasa")
+        XCTAssertEqual(InstagramPage.user("https://instagram.com/natgeo/reels/"), "natgeo")
+        XCTAssertNil(InstagramPage.user("https://www.instagram.com/p/Dfc1mYxFevS/"))
+        let json = #"{"posts":12,"videos":[{"u":"https://www.instagram.com/reel/Dfc1mYxFevS/","t":"Video by NASA on November 07, 2026. May be an image"},{"u":"https://www.instagram.com/p/Dfdiuv0lI2K/","t":""},{"u":"https://evil.example/x","t":""}]}"#
+        let r = InstagramPage.read(json)
+        XCTAssertEqual(r.posts, 12)
+        XCTAssertEqual(r.videos.map(\.kind), ["shorts", "video"])
+        XCTAssertNotNil(r.videos[0].date)
+        XCTAssertEqual(InstagramPage.read("not json").posts, 0)
+    }
+
+    func testInstagramAndFacebookProfilesAreRecognised() {
+        XCTAssertEqual(SocialPages.find("https://www.instagram.com/alexvkino/")?.owner, "alexvkino")
+        let id = SocialPages.find("https://www.facebook.com/profile.php?id=100066819891059&sk=reels_tab")
+        XCTAssertEqual(id?.site, SocialPages.facebook)
+        XCTAssertEqual(id?.pages.first, "https://www.facebook.com/profile.php?id=100066819891059&sk=reels_tab")
+        XCTAssertEqual(SocialPages.find("https://m.facebook.com/NASA/videos")?.pages.first, "https://www.facebook.com/NASA/reels/")
+        XCTAssertNil(SocialPages.find("https://www.facebook.com/watch/?v=123"))
+        var all: [String: BatchEntry] = [:], order: [String] = []
+        let page = [BatchEntry(url: "https://www.facebook.com/reel/1/", title: "a"), BatchEntry(url: "https://www.facebook.com/reel/2/", title: "b")]
+        XCTAssertTrue(SocialPages.merge(&all, order: &order, page, max: 10))
+        XCTAssertFalse(SocialPages.merge(&all, order: &order, page, max: 10))
+        XCTAssertEqual(order.count, 2)
+    }
+
+    func testThePagesOwnPostsGoToTheRightEngine() {
+        let e = ProfileBatch.pageEntries(["https://www.instagram.com/p/AbC123/", "https://www.instagram.com/p/AbC123/",
+                                          "https://www.facebook.com/reel/42", "javascript:x"])
+        XCTAssertEqual(e.map(\.kind), ["post", "shorts"])
+        XCTAssertEqual(ProfileBatch.postCode("https://www.instagram.com/reel/XyZ/?igsh=1"), "XyZ")
+        XCTAssertNil(ProfileBatch.postCode("https://www.instagram.com/someone/"))
+    }
+
+    func testFilesAreCountedBesidePosts() {
+        var a = BatchEntry(url: "https://cdn.test/1.jpg", title: "a"); a.post = "P1"
+        var b = BatchEntry(url: "https://cdn.test/2.jpg", title: "b"); b.post = "P1"
+        let c = BatchEntry(url: "https://www.instagram.com/p/P2/", title: "c", kind: "post")
+        XCTAssertEqual(ProfileBatch.postCount([a, b, c]), 2)
+    }
 }

@@ -78,9 +78,12 @@ public static class GalleryDl
 
     /// <summary>The engine's arguments: everything goes straight into <paramref name="folder"/>; files already there are skipped.
     /// The site login, cookies and proxy are never here: they go in the private settings file (see <see cref="Settings"/>).</summary>
+    public const string Pace = "extractor.sleep-request=1.0-2.0";
+
     public static List<string> Arguments(string url, string folder, int speedLimitKBps, string? referrer, string? settingsFile = null)
     {
-        var args = new List<string> { "--directory", folder };
+        // A person's pace on every site: 1-2 seconds between the requests that list a profile or gallery.
+        var args = new List<string> { "--directory", folder, "-o", Pace };
         if (settingsFile != null) args.AddRange(new[] { "--config", settingsFile });
         if (speedLimitKBps > 0) args.AddRange(new[] { "--limit-rate", speedLimitKBps + "k" });
         if (referrer is { Length: > 0 } && Uri.IsWellFormedUriString(referrer, UriKind.Absolute)) args.AddRange(new[] { "-o", "extractor.referer=" + referrer });
@@ -139,6 +142,194 @@ public static class GalleryDl
         if (path.StartsWith("# ", StringComparison.Ordinal)) { path = path[2..]; return Path.IsPathRooted(path) ? false : null; }
         return Path.IsPathRooted(path) ? true : null;
     }
+}
+
+/// <summary>
+/// Profile Batch with the gallery engine: the photos and videos of a profile, listed (not downloaded) with the browser's
+/// cookies for the site, at a person's pace. The user then picks Download Now or Add to Queue.
+/// </summary>
+public static class GalleryList
+{
+    static readonly HashSet<string> VideoExtensions = new(StringComparer.OrdinalIgnoreCase) { "mp4", "webm", "mov", "m4v", "mkv" };
+
+    /// <summary>Sites whose profiles the engine lists completely with a browser's sign-in (Facebook pages are not among them).</summary>
+    static readonly string[] ProfileSites = { "instagram.com", "tiktok.com", "x.com", "twitter.com", "threads.net", "threads.com", "pinterest.com",
+        "reddit.com", "tumblr.com", "bsky.app", "vk.com", "flickr.com", "deviantart.com" };
+
+    /// <summary>A profile (not a single post) on one of those sites.</summary>
+    public static bool IsProfile(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var u)) return false;
+        var host = u.Host.ToLowerInvariant();
+        if (!ProfileSites.Any(s => host == s || host.EndsWith("." + s))) return false;
+        var first = u.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.ToLowerInvariant() ?? "";
+        return first.Length > 0 && !new[] { "p", "reel", "tv", "stories", "explore", "accounts", "direct", "video", "status", "i", "home", "search",
+            "settings", "messages", "notifications", "login", "share", "hashtag", "tag", "watch" }.Contains(first);
+    }
+
+    /// <summary>
+    /// One line per file while listing: its address and the details used for its name, as a JSON array (the engine writes
+    /// them as it finds them).
+    /// </summary>
+    public const string Format = "[{_url!j},{extension!j},{post_shortcode!j},{shortcode!j},{post_id!j},{id!j},{filename!j},{description!j},{content!j},{title!j},{desc!j},{num!j},{count!j},{date!j},{duration!j},{username!j}]";
+
+    /// <summary>The engine's arguments for listing: a line per file (nothing downloaded), at most <paramref name="max"/> of them.</summary>
+    public static List<string> Arguments(string url, int max, string? settingsFile)
+    {
+        var args = new List<string> { "-N", Format, "--range", "1-" + Math.Max(1, max), "-o", GalleryDl.Pace };
+        if (settingsFile != null) args.AddRange(new[] { "--config", settingsFile });
+        // TikTok: its own listing first through the video engine, then the gallery engine's own way.
+        if (Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Host.EndsWith("tiktok.com", StringComparison.OrdinalIgnoreCase))
+            args.AddRange(new[] { "-o", "extractor.tiktok.ytdl=true" });
+        // Instagram videos as one file each (not as separate picture and sound streams), so they are listed and saved
+        // like the photos.
+        if (u != null && u.Host.EndsWith("instagram.com", StringComparison.OrdinalIgnoreCase))
+            args.AddRange(new[] { "-o", "extractor.instagram.videos=merged" });
+        args.Add("--");
+        args.Add(url);
+        return args;
+    }
+
+    /// <summary>
+    /// The files in the engine's listing (its lines): the picture or video address, named "description [post id].ext";
+    /// and the account they belong to (their folder), "" when it doesn't say.
+    /// </summary>
+    public static (List<BatchEntry> Entries, string Owner) Entries(string lines, string fallback = "")
+    {
+        var list = new List<BatchEntry>();
+        var seen = new HashSet<string>();
+        var owner = "";
+        foreach (var line in lines.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            JsonDocument doc;
+            try { doc = JsonDocument.Parse(line); } catch (JsonException) { continue; }
+            using (doc)
+            {
+                var f = doc.RootElement;
+                if (f.ValueKind != JsonValueKind.Array || f.GetArrayLength() < 16 || f[0].ValueKind != JsonValueKind.String) continue;
+                var url = f[0].GetString()!;
+                if (!url.StartsWith("https://", StringComparison.Ordinal) || !seen.Add(url)) continue;
+                string Text(int i) => f[i].ValueKind switch { JsonValueKind.String => f[i].GetString() ?? "", JsonValueKind.Number => f[i].GetRawText(), _ => "" };
+                int Int(int i) => f[i].ValueKind == JsonValueKind.Number && f[i].TryGetInt32(out var n) ? n : 0;
+                if (owner.Length == 0) owner = Text(15);
+                var ext = Text(1).ToLowerInvariant();
+                if (ext.Length == 0) ext = "jpg";
+                var post = new[] { 2, 3, 4, 5, 6 }.Select(Text).FirstOrDefault(x => x.Length > 0) ?? "";
+                var caption = (new[] { 7, 8, 9, 10 }.Select(Text).FirstOrDefault(x => x.Length > 0) ?? "").Replace('\n', ' ').Replace('\r', ' ').Trim();
+                if (caption.Length > 100) caption = caption[..100].Trim();
+                var part = Int(12) > 1 && Int(11) > 0 ? "-" + Int(11) : "";
+                var label = caption.Length > 0 ? caption : owner.Length > 0 ? owner : fallback;
+                var name = FileNames.Sanitize($"{label} [{post}{part}].{ext}");
+                DateTime? date = DateTime.TryParse(Text(13), System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out var d) ? d : null;
+                double? seconds = f[14].ValueKind == JsonValueKind.Number ? f[14].GetDouble() : null;
+                list.Add(new BatchEntry(url, name, seconds, date, VideoExtensions.Contains(ext) ? "video" : "photo",
+                    Id: Text(2).Length > 0 ? Text(2) : Text(3), Direct: true));
+            }
+        }
+        return (list, owner);
+    }
+
+    /// <summary>Lists a profile with the engine; null when it can't (no build here, not installed, or a site or address it doesn't know).</summary>
+    public static async Task<(List<BatchEntry> Entries, string Owner)?> ListAsync(string url, string? cookies, string? userAgent, ProxySettings? proxy, int max,
+        CancellationToken cancel, Action<int>? waiting = null)
+    {
+        if (GalleryDl.Asset == null || !await Task.Run(() => GalleryDl.EnsureInstalled(), cancel)) return null;
+        var settingsFile = GalleryDl.WriteSettings(GalleryDl.Settings(cookies, userAgent, null, null, proxy == null ? null : SiteVideo.ProxyUrl(proxy, url)));
+        try
+        {
+            var all = new List<BatchEntry>();
+            var seen = new HashSet<string>();
+            var owner = "";
+            var parts = Parts(url);
+            foreach (var part in parts)
+            {
+                // The first part (an Instagram profile's posts) is worth waiting longer for; the later ones (reels, mostly
+                // on the posts grid already) are tried a few times, so the search doesn't stay open for an hour.
+                var patience = part == parts[0] ? 5 : 2;
+                string? cursor = null;
+                for (var tries = 0; ; tries++)
+                {
+                    var args = Arguments(part, max, settingsFile);
+                    if (cursor != null) args.InsertRange(args.Count - 2, new[] { "-o", "cursor=" + cursor });
+                    var (output, errors) = await RunAsync(args, cancel);
+                    var listed = Entries(output, owner);
+                    if (owner.Length == 0) owner = listed.Owner;
+                    all.AddRange(listed.Entries.Where(e => seen.Add(ProfileBatch.Key(e.Url))));
+                    Note(part, cursor != null, all.Count, errors);
+                    // The site stopped answering (it limits how much one account may read in a row; Instagram then sends
+                    // the reader to its home page): after a pause the search continues where the engine says it got to (or
+                    // from the same place), a few times, longer each time.
+                    var said = ResumeCursor(errors);
+                    if (said == null && !Throttled(errors) || tries >= patience || all.Count >= max) break;
+                    cursor = said ?? cursor;
+                    var pause = 120 << tries;
+                    waiting?.Invoke(pause);
+                    await Task.Delay(TimeSpan.FromSeconds(pause), cancel);
+                }
+            }
+            return all.Count == 0 ? null : (all, owner);
+        }
+        finally { if (settingsFile != null) try { File.Delete(settingsFile); } catch { } }
+    }
+
+    static async Task<(string Output, string Errors)> RunAsync(List<string> args, CancellationToken cancel)
+    {
+        var psi = new ProcessStartInfo(GalleryDl.Program)
+        {
+            CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true,
+            StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8,
+        };
+        psi.Environment["PYTHONIOENCODING"] = "utf-8";
+        foreach (var a in args) psi.ArgumentList.Add(a);
+        using var p = Process.Start(psi)!;
+        using var kill = cancel.Register(() => { try { p.Kill(true); } catch { } });
+        var errors = p.StandardError.ReadToEndAsync(cancel);
+        var output = await p.StandardOutput.ReadToEndAsync(cancel);
+        await p.WaitForExitAsync(cancel);
+        return (output, await errors);
+    }
+
+    /// <summary>
+    /// The parts of a profile that are listed one after the other: an Instagram profile's posts, then its reels (videos
+    /// that are not on the posts grid); anything else as it is.
+    /// </summary>
+    public static List<string> Parts(string url)
+    {
+        if (!IsProfile(url) || !Uri.TryCreate(url, UriKind.Absolute, out var u) || !u.Host.EndsWith("instagram.com", StringComparison.OrdinalIgnoreCase))
+            return new() { url };
+        var user = u.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries)[0];
+        return new() { $"https://www.instagram.com/{user}/posts/", $"https://www.instagram.com/{user}/reels/" };
+    }
+
+    /// <summary>
+    /// What each search said, kept in the data folder (the last 200 KB) so a search that finds less than expected can be
+    /// looked into. No cookies or passwords are in it: those go to the engine in a private settings file.
+    /// </summary>
+    public static string SearchLog => Path.Combine(AppPaths.Support, "profile-search.log");
+
+    static void Note(string url, bool continued, int found, string errors)
+    {
+        try
+        {
+            var lines = errors.Split('\n', StringSplitOptions.RemoveEmptyEntries).TakeLast(40).Select(l => "    " + l.TrimEnd());
+            var text = $"{DateTime.UtcNow:O}  {url}{(continued ? " (continued)" : "")}  {found} found so far\n" + string.Join("\n", lines) + "\n";
+            var old = File.Exists(SearchLog) ? File.ReadAllText(SearchLog) : "";
+            var all = old + text;
+            File.WriteAllText(SearchLog, all.Length > 200_000 ? all[^200_000..] : all);
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+    }
+
+    /// <summary>The site refused for now (too many requests), as the engine reports it.</summary>
+    public static bool Throttled(string errors) =>
+        new[] { "redirect to home page", "redirect to login page", "429", "too many requests", "rate limit", "please wait a few minutes" }
+            .Any(x => errors.Contains(x, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Where an interrupted listing got to, as the engine says it ("Use '-o cursor=…' to continue").</summary>
+    public static string? ResumeCursor(string errors) =>
+        System.Text.RegularExpressions.Regex.Match(errors, @"-o cursor=([^'""\s]+)") is { Success: true } m ? m.Groups[1].Value : null;
 }
 
 /// <summary>Runs the gallery engine for one gallery: the list row counts files and bytes; pausing stops it and resuming

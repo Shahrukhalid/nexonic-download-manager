@@ -1,3 +1,47 @@
+## 0.31.0
+
+**Profile Batch**
+- Instagram and Facebook profiles: Instagram stopped answering the request Nexonic used to read profiles, and both
+  sites show visitors who are not signed in only a profile's latest posts.
+  - Profile Batch takes what visitors see as soon as you paste the link (a hidden private web view on Windows, Mac
+    and Android): on a Mac with a home connection, a Facebook profile's reels showed 19 (the old way found 1) and an
+    Instagram profile its latest 12 posts. It then says how to get the rest.
+- Profile Batch on the Mac: paste a link to an Instagram, TikTok, X, Threads, Pinterest, Reddit or similar profile and
+  it finds every video and photo with your default browser's sign-in (Chrome, Edge, Brave, Firefox, Opera, Vivaldi or
+  Safari); macOS asks once to let Nexonic use it. Nexonic never sees your password.
+- Browser extension: **Download all** on a profile (Instagram, TikTok, X, Threads, Pinterest, Reddit, Tumblr, Bluesky
+  and more) opens it in Profile Batch, which lists every photo and video with your browser's sign-in for that site (the
+  extension hands over its cookies; Nexonic never sees your password); then choose **Download Now** or **Add to Queue**,
+  or preview and pick. On the Mac the search is a row in the downloads list ("Photos and videos of …", with the count
+  so far): close the window, run searches on several profiles at once, and double-click a row to come back. When the
+  signed-in search can't read a site, Profile Batch says why and takes what visitors see. Facebook pages can't be
+  listed this way; Profile Batch takes what visitors see there, and single Facebook videos download as before.
+  - It stays polite, so it never looks or acts like a bot: it only reads (never likes, follows, comments, messages or
+    posts) and waits 1–2 seconds between its requests to the site, like a person. All galleries keep that pace.
+- Browser extension: one **Download all** button on Instagram, Facebook, TikTok, YouTube, X and other video sites:
+  Nexonic's Profile Batch window opens with every video and post the page shows (Instagram posts with their photos)
+  to choose the folder and quality, then Download Now or Add to Queue. On a profile Nexonic meanwhile finds the rest in
+  the background with your browser's sign-in, and what it finds joins that choice (a row in the list shows the count).
+  Facebook: the videos the page shows. The popup remembers what it sent for a page.
+- The progress window has Speed limiter and Options on completion tabs (open the file, show it in Finder, quit, sleep or
+  shut down when this download is done). Torrents show their size, progress, seeds and peers, pieces and upload there.
+- Instagram profiles are searched for their posts and then their reels; when Instagram stops answering partway, the
+  search waits and continues from where it got to (a few times, longer each time) instead of ending there.
+- Profile Batch on the Mac: **Close** only hides the window; what it was doing keeps going, and Profile Batch in the
+  toolbar (or double-clicking a search's row) brings it back.
+- Instagram posts from the extension (the video button and "This page's video") open the download window and are saved
+  by the gallery engine with your browser's sign-in, photos included; the video engine couldn't read them.
+- The **Download this video** button now also appears on players covered by see-through layers (Instagram, Facebook,
+  TikTok and others), not only on YouTube.
+- Pasting a link in Profile Batch starts Find Videos straight away.
+- Snapchat profiles (all apps): the Spotlight videos a public profile shows visitors (snapchat.com/@name).
+- Nothing starts by itself any more: after Find Videos, choose **Download Now** or **Add to Queue** (added, waiting
+  until you start them). This replaces the "Start downloading straight away" switch.
+- Downloads in a chosen quality (Best, 8K…480p) are always saved as MP4; only "Original quality" may still give MKV
+  for formats MP4 can't hold.
+- Instagram, Facebook, X, Snapchat and Threads videos are named after their caption plus the video's id. Before, they
+  were all named "Video by <name>", so the engine skipped every video after the first as "already downloaded".
+
 ## 0.30.1
 
 Fixes for 0.30.0:

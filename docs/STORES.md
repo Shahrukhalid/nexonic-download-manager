@@ -29,13 +29,16 @@ computer.
 | `nativeMessaging` | to talk to the app on the same computer |
 | `contextMenus` | "Download with Nexonic" in the right-click menu |
 | `storage` | the extension's own settings (language, sites to skip) |
-| `cookies` | the cookies of the download's own site, so downloads that need a login work in the app |
+| `cookies` | the cookies of the download's own site, so downloads that need a login work in the app; for "Download all" on a profile, the site's cookies so the app can list the profile as you see it |
 | `scripting` | to collect the links of the current page (or of the selected text) when the user asks to download them all |
 | `webRequest` | to notice video streams the page plays, for "Download this video" |
 | `tabs` | the current page's address and title for the context menu and the popup |
 | host access (all sites) | downloads and videos can come from any site |
 
-**Data:** the extension collects nothing and sends nothing anywhere except to the app on the same computer. No
+**Data:** the extension collects nothing and sends nothing anywhere except to the app on the same computer. When you
+choose "Download all" on a profile (Instagram, Facebook, TikTok, X …), it hands the page's address, the links of the
+videos and posts on it, and your cookies for that site to the app, whose Profile Batch lists the profile's photos and videos at a person's pace for you
+to download. No
 analytics, no accounts. Privacy policy: the "Privacy and terms" section of the README and TERMS.md.
 
 The owner submits the uploads; this repository never publishes to a store automatically.

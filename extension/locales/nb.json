@@ -64,6 +64,9 @@
     "Normal": "Normal",
     "Large": "Stor",
     "Button colour": "Knappfarge",
-    "Show the button's text (off = arrow only)": "Vis knappens tekst (av = bare pil)"
+    "Show the button's text (off = arrow only)": "Vis knappens tekst (av = bare pil)",
+    "Opens Nexonic with every video and photo on this page, to choose the folder and quality. On an Instagram, TikTok, X or similar profile, Nexonic also finds the rest in the background with this browser's sign-in (a request every 1–2 seconds; nothing is liked, followed or posted) and adds them the same way.": "Opens Nexonic with every video and photo on this page, to choose the folder and quality. On an Instagram, TikTok, X or similar profile, Nexonic also finds the rest in the background with this browser's sign-in (a request every 1–2 seconds; nothing is liked, followed or posted) and adds them the same way.",
+    "Download all": "Download all",
+    "Opened in Nexonic with {count} from this page; choose the folder and quality there": "Opened in Nexonic with {count} from this page; choose the folder and quality there"
   }
 }

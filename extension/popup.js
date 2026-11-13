@@ -103,6 +103,28 @@ if (tab && isVideoSite(tab.url)) {
   $("siteAudio").onclick = go(true, $("siteAudio"));
 }
 
+// Download all (Instagram, Facebook, TikTok, YouTube, X …): Nexonic's window opens with this page's videos listed, to
+// choose the folder and quality, and finds the rest in the background with this browser's sign-in (see background.js).
+if (tab && isVideoSite(tab.url)) {
+  $("profileBox").hidden = false;
+  const key = "all:" + tab.url;
+  // What was sent is shown again after switching tabs; the button stays usable, to send the page again (after
+  // scrolling further, or to look for new posts).
+  const say = (r) => {
+    $("profileCount").textContent = r && r.ok ? t("Opened in Nexonic with {count} from this page; choose the folder and quality there", { count: r.sent })
+      : t("Open Nexonic first");
+  };
+  const done = (await chrome.storage.session.get(key).catch(() => ({})))[key];
+  if (done) say(done);
+  $("profileAll").onclick = async () => {
+    $("profileAll").disabled = true;
+    const r = await ask({ type: "download-all", url: tab.url, tabId: tab.id });
+    if (r && r.ok) await chrome.storage.session.set({ [key]: r }).catch(() => {});
+    say(r);
+    $("profileAll").disabled = false;
+  };
+}
+
 // Media seen on this tab
 if (tab) {
   const { media = [] } = (await ask({ type: "media-list", tabId: tab.id })) || {};

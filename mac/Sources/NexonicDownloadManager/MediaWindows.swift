@@ -5,25 +5,55 @@ import SwiftUI
 
 /// Playlists and channels, and the Media Library (Milestone 8).
 enum MediaWindows {
-    @MainActor private static var playlist: NSWindow?
+    /// Profile Batch windows, one per profile (several searches can run at once), by profile address ("" = no link yet).
+    @MainActor private static var playlists: [String: NSWindow] = [:]
     @MainActor private static var library: NSWindow?
 
-    /// Lists a playlist's or channel's videos; the chosen ones open in the Add window.
+    @MainActor private static var lastHidden: String?
+
+    /// Close: hides the Profile Batch window of this link; whatever it was doing keeps going (a signed-in search in the
+    /// downloads list, or what visitors see). Profile Batch in the toolbar, or double-clicking the search's row, shows it again.
+    @MainActor static func closePlaylist(_ link: String) {
+        let key = link.isEmpty ? "" : ProfileBatch.key(link)
+        let k = playlists[key] != nil ? key : playlists.first(where: { $0.value.isKeyWindow })?.key
+        guard let k, let w = playlists[k] else { return }
+        w.orderOut(nil)
+        lastHidden = k
+    }
+
+    /// Profile Batch is open with this link.
+    @MainActor static func isShowing(_ link: String) -> Bool { playlists[ProfileBatch.key(link)] != nil }
+
+    /// Lists a profile's, playlist's or channel's videos (and photos); the chosen ones go into a queue of their own. One
+    /// window per profile: opening one that is open brings it to the front.
     @MainActor static func showPlaylist(_ link: String = "") {
-        if let w = playlist { w.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true); return }
+        // Profile Batch from the toolbar: the window hidden last (Close), still working, comes back first.
+        if link.isEmpty, let k = lastHidden, let w = playlists[k], !w.isVisible {
+            lastHidden = nil
+            NSApp.activate(ignoringOtherApps: true); w.makeKeyAndOrderFront(nil); w.orderFrontRegardless()
+            return
+        }
         let start = link.isEmpty ? (NSPasteboard.general.string(forType: .string).flatMap { DownloadJob(url: $0.trimmingCharacters(in: .whitespacesAndNewlines)).validURL != nil ? $0 : nil } ?? "") : link
+        let key = start.isEmpty ? "" : ProfileBatch.key(start)
+        if let w = playlists[key] {
+            NSApp.activate(ignoringOtherApps: true); w.makeKeyAndOrderFront(nil); w.orderFrontRegardless()
+            return
+        }
         let w = NSWindow(contentViewController: NSHostingController(rootView: ProfileBatchView(link: start).environmentObject(DownloadManager.shared)))
         w.title = String(localized: "Profile Batch")
-        w.styleMask = [.titled, .closable, .resizable]
+        w.styleMask = [.titled, .closable, .resizable, .miniaturizable]
         w.isReleasedWhenClosed = false
         w.setContentSize(NSSize(width: 680, height: 640))
         w.center()
-        playlist = w
+        if !playlists.isEmpty, let last = playlists.values.first { w.setFrameOrigin(NSPoint(x: last.frame.minX + 28, y: last.frame.minY - 28)) }
+        playlists[key] = w
         NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: w, queue: .main) { _ in
-            Task { @MainActor in playlist = nil }
+            // Only this window's entry: another window may have taken the same profile meanwhile.
+            Task { @MainActor in if playlists[key] === w { playlists[key] = nil } }
         }
-        w.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        w.makeKeyAndOrderFront(nil)
+        w.orderFrontRegardless()  // in front of the downloads window, also when the browser handed the profile over
     }
 
     /// Finished videos and music with preview pictures.
@@ -87,12 +117,21 @@ struct ProfileBatchView: View {
     @EnvironmentObject var manager: DownloadManager
     @State var link: String
 
-    init(link: String) { _link = State(initialValue: link) }
+    init(link: String) { _link = State(initialValue: link); windowLink = link }
 
+    @State private var lastLink = ""
+    /// The signed-in search whose result this window shows (its profile address), so it is shown once.
+    @State private var shownSearch = ""
+    /// The link this window was opened with (its entry among the Profile Batch windows).
+    private let windowLink: String
     @State private var quality = "best"
     @State private var mode = 0  // 0 all, 1 new only, 2 preview
-    @State private var autoStart = true
+    // Found videos wait here until the user picks Download Now or Add to Queue: nothing starts by itself.
+    @State private var pending: [BatchEntry] = []
+    @State private var pendingCounts: BatchCounts?
     @State private var ownFolder = true
+    /// Where this batch is saved (the downloads folder until another is chosen).
+    @State private var saveFolder: URL?
     @State private var parallel = 2
     @State private var useFrom = false
     @State private var useTo = false
@@ -121,9 +160,14 @@ struct ProfileBatchView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Paste one link to a profile, channel, playlist, gallery or page on any site the video engine supports. Nexonic finds every video that is open to everyone (no login needed), skips the ones you already have and downloads the rest in their own queue.")
+            Text("Paste a link to a profile, channel, playlist, gallery or page. Nexonic finds every video (and, on Instagram, TikTok, X and similar sites, every photo) using your browser's sign-in, skips the ones you already have and downloads the rest in their own queue. Facebook pages: what visitors see.")
                 .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            TextField("Link", text: $link).textFieldStyle(.roundedBorder).onSubmit(find)
+            TextField("Link", text: $link).textFieldStyle(.roundedBorder).onSubmit { find() }
+                // Pasting a whole link starts Find Videos straight away (typing one doesn't, until Return).
+                .onChange(of: link) { new in
+                    defer { lastLink = new }
+                    if !busy, new.count - lastLink.count > 8, DownloadJob(url: new.trimmingCharacters(in: .whitespacesAndNewlines)).validURL != nil { find() }
+                }
             Form {
                 Picker("Quality", selection: $quality) {
                     ForEach(ProfileBatch.qualities.map { $0.key }, id: \.self) { k in
@@ -135,10 +179,15 @@ struct ProfileBatchView: View {
                     Text("Only new videos (not seen on this profile before)").tag(1)
                     Text("Let me preview and choose").tag(2)
                 }
-                Toggle("Start downloading straight away", isOn: $autoStart)
                 LabeledContent("Save to") {
                     HStack {
-                        Text(manager.settings.startFolder.path).lineLimit(1).truncationMode(.middle)
+                        Text((saveFolder ?? manager.settings.startFolder).path).lineLimit(1).truncationMode(.middle)
+                        Button("Choose…") {
+                            let panel = NSOpenPanel()
+                            panel.canChooseDirectories = true; panel.canChooseFiles = false; panel.canCreateDirectories = true
+                            panel.directoryURL = saveFolder ?? manager.settings.startFolder
+                            if panel.runModal() == .OK, let u = panel.url { saveFolder = u }
+                        }
                         Toggle("A folder for each profile", isOn: $ownFolder)
                     }
                 }
@@ -180,27 +229,75 @@ struct ProfileBatchView: View {
                     Button("JSON") { export("json") }
                 }.disabled(scan == nil).fixedSize()
                 Spacer()
-                Button("Stop") { stopRequested = true }.disabled(!busy)
-                if !preview.isEmpty {
-                    Button("Download Selected") { download(preview.filter { chosen.contains($0.url) }, nil) }.keyboardShortcut(.defaultAction)
+                // While a profile is listed in the background, Close leaves it running (Nexonic reopens Profile Batch).
+                Button("Close") { MediaWindows.closePlaylist(windowLink) }
+                Button("Stop Search") {
+                    stopRequested = true
+                    let key = ProfileBatch.key(link.trimmingCharacters(in: .whitespacesAndNewlines))
+                    if let l = manager.listings[key], l.running { l.stop.set(); busy = false; status = String(localized: "Stopped.") }
+                }.disabled(!busy)
+                if !preview.isEmpty || !pending.isEmpty {
+                    Button("Add to Queue") { hand(start: false) }
+                    Button("Download Now") { hand(start: true) }.keyboardShortcut(.defaultAction)
+                    Button("Find Videos") { find(again: true) }.disabled(busy)
                 } else {
-                    Button("Find Videos", action: find).keyboardShortcut(.defaultAction).disabled(busy)
+                    Button("Find Videos") { find(again: true) }.keyboardShortcut(.defaultAction).disabled(busy)
                 }
             }
         }
         .padding(16)
         .frame(minWidth: 600, minHeight: 560)
-        .onAppear { if !link.isEmpty { find() } }
+        .onAppear { lastLink = link; if !link.isEmpty { find() } }
+        // A background listing finished while this window is open: show it (or what visitors see).
+        // The signed-in search of this window's profile is the truth: its count while it runs, its result when it's done
+        // (never what visitors see while it exists).
+        .onReceive(manager.$listings) { all in
+            let key = ProfileBatch.key(link.trimmingCharacters(in: .whitespacesAndNewlines))
+            guard let l = all[key], !l.stopped else { return }
+            if l.follow != nil {
+                // Chosen already: what the search finds is added that way; this window only counts.
+                busy = l.running
+                status = l.running
+                    ? String(format: String(localized: "%d photos and videos found so far; new ones are added as you chose. You can close this window: the search keeps going in the downloads list."), l.found)
+                    : String(format: String(localized: "%d photos and videos found; all added as you chose."), l.found)
+                if let w = l.waiting, l.running { status += "\n" + String(format: String(localized: "The site stopped answering for a while; the search continues from where it got to in %d min."), w) }
+                if !l.running { shownSearch = key }
+            } else if l.running {
+                busy = true
+                // The page's posts and what the search found so far, ready to download now; more join as they are found.
+                if !l.entries.isEmpty, mode != 2 || preview.isEmpty {
+                    show(SocialPages.scan(url: l.url, owner: l.owner, entries: l.entries, note: ""), url: l.url, filter: filter)
+                    status += "\n" + String(localized: "Still searching with your browser's sign-in; what it finds later follows your choice. You can close this window: the search keeps going in the downloads list.")
+                    if let w = l.waiting { status += "\n" + String(format: String(localized: "The site stopped answering for a while; the search continues from where it got to in %d min."), w) }
+                }
+            } else if l.scan != nil, shownSearch != key, !l.pageOnly {
+                DispatchQueue.main.async { find() }  // after the change is stored
+            } else if l.visitorsOnly, busy {
+                DispatchQueue.main.async { find() }  // the signed-in search didn't work: what visitors see, and why
+            }
+        }
     }
 
     private func target(_ s: ProfileBatch.Scan) -> URL {
-        ownFolder ? ProfileBatch.folder(base: manager.settings.startFolder, owner: s.owner, url: s.url) : manager.settings.startFolder
+        let base = saveFolder ?? manager.settings.startFolder
+        return ownFolder ? ProfileBatch.folder(base: base, owner: s.owner, url: s.url) : base
     }
 
-    private func download(_ take: [BatchEntry], _ counts: BatchCounts?) {
+    /// Download Now or Add to Queue: the chosen videos of the preview, or everything that was found.
+    private func hand(start: Bool) {
+        if !preview.isEmpty { download(preview.filter { chosen.contains($0.url) }, nil, start: start) }
+        else { download(pending, pendingCounts, start: start) }
+        pending = []; pendingCounts = nil
+        // A search still running: what it finds later goes the same way (folder, quality, now or later).
+        if let s = scan, manager.listings[ProfileBatch.key(s.url)]?.running == true {
+            manager.listings[ProfileBatch.key(s.url)]?.follow = ProfileListing.Follow(folder: target(s), quality: quality, parallel: parallel, start: start)
+        }
+    }
+
+    private func download(_ take: [BatchEntry], _ counts: BatchCounts?, start: Bool) {
         guard let s = scan else { return }
         var c = counts ?? ProfileBatch.choose(take, BatchFilter(), alreadyDownloaded: manager.alreadyDownloaded).counts
-        c.queued = manager.queueBatch(owner: s.owner, take, folder: target(s), quality: quality, maxActive: parallel, start: autoStart)
+        c.queued = manager.queueBatch(owner: s.owner, take, folder: target(s), quality: quality, maxActive: parallel, start: start)
         status = (s.owner.isEmpty ? "" : s.owner + ": ") + c.text
         preview = []
         let key = ProfileBatch.key(s.url)
@@ -215,14 +312,106 @@ struct ProfileBatchView: View {
         manager.saveProfiles()
     }
 
-    private func find() {
+    /// Shows what was found for the link, or looks for it. `again` (the Find Videos button): searches the site again even
+    /// when a search was done, and adds what is new.
+    private func find(again: Bool = false) {
         let url = link.trimmingCharacters(in: .whitespacesAndNewlines)
         guard DownloadJob(url: url).validURL != nil else { status = String(localized: "Paste a web link (http or https)."); return }
-        busy = true; stopRequested = false; preview = []
+        busy = true; stopRequested = false; preview = []; pending = []; pendingCounts = nil
         let earlier = ProfileBatch.loadScan(url).map { $0.complete ? 0 : $0.entries.count } ?? 0
         status = earlier > 0 ? String(format: String(localized: "Continuing an interrupted scan (%d found before)…"), earlier)
             : String(localized: "Looking for videos… (large profiles can take a few minutes)")
         let proxy = manager.settings.proxy, f = filter, stopFlag = { [self] in stopRequested }
+        let key = ProfileBatch.key(url)
+        if let l = manager.listings[key], l.pageOnly, let social = SocialPages.find(url) {
+            // Facebook: the page is read in a hidden view with the browser's sign-in the extension handed over, scrolled
+            // down until it shows no more; each Find Videos reads it again and adds what is new.
+            let cookies = manager.profileCookies[key]?.cookies, userAgent = manager.profileCookies[key]?.userAgent
+            shownSearch = key
+            status = String(format: String(localized: "Reading the %@ page in the background, scrolling until it shows no more…"), social.site.name)
+            Task { @MainActor in
+                do {
+                    let s = try await SocialWebView.scan(url, site: social.site, owner: social.owner, pages: social.pages, max: ProfileBatch.limit,
+                                                         cookies: cookies, userAgent: userAgent, seed: l.entries,
+                                                         found: { n in
+                                                             status = String(format: String(localized: "%d found so far…"), n)
+                                                             // The row in the downloads list counts along with this window.
+                                                             manager.listings[key]?.found = n
+                                                             if let row = manager.items.first(where: { $0.listing == true && ProfileBatch.key($0.url.absoluteString) == key })?.id {
+                                                                 manager.update(row) { $0.streamDone = n; $0.status = .downloading }
+                                                             }
+                                                         },
+                                                         stop: { stopRequested })
+                    manager.listings[key]?.entries = s.entries
+                    manager.listings[key]?.found = s.entries.count
+                    manager.listings[key]?.scan = s
+                    if let row = manager.items.first(where: { $0.listing == true && ProfileBatch.key($0.url.absoluteString) == key })?.id {
+                        manager.update(row) { $0.streamDone = s.entries.count; $0.status = .finished }
+                    }
+                    show(s, url: url, filter: f)
+                } catch is CancellationError {
+                    status = String(localized: "Stopped.")
+                } catch {
+                    status = error.localizedDescription
+                }
+                // Stopped or failed: the row stops counting too.
+                if let row = manager.items.first(where: { $0.listing == true && ProfileBatch.key($0.url.absoluteString) == key && $0.status == .downloading })?.id {
+                    manager.update(row) { $0.status = .finished }
+                }
+                busy = false
+            }
+            return
+        }
+        if again, let l = manager.listings[key], !l.running, !l.pageOnly, manager.canSearchSignedIn(url) {
+            status = String(localized: "Searching again with your browser's sign-in; what is new is added to the list.")
+            manager.startListing(url, max: ProfileBatch.limit, seed: l.entries)
+            return
+        }
+        if let listing = manager.listings[key], !listing.running, let found = listing.scan {
+            // Listed in the background (the extension's Download all): show it.
+            busy = false
+            shownSearch = key
+            show(found, url: url, filter: f)
+            return
+        }
+        if let l = manager.listings[key], l.running {
+            status = String(localized: "Searching every photo and video with your browser's sign-in…")
+            if l.follow == nil, !l.entries.isEmpty { show(SocialPages.scan(url: l.url, owner: l.owner, entries: l.entries, note: ""), url: url, filter: f) }
+            return
+        }
+        if manager.canSearchSignedIn(url) {
+            // Opened by the extension's Download all: the gallery engine lists every photo and video with the browser's
+            // sign-in, a request every 1-2 seconds, in the background; this window may close meanwhile.
+            status = String(localized: "Searching every photo and video with your browser's sign-in, a request every 1–2 seconds (the first time, macOS asks to let Nexonic use that sign-in). You can close this window: the search keeps going in the downloads list (\"Photos and videos of …\"); double-click it there to come back.")
+            manager.startListing(url, max: f.max)
+            return
+        }
+        // The signed-in search didn't work: what visitors see, below, and why.
+        let signedInError = manager.listings[key]?.visitorsOnly == true ? manager.listings[key]?.error : nil
+        if manager.listings[key]?.visitorsOnly == true { manager.listings[key] = nil }
+        if let social = SocialPages.find(url) {
+            // Instagram and Facebook show visitors only their latest posts: Nexonic takes those straight away and says how to
+            // get the rest (the extension's Download all in the user's signed-in browser; Nexonic never signs in).
+            Task { @MainActor in
+                do {
+                    status = String(format: String(localized: "Opening the %@ profile like a visitor's browser…"), social.site.name)
+                    var s = try await SocialWebView.scan(url, site: social.site, owner: social.owner, pages: social.pages, max: f.max,
+                                                         found: { n in status = String(format: String(localized: "%d found so far…"), n) },
+                                                         stop: { stopRequested })
+                    // A signed-in search of this profile started meanwhile: its result wins.
+                    if let l = manager.listings[key], l.running || l.scan != nil { return }
+                    let why = signedInError.map { String(format: String(localized: "The search with your browser's sign-in didn't work (%@), so these are what visitors see."), $0) }
+                    s.note = [s.note ?? "", why ?? String(localized: String.LocalizationValue(SocialPages.more(social.site)))].filter { !$0.isEmpty }.joined(separator: "\n")
+                    show(s, url: url, filter: f)
+                } catch is CancellationError {
+                    status = String(localized: "Stopped.")
+                } catch {
+                    status = error.localizedDescription
+                }
+                busy = false
+            }
+            return
+        }
         DispatchQueue.global(qos: .userInitiated).async {
             let result = Result {
                 try ProfileBatch.discover(url, proxy: proxy, max: f.max, stop: { DispatchQueue.main.sync { stopFlag() } }) { _, n in
@@ -237,24 +426,39 @@ struct ProfileBatchView: View {
                 case .failure(let e):
                     status = e.localizedDescription
                 case .success(let s):
-                    scan = s
-                    var seen: Set<String>? = nil
-                    if mode == 1, let p = manager.profiles.first(where: { ProfileBatch.key($0.url) == ProfileBatch.key(url) }) { seen = Set(p.seen) }
-                    let (take, counts) = ProfileBatch.choose(s.entries, f, alreadyDownloaded: manager.alreadyDownloaded, seen: seen)
-                    if mode == 2 {
-                        preview = take; chosen = Set(take.map(\.url))
-                        var c = counts; c.queued = 0
-                        status = (s.owner.isEmpty ? "" : s.owner + ": ") + c.text
-                    } else if take.isEmpty {
-                        var c = counts; c.queued = 0
-                        status = (s.owner.isEmpty ? "" : s.owner + ": ") + c.text
-                    } else {
-                        download(take, counts)
-                    }
-                    if let note = s.note, !note.isEmpty { status += "\n" + note }  // what the site doesn't show visitors
+                    show(s, url: url, filter: f)
                 }
             }
         }
+    }
+
+    /// Shows a finished scan: the preview list, or the counts, or the queued downloads.
+    private func show(_ s: ProfileBatch.Scan, url: String, filter: BatchFilter) {
+        scan = s
+        // A signed-in search lists files, not videos: all of them are offered (a carousel post alone can hold 20).
+        var f = filter
+        if manager.listings[ProfileBatch.key(url)] != nil { f.max = ProfileBatch.limit }
+        var seen: Set<String>? = nil
+        if mode == 1, let p = manager.profiles.first(where: { ProfileBatch.key($0.url) == ProfileBatch.key(url) }) { seen = Set(p.seen) }
+        let (take, counts) = ProfileBatch.choose(s.entries, f, alreadyDownloaded: manager.alreadyDownloaded, seen: seen)
+        if mode == 2 {
+            preview = take; chosen = Set(take.map(\.url))
+            var c = counts; c.queued = 0
+            status = (s.owner.isEmpty ? "" : s.owner + ": ") + c.text
+        } else if take.isEmpty {
+            var c = counts; c.queued = 0
+            status = (s.owner.isEmpty ? "" : s.owner + ": ") + c.text
+        } else {
+            pending = take; pendingCounts = counts
+            var c = counts; c.queued = 0
+            status = (s.owner.isEmpty ? "" : s.owner + ": ") + c.text + "\n" + String(localized: "Choose Download Now, or Add to Queue to start them later.")
+        }
+        // Files, set beside the posts they come from (the site counts posts; a carousel post holds up to 20 files).
+        let posts = ProfileBatch.postCount(s.entries)
+        if posts > 0, posts != s.entries.count {
+            status = String(format: String(localized: "%d posts: %d photos and videos (a post with several photos or videos counts each one)."), posts, s.entries.count) + "\n" + status
+        }
+        if let note = s.note, !note.isEmpty { status += "\n" + note }  // what the site doesn't show visitors
     }
 
     private func export(_ format: String) {

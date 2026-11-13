@@ -2,12 +2,14 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace Nexonic.Core;
 
 /// <summary>One video (or sound, or picture post) found on a profile, channel, playlist or page.</summary>
+/// <summary>Kind: video, shorts, live or photo. Direct (added in 0.31.0): the file itself, from a gallery engine listing.</summary>
 public sealed record BatchEntry(string Url, string Title, double? Duration = null, DateTime? Date = null, string Kind = "video",
-    bool Available = true, string Id = "");
+    bool Available = true, string Id = "", bool Direct = false);
 
 /// <summary>Which of the found videos to keep. Values a site does not report (a date, a length) never exclude a video.</summary>
 public sealed class BatchFilter
@@ -58,7 +60,7 @@ public sealed record BatchCounts(int Discovered, int Queued, int Duplicates, int
 /// </summary>
 public static class ProfileBatch
 {
-    public const int DefaultMax = 500, Limit = 5000;
+    public const int DefaultMax = 500, Limit = 20000;
 
     public static readonly (string Key, string Title, int? Height, bool Audio)[] Qualities =
     {
@@ -132,9 +134,40 @@ public static class ProfileBatch
     }
 
     /// <summary>The address without the engine's internal additions and fragments, to recognise the same video.</summary>
+    static readonly string[] CdnHosts = { "cdninstagram.com", "fbcdn.net", "tiktokcdn.com", "tiktokcdn-us.com", "twimg.com", "pinimg.com" };
+
+    /// <summary>An Instagram post's short code (/p/, /reel/ or /tv/), to match it with the files the gallery engine lists.</summary>
+    public static string? PostCode(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var u)) return null;
+        var parts = u.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var i = Array.FindIndex(parts, p => p is "p" or "reel" or "reels" or "tv");
+        return i >= 0 && i + 1 < parts.Length ? parts[i + 1] : null;
+    }
+
+    /// <summary>
+    /// The page's own posts and videos, sent by the extension with Download all: an Instagram post is downloaded by the
+    /// gallery engine (its video or photos), anything else by the video engine.
+    /// </summary>
+    public static List<BatchEntry> PageEntries(IEnumerable<string>? links)
+    {
+        var keys = new HashSet<string>();
+        var list = new List<BatchEntry>();
+        foreach (var l in links ?? [])
+        {
+            if (!Uri.TryCreate(l, UriKind.Absolute, out var u) || !u.Scheme.StartsWith("http") || !keys.Add(Key(l))) continue;
+            var instagram = u.Host.EndsWith("instagram.com", StringComparison.OrdinalIgnoreCase);
+            list.Add(new BatchEntry(l, l, Kind: instagram ? "post" : l.Contains("/reel") ? "shorts" : "video", Id: instagram ? PostCode(l) ?? "" : ""));
+        }
+        return list;
+    }
+
     public static string Key(string url)
     {
         var u = url.Split('#')[0].Trim();
+        // The sites' picture and video servers sign every address anew; the file is the same without the signature.
+        if (Uri.TryCreate(u, UriKind.Absolute, out var a) && CdnHosts.Any(h => a.Host.EndsWith(h, StringComparison.OrdinalIgnoreCase)))
+            u = a.GetLeftPart(UriPartial.Path);
         return Duplicates.Normalize(u);
     }
 
@@ -350,5 +383,142 @@ public static class EnginePlugins
         }
         catch (IOException) { return null; }
         catch (UnauthorizedAccessException) { return null; }
+    }
+}
+
+/// <summary>
+/// Instagram shows visitors who are not signed in the latest posts of a profile, but only through its own page scripts.
+/// The apps open the profile page in a private web view (no cookies, no sign-in), like a visitor's browser, run Script
+/// and read the video links the page shows. Nothing else of Instagram's is called.
+/// </summary>
+public static class InstagramPage
+{
+    static readonly string[] Reserved = { "p", "reel", "reels", "tv", "stories", "explore", "accounts", "direct", "about", "legal",
+        "developer", "api", "graphql", "web", "challenge", "emails", "session", "privacy", "terms" };
+
+    /// <summary>The user name of an Instagram profile link (instagram.com/name, /name/reels), or null.</summary>
+    public static string? User(string link)
+    {
+        var m = Regex.Match(link.Trim(), @"^https?://(?:www\.)?instagram\.com/([A-Za-z0-9._]{1,30})/?(?:reels/?|videos/?)?(?:[?#].*)?$", RegexOptions.IgnoreCase);
+        return m.Success && !Reserved.Contains(m.Groups[1].Value.ToLowerInvariant()) ? m.Groups[1].Value : null;
+    }
+
+    /// <summary>Run in the loaded page: {"posts": links to posts shown, "videos": [{"u": link, "t": picture text}]}.</summary>
+    public const string Script = """
+        (() => {
+          const all = [...document.querySelectorAll('a[href*="/reel/"], a[href*="/p/"]')], seen = new Set(), videos = [];
+          for (const a of all) {
+            const link = new URL(a.getAttribute('href'), location.href);
+            const m = link.pathname.match(/\/(p|reel)\/([A-Za-z0-9_-]+)/);
+            if (!m) continue;
+            const alt = (a.querySelector('img') || {}).alt || '';
+            const video = m[1] === 'reel' || /^Video by /.test(alt) || !!a.querySelector('svg[aria-label="Clip"], svg[aria-label="Video"], svg[aria-label="Reel"]');
+            const u = 'https://www.instagram.com/' + m[1] + '/' + m[2] + '/';
+            if (video && !seen.has(u)) { seen.add(u); videos.push({ u, t: alt }); }
+          }
+          return JSON.stringify({ posts: all.length, videos });
+        })()
+        """;
+
+    /// <summary>What Script returned: the number of posts the page shows and its videos.</summary>
+    public static (int Posts, List<BatchEntry> Videos) Read(string? json)
+    {
+        var list = new List<BatchEntry>();
+        if (string.IsNullOrEmpty(json)) return (0, list);
+        try
+        {
+            // The web views hand the script's string back either as it is or JSON-quoted.
+            if (json.StartsWith('"')) json = JsonSerializer.Deserialize<string>(json) ?? "";
+            using var doc = JsonDocument.Parse(json);
+            var posts = doc.RootElement.TryGetProperty("posts", out var p) && p.ValueKind == JsonValueKind.Number ? p.GetInt32() : 0;
+            if (doc.RootElement.TryGetProperty("videos", out var v) && v.ValueKind == JsonValueKind.Array)
+                foreach (var e in v.EnumerateArray())
+                {
+                    var url = e.TryGetProperty("u", out var u) ? u.GetString() ?? "" : "";
+                    if (!url.StartsWith("https://www.instagram.com/", StringComparison.Ordinal) && !url.StartsWith("https://www.facebook.com/", StringComparison.Ordinal)) continue;
+                    var text = e.TryGetProperty("t", out var t) ? t.GetString() ?? "" : "";
+                    DateTime? date = Regex.Match(text, @" on ([A-Z][a-z]+ \d{1,2}, \d{4})") is { Success: true } dm
+                        && DateTime.TryParseExact(dm.Groups[1].Value, "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var d) ? d : null;
+                    var title = Regex.Replace(text, @"\s+", " ").Trim();
+                    if (title.Length > 120) title = title[..120] + "…";
+                    list.Add(new BatchEntry(url, title.Length > 0 ? title : url, null, date, url.Contains("/reel/") ? "shorts" : "video", true, url.Contains("?v=") ? url.Split("?v=")[^1] : url.Split('/')[^2]));
+                }
+            return (posts, list);
+        }
+        catch (JsonException) { return (0, list); }
+    }
+
+    /// <summary>Shown with the result: Instagram shows visitors only the latest posts.</summary>
+    public static string Note(int posts) =>
+        $"Instagram shows visitors who are not signed in only the latest {posts} posts of a profile; Nexonic took the videos among them.";
+
+    public const string Nothing = "Instagram did not show any posts of this profile to a visitor who is not signed in (it may be private or not exist).";
+
+    public static string NoVideos(int posts) => $"None of the latest {posts} posts Instagram shows visitors of this profile is a video.";
+}
+
+/// <summary>
+/// Instagram and Facebook profiles in Profile Batch. Their profile pages show visitors who are not signed in only the
+/// latest posts; the rest come through the user's own signed-in browser and the Nexonic extension (see More).
+/// </summary>
+public sealed record SocialSite(string Name, string LoginUrl, string Domain, string SessionCookie, string Script);
+
+public static class SocialPages
+{
+    /// <summary>
+    /// Added under what a visitor sees: how to get the rest. The Nexonic extension's "Download all" on the profile, in a
+    /// browser signed in to the site, hands the whole profile to the gallery engine with the browser's cookies (read-only, a person's pace) and sends every
+    /// video and photo here. Nexonic itself never signs in.
+    /// </summary>
+    public static string More(SocialSite site) =>
+        $"To get every video and photo: open this profile in Chrome, Edge or Firefox where you are signed in to {site.Name}, click the Nexonic extension and choose Download all. Nexonic then saves the whole profile with that sign-in, a request every 1-2 seconds like a person, and only reads; it never sees your password.";
+
+    public static readonly SocialSite Instagram = new("Instagram", "https://www.instagram.com/accounts/login/", "instagram.com", "sessionid", InstagramPage.Script);
+    public static readonly SocialSite Facebook = new("Facebook", "https://www.facebook.com/login/", "facebook.com", "c_user", FacebookScript);
+
+    /// <summary>The site, the profile's name and the pages that list its videos; null for other links.</summary>
+    public static (SocialSite Site, string Owner, string[] Pages)? Find(string link)
+    {
+        if (InstagramPage.User(link) is { } user) return (Instagram, user, new[] { $"https://www.instagram.com/{user}/" });
+        var m = Regex.Match(link.Trim(), @"^https?://(?:www\.|m\.|web\.)?facebook\.com/(?:profile\.php\?id=(\d+)|(?!(?:watch|reel|videos|groups|events|share|story\.php|photo|permalink\.php|login|marketplace|gaming|people|pages)\b)([A-Za-z0-9.\-]{2,80}))", RegexOptions.IgnoreCase);
+        if (!m.Success) return null;
+        if (m.Groups[1].Success)
+        {
+            var id = m.Groups[1].Value;
+            return (Facebook, id, new[] { $"https://www.facebook.com/profile.php?id={id}&sk=reels_tab", $"https://www.facebook.com/profile.php?id={id}&sk=videos" });
+        }
+        var name = m.Groups[2].Value;
+        return (Facebook, name, new[] { $"https://www.facebook.com/{name}/reels/", $"https://www.facebook.com/{name}/videos/" });
+    }
+
+    /// <summary>Run in a loaded Facebook page: its reels and videos, as InstagramPage.Script reports them.</summary>
+    public const string FacebookScript = """
+        (() => {
+          const seen = new Set(), videos = [];
+          for (const a of document.querySelectorAll('a[href*="/reel/"], a[href*="/videos/"], a[href*="watch/?v="], a[href*="watch?v="]')) {
+            const link = new URL(a.getAttribute('href'), location.href);
+            let id = null, reel = false, m;
+            if ((m = link.pathname.match(/\/reel\/(\d+)/))) { id = m[1]; reel = true; }
+            else if ((m = link.pathname.match(/\/videos\/(?:[^/]+\/)?(\d{6,})/))) id = m[1];
+            else if (/^\d{6,}$/.test(link.searchParams.get('v') || '')) id = link.searchParams.get('v');
+            if (!id || seen.has(id)) continue;
+            seen.add(id);
+            const u = reel ? 'https://www.facebook.com/reel/' + id + '/' : 'https://www.facebook.com/watch/?v=' + id;
+            videos.push({ u, t: (a.getAttribute('aria-label') || a.innerText || '').trim().slice(0, 200) });
+          }
+          return JSON.stringify({ posts: videos.length, videos });
+        })()
+        """;
+
+
+    /// <summary>
+    /// Adds what a page shows now to what was found before (pages drop posts that scrolled far away) and says whether
+    /// anything new came. Stops at max.
+    /// </summary>
+    public static bool Merge(Dictionary<string, BatchEntry> found, List<BatchEntry> now, int max)
+    {
+        var before = found.Count;
+        foreach (var e in now) if (found.Count < max) found.TryAdd(e.Url, e);
+        return found.Count > before;
     }
 }

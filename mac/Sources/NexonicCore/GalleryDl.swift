@@ -62,8 +62,11 @@ public enum GalleryDl {
 
     /// The engine's arguments: everything goes straight into `folder`; files already there are skipped.
     /// The site login, cookies and proxy are never here: they go in the private settings file (see `settings`).
+    public static let pace = "extractor.sleep-request=1.0-2.0"
+
     public static func arguments(url: String, folder: String, speedLimitKBps: Int, referrer: String?, settingsFile: String? = nil) -> [String] {
-        var args = ["--directory", folder]
+        // A person's pace on every site: 1-2 seconds between the requests that list a profile or gallery.
+        var args = ["--directory", folder, "-o", pace]
         if let settingsFile { args += ["--config", settingsFile] }
         if speedLimitKBps > 0 { args += ["--limit-rate", "\(speedLimitKBps)k"] }
         if let referrer, URL(string: referrer)?.scheme?.hasPrefix("http") == true { args += ["-o", "extractor.referer=" + referrer] }
@@ -112,6 +115,219 @@ public enum GalleryDl {
         if t.hasPrefix("# /") { return (false, String(t.dropFirst(2))) }
         return t.hasPrefix("/") ? (true, t) : nil
     }
+}
+
+/// Profile Batch with the gallery engine: the photos and videos of a profile, listed (not downloaded) with the browser's
+/// cookies for the site, at a person's pace. The user then picks Download Now or Add to Queue.
+public extension GalleryDl {
+    static let videoExtensions: Set<String> = ["mp4", "webm", "mov", "m4v", "mkv"]
+
+    /// One line per file while listing: its address and the details used for its name, as a JSON array (the engine
+    /// writes them as it finds them, so the count can be shown).
+    static let listFormat = "[{_url!j},{extension!j},{post_shortcode!j},{shortcode!j},{post_id!j},{id!j},{filename!j},{description!j},{content!j},{title!j},{desc!j},{num!j},{count!j},{date!j},{duration!j},{username!j}]"
+
+    /// The engine's arguments for listing: a line per file (nothing downloaded), at most `max` of them.
+    static func listArguments(url: String, max: Int, settingsFile: String?, browser: String? = nil) -> [String] {
+        var args = ["-N", listFormat, "--range", "1-\(Swift.max(1, max))", "-o", pace]
+        if let settingsFile { args += ["--config", settingsFile] }
+        if let browser { args += ["--cookies-from-browser", browser] }
+        // TikTok: its own listing first through the video engine, then the gallery engine's own way.
+        if URL(string: url)?.host?.lowercased().hasSuffix("tiktok.com") == true { args += ["-o", "extractor.tiktok.ytdl=true"] }
+        // Instagram videos as one file each (not as separate picture and sound streams), so they are listed and saved
+        // like the photos.
+        if URL(string: url)?.host?.lowercased().hasSuffix("instagram.com") == true { args += ["-o", "extractor.instagram.videos=merged"] }
+        return args + ["--", url]
+    }
+
+    /// Sites whose profiles the engine lists completely (photos and videos) with a browser's sign-in. Facebook pages
+    /// are not among them: the engine can't list them.
+    static let profileSites = ["instagram.com", "tiktok.com", "x.com", "twitter.com", "threads.net", "threads.com", "pinterest.com",
+                               "reddit.com", "tumblr.com", "bsky.app", "vk.com", "flickr.com", "deviantart.com"]
+
+    /// A profile (not a single post) on one of those sites.
+    static func isProfile(_ url: String) -> Bool {
+        guard let u = URL(string: url), let host = u.host?.lowercased(), profileSites.contains(where: { host == $0 || host.hasSuffix("." + $0) })
+        else { return false }
+        let first = u.pathComponents.dropFirst().first?.lowercased() ?? ""
+        return !first.isEmpty && !["p", "reel", "tv", "stories", "explore", "accounts", "direct", "video", "status", "i", "home", "search",
+                                   "settings", "messages", "notifications", "login", "share", "hashtag", "tag", "watch"].contains(first)
+    }
+
+    /// The engine's name for the browser that opens web links on this Mac (its sign-ins are used), nil when it can't read it.
+    static func browserName(bundleID: String?) -> String? {
+        switch bundleID?.lowercased() {
+        case "com.google.chrome", "com.google.chrome.beta", "com.google.chrome.canary": return "chrome"
+        case "com.microsoft.edgemac", "com.microsoft.edgemac.beta": return "edge"
+        case "com.brave.browser": return "brave"
+        case "org.mozilla.firefox", "org.mozilla.firefoxdeveloperedition": return "firefox"
+        case "com.operasoftware.opera": return "opera"
+        case "com.vivaldi.vivaldi": return "vivaldi"
+        case "org.chromium.chromium": return "chromium"
+        case "com.apple.safari": return "safari"
+        default: return nil
+        }
+    }
+
+    /// The files in the engine's listing (its lines): the picture or video address, named "description [post id].ext";
+    /// and the account they belong to (their folder), "" when it doesn't say.
+    static func entries(_ text: String, owner fallback: String = "") -> (entries: [BatchEntry], owner: String) {
+        let iso = ISO8601DateFormatter()
+        let df = DateFormatter(); df.dateFormat = "yyyy-MM-dd HH:mm:ss"; df.locale = Locale(identifier: "en_US_POSIX")
+        df.timeZone = TimeZone(identifier: "UTC")
+        var list: [BatchEntry] = [], seen = Set<String>(), owner = ""
+        for line in text.split(whereSeparator: \.isNewline) {
+            guard let f = (try? JSONSerialization.jsonObject(with: Data(line.utf8))) as? [Any], f.count >= 16,
+                  let url = f[0] as? String, url.hasPrefix("https://"), seen.insert(url).inserted else { continue }
+            let text = { (i: Int) -> String in (f[i] as? String) ?? (f[i] as? NSNumber)?.stringValue ?? "" }
+            if owner.isEmpty { owner = text(15) }
+            let ext = text(1).lowercased().isEmpty ? "jpg" : text(1).lowercased()
+            let post = [2, 3, 4, 5, 6].map(text).first { !$0.isEmpty } ?? ""
+            let num = (f[11] as? Int) ?? 0, count = (f[12] as? Int) ?? 0
+            var caption = ([7, 8, 9, 10].map(text).first { !$0.isEmpty } ?? "").replacingOccurrences(of: "\n", with: " ").trimmingCharacters(in: .whitespaces)
+            if caption.count > 100 { caption = String(caption.prefix(100)).trimmingCharacters(in: .whitespaces) }
+            let label = caption.isEmpty ? (owner.isEmpty ? fallback : owner) : caption
+            let name = FileNames.sanitize("\(label) [\(post)\(count > 1 && num > 0 ? "-\(num)" : "")].\(ext)")
+            list.append(BatchEntry(url: url, title: name, duration: (f[14] as? NSNumber)?.doubleValue,
+                                   date: df.date(from: text(13)) ?? iso.date(from: text(13) + (text(13).contains("+") || text(13).hasSuffix("Z") ? "" : "Z")),
+                                   kind: videoExtensions.contains(ext) ? "video" : "photo", available: true, direct: true,
+                                   post: [2, 3, 4].map(text).first { !$0.isEmpty }))
+        }
+        return (list, owner)
+    }
+
+    /// Lists a profile with the engine. `found(new, owner)` hands over the files as the engine finds them, so they can be
+    /// shown (and downloaded) at once. Throws `GalleryListError` with the engine's own words when it found nothing.
+    static func list(_ url: String, cookies: String?, browser: String? = nil, userAgent: String?, proxy: ProxySettings?, max: Int,
+                     found: @escaping ([BatchEntry], String) -> Void = { _, _ in }, waiting: @escaping (Int) -> Void = { _ in },
+                     stop: @escaping () -> Bool) throws -> (entries: [BatchEntry], owner: String) {
+        guard ensureInstalled() else { throw GalleryListError(message: missing) }
+        let settingsFile = try writeSettings(settings(cookies: cookies, userAgent: userAgent, username: nil, password: nil,
+                                                      proxyURL: proxy.flatMap(SiteVideo.proxyURL)))
+        defer { if let settingsFile { try? FileManager.default.removeItem(at: settingsFile) } }
+        var all: [BatchEntry] = [], seen = Set<String>(), owner = "", lastError = ""
+        let parts = listParts(url)
+        for (index, part) in parts.enumerated() {
+            // The first part (an Instagram profile's posts) is worth waiting longer for; the later ones (reels, mostly on the
+            // posts grid already) are tried a few times, so the search doesn't stay open for an hour.
+            let patience = index == 0 ? 5 : 2
+            var cursor: String?, tries = 0
+            repeat {
+                var args = listArguments(url: part, max: max, settingsFile: settingsFile?.path, browser: cookies == nil ? browser : nil)
+                if let cursor { args.insert(contentsOf: ["-o", "cursor=\(cursor)"], at: args.count - 2) }
+                let errors = try runList(args) { listed in
+                    if owner.isEmpty { owner = listed.owner }
+                    let fresh = listed.entries.filter { seen.insert(ProfileBatch.key($0.url)).inserted }
+                    if !fresh.isEmpty { all += fresh; found(fresh, owner) }
+                } stop: { stop() || all.count >= max }
+                lastError = errors
+                note(part, cursor: cursor, found: all.count, errors)
+                // The site stopped answering (it limits how much one account may read in a row; Instagram then sends the
+                // reader to its home page): after a pause the search continues where the engine says it got to (or from
+                // the same place), a few times, longer each time.
+                let said = resumeCursor(errors)
+                guard said != nil || throttled(errors), tries < patience, all.count < max else { break }
+                cursor = said ?? cursor
+                tries += 1
+                let pause = 120 * (1 << (tries - 1))  // 2, 4, 8, 16, 32 minutes
+                waiting(pause)
+                for _ in 0..<pause { if stop() { throw CancellationError() }; Thread.sleep(forTimeInterval: 1) }
+            } while true
+            if stop() { throw CancellationError() }
+        }
+        if all.isEmpty {
+            let said = lastError.split(whereSeparator: \.isNewline).last { $0.contains("error") || $0.contains("Error") } ?? lastError.split(whereSeparator: \.isNewline).last
+            throw GalleryListError(message: said.map { String($0).replacingOccurrences(of: "[error] ", with: "") } ?? "")
+        }
+        return (all, owner)
+    }
+
+    /// The parts of a profile that are listed one after the other: an Instagram profile's posts, then its reels (videos
+    /// that are not on the posts grid); anything else as it is.
+    static func listParts(_ url: String) -> [String] {
+        guard isProfile(url), let u = URL(string: url), u.host?.lowercased().hasSuffix("instagram.com") == true,
+              let user = u.pathComponents.dropFirst().first else { return [url] }
+        return ["https://www.instagram.com/\(user)/posts/", "https://www.instagram.com/\(user)/reels/"]
+    }
+
+    /// What each search said, kept in the data folder (the last 200 KB) so a search that finds less than expected can be
+    /// looked into. No cookies or passwords are in it: those go to the engine in a private settings file.
+    public static var searchLog: URL { AppPaths.support.appendingPathComponent("profile-search.log") }
+
+    public static func note(_ url: String, cursor: String?, found: Int, _ errors: String) {
+        let text = "\(ISO8601DateFormatter().string(from: Date()))  \(url)\(cursor == nil ? "" : " (continued)")  \(found) found so far\n"
+            + errors.split(whereSeparator: \.isNewline).suffix(40).map { "    " + $0 }.joined(separator: "\n") + "\n"
+        var log = (try? Data(contentsOf: searchLog)) ?? Data()
+        log.append(Data(text.utf8))
+        if log.count > 200_000 { log = log.suffix(200_000) }
+        try? log.write(to: searchLog, options: .atomic)
+    }
+
+    /// The site refused for now (too many requests), as the engine reports it.
+    public static func throttled(_ errors: String) -> Bool {
+        let e = errors.lowercased()
+        return ["redirect to home page", "redirect to login page", "429", "too many requests", "rate limit", "please wait a few minutes"].contains { e.contains($0) }
+    }
+
+    /// Where an interrupted listing got to, as the engine says it ("Use '-o cursor=…' to continue").
+    static func resumeCursor(_ errors: String) -> String? {
+        guard let r = errors.range(of: #"-o cursor=([^'"\s]+)"#, options: .regularExpression) else { return nil }
+        return String(errors[r].dropFirst("-o cursor=".count))
+    }
+
+    /// Runs one listing, handing over what it lists as it arrives; returns what the engine said on its error output.
+    private static func runList(_ args: [String], found: @escaping ((entries: [BatchEntry], owner: String)) -> Void, stop: @escaping () -> Bool) throws -> String {
+        let p = Process()
+        p.executableURL = program
+        p.arguments = args
+        var env = ProcessInfo.processInfo.environment; env["PYTHONIOENCODING"] = "utf-8"; p.environment = env
+        let out = Pipe(), err = Pipe()
+        p.standardOutput = out
+        p.standardError = err
+        try p.run()
+        final class Box: @unchecked Sendable { let lock = NSLock(); var data = Data(); var errors = Data(); var done = false }
+        let box = Box(), handle = out.fileHandleForReading, errHandle = err.fileHandleForReading
+        DispatchQueue.global(qos: .utility).async {
+            let e = errHandle.readDataToEndOfFile()
+            box.lock.lock(); box.errors = e.suffix(4000); box.lock.unlock()
+        }
+        DispatchQueue.global(qos: .userInitiated).async {
+            while true {
+                let chunk = handle.availableData
+                box.lock.lock()
+                if chunk.isEmpty { box.done = true; box.lock.unlock(); break }
+                box.data.append(chunk); box.lock.unlock()
+            }
+        }
+        var handed = 0, owner = ""
+        func handOver(final: Bool) {
+            box.lock.lock(); let data = box.data; box.lock.unlock()
+            // Only whole lines; the last one may still be arriving.
+            guard let end = final ? data.endIndex : data.lastIndex(of: 10).map({ data.index(after: $0) }), end > handed else { return }
+            let listed = entries(String(decoding: data[handed..<end], as: UTF8.self), owner: owner)
+            handed = end
+            if owner.isEmpty { owner = listed.owner }
+            found(listed)
+        }
+        while true {
+            Thread.sleep(forTimeInterval: 0.3)
+            if stop() { p.terminate(); p.waitUntilExit(); handOver(final: true); return "" }
+            handOver(final: false)
+            box.lock.lock(); let finished = box.done; box.lock.unlock()
+            if finished { break }
+        }
+        p.waitUntilExit()
+        handOver(final: true)
+        // The error output is read to its end once the engine has exited.
+        for _ in 0..<20 { box.lock.lock(); let ready = !box.errors.isEmpty; box.lock.unlock(); if ready { break }; Thread.sleep(forTimeInterval: 0.05) }
+        box.lock.lock(); defer { box.lock.unlock() }
+        return String(decoding: box.errors, as: UTF8.self)
+    }
+}
+
+/// The gallery engine found nothing: its own words (a site it doesn't know, a sign-in it wants …), shown to the user.
+public struct GalleryListError: LocalizedError {
+    public let message: String
+    public var errorDescription: String? { message }
 }
 
 /// Runs the gallery engine for one gallery: the list row counts files and bytes; pausing stops it and resuming continues

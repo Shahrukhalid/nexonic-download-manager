@@ -154,7 +154,18 @@ public enum SiteVideo {
         if audioOnly { return ["-f", "ba[ext=m4a]/ba/b"] }
         if maxHeight == originalQuality { return ["-f", "bv*+ba/b", "-S", "res,fps,hdr:12", "--merge-output-format", "mp4/mkv"] }
         let res = maxHeight.map { $0 > 0 ? "res:\($0)" : "res" } ?? "res"
-        return ["-f", "bv*+ba/b", "-S", "\(res),fps,hdr:12,vcodec:avc,acodec:m4a", "--merge-output-format", "mp4/mkv"]
+        // A chosen quality is always saved as MP4 (the container every app opens); "Original" keeps MKV for codecs MP4 can't hold.
+        return ["-f", "bv*+ba/b", "-S", "\(res),fps,hdr:12,vcodec:avc,acodec:m4a", "--merge-output-format", "mp4"]
+    }
+
+    /// Sites whose videos all have the same title ("Video by name"): the file is named after the caption instead, with the
+    /// video's id so two videos never share a name (the engine would skip the second as "already downloaded").
+    public static func naming(_ url: String) -> [String] {
+        let host = URL(string: url)?.host?.lowercased() ?? ""
+        let captioned = ["instagram.com", "facebook.com", "fb.watch", "x.com", "twitter.com", "snapchat.com", "threads.net", "threads.com"]
+        return captioned.contains { host == $0 || host.hasSuffix("." + $0) }
+            ? ["--parse-metadata", "%(description,title)s:(?s)(?P<title>.+)", "-o", "%(title).120B [%(id)s].%(ext)s"]
+            : ["-o", "%(title).150B.%(ext)s"]
     }
 
     /// One picture quality a video is offered in.
@@ -308,10 +319,10 @@ public enum SiteVideo {
             "--progress-template", "download:\(progressTag) %(progress.downloaded_bytes)s %(progress.total_bytes)s %(progress.total_bytes_estimate)s %(progress.speed)s %(info.format_id)s %(info.height)s %(info.vcodec)s",
             "--print", "after_move:\(fileTag) %(filepath)s",
             "-P", "home:\(folder)", "-P", "temp:\(temp)",
-            "-o", "%(title).150B.%(ext)s",
             "--concurrent-fragments", "4",
             "--js-runtimes", "node",
         ]
+        a += naming(url.absoluteString)
         if let quickJS { a += ["--js-runtimes", "quickjs:\(quickJS)"] }
         if let ffmpeg { a += ["--ffmpeg-location", (ffmpeg as NSString).deletingLastPathComponent] }  // folder: ffmpeg and ffprobe
         a += format(audioOnly: audioOnly, maxHeight: maxHeight)

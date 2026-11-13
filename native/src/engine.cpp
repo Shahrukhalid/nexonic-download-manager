@@ -516,7 +516,8 @@ struct Engine {
         }
         if (action == "flush") {
             for (auto& [id,j] : jobs) { persist(j); save(j); }
-            auto until = Clock::now() + std::chrono::seconds(5);
+            // Slow disks (and slow ARM machines) can take a while to hand back the resume data after flushing the cache.
+            auto until = Clock::now() + std::chrono::seconds(15);
             while (Clock::now() < until && std::any_of(jobs.begin(),jobs.end(),[](auto const& item) { return item.second.checkpoint_pending; })) {
                 pump(); session.wait_for_alert(std::chrono::milliseconds(100));
             }
