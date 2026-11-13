@@ -154,6 +154,12 @@ extension DownloadManager {
     private func listingFound(_ key: String, row: UUID?, _ fresh: [BatchEntry], owner: String) {
         guard var l = listings[key] else { return }
         if l.owner.isEmpty { l.owner = owner }
+        // A post the page gave as a link: once the search lists its files, they take its place (saved as they are, without
+        // asking Instagram for the post again). After the user chose, the post was already added, so its files are not.
+        let freshPosts = Set(fresh.compactMap(\.post))
+        if l.follow == nil {
+            l.entries.removeAll { $0.kind == "post" && freshPosts.contains(ProfileBatch.postCode($0.url) ?? "") }
+        }
         let posts = Set(l.entries.compactMap { $0.kind == "post" ? ProfileBatch.postCode($0.url) : nil })
         var have = Set(l.entries.map { ProfileBatch.key($0.url) })
         let added = fresh.filter { e in !(e.post.map { posts.contains($0) } ?? false) && have.insert(ProfileBatch.key(e.url)).inserted }
