@@ -235,6 +235,14 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
             Toggle("Wi-Fi only", "Wait for Wi-Fi or another unmetered network before downloading.", wifiOnly) {
                 wifiOnly = it; s.wifiOnly = it; Downloads.pump()
             }
+            var chargingOnly by remember { mutableStateOf(s.chargingOnly) }
+            var lowBattery by remember { mutableStateOf(s.lowBatteryPercent > 0) }
+            Toggle("Only while charging", "Downloads wait until the phone is on a charger, and pause when it is unplugged.", chargingOnly) {
+                chargingOnly = it; Downloads.setPowerRules(it, s.lowBatteryPercent)
+            }
+            Toggle("Pause when the battery is low", "Below 15% and not charging, downloads pause and continue once the phone charges.", lowBattery) {
+                lowBattery = it; Downloads.setPowerRules(s.chargingOnly, if (it) 15 else 0)
+            }
             var capMB by remember { mutableStateOf(if (s.dataCapMB > 0) s.dataCapMB.toString() else "") }
             var capHours by remember { mutableStateOf(s.dataCapHours.toString()) }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {

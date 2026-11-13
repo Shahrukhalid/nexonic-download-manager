@@ -55,6 +55,9 @@ public partial class App : Application
         // The extension's Download all: Profile Batch lists the profile, then the user picks Download Now or Add to Queue.
         manager.ProfileRequested += link => { ShowWindow(); Dialogs.ProfileBatchWindow(window!, manager, link); };
         manager.ShowRequested += ShowWindow;
+        void Drops() => DropTarget.Update(manager, ShowWindow, source => { ShowWindow(); Dialogs.Torrent(window!, manager, source, DownloadQueue.MainId); });
+        manager.SettingsApplied += Drops;
+        Drops();
         tray = new TrayIcon("Nexonic Download Manager");
         tray.DoubleClick += ShowWindow;
         var menu = tray.Menu.Items;

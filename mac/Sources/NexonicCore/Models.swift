@@ -297,6 +297,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var debrid = DebridSettings()
     /// The user's own categories, in the order they are checked (Settings → General).
     public var customCategories: [CustomCategory] = []
+    /// Settings → Extras (added in 0.32.0).
+    public var finish = FinishOptions()
 
     /// The folder the Add windows start in.
     public var startFolder: URL {
@@ -318,7 +320,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         case torrentsEnabled, connections, maxActive, speedLimitKBps, folder, sortIntoCategoryFolders = "categoryFolders", notifications, monitorClipboard,
              clipboardTypes, proxy, showCompleteDialog, playSound, markDownloads, scanEnabled, scanCommand,
              showDownloadDialog, showProgressWindow, bringToFrontOnBrowserDownload, checkForUpdates, skippedVersion, network, hostProfiles, torrentNetwork,
-             dataCapMB, dataCapHours, rememberLastFolder, lastFolder, appearance, customCategories, autoConnections, speedSchedule, duplicateAction, colorScheme, debrid
+             dataCapMB, dataCapHours, rememberLastFolder, lastFolder, appearance, customCategories, autoConnections, speedSchedule, duplicateAction, colorScheme, debrid, finish
     }
 
     /// Missing keys keep their defaults, so settings from older versions still load.
@@ -358,6 +360,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         lastFolder = try c.decodeIfPresent(String.self, forKey: .lastFolder) ?? d.lastFolder
         appearance = try c.decodeIfPresent(String.self, forKey: .appearance) ?? d.appearance
         colorScheme = try c.decodeIfPresent(String.self, forKey: .colorScheme) ?? d.colorScheme
+        finish = (try? c.decodeIfPresent(FinishOptions.self, forKey: .finish)) ?? d.finish
         debrid = (try? c.decodeIfPresent(DebridSettings.self, forKey: .debrid)) ?? d.debrid
         customCategories = CustomCategory.clean((try? c.decodeIfPresent([CustomCategory].self, forKey: .customCategories)) ?? [])
     }

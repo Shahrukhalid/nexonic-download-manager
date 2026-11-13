@@ -28,6 +28,8 @@ final class DownloadManager: ObservableObject {
     @Published var settings: AppSettings {
         didSet {
             applySpeedLimit()
+            SiteVideo.extraArguments = settings.finish.videoArguments
+            if settings.finish.dropTarget != oldValue.finish.dropTarget { DropTarget.update(settings.finish.dropTarget) }
             Adapters.required = settings.network.bindAdapter
             CategoryRules.list = settings.customCategories
             if settings.network.torrentBlocklist != oldValue.network.torrentBlocklist {
@@ -152,6 +154,8 @@ final class DownloadManager: ObservableObject {
         settings = loadedSettings
         Adapters.required = loadedSettings.network.bindAdapter
         CategoryRules.list = loadedSettings.customCategories
+        SiteVideo.extraArguments = loadedSettings.finish.videoArguments
+        if loadedSettings.finish.dropTarget { DispatchQueue.main.async { DropTarget.update(true) } }
         let blocklist = loadedSettings.network.torrentBlocklist
         Task.detached { await TorrentBlocklist.refresh(blocklist) }
         if UserDefaults.standard.bool(forKey: MissingFiles.removeOnStartKey) { loadedItems.removeAll(where: MissingFiles.isMissing) }
@@ -681,6 +685,7 @@ final class DownloadManager: ObservableObject {
                 }
             } else if rec.status == .failed {
                 post("Download failed", "\(rec.fileName): \(rec.error ?? "")")
+                tellPhone(rec.fileName, ok: false)
             }
             persist()
             schedule()
@@ -723,9 +728,11 @@ final class DownloadManager: ObservableObject {
 
     // MARK: after a download
 
-    private func finished(_ rec: DownloadRecord) {
+    private func finished(_ original: DownloadRecord) {
+        let rec = renamedByMask(original)
         guard let path = rec.savedPath else { return }
         let file = URL(fileURLWithPath: path)
+        tellPhone(rec.fileName, ok: true)
         if settings.markDownloads { markAsDownloaded(file, from: rec.url) }
         if settings.playSound { NSSound(named: "Glass")?.play() }
         var body = rec.fileName
@@ -744,6 +751,90 @@ final class DownloadManager: ObservableObject {
         case "folder": NSWorkspace.shared.activateFileViewerSelecting([file])
         default: if let a = AfterQueue(rawValue: action) { perform(a, done: rec.fileName) }
         }
+    }
+
+    /// Settings → Extras → Rename finished files: the file gets the pattern's name (a free one in its folder).
+    private func renamedByMask(_ rec: DownloadRecord) -> DownloadRecord {
+        guard rec.torrent == nil, rec.listing != true, let path = rec.savedPath,
+              let name = RenameMask.apply(settings.finish.renameMask, fileName: rec.fileName, url: rec.url,
+                                         date: rec.finished ?? Date(), category: rec.category.rawValue) else { return rec }
+        let from = URL(fileURLWithPath: path)
+        let to = FileNames.unique(name, in: from.deletingLastPathComponent())
+        guard (try? FileManager.default.moveItem(at: from, to: to)) != nil else { return rec }
+        update(rec.id) { $0.savedPath = to.path; $0.fileName = to.lastPathComponent }
+        return items.first { $0.id == rec.id } ?? rec
+    }
+
+    /// Settings → Extras → Notify my phone: a short message to the chosen address (never the link or the folder).
+    private func tellPhone(_ name: String, ok: Bool) {
+        guard let r = FinishNotice.request(settings.finish.notifyURL, fileName: name, ok: ok) else { return }
+        URLSession.shared.dataTask(with: r).resume()
+    }
+
+    /// Play while downloading: the part already there opens in the default player for its type.
+    func playPartial(_ id: UUID) {
+        guard let r = items.first(where: { $0.id == id }) else { return }
+        if r.status == .finished { open(id); return }
+        guard PartialPlay.ready(r), let work = r.workFile else { return }
+        // The file being written has a working suffix: a link with the real name lets the player know its type.
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("NexonicPlay", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let link = dir.appendingPathComponent(r.fileName)
+        try? FileManager.default.removeItem(at: link)
+        guard (try? FileManager.default.createSymbolicLink(at: link, withDestinationURL: URL(fileURLWithPath: work))) != nil else { return }
+        NSWorkspace.shared.open(link)
+    }
+
+    /// Quick Look of a finished file, or of the part there while it downloads.
+    func quickLook(_ id: UUID) {
+        guard let r = items.first(where: { $0.id == id }), let path = r.savedPath ?? r.workFile else { return }
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/usr/bin/qlmanage")
+        p.arguments = ["-p", path]
+        p.standardOutput = FileHandle.nullDevice; p.standardError = FileHandle.nullDevice
+        try? p.run()
+    }
+
+    /// Video tools: "mp4" (the same video in an .mp4 file) or "audio" (its sound alone), without re-encoding.
+    func convert(_ id: UUID, to kind: String) {
+        guard let r = items.first(where: { $0.id == id }), r.status == .finished, let input = r.savedPath,
+              let ffmpeg = FFmpeg.path else { post("Video tools", "The video engine's tools are not installed yet."); return }
+        let name = (input as NSString).lastPathComponent
+        DispatchQueue.global().async { [weak self] in
+            let output: String
+            let args: [String]
+            if kind == "mp4" {
+                output = MediaTools.output(for: input, ext: "mp4")
+                args = MediaTools.remuxArguments(input: input, output: output)
+            } else {
+                output = MediaTools.output(for: input, ext: MediaTools.audioExtension(codec: DownloadManager.audioCodec(input, ffmpeg: ffmpeg)))
+                args = MediaTools.audioArguments(input: input, output: output)
+            }
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: ffmpeg)
+            p.arguments = args
+            p.standardOutput = FileHandle.nullDevice; p.standardError = FileHandle.nullDevice
+            var ok = (try? p.run()) != nil
+            if ok { p.waitUntilExit(); ok = p.terminationStatus == 0 && FileManager.default.fileExists(atPath: output) }
+            if !ok { try? FileManager.default.removeItem(atPath: output) }
+            DispatchQueue.main.async {
+                self?.post(ok ? "Saved" : "Could not convert", ok ? (output as NSString).lastPathComponent : "\(name): this file's video or sound can't be copied into that format.")
+                if ok { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: output)]) }
+            }
+        }
+    }
+
+    /// The first sound track's codec, as ffmpeg reports it ("Audio: aac …").
+    nonisolated static func audioCodec(_ input: String, ffmpeg: String) -> String {
+        let p = Process(), pipe = Pipe()
+        p.executableURL = URL(fileURLWithPath: ffmpeg)
+        p.arguments = ["-hide_banner", "-i", input]
+        p.standardError = pipe; p.standardOutput = FileHandle.nullDevice
+        guard (try? p.run()) != nil else { return "" }
+        let text = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+        p.waitUntilExit()
+        guard let r = text.range(of: #"Audio: ([a-z0-9]+)"#, options: .regularExpression) else { return "" }
+        return String(text[r].dropFirst(7))
     }
 
     /// The progress window's Speed Limiter: applies at once (a torrent takes it when it next starts).

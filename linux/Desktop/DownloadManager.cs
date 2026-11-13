@@ -86,6 +86,7 @@ public sealed partial class DownloadManager
         AudioConversion.Format = Settings.AudioFormat;
         EnginePaths.YtDlp = Settings.YtDlpPath?.Trim() ?? "";
         EnginePaths.FFmpeg = Settings.FFmpegPath?.Trim() ?? "";
+        SiteVideo.ExtraArguments = Settings.Finish.VideoArguments();
         // The app reads the inbox once its windows are ready (CollectInbox), so browser links get the download window.
         Schedule();
         UpdateWakeTimer();
@@ -98,6 +99,9 @@ public sealed partial class DownloadManager
         s.Folder = LinuxSystem.DownloadFolder();
         s.ScanCommand = "clamscan --no-summary";
     }
+
+    /// <summary>Options were saved (the app shows or hides the drop target).</summary>
+    public event Action? SettingsApplied;
 
     public void ApplySettings(AppSettings s)
     {
@@ -114,6 +118,8 @@ public sealed partial class DownloadManager
         foreach (var r in Rows) r.Refresh(); // sizes, speeds and dates in the chosen units
         EnginePaths.YtDlp = s.YtDlpPath?.Trim() ?? "";
         EnginePaths.FFmpeg = s.FFmpegPath?.Trim() ?? "";
+        SiteVideo.ExtraArguments = s.Finish.VideoArguments();
+        SettingsApplied?.Invoke();
         Write(AppPaths.Settings, s);
         Schedule();
     }
@@ -699,7 +705,7 @@ public sealed partial class DownloadManager
         transfers.Remove(rec.Id);
         rec.Manual = null;
         if (rec.Status == DownloadStatus.Finished && rec.Torrent == null) AfterDownload(rec);
-        if (rec.Status == DownloadStatus.Failed) { Notify?.Invoke("Download failed", $"{rec.FileName}: {rec.Error}"); PlaySound(Sounds.Event.Failed); }
+        if (rec.Status == DownloadStatus.Failed) { Notify?.Invoke("Download failed", $"{rec.FileName}: {rec.Error}"); FinishNotice.Send(Settings.Finish.NotifyUrl, rec.FileName, false); PlaySound(Sounds.Event.Failed); }
         Save();
         Schedule();
     }
@@ -708,6 +714,8 @@ public sealed partial class DownloadManager
 
     void AfterDownload(DownloadRecord rec)
     {
+        RenameMask.RenameFinished(rec, Settings.Finish.RenameMask);
+        FinishNotice.Send(Settings.Finish.NotifyUrl, rec.FileName, true);
         if (rec.SavedPath is not { } path) return;
         // Where the file came from, as browsers record it on Linux (shown by file managers).
         if (Settings.MarkDownloads) LinuxSystem.MarkOrigin(path, rec.Url);

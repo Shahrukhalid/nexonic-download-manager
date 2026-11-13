@@ -119,6 +119,7 @@ fun DownloadsScreen(items: List<DownloadItem>, ui: UiState, onOpenBrowser: () ->
     var searching by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
     val waitingForWifi by Downloads.waitingForWifi.collectAsState()
+    val waitingForPower by Downloads.waitingForPower.collectAsState()
     val waitingForVpn by Downloads.waitingForVpn.collectAsState()
     // Scan QR code: a nexonic:// code from the desktop apps, a web link or a magnet link opens the Add window.
     val scanQr = androidx.activity.compose.rememberLauncherForActivityResult(com.journeyapps.barcodescanner.ScanContract()) { result ->
@@ -208,6 +209,9 @@ fun DownloadsScreen(items: List<DownloadItem>, ui: UiState, onOpenBrowser: () ->
             }
             if (waitingForVpn) Surface(color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.fillMaxWidth()) {
                 Text(tr("Waiting for a VPN. Turn off \"VPN only\" in Settings to download without one."), Modifier.padding(12.dp), style = MaterialTheme.typography.bodySmall)
+            }
+            if (waitingForPower) Surface(color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.fillMaxWidth()) {
+                Text(tr("Waiting for the charger or more battery, as set in Settings."), Modifier.padding(12.dp), style = MaterialTheme.typography.bodySmall)
             }
             if (waitingForWifi) Surface(color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.fillMaxWidth()) {
                 Text("Waiting for Wi-Fi. Turn off \"Wi-Fi only\" in Settings to use mobile data.", Modifier.padding(12.dp), style = MaterialTheme.typography.bodySmall)

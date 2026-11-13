@@ -215,6 +215,11 @@
               <MenuItem Header="Open" Click="OnOpen" />
               <MenuItem Header="Show in Folder" Click="OnShowInFolder" />
               <MenuItem Header="Open With…" Click="OnOpenWith" />
+              <MenuItem x:Name="PlayItem" Header="Play While Downloading" Click="OnPlay" ToolTip="Opens the part already downloaded in your video or music player" />
+              <MenuItem x:Name="VideoToolsMenu" Header="Video Tools">
+                <MenuItem Header="Save as MP4" Click="OnSaveMp4" />
+                <MenuItem Header="Save Sound Only" Click="OnSaveSound" />
+              </MenuItem>
               <MenuItem Header="Show Progress" Click="OnShowProgress" />
               <Separator />
               <MenuItem Header="Resume" Click="OnResume" />

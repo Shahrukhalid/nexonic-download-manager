@@ -2,4 +2,7 @@
 <resources>
     <string name="app_name" translatable="false">Nexonic</string>
     <string name="share_download">Download with Nexonic</string>
+    <string name="widget_description" translatable="false">Download speed, Pause all and Add the copied link</string>
+    <string name="widget_pause_all" translatable="false">Pause all</string>
+    <string name="widget_add_copied" translatable="false">Add the copied link</string>
 </resources>

@@ -937,6 +937,33 @@ public sealed class MainWindow : Window
         BuildSidebar();
     }
 
+    /// <summary>Play while downloading: a link with the real name (the file being written has a working suffix) opens
+    /// in the desktop's player for its type.</summary>
+    static void Play(DownloadRecord r)
+    {
+        if (r.Status == DownloadStatus.Finished) { if (r.SavedPath is { } done) LinuxSystem.Open(done); return; }
+        if (!PartialPlay.Ready(r) || r.WorkFile is not { } work) return;
+        try
+        {
+            var dir = Path.Combine(Path.GetTempPath(), "nexonic-play-" + Environment.UserName);
+            Directory.CreateDirectory(dir);
+            var link = Path.Combine(dir, r.FileName);
+            if (File.Exists(link) || Directory.Exists(link)) File.Delete(link);
+            File.CreateSymbolicLink(link, work);
+            LinuxSystem.Open(link);
+        }
+        catch { }
+    }
+
+    static async Task SaveAs(DownloadRecord r, string kind)
+    {
+        if (r.SavedPath is not { } input) return;
+        if (FFmpeg.Path is not { } ffmpeg) { LinuxSystem.Notify("Video tools", "The video engine's tools are not installed yet."); return; }
+        var output = await MediaTools.ConvertAsync(ffmpeg, input, kind);
+        if (output != null) LinuxSystem.ShowInFolder(output);
+        else LinuxSystem.Notify("Could not convert", Path.GetFileName(input) + ": this file's video or sound can't be copied into that format.");
+    }
+
     ContextMenu BuildContextMenu()
     {
         var menu = new ContextMenu();
@@ -949,6 +976,9 @@ public sealed class MainWindow : Window
         }
         Item("Open", () => { if (One?.Record.SavedPath is { } p) LinuxSystem.Open(p); });
         Item("Show in Folder", () => { if (One?.Record.SavedPath is { } p) LinuxSystem.ShowInFolder(p); });
+        var play = Item("Play While Downloading", () => { if (One is { } r) Play(r.Record); });
+        var mp4 = Item("Save as MP4", () => { if (One is { } r) _ = SaveAs(r.Record, "mp4"); });
+        var sound = Item("Save Sound Only", () => { if (One is { } r) _ = SaveAs(r.Record, "audio"); });
         Item("Show Progress", () => { if (One is { } r) DownloadWindows.ShowProgress(manager, r); });
         menu.Items.Add(new Separator());
         Item("Resume", () => { foreach (var r in Selected) manager.Resume(r); });
@@ -968,6 +998,9 @@ public sealed class MainWindow : Window
         menu.Opening += (_, _) =>
         {
             torrentFiles.IsEnabled = One?.Record.Torrent != null;
+            var media = One is { Record: { Status: DownloadStatus.Finished } f } && PartialPlay.IsMedia(f.FileName);
+            play.IsVisible = media || One is { } p && PartialPlay.Ready(p.Record);
+            mp4.IsVisible = sound.IsVisible = media;
             recheck.IsEnabled = One?.Record.Torrent is { MetadataPending: false };
             moveMenu.Items.Clear();
             foreach (var q in manager.Queues)

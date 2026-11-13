@@ -495,6 +495,34 @@ public partial class MainWindow : Window
             Process.Start(new ProcessStartInfo("rundll32.exe") { ArgumentList = { "shell32.dll,OpenAs_RunDLL", p }, UseShellExecute = false });
     }
 
+    /// <summary>Play while downloading: the part already there opens in the player Windows uses for its type.</summary>
+    void OnPlay(object s, RoutedEventArgs e)
+    {
+        if (One is not { } row) return;
+        var r = row.Record;
+        if (r.Status == DownloadStatus.Finished) { OnOpen(s, e); return; }
+        if (!PartialPlay.Ready(r) || r.WorkFile is not { } work) return;
+        var player = DropTarget.PlayerFor(System.IO.Path.GetExtension(r.FileName));
+        try
+        {
+            if (player != null) Process.Start(new ProcessStartInfo(player) { ArgumentList = { work }, UseShellExecute = false });
+            else Process.Start(new ProcessStartInfo("rundll32.exe") { ArgumentList = { "shell32.dll,OpenAs_RunDLL", work }, UseShellExecute = false });
+        }
+        catch { }
+    }
+
+    void OnSaveMp4(object s, RoutedEventArgs e) => ConvertVideo("mp4");
+    void OnSaveSound(object s, RoutedEventArgs e) => ConvertVideo("audio");
+
+    async void ConvertVideo(string kind)
+    {
+        if (One is not { Record: { Status: DownloadStatus.Finished, SavedPath: { } input } }) return;
+        if (FFmpeg.Path is not { } ffmpeg) { MessageBox.Show(this, L.T("The video engine's tools are not installed yet."), "Nexonic"); return; }
+        var output = await MediaTools.ConvertAsync(ffmpeg, input, kind);
+        if (output != null) Process.Start("explorer.exe", $"/select,\"{output}\"");
+        else MessageBox.Show(this, L.T("This file's video or sound can't be copied into that format."), "Nexonic");
+    }
+
     void OnShowProgress(object s, RoutedEventArgs e) { if (One is { } r) DownloadWindows.ShowProgress(manager, r); }
     void OnGallery(object s, RoutedEventArgs e) => Dialogs.Gallery(this, manager);
     void OnLinkGrabber(object s, RoutedEventArgs e) => Dialogs.LinkGrabber(this, manager);
@@ -521,6 +549,8 @@ public partial class MainWindow : Window
     {
         MoveMenu.Items.Clear();
         RecheckItem.IsEnabled = One?.Record.Torrent is { MetadataPending: false };
+        PlayItem.Visibility = One is { } pr && (PartialPlay.Ready(pr.Record) || pr.Record.Status == DownloadStatus.Finished && PartialPlay.IsMedia(pr.Record.FileName)) ? Visibility.Visible : Visibility.Collapsed;
+        VideoToolsMenu.Visibility = One is { Record: { Status: DownloadStatus.Finished } vr } && PartialPlay.IsMedia(vr.FileName) ? Visibility.Visible : Visibility.Collapsed;
         foreach (var q in manager.Queues)
         {
             var item = new MenuItem { Header = q.Name };

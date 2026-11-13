@@ -54,6 +54,8 @@ class UiState {
     /** The add window: a browser offer, or pasted/shared text. */
     var addOffer by mutableStateOf<Offer?>(null)
     var addText by mutableStateOf<String?>(null)
+    /** The widget's Add button: the copied link goes into the Add window once the app is in front. */
+    var pasteCopied by mutableStateOf(false)
     /** A magnet link or .torrent file to show in the Add Torrent window. */
     var addTorrent by mutableStateOf<String?>(null)
     /** A playlist or channel link to list in the Add Playlist window ("" opens it empty). */
@@ -106,6 +108,7 @@ class MainActivity : ComponentActivity() {
     private fun handle(intent: Intent?) {
         intent ?: return
         when (intent.action) {
+            com.nexonic.downloadmanager.service.NexonicWidget.ACTION_ADD_COPIED -> { ui.tab = Tab.DOWNLOADS; ui.pasteCopied = true }
             Intent.ACTION_SEND -> {
                 val text = listOfNotNull(intent.getStringExtra(Intent.EXTRA_TEXT), intent.getStringExtra(Intent.EXTRA_SUBJECT)).joinToString(" ")
                 // A shared .torrent file, or a magnet link in shared text.

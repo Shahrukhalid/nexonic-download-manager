@@ -86,6 +86,7 @@ public sealed partial class DownloadManager
         AudioConversion.Format = Settings.AudioFormat;
         EnginePaths.YtDlp = Settings.YtDlpPath?.Trim() ?? "";
         EnginePaths.FFmpeg = Settings.FFmpegPath?.Trim() ?? "";
+        SiteVideo.ExtraArguments = Settings.Finish.VideoArguments();
         timer.Tick += (_, _) => Tick();
         timer.Start();
         CollectInbox();
@@ -93,6 +94,9 @@ public sealed partial class DownloadManager
         UpdateWakeTimer();
         Task.Run(SiteVideoTools.Prepare); // keeps the video engine current
     }
+
+    /// <summary>Options were saved (the app shows or hides the drop target).</summary>
+    public event Action? SettingsApplied;
 
     public void ApplySettings(AppSettings s)
     {
@@ -107,6 +111,8 @@ public sealed partial class DownloadManager
         foreach (var r in Rows) r.Refresh(); // sizes, speeds and dates in the chosen units
         EnginePaths.YtDlp = s.YtDlpPath?.Trim() ?? "";
         EnginePaths.FFmpeg = s.FFmpegPath?.Trim() ?? "";
+        SiteVideo.ExtraArguments = s.Finish.VideoArguments();
+        SettingsApplied?.Invoke();
         if (TorrentRuntime.Unavailable(s) != null)
             foreach (var row in Rows.Where(r => r.Record.Torrent != null && r.Record.IsActive).ToList()) Pause(row);
         Write(AppPaths.Settings, s);
@@ -701,7 +707,7 @@ public sealed partial class DownloadManager
         transfers.Remove(rec.Id);
         rec.Manual = null;
         if (rec.Status == DownloadStatus.Finished && rec.Torrent == null) AfterDownload(rec);
-        if (rec.Status == DownloadStatus.Failed) { Notify?.Invoke("Download failed", $"{rec.FileName}: {rec.Error}"); PlaySound(Sounds.Event.Failed); }
+        if (rec.Status == DownloadStatus.Failed) { Notify?.Invoke("Download failed", $"{rec.FileName}: {rec.Error}"); FinishNotice.Send(Settings.Finish.NotifyUrl, rec.FileName, false); PlaySound(Sounds.Event.Failed); }
         Save();
         Schedule();
     }
@@ -710,6 +716,8 @@ public sealed partial class DownloadManager
 
     void AfterDownload(DownloadRecord rec)
     {
+        RenameMask.RenameFinished(rec, Settings.Finish.RenameMask);
+        FinishNotice.Send(Settings.Finish.NotifyUrl, rec.FileName, true);
         if (rec.SavedPath is not { } path) return;
         if (Settings.MarkDownloads)
         {

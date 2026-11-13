@@ -100,6 +100,9 @@ public sealed class App : Application
         // The extension's Download all: Profile Batch lists the profile, then the user picks Download Now or Add to Queue.
         m.ProfileRequested += link => { ShowWindow(); _ = Dialogs.ProfileBatchWindow(window, m, link); };
         m.ShowRequested += ShowWindow;
+        void Drops() => DropTarget.Update(m, ShowWindow, source => { ShowWindow(); _ = Dialogs.Torrent(window, m, source, DownloadQueue.MainId); });
+        m.SettingsApplied += Drops;
+        Drops();
         m.Notify += (title, body) => { if (m.Settings.Notifications) LinuxSystem.Notify(title, body, IconPath); };
         m.Finished += r =>
         {
