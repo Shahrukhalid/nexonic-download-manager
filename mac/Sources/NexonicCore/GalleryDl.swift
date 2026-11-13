@@ -205,7 +205,11 @@ public extension GalleryDl {
                                                       proxyURL: proxy.flatMap(SiteVideo.proxyURL)))
         defer { if let settingsFile { try? FileManager.default.removeItem(at: settingsFile) } }
         var all: [BatchEntry] = [], seen = Set<String>(), owner = "", lastError = ""
-        for part in listParts(url) {
+        let parts = listParts(url)
+        for (index, part) in parts.enumerated() {
+            // The first part (an Instagram profile's posts) is worth waiting longer for; the later ones (reels, mostly on the
+            // posts grid already) are tried a few times, so the search doesn't stay open for an hour.
+            let patience = index == 0 ? 5 : 2
             var cursor: String?, tries = 0
             repeat {
                 var args = listArguments(url: part, max: max, settingsFile: settingsFile?.path, browser: cookies == nil ? browser : nil)
@@ -221,7 +225,7 @@ public extension GalleryDl {
                 // reader to its home page): after a pause the search continues where the engine says it got to (or from
                 // the same place), a few times, longer each time.
                 let said = resumeCursor(errors)
-                guard said != nil || throttled(errors), tries < 5, all.count < max else { break }
+                guard said != nil || throttled(errors), tries < patience, all.count < max else { break }
                 cursor = said ?? cursor
                 tries += 1
                 let pause = 120 * (1 << (tries - 1))  // 2, 4, 8, 16, 32 minutes

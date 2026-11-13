@@ -333,19 +333,30 @@ struct ProfileBatchView: View {
                 do {
                     let s = try await SocialWebView.scan(url, site: social.site, owner: social.owner, pages: social.pages, max: ProfileBatch.limit,
                                                          cookies: cookies, userAgent: userAgent, seed: l.entries,
-                                                         found: { n in status = String(format: String(localized: "%d found so far…"), n) },
+                                                         found: { n in
+                                                             status = String(format: String(localized: "%d found so far…"), n)
+                                                             // The row in the downloads list counts along with this window.
+                                                             manager.listings[key]?.found = n
+                                                             if let row = manager.items.first(where: { $0.listing == true && ProfileBatch.key($0.url.absoluteString) == key })?.id {
+                                                                 manager.update(row) { $0.streamDone = n; $0.status = .downloading }
+                                                             }
+                                                         },
                                                          stop: { stopRequested })
                     manager.listings[key]?.entries = s.entries
                     manager.listings[key]?.found = s.entries.count
                     manager.listings[key]?.scan = s
                     if let row = manager.items.first(where: { $0.listing == true && ProfileBatch.key($0.url.absoluteString) == key })?.id {
-                        manager.update(row) { $0.streamDone = s.entries.count }
+                        manager.update(row) { $0.streamDone = s.entries.count; $0.status = .finished }
                     }
                     show(s, url: url, filter: f)
                 } catch is CancellationError {
                     status = String(localized: "Stopped.")
                 } catch {
                     status = error.localizedDescription
+                }
+                // Stopped or failed: the row stops counting too.
+                if let row = manager.items.first(where: { $0.listing == true && ProfileBatch.key($0.url.absoluteString) == key && $0.status == .downloading })?.id {
+                    manager.update(row) { $0.status = .finished }
                 }
                 busy = false
             }

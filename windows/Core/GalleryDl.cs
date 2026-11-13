@@ -241,8 +241,12 @@ public static class GalleryList
             var all = new List<BatchEntry>();
             var seen = new HashSet<string>();
             var owner = "";
-            foreach (var part in Parts(url))
+            var parts = Parts(url);
+            foreach (var part in parts)
             {
+                // The first part (an Instagram profile's posts) is worth waiting longer for; the later ones (reels, mostly
+                // on the posts grid already) are tried a few times, so the search doesn't stay open for an hour.
+                var patience = part == parts[0] ? 5 : 2;
                 string? cursor = null;
                 for (var tries = 0; ; tries++)
                 {
@@ -257,7 +261,7 @@ public static class GalleryList
                     // the reader to its home page): after a pause the search continues where the engine says it got to (or
                     // from the same place), a few times, longer each time.
                     var said = ResumeCursor(errors);
-                    if (said == null && !Throttled(errors) || tries >= 5 || all.Count >= max) break;
+                    if (said == null && !Throttled(errors) || tries >= patience || all.Count >= max) break;
                     cursor = said ?? cursor;
                     var pause = 120 << tries;
                     waiting?.Invoke(pause);
