@@ -6,9 +6,10 @@
 
 **Free, open-source download manager for macOS, Windows, Linux and Android, with an iPhone and iPad build for testing.**
 
-An alternative to Internet Download Manager (IDM) with up to 256 adaptive connections on desktop and Android,
-resumable downloads, queues, scheduling, BitTorrent, and browser integration. Save videos from supported sites
-such as YouTube, Instagram, Facebook, X and TikTok on desktop and Android.
+**Download every photo and video of an Instagram, TikTok or Facebook profile in one click.** An alternative to
+Internet Download Manager (IDM) with up to 256 adaptive connections, resumable downloads, queues, scheduling,
+a per-download speed limiter, BitTorrent and browser integration. Save videos from YouTube, Instagram, Facebook,
+X, TikTok and 1,000+ sites on desktop and Android.
 
 [![Latest release](https://img.shields.io/github/v/release/Shahrukhalid/nexonic-download-manager?label=download)](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest)
 [![Support on Patreon](https://img.shields.io/badge/support-Patreon-f96854?logo=patreon&logoColor=white)](https://www.patreon.com/Shahrukhalid)
@@ -132,6 +133,23 @@ On macOS 13–14 you can also right-click the app → **Open** → **Open**.
 
 ## Features
 
+### Download all, in one click
+
+Open an Instagram, TikTok or Facebook profile in your browser and click **Download all** in the Nexonic extension.
+
+- **Everything, found in the background.** The Nexonic window opens with what the page shows and keeps finding
+  the rest with your own browser sign-in: photos, videos and reels, at a pace the site accepts.
+- **Your choice, then one click.** Choose the folder and quality, then **Download Now** or **Add to Queue**.
+  Posts and files are counted separately, because one post can hold several photos or videos.
+- **Keeps going.** Close the window and the search continues as a row in the downloads list. Click **Find Videos**
+  later to add only what is new.
+- Desktop apps (macOS, Windows, Linux x64). Facebook profiles are read in the background on Mac. Nexonic only sees
+  what your account can see.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/mac-profile.png" alt="Profile Batch: every photo and video of a profile, ready to download" width="760">
+</p>
+
 ### Downloads and scheduling
 
 - **Adaptive downloads (desktop and Android).** Start with four connections and increase up to 256 while speed
@@ -140,6 +158,9 @@ On macOS 13–14 you can also right-click the app → **Open** → **Open**.
   serving a different file and verifies the finished file when a checksum is available.
 - **Pause, resume and refresh links.** Resume after restarting the app, or replace an expired link and keep the data
   already downloaded. Import a browser's **Copy as cURL** command with its request details, or export a download as cURL.
+- **Speed limiter and completion actions.** On Mac, each download's progress window has **Speed limiter** and
+  **Options on completion** tabs: cap one download, then open the file, show the folder, sleep or shut down when it
+  finishes. Torrents show seeds, peers, pieces, availability and ratio.
 - **Queues, scheduling and speed limits.** Start downloads at set times, set time-of-day speed rules on desktop and
   Android, and set a data budget for capped connections. Desktop tools include batch patterns, clipboard detection,
   a site grabber and a link grabber that groups split archives.
@@ -179,7 +200,7 @@ On macOS 13–14 you can also right-click the app → **Open** → **Open**.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/mac-info.png" alt="Download window that opens when a link is clicked in the browser" width="440">
-  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/mac-progress.png" alt="Progress window with speed graph and connections" width="440">
+  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/mac-progress.png" alt="Progress window with speed limiter and completion tabs" width="440">
 </p>
 
 <p align="center">
@@ -206,18 +227,6 @@ On macOS 13–14 you can also right-click the app → **Open** → **Open**.
   <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/windows-options.png" alt="Windows: Options" width="440">
 </p>
 
-## What's new in v0.28.0
-
-- Adaptive downloads now use up to 256 connections on macOS as well as Windows, Linux and Android. In the release
-  benchmark, a SHA-256-verified 120 MB download took 6.0 seconds versus 15.1 seconds on v0.27.0 with a local server
-  limited to 1 MB/s per connection.
-- Windows on Arm has its own installer and portable ZIP. The Android APK, Linux AppImage and Windows installer are
-  smaller, and Linux AppImages support differential updates.
-- Desktop video downloads can embed chapters and subtitles again. This release also adds Metalink and mirrors,
-  encrypted DNS over TLS, scheduled speed rules, cURL import and export, and more appearance controls on Windows and Linux.
-
-See the [changelog](CHANGELOG.md) for benchmark conditions and previous releases.
-
 ## How to use
 
 | To | Do this |
@@ -225,6 +234,7 @@ See the [changelog](CHANGELOG.md) for benchmark conditions and previous releases
 | Download a link | **Add URL**, paste the link, **Start Download** |
 | Save a YouTube / Instagram / Facebook / X / TikTok video | Point at the video → **Download this video**, or paste its link into **Add URL** |
 | Download from a website | Click the download link in your browser; the app takes over |
+| Download a whole profile | Open it in your browser → extension → **Download all** → choose folder and quality → **Download Now** |
 | Download at night | **Scheduler** → **New Queue** → set the time → add downloads with **Download Later** |
 | Continue an expired download | Right-click → **Refresh Link…** |
 

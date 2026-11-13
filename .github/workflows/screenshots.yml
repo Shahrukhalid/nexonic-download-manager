@@ -37,7 +37,7 @@ jobs:
           python3 scripts/demo-server.py 8099 &
           sleep 1
           APP="build/Nexonic Download Manager.app/Contents/MacOS/NexonicDownloadManager"
-          for shot in "main::light" "add:add:light" "scheduler:scheduler:light" "batch:batch:light" "info:info:light" "progress:progress:light" "main-dark::dark"; do
+          for shot in "main::light" "add:add:light" "scheduler:scheduler:light" "batch:batch:light" "info:info:light" "progress:progress:light" "profile:profile:light" "main-dark::dark"; do
             IFS=: read -r name sheet look <<< "$shot"
             rm -rf "$HOME/Library/Application Support/Nexonic Download Manager"
             NDM_DEMO=1 NDM_SNAPSHOT="$PWD/shots" NDM_NAME="mac-$name" NDM_SHEET="$sheet" NDM_APPEARANCE="$look" \
