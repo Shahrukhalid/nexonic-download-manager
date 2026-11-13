@@ -263,7 +263,7 @@ public extension GalleryDl {
     }
 
     /// The site refused for now (too many requests), as the engine reports it.
-    static func throttled(_ errors: String) -> Bool {
+    public static func throttled(_ errors: String) -> Bool {
         let e = errors.lowercased()
         return ["redirect to home page", "redirect to login page", "429", "too many requests", "rate limit", "please wait a few minutes"].contains { e.contains($0) }
     }

@@ -366,6 +366,8 @@ final class DownloadManager: ObservableObject {
 
     /// Downloads canceled while their transfer was still stopping.
     private var canceled = Set<UUID>()
+    /// Downloads a site refused for a while (Instagram's "redirect to home page"), and how often they were tried again.
+    private var siteRetries: [UUID: Int] = [:]
 
     func pause(_ id: UUID) {
         if let r = items.first(where: { $0.id == id }), r.listing == true { listings[ProfileBatch.key(r.url.absoluteString)]?.stop.set(); return }
@@ -663,7 +665,19 @@ final class DownloadManager: ObservableObject {
         if before != rec.status, [.finished, .failed, .paused, .queued].contains(rec.status) {
             transfers.removeValue(forKey: rec.id)
             if rec.status == .finished, rec.torrent == nil { finished(rec) }
-            if rec.status == .failed { post("Download failed", "\(rec.fileName): \(rec.error ?? "")") }
+            if rec.status == .failed, GalleryDl.throttled(rec.error ?? ""), (siteRetries[rec.id] ?? 0) < 3 {
+                // The site refused for a while: tried again by itself after a pause (5, 10, then 15 minutes).
+                let n = (siteRetries[rec.id] ?? 0) + 1, id = rec.id
+                siteRetries[id] = n
+                items[i].error = String(format: String(localized: "The site refused for a while; trying again in %d min."), 5 * n)
+                Task { @MainActor [weak self] in
+                    try? await Task.sleep(nanoseconds: UInt64(5 * 60 * n) * 1_000_000_000)
+                    guard let self, !self.canceled.contains(id), self.items.first(where: { $0.id == id })?.status == .failed else { return }
+                    self.resume(id)
+                }
+            } else if rec.status == .failed {
+                post("Download failed", "\(rec.fileName): \(rec.error ?? "")")
+            }
             persist()
             schedule()
         }
