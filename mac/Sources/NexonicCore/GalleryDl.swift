@@ -217,12 +217,14 @@ public extension GalleryDl {
                 } stop: { stop() || all.count >= max }
                 lastError = errors
                 note(part, cursor: cursor, found: all.count, errors)
-                // The site stopped answering partway (it limits how much one account may read in a row): the engine says
-                // where it got to; after a pause the search continues from there, a few times, longer each time.
-                cursor = resumeCursor(errors)
-                guard cursor != nil, tries < 6, all.count < max else { break }
+                // The site stopped answering (it limits how much one account may read in a row; Instagram then sends the
+                // reader to its home page): after a pause the search continues where the engine says it got to (or from
+                // the same place), a few times, longer each time.
+                let said = resumeCursor(errors)
+                guard said != nil || throttled(errors), tries < 5, all.count < max else { break }
+                cursor = said ?? cursor
                 tries += 1
-                let pause = 60 * (1 << (tries - 1))  // 1, 2, 4, 8, 16, 32 minutes
+                let pause = 120 * (1 << (tries - 1))  // 2, 4, 8, 16, 32 minutes
                 waiting(pause)
                 for _ in 0..<pause { if stop() { throw CancellationError() }; Thread.sleep(forTimeInterval: 1) }
             } while true
@@ -254,6 +256,12 @@ public extension GalleryDl {
         log.append(Data(text.utf8))
         if log.count > 200_000 { log = log.suffix(200_000) }
         try? log.write(to: searchLog, options: .atomic)
+    }
+
+    /// The site refused for now (too many requests), as the engine reports it.
+    static func throttled(_ errors: String) -> Bool {
+        let e = errors.lowercased()
+        return ["redirect to home page", "redirect to login page", "429", "too many requests", "rate limit", "please wait a few minutes"].contains { e.contains($0) }
     }
 
     /// Where an interrupted listing got to, as the engine says it ("Use '-o cursor=…' to continue").

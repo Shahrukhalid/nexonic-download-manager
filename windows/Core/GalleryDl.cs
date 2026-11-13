@@ -253,11 +253,13 @@ public static class GalleryList
                     if (owner.Length == 0) owner = listed.Owner;
                     all.AddRange(listed.Entries.Where(e => seen.Add(ProfileBatch.Key(e.Url))));
                     Note(part, cursor != null, all.Count, errors);
-                    // The site stopped answering partway (it limits how much one account may read in a row): the engine
-                    // says where it got to; after a pause the search continues from there, a few times, longer each time.
-                    cursor = ResumeCursor(errors);
-                    if (cursor == null || tries >= 6 || all.Count >= max) break;
-                    var pause = 60 << tries;
+                    // The site stopped answering (it limits how much one account may read in a row; Instagram then sends
+                    // the reader to its home page): after a pause the search continues where the engine says it got to (or
+                    // from the same place), a few times, longer each time.
+                    var said = ResumeCursor(errors);
+                    if (said == null && !Throttled(errors) || tries >= 5 || all.Count >= max) break;
+                    cursor = said ?? cursor;
+                    var pause = 120 << tries;
                     waiting?.Invoke(pause);
                     await Task.Delay(TimeSpan.FromSeconds(pause), cancel);
                 }
@@ -315,6 +317,11 @@ public static class GalleryList
         catch (IOException) { }
         catch (UnauthorizedAccessException) { }
     }
+
+    /// <summary>The site refused for now (too many requests), as the engine reports it.</summary>
+    public static bool Throttled(string errors) =>
+        new[] { "redirect to home page", "redirect to login page", "429", "too many requests", "rate limit", "please wait a few minutes" }
+            .Any(x => errors.Contains(x, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Where an interrupted listing got to, as the engine says it ("Use '-o cursor=…' to continue").</summary>
     public static string? ResumeCursor(string errors) =>

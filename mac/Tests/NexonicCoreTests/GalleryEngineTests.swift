@@ -82,5 +82,7 @@ final class GalleryEngineTests: XCTestCase {
         XCTAssertEqual(GalleryDl.listParts("https://www.tiktok.com/@someone"), ["https://www.tiktok.com/@someone"])
         XCTAssertEqual(GalleryDl.resumeCursor("[instagram][info] Use '-o cursor=QVFE_x-1' to continue downloading from the current position"), "QVFE_x-1")
         XCTAssertNil(GalleryDl.resumeCursor("[instagram][error] HttpError"))
+        XCTAssertTrue(GalleryDl.throttled("[instagram][error] HTTP redirect to home page (https://www.instagram.com/)"))
+        XCTAssertFalse(GalleryDl.throttled("[instagram][error] Unsupported URL"))
     }
 }

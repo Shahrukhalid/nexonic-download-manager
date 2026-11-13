@@ -109,5 +109,7 @@ public class GalleryEngineTests
         Assert.Equal(new[] { "https://www.tiktok.com/@someone" }, GalleryList.Parts("https://www.tiktok.com/@someone"));
         Assert.Equal("QVFE_x-1", GalleryList.ResumeCursor("[instagram][info] Use '-o cursor=QVFE_x-1' to continue downloading from the current position"));
         Assert.Null(GalleryList.ResumeCursor("[instagram][error] HttpError"));
+        Assert.True(GalleryList.Throttled("[instagram][error] HTTP redirect to home page (https://www.instagram.com/)"));
+        Assert.False(GalleryList.Throttled("[instagram][error] Unsupported URL"));
     }
 }
