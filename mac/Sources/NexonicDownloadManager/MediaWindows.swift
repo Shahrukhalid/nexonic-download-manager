@@ -162,7 +162,7 @@ struct ProfileBatchView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Paste a link to a profile, channel, playlist, gallery or page. Nexonic finds every video (and, on Instagram, TikTok, X and similar sites, every photo) using your browser's sign-in, skips the ones you already have and downloads the rest in their own queue. Facebook pages: what visitors see.")
                 .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            TextField("Link", text: $link).textFieldStyle(.roundedBorder).onSubmit(find)
+            TextField("Link", text: $link).textFieldStyle(.roundedBorder).onSubmit { find() }
                 // Pasting a whole link starts Find Videos straight away (typing one doesn't, until Return).
                 .onChange(of: link) { new in
                     defer { lastLink = new }
