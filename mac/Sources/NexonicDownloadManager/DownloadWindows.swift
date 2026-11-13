@@ -305,6 +305,9 @@ struct DownloadProgressView: View {
     let fit: (Bool) -> Void
     @State private var history: [Double] = []
     @State private var details = true
+    @State private var tab = 0  // 0 download status, 1 speed limiter, 2 options on completion
+    @State private var limitOn = false
+    @State private var limitKB = ""
 
     private var item: DownloadRecord? { manager.items.first { $0.id == id } }
 
@@ -336,35 +339,13 @@ struct DownloadProgressView: View {
                         .textSelection(.enabled)
                 }
             }
-            Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 5) {
-                row("Status", statusText(item))
-                row("File size", item.size.map(bytes) ?? "Unknown")
-                row("Downloaded", "\(bytes(item.received))" + (item.size != nil ? String(format: " (%.1f %%)", item.progress * 100) : ""))
-                row("Transfer rate", item.status.isActive ? speed(bps) : "–")
-                row("Time left", item.status.isActive ? (manager.eta(item).isEmpty ? "–" : manager.eta(item)) : "–")
-                row("Resume capability", item.acceptsRanges || item.siteVideo == true || item.isStream == true ? "Yes" : "No")
+            Picker("", selection: $tab) {
+                Text("Download status").tag(0)
+                Text("Speed limiter").tag(1)
+                Text("Options on completion").tag(2)
             }
-            .font(.callout)
-            ProgressView(value: item.status == .finished ? 1 : item.progress)
-            SpeedGraph(samples: history).frame(height: 44)
-            if details {
-                if item.isStream != true && item.siteVideo != true && !item.segments.isEmpty {
-                    Text("Start positions and progress by connection").font(.caption).foregroundStyle(.secondary)
-                    SegmentBar(segments: item.segments, size: item.size).frame(height: 12)
-                    connections(item)
-                } else if item.isStream == true {
-                    Text("Streamed video · pieces: \(item.streamDone ?? 0) of \(item.streamTotal ?? 0), joined into one .mp4")
-                        .font(.caption).foregroundStyle(.secondary)
-                } else if item.siteVideo == true {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("Video site · " + SiteVideo.choiceText(audioOnly: item.audioOnly, maxHeight: item.maxHeight) + ", picture and sound joined")
-                        Text("Save to: \(item.folder.path)").lineLimit(1).truncationMode(.middle)
-                        if let path = item.savedPath { Text("Saved as: \((path as NSString).lastPathComponent)").lineLimit(1) }
-                    }
-                    .font(.caption).foregroundStyle(.secondary)
-                    videoParts(item)
-                }
-            }
+            .pickerStyle(.segmented).labelsHidden()
+            if tab == 1 { limiter(item) } else if tab == 2 { completion(item) } else { status(item, bps: bps) }
             if let e = item.error { Text(e).font(.caption).foregroundStyle(.red).lineLimit(2) }
             HStack {
                 Button(details ? "Hide Details" : "Show Details") {
@@ -382,6 +363,91 @@ struct DownloadProgressView: View {
             }
         }
         .padding(16)
+        .onAppear {
+            limitOn = (item.speedLimitKBps ?? 0) > 0
+            limitKB = item.speedLimitKBps.map(String.init) ?? "500"
+        }
+    }
+
+    /// Speed limiter, like a download manager's: on or off, in KB/s, for this download only.
+    private func limiter(_ item: DownloadRecord) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Toggle("Use speed limiter for this download", isOn: $limitOn)
+            HStack {
+                Text("Maximum download speed")
+                TextField("KB/s", text: $limitKB).frame(width: 90).disabled(!limitOn)
+                Text("KB/s").foregroundStyle(.secondary)
+                Button("Apply") { manager.setSpeedLimit(id, kbps: limitOn ? Int(limitKB) ?? 0 : 0) }
+            }
+            Text(item.torrent != nil ? "A torrent takes the new speed the next time it starts (Pause, then Resume)."
+                 : "The new speed applies at once. The limit for all downloads is in Settings.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Options on completion: what happens when this download is done.
+    private func completion(_ item: DownloadRecord) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Picker("When this download is done", selection: Binding(get: { item.onComplete ?? "" },
+                                                                     set: { manager.setOnComplete(id, $0.isEmpty ? nil : $0) })) {
+                Text("Do nothing").tag("")
+                Text("Open the file").tag("open")
+                Text("Show it in Finder").tag("folder")
+                Text("Quit the app").tag(AfterQueue.quit.rawValue)
+                Text("Put the computer to sleep").tag(AfterQueue.sleep.rawValue)
+                Text("Shut down the computer").tag(AfterQueue.shutDown.rawValue)
+            }
+            .pickerStyle(.radioGroup)
+            Toggle("Show the download complete window", isOn: Binding(get: { manager.settings.showCompleteDialog },
+                                                                       set: { manager.settings.showCompleteDialog = $0 }))
+            Text("Shutting down asks macOS first; unsaved work in other apps can stop it.").font(.caption).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder private func status(_ item: DownloadRecord, bps: Double) -> some View {
+            Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 5) {
+                row("Status", statusText(item))
+                row("File size", item.size.map(bytes) ?? "Unknown")
+                row("Downloaded", "\(bytes(item.received))" + (item.size != nil ? String(format: " (%.1f %%)", item.progress * 100) : ""))
+                row("Transfer rate", item.status.isActive ? speed(bps) : "–")
+                row("Time left", item.status.isActive ? (manager.eta(item).isEmpty ? "–" : manager.eta(item)) : "–")
+                row("Resume capability", item.acceptsRanges || item.siteVideo == true || item.isStream == true || item.torrent != nil ? "Yes" : "No")
+            }
+            .font(.callout)
+            ProgressView(value: item.status == .finished ? 1 : item.progress)
+            SpeedGraph(samples: history).frame(height: 44)
+            if details {
+                if let t = item.torrent?.metadata {
+                    // A torrent: the swarm and its pieces, in place of connections.
+                    Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 4) {
+                        row("Seeds / peers", "\(t.seedsText) / \(t.peersText)")
+                        row("Connections", t.connections.map(String.init) ?? "–")
+                        row("Uploaded", bytes(t.uploaded) + String(format: " (ratio %.2f)", t.ratio))
+                        if let done = t.piecesDone, let all = t.pieceCount, all > 0 { row("Pieces", "\(done) of \(all)") }
+                        if let a = t.availability { row("Availability", String(format: "%.2f", a)) }
+                        if let f = t.files?.filter({ !$0.pad }), f.count > 1 { row("Files", "\(f.count)") }
+                        row("Save to", item.folder.path)
+                    }
+                    .font(.caption)
+                } else if item.isStream != true && item.siteVideo != true && !item.segments.isEmpty {
+                    Text("Start positions and progress by connection").font(.caption).foregroundStyle(.secondary)
+                    SegmentBar(segments: item.segments, size: item.size).frame(height: 12)
+                    connections(item)
+                } else if item.isStream == true {
+                    Text("Streamed video · pieces: \(item.streamDone ?? 0) of \(item.streamTotal ?? 0), joined into one .mp4")
+                        .font(.caption).foregroundStyle(.secondary)
+                } else if item.siteVideo == true {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Video site · " + SiteVideo.choiceText(audioOnly: item.audioOnly, maxHeight: item.maxHeight) + ", picture and sound joined")
+                        Text("Save to: \(item.folder.path)").lineLimit(1).truncationMode(.middle)
+                        if let path = item.savedPath { Text("Saved as: \((path as NSString).lastPathComponent)").lineLimit(1) }
+                    }
+                    .font(.caption).foregroundStyle(.secondary)
+                    videoParts(item)
+                }
+            }
     }
 
     private func row(_ label: String, _ value: String) -> some View {

@@ -23,6 +23,8 @@
   to choose the folder and quality, then Download Now or Add to Queue. On a profile Nexonic meanwhile finds the rest in
   the background with your browser's sign-in, and what it finds joins that choice (a row in the list shows the count).
   Facebook: the videos the page shows. The popup remembers what it sent for a page.
+- The progress window has Speed limiter and Options on completion tabs (open the file, show it in Finder, quit, sleep or
+  shut down when this download is done). Torrents show their size, progress, seeds and peers, pieces and upload there.
 - Instagram profiles are searched for their posts and then their reels; when Instagram stops answering partway, the
   search waits and continues from where it got to (a few times, longer each time) instead of ending there.
 - Profile Batch on the Mac: **Close** only hides the window; what it was doing keeps going, and Profile Batch in the

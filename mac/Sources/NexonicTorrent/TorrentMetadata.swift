@@ -188,5 +188,12 @@ public struct TorrentTask: Codable, Equatable, Sendable {
               !files.enumerated().contains(where: { $0.element.pad && values[$0.offset] != 0 }) else { throw TorrentFailure("Select at least one real file with valid priorities.") }
         return values
     }
-    public var selectedSize: Int64 { zip(metadata?.files ?? [], priorities ?? []).filter { $0.1 > 0 }.reduce(0) { $0 + $1.0.size } }
+    /// The size of the chosen files; before the file list is known (or when the engine's progress reports leave it out),
+    /// the size the engine says it wants, else the whole torrent's.
+    public var selectedSize: Int64 {
+        let chosen = zip(metadata?.files ?? [], priorities ?? []).filter { $0.1 > 0 }.reduce(0) { $0 + $1.0.size }
+        if chosen > 0 { return chosen }
+        if let wanted = metadata?.wantedSize, wanted > 0 { return wanted }
+        return metadata?.size ?? 0
+    }
 }

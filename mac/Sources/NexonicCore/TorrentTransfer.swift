@@ -75,6 +75,9 @@ public final class TorrentTransfer: Downloader, @unchecked Sendable {
             switch result {
             case .failure(let error): fail(error)
             case .success(let snapshot):
+                // A progress report without the file list keeps the list already known (sizes and choices stay right).
+                var snapshot = snapshot
+                if snapshot.files?.isEmpty ?? true { snapshot.files = record.torrent?.metadata?.files }
                 record.torrent?.metadata = snapshot
                 if record.torrent?.priorities == nil { record.torrent?.priorities = snapshot.files?.map { $0.pad ? 0 : 4 } }
                 record.fileName = snapshot.name ?? record.fileName

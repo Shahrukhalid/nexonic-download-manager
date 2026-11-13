@@ -566,19 +566,22 @@ final class DownloadManager: ObservableObject {
         }
     }
 
-    private func afterQueue(_ q: DownloadQueue) {
-        switch q.afterDone {
+    private func afterQueue(_ q: DownloadQueue) { perform(q.afterDone, done: q.name) }
+
+    /// Quit, sleep or shut down once something is done (a queue, or a download's Options on completion).
+    private func perform(_ action: AfterQueue, done name: String) {
+        switch action {
         case .nothing:
             return
         case .quit:
             persist()
             NSApp.terminate(nil)
         case .sleep:
-            post("Queue finished", "\(q.name) is done. The Mac will sleep now.")
+            post("Finished", "\(name) is done. The Mac will sleep now.")
             run("/usr/bin/pmset", ["sleepnow"])
         case .shutDown:
             persist()
-            post("Queue finished", "\(q.name) is done. Shutting down.")
+            post("Finished", "\(name) is done. Shutting down.")
             var error: NSDictionary?
             NSAppleScript(source: "tell application \"System Events\" to shut down")?.executeAndReturnError(&error)
         }
@@ -645,6 +648,7 @@ final class DownloadManager: ObservableObject {
         // Fields edited in the app while the transfer runs stay as edited.
         rec.queueID = items[i].queueID
         rec.speedLimitKBps = items[i].speedLimitKBps
+        rec.onComplete = items[i].onComplete
         if let edited = items[i].torrent, rec.torrent != nil {  // torrent settings changed while it runs
             rec.torrent?.options = edited.options; rec.torrent?.priorities = edited.priorities
             rec.size = rec.torrent?.selectedSize
@@ -733,6 +737,24 @@ final class DownloadManager: ObservableObject {
             unzip(URL(fileURLWithPath: archive))
         }
         if settings.showCompleteDialog { CompleteWindow.show(rec, manager: self) }
+        // The download's own Options on completion.
+        let action = rec.onComplete ?? ""
+        switch action {
+        case "open": NSWorkspace.shared.open(file)
+        case "folder": NSWorkspace.shared.activateFileViewerSelecting([file])
+        default: if let a = AfterQueue(rawValue: action) { perform(a, done: rec.fileName) }
+        }
+    }
+
+    /// The progress window's Speed Limiter: applies at once (a torrent takes it when it next starts).
+    func setSpeedLimit(_ id: UUID, kbps: Int) {
+        update(id) { $0.speedLimitKBps = kbps > 0 ? kbps : nil }
+        transfers[id]?.ownLimiter.setLimit(bytesPerSecond: max(0, kbps) * 1024)
+    }
+
+    /// The progress window's Options on completion.
+    func setOnComplete(_ id: UUID, _ action: String?) {
+        update(id) { $0.onComplete = action }
     }
 
     /// Lets macOS check the file the first time it is opened, as it does for browser downloads.
