@@ -204,8 +204,9 @@ public partial class App : Application
     /// <summary>Lets the browser extension find the helper (per user, no admin rights needed).</summary>
     static void RegisterBrowserHost()
     {
-        var host = Path.Combine(AppContext.BaseDirectory, "nexonic-host.exe");
-        if (!File.Exists(host)) return;
+        var beside = Path.Combine(AppContext.BaseDirectory, "nexonic-host.exe");
+        if (!File.Exists(beside)) return;
+        var host = StorePackage.HelperPath(beside);
         var manifest = Path.Combine(AppPaths.Support, NativeMessaging.HostName + ".json");
         File.WriteAllText(manifest, NativeMessaging.Manifest(host));
         foreach (var browser in new[] { @"Google\Chrome", @"Microsoft\Edge", @"BraveSoftware\Brave-Browser", @"Chromium", @"Vivaldi" })

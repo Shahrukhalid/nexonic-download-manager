@@ -1,0 +1,57 @@
+name: Microsoft Store package
+# Builds the Microsoft Store edition (MSIX) from a published, verified release's portable Windows files, run by hand
+# (Actions → Microsoft Store package). Upload the .msix files to Partner Center → the app → Packages.
+# Repository variables (Settings → Secrets and variables → Actions → Variables), from Partner Center → Product identity:
+#   MSIX_IDENTITY_NAME, MSIX_PUBLISHER (CN=…), MSIX_PUBLISHER_NAME. Without them a test package is made (not for upload).
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag (empty = latest)
+        required: false
+permissions:
+  contents: read
+jobs:
+  msix:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      IDENTITY: ${{ vars.MSIX_IDENTITY_NAME }}
+      PUBLISHER: ${{ vars.MSIX_PUBLISHER }}
+      PUBLISHER_NAME: ${{ vars.MSIX_PUBLISHER_NAME }}
+      INPUT_TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Pick the release and match its version
+        shell: pwsh
+        run: |
+          $tag = $env:INPUT_TAG
+          if (-not $tag) { $tag = gh release view --repo $env:GITHUB_REPOSITORY --json tagName -q .tagName }
+          git fetch --depth 1 origin "refs/tags/${tag}:refs/tags/${tag}"
+          git checkout -q $tag -- VERSION
+          "TAG=$tag" >> $env:GITHUB_ENV
+      - name: Package x64 and Arm64
+        shell: pwsh
+        run: |
+          $id = $env:IDENTITY; $pub = $env:PUBLISHER; $name = $env:PUBLISHER_NAME
+          if (-not $id -or -not $pub -or -not $name) {
+            Write-Host "::warning::MSIX_IDENTITY_NAME, MSIX_PUBLISHER and MSIX_PUBLISHER_NAME are not set: making a test package that Partner Center will not accept."
+            $id = "Nexonic.DownloadManager.Test"; $pub = "CN=Nexonic Test"; $name = "Nexonic Test"
+          }
+          foreach ($pair in @(@("x64", "NexonicDownloadManager-Windows-Portable.zip"), @("arm64", "NexonicDownloadManager-Windows-ARM64-Portable.zip"))) {
+            $arch, $zip = $pair
+            Remove-Item build\win -Recurse -Force -ErrorAction SilentlyContinue
+            gh release download $env:TAG --repo $env:GITHUB_REPOSITORY -p $zip -D dl --clobber
+            if ($LASTEXITCODE -ne 0) { throw "Cannot download $zip" }
+            Expand-Archive "dl\$zip" build\win -Force
+            # The zip may hold one folder with the files.
+            $top = Get-ChildItem build\win
+            if ($top.Count -eq 1 -and $top[0].PSIsContainer) { $inner = $top[0].FullName; Move-Item "$inner\*" build\win; Remove-Item $inner }
+            ./scripts/build-msix.ps1 -IdentityName $id -Publisher $pub -PublisherName $name -Arch $arch
+          }
+          Get-ChildItem build\*.msix | Format-Table Name, Length
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: microsoft-store-packages
+          path: build/*.msix
