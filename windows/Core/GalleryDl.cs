@@ -327,6 +327,16 @@ public static class GalleryList
         new[] { "redirect to home page", "redirect to login page", "429", "too many requests", "rate limit", "please wait a few minutes" }
             .Any(x => errors.Contains(x, StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>
+    /// The site, not the app, stopped it: too many requests, a sign-in or age check, a private or removed post, a region
+    /// block or a refused address. Live checks report these apart from failures of the app itself.
+    /// </summary>
+    public static bool SiteRestriction(string errors) =>
+        Throttled(errors) || new[] { "login required", "log in", "sign in", "logged-in", "private", "this content isn't available",
+            "not available in your country", "geo restrict", "age-restricted", "age restricted", "confirm you're not a bot",
+            "http error 401", "http error 403", "forbidden", "empty media response", "requested content is not available",
+            "use --cookies", "account cookies" }.Any(x => errors.Contains(x, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>Where an interrupted listing got to, as the engine says it ("Use '-o cursor=…' to continue").</summary>
     public static string? ResumeCursor(string errors) =>
         System.Text.RegularExpressions.Regex.Match(errors, @"-o cursor=([^'""\s]+)") is { Success: true } m ? m.Groups[1].Value : null;

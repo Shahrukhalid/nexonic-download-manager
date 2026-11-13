@@ -1,3 +1,29 @@
+## 0.31.1
+
+**Privacy and security**
+- Android: Profile Batch's visitor view of an Instagram or Facebook profile now runs in a web profile of its own,
+  emptied after every scan. Before, it shared the Browser tab's cookies, so a "visitor" scan could use your sign-in.
+  Where the phone's WebView can't keep profiles apart, Profile Batch uses the cookie-free listing instead. The
+  Browser tab and signed-in video downloads work as before.
+- Android: the browser cookies a video download uses are written to a file of its own that only the app can read and
+  that is deleted when the download ends (it used to stay in the cache, shared by every download).
+
+**Profile Batch**
+- Android: a photo or video whose address the site signs anew each time is now recognised as the same file, as on
+  the desktop apps, so it is not listed or downloaded twice. Shared test cases now check this on Mac, Windows, Linux
+  and Android alike.
+- The live check of real public profiles runs weekly and reports a site's refusal (sign-in, rate limit, region) apart
+  from a failure of the app; it also stops and continues each listing and downloads a sample twice.
+
+**Translations**
+- 2,227 machine-translated texts that were broken or in another language were replaced with English: Uzbek and
+  Kurdish texts written in the wrong alphabet, Lao texts in Khmer, and texts with damaged placeholders such as
+  `%. 1f`. One Simplified Chinese help text was corrected. A new check in CI stops such texts from coming back.
+
+**Releases**
+- A release is now published only after its checksums, signed checksum list, build attestations and SBOM are made,
+  attached and checked, and after `latest.json` is confirmed to match the files. If anything fails, it stays a draft.
+
 ## 0.31.0
 
 **Profile Batch**

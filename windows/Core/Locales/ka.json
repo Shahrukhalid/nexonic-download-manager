@@ -214,7 +214,7 @@
     "Original format (no conversion)": "ორიგინალური ფორმატი (გადამუშავების გარეშე)",
     "MP3": "MP3",
     "Opus": "ოპუსიName",
-    "FLAC": "FLACName",
+    "FLAC": "FLAC",
     "Converting needs FFmpeg. MP3 uses the best variable quality; FLAC keeps every detail of the sound the site sends.": "FFmpeg- ის გადამუშავებაა საჭირო. MP3 იყენებს საუკეთესო ცვალებად ხარისხს; FLAC ინარჩუნებს საიტის მიერ გაგზავნილი ხმის ყველა დეტალს.",
     "Downloads I resume myself: run this many at once beside the queues (0 = they wait for a queue slot)": "ჩამოტვირთვები მე თვითონ ვაგრძელებ: ამდენი ჩამოტვირთვის ერთდროულად გაშვება რიგის გვერდით (0 = ისინი ელოდება რიგის ადგილს)",
     "Missing files": "ფაილები არ არის",

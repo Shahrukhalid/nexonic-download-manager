@@ -1,7 +1,10 @@
 # Profile Batch against real public profiles, run by hand (Actions → Profile Batch live check). Uses the app's own code,
-# no login or cookies. Not a required check: sites change and may limit data-centre addresses.
+# no login or cookies. Not a required check: sites change and may limit data-centre addresses, so the report tells a
+# site's refusal apart from a failure of the app, and only the latter fails the run. Also runs weekly.
 name: Profile Batch live check
 on:
+  schedule:
+    - cron: "41 3 * * 1"
   workflow_dispatch:
     inputs:
       links:
@@ -36,5 +39,6 @@ jobs:
           LINKS: ${{ inputs.links }}
         run: |
           # shellcheck disable=SC2086
+          # (the weekly run passes no links: the program's own public list is used)
           dotnet run -c Release --project scripts/profile-batch-live -- $LINKS | tee report.md
           cat report.md >> "$GITHUB_STEP_SUMMARY"

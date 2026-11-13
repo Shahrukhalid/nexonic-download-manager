@@ -214,7 +214,7 @@
     "Sites whose links go through it (comma separated, e.g. example-host.com)": "Àwọn ojú-ìwé tí àwọn líǹkì náà lọ́wọ́lọ́wọ́ (tí a fi kọ́mìnà pamọ́, b.k.a. ojú-ìwé-ọ̀rọ̀bọ̀tà.com)",
     "Off by default. Uses your own account; links from other sites are never sent to the service. The key is saved encrypted and never in backups.": "Tí kò bá jẹ́ nípa ìpéwọ̀n. Ló àwọn àwọn ìṣàmúlò-ètò rẹ̀; àwọn líǹkì láti inú àwọn sáà mìíràn kò bá fi pamọ́ sí iṣẹ́ náà. Bọ́tìnì náà tí a fi pamọ́ ní pàtó àti kò bá fi pamọ́ nínú àwọn ìpamọ́.",
     "RSS Feeds": "Àwọn Ìjánu-ìwé RSS",
-    "New items of these feeds are downloaded when their title matches the rule: files and videos, and torrents when torrents are on. A rule lists words that must all be in the title, or a /regular expression/.": "Àwọn nǹkan tuntun láti inú àwọn ìṣàfihàn yìí nígbà tí àwọn àmì-ìwé àwọn náà bá jẹ́ àwọn àmì-ìwé àwọn fáìlì àti àwọn àwòrán, àti àwọn tónẹ́ẹ̀lì tí àwọn tónẹ́ẹ̀lì náà bá jẹ́. Àwọn àmì-ìwé àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn",
+    "New items of these feeds are downloaded when their title matches the rule: files and videos, and torrents when torrents are on. A rule lists words that must all be in the title, or a /regular expression/.": "New items of these feeds are downloaded when their title matches the rule: files and videos, and torrents when torrents are on. A rule lists words that must all be in the title, or a /regular expression/.",
     "every item": "gbogbo àwòrán",
     "not checked yet": "tí a kò ṣayẹwo",
     "Add Feed…": "Add Feed…",

@@ -223,6 +223,7 @@ jobs:
   windows:
     permissions:
       contents: write
+      actions: write
     needs: [release, ffmpeg-windows, linux]
     runs-on: windows-latest
     timeout-minutes: 60
@@ -331,11 +332,15 @@ jobs:
             body = (Get-Content CHANGELOG.md -Raw); assets = $assets
           } | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8NoBOM latest.json
           gh release upload $tag latest.json --clobber
-      - name: Publish the release (all Mac, Windows and Linux files are attached now)
+      # The draft is published only by Release verification, after its checksums, signed checksum list, build
+      # attestations and SBOM are made, attached and checked: a release is never public before it is verified.
+      - name: Hand the draft to Release verification (it publishes it when every check passes)
         env:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh
-        run: gh release edit $env:GITHUB_REF_NAME --draft=false --latest
+        run: |
+          gh workflow run verify-release.yml --ref main -f tag=$env:GITHUB_REF_NAME -f run=$env:GITHUB_RUN_ID
+          if ($LASTEXITCODE -ne 0) { throw "Could not start Release verification" }
   windows-arm64:
     permissions:
       contents: write

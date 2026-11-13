@@ -166,7 +166,9 @@ fun ProfileBatchSheet(link: String, onDismiss: () -> Unit, message: (String) -> 
             note.takeIf { it.isNotEmpty() }?.let { status += "\n" + it }
         }
         val social = com.nexonic.downloadmanager.core.SocialPages.find(url)
-        if (social != null) {
+        // The visitor's page is read only in a view kept apart from the browser's sign-in; without that, the engine's
+        // cookie-free listing below is used.
+        if (social != null && com.nexonic.downloadmanager.video.SocialWebView.isolated()) {
             // Instagram and Facebook show their posts only through their own pages: open them like a visitor's browser.
             val (site, name, pages) = social
             val web = com.nexonic.downloadmanager.video.SocialWebView

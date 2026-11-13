@@ -301,7 +301,7 @@
     "Light or dark text and panels for your scheme.": "Texto claro ou escuro e paneis para o seu esquema.",
     "Accent (#RRGGBB)": "Acento (# RRGGBB)",
     "Background (#RRGGBB)": "Fondo (# RRGGBB)",
-    "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).": "O acento é difícil de ver neste fondo (contraste% 1f: 1, requírese polo menos 3: 1).",
+    "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).": "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).",
     "%d found so far…": "%d found so far…",
     "%d found · %d added · %d already downloaded · %d left out by filters · %d not accessible": "%d atopado · %d engadido · %d xa obtido · %d omitido polos filtros · %d non accesible",
     "1080p": "1080p",

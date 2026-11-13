@@ -301,7 +301,7 @@
     "Light or dark text and panels for your scheme.": "Сұлбаңыздағы ашық не қараңғы мәтін мен панелі.",
     "Accent (#RRGGBB)": "Акцент (# RRGGBB)",
     "Background (#RRGGBB)": "Аясы (# RRGGBB)",
-    "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).": "Бұл аясындағы акцентті көру қиын (контрасты% 1f: 1, кемінде 3: 1 болуы керек).",
+    "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).": "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).",
     "%d found so far…": "%d found so far…",
     "%d found · %d added · %d already downloaded · %d left out by filters · %d not accessible": "%d табылды · %d қосылды · %d жүктеліп қойды · %d сүзгілер арқылы өшірілді · %d қол жеткізбейді",
     "1080p": "1080p",

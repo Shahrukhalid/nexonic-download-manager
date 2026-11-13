@@ -14,7 +14,7 @@
 "All" = "အားလုံး";
 "All types" = "အမျိုးအစားအားလုံး";
 "Allow Notifications" = "အသိပေးချက်များကို ခွင့်ပြုပါ";
-"Backup" = "_B バックアップ";
+"Backup" = "Backup";
 "Batch" = "အစုလိုက်";
 "Batch Download" = "အစုလိုက်ဒေါင်းလုပ်လုပ်";
 "Bring the main window to the front for browser downloads" = "ဘရောက်ဆာမှဒေါင်းလုပ်ချရန်အတွက် အဓိကဝင်းဒိုးကိုရှေ့သို့ယူလာပါ";
@@ -238,7 +238,7 @@
 "Downloads at the same time: %lld" = "တစ်ချိန်တည်းမှာဒေါင်းလုပ်: %lld";
 "Put each type in its own folder (Video, Music, Documents, Programs, Compressed, Images)" = "၎င်း၏ကိုယ်ပိုင်ဖိုင်တွဲထဲမှာအမျိုးအစားတစ်ခုချင်းစီကိုထည့်ပါ (ဗီဒီယို, ဂီတ, စာရွက်စာတမ်းများ, ပရိုဂရမ်များ, ဖိသိပ်, ပုံရိပ်များ)";
 "With the download window off, downloads start right away. The app keeps running in the menu bar when its window is closed." = "download window ကိုပိတ်ထားခြင်းနှင့်အတူ, downloads ချက်ချင်းစတင်. အဆိုပါ app ကို၎င်း၏ window ကိုပိတ်ဆို့သည့်အခါ menu bar တွင် run  keeps.";
-"Proxy changes apply to downloads started afterwards. Password-protected downloads: add the user name and password in the Add window or under Properties." = "Password-protected downloads: add the user name and password in the Add window or under Properties.";
+"Proxy changes apply to downloads started afterwards. Password-protected downloads: add the user name and password in the Add window or under Properties." = "Proxy changes apply to downloads started afterwards. Password-protected downloads: add the user name and password in the Add window or under Properties.";
 "Smallest part of a file: %lld KB" = "ဖိုင်၏အသေးဆုံးအစိတ်အပိုင်း: %lld KB";
 "Tries per part before a download stops: %lld" = "တစ် download ကိုရပ်တန့်မတိုင်မီအစိတ်အပိုင်းတစ်ခုလျှင်စမ်းသပ်: %lld";
 "Reconnect a part that receives nothing for %lld s" = "%lld s အတွက်ဘာမှမရရှိသောအစိတ်အပိုင်းကိုပြန်ဆက်သွယ်ပါ";
@@ -301,7 +301,7 @@
 "Looking for peers…" = "Looking for peers…";
 "Flags: E encrypted, I incoming, P µTP, S seed" = "တံဆိပ်များ: E ကို encrypted, ငါဝင်ရောက်လာ, P µTP, S ကိုမျိုးစေ့";
 "Torrent Settings" = "Torrent သတ်မှတ်ချက်များ";
-"Bandwidth" = "bandwidth";
+"Bandwidth" = "Bandwidth";
 "Seeding" = "စိုက်ပျိုးခြင်း";
 "Trackers (one per line)" = "ခြေရာခံသူများ (လိုင်းတစ်ကြောင်းလျှင်တစ်ခု)";
 "Files" = "ဖိုင်များ";

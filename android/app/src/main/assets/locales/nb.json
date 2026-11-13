@@ -301,7 +301,7 @@
     "Light or dark text and panels for your scheme.": "Lys eller mørk tekst og paneler for ditt oppsett.",
     "Accent (#RRGGBB)": "Aksent (# RRGGBB)",
     "Background (#RRGGBB)": "Bakgrunn (# RRGGBB)",
-    "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).": "Aksentet er vanskelig å se på denne bakgrunnen (kontrast %. 1f: 1, minst 3: 1 er nødvendig).",
+    "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).": "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).",
     "%d found so far…": "%d found so far…",
     "%d found · %d added · %d already downloaded · %d left out by filters · %d not accessible": "%d funnet · %d lagt til · %d allerede lastet ned · %d utelatt av filtre · %d ikke tilgjengelig",
     "1080p": "1080p",

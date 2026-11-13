@@ -159,7 +159,7 @@
     "Check Server…": "Check Server…",
     "Check at least one link.": "Check at least one link.",
     "Download Checked": "Kopitsa ho tsoa",
-    "Download limit reached": "Tlosa ho tloha ho %s",
+    "Download limit reached": "Download limit reached",
     "Download limit: at most this many MB (0 = no limit)": "Boholo ba ho jarolla: ho feta moo MB (0 = ha ho lekanyetso)",
     "… every this many hours": "… lihora tsohle tse ngata",
     "When the amount is reached, downloads stop and continue by themselves when the next period starts.": "Ha palo e fihla, li-downloads li khutlela morao'me li tsoelapele ka tsona ha nako e latelang e qala.",

@@ -1,0 +1,25 @@
+{
+  "comment": "Profile Batch behaviour every app must share (Mac, Windows, Linux, Android). Each app's tests read this file.",
+  "keys": [
+    ["https://Scontent-ams2-1.cdninstagram.com/v/t51/abc.mp4?stp=dst&_nc_sid=1&oh=XYZ#f", "https://scontent-ams2-1.cdninstagram.com/v/t51/abc.mp4"],
+    ["https://video.fbcdn.net/o1/v/x.mp4?efg=1&oh=2", "https://video.fbcdn.net/o1/v/x.mp4"],
+    ["https://v16-webapp.tiktokcdn-us.com/a/b.mp4?x=1", "https://v16-webapp.tiktokcdn-us.com/a/b.mp4"],
+    ["https://pbs.twimg.com/media/A.jpg?name=orig", "https://pbs.twimg.com/media/A.jpg"],
+    ["https://www.YouTube.com/watch?v=abc#t=5", "https://www.youtube.com/watch?v=abc"],
+    ["HTTPS://example.com/Path/File.MP4?a=B", "https://example.com/Path/File.MP4?a=B"],
+    ["https://www.instagram.com/p/ABC123/", "https://www.instagram.com/p/ABC123/"]
+  ],
+  "choose": {
+    "found": [
+      "https://scontent.cdninstagram.com/v/1.mp4?oh=first",
+      "https://scontent.cdninstagram.com/v/1.mp4?oh=second",
+      "https://www.tiktok.com/@nasa/video/1",
+      "https://www.tiktok.com/@nasa/video/1#again",
+      "https://www.tiktok.com/@nasa/video/2"
+    ],
+    "downloaded": ["https://www.tiktok.com/@nasa/video/2"],
+    "discovered": 3,
+    "queued": 2,
+    "duplicates": 1
+  }
+}

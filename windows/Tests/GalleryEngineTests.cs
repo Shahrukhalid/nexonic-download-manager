@@ -112,4 +112,15 @@ public class GalleryEngineTests
         Assert.True(GalleryList.Throttled("[instagram][error] HTTP redirect to home page (https://www.instagram.com/)"));
         Assert.False(GalleryList.Throttled("[instagram][error] Unsupported URL"));
     }
+
+    [Fact]
+    public void SiteRefusalsAreToldApartFromAppFailures()
+    {
+        Assert.True(GalleryList.SiteRestriction("ERROR: [Instagram] abc: Requested content is not available, rate-limit reached or login required. Use --cookies"));
+        Assert.True(GalleryList.SiteRestriction("ERROR: [TikTok] 123: Your IP address is blocked: HTTP Error 403: Forbidden"));
+        Assert.True(GalleryList.SiteRestriction("ERROR: [youtube] x: Sign in to confirm you're not a bot"));
+        Assert.True(GalleryList.SiteRestriction("[instagram][error] HTTP redirect to login page (https://www.instagram.com/accounts/login/)"));
+        Assert.False(GalleryList.SiteRestriction("[instagram][error] Unsupported URL"));
+        Assert.False(GalleryList.SiteRestriction("Object reference not set to an instance of an object."));
+    }
 }

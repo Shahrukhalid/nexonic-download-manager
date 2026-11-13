@@ -158,7 +158,7 @@
 "Show in Finder" = "הצג ב- Finder";
 "Show the Download Complete window" = "הראה את חלון ההורדה המלא";
 "Show the download window when a link is clicked in the browser" = "הראה את חלון ההורדה כאשר נלחץ על קישור בדפדפן";
-"Site Grabber" = "Site GrabberName";
+"Site Grabber" = "Site Grabber";
 "Sites" = "אתרים";
 "Size" = "גודל";
 "Sound only" = "רק צליל";
@@ -213,7 +213,7 @@
 "Restart Now" = "להתחיל מחדש עכשיו";
 "Support the Project" = "תמיכה בפרויקט";
 "Torrent Settings…" = "הגדרות טורנט…";
-"Update Tracker" = "Update TrackerComment";
+"Update Tracker" = "Update Tracker";
 "%lld downloading" = "הורדת %lld";
 "%lld queued" = "בתור %lld";
 "Limit %lld KB/s" = "גבול %lld KB/s";

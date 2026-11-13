@@ -214,7 +214,7 @@
     "Original format (no conversion)": "Пачатковы фармат (без пераўтварэння)",
     "MP3": "MP3",
     "Opus": "Опус",
-    "FLAC": "FLACName",
+    "FLAC": "FLAC",
     "Converting needs FFmpeg. MP3 uses the best variable quality; FLAC keeps every detail of the sound the site sends.": "Для пераўтварэння патрабуецца FFmpeg. MP3 выкарыстоўвае найлепшую якасць зменлівай; FLAC захоўвае ўсе дэталі гуку, якія адпраўляе сайт.",
     "Downloads I resume myself: run this many at once beside the queues (0 = they wait for a queue slot)": "Сцягванні паўтараюцца самастойна: гэтая колькасць запускаецца адначасова побач з чаргамі (0 = яны чакаюць месца ў чарзе)",
     "Missing files": "Адсутнічаюць файлы",

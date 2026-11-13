@@ -184,3 +184,37 @@ public class ProfileBatchTests
         Assert.Null(ProfileBatch.PostCode("https://www.instagram.com/someone/"));
     }
 }
+
+/// <summary>The Profile Batch behaviour every app shares (tests/profile-batch-vectors.json).</summary>
+public class ProfileBatchParityTests
+{
+    static System.Text.Json.JsonElement Vectors()
+    {
+        for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)
+        {
+            var f = Path.Combine(d.FullName, "tests", "profile-batch-vectors.json");
+            if (File.Exists(f)) return System.Text.Json.JsonDocument.Parse(File.ReadAllText(f)).RootElement;
+        }
+        throw new FileNotFoundException("tests/profile-batch-vectors.json");
+    }
+
+    [Fact]
+    public void KeysMatchEveryApp()
+    {
+        foreach (var pair in Vectors().GetProperty("keys").EnumerateArray())
+            Assert.Equal(pair[1].GetString()!.TrimEnd('/'), ProfileBatch.Key(pair[0].GetString()!).TrimEnd('/'));
+    }
+
+    [Fact]
+    public void DuplicatesMatchEveryApp()
+    {
+        var c = Vectors().GetProperty("choose");
+        var found = c.GetProperty("found").EnumerateArray().Select(u => new BatchEntry(u.GetString()!, "Clip")).ToList();
+        var done = c.GetProperty("downloaded").EnumerateArray().Select(u => ProfileBatch.Key(u.GetString()!)).ToHashSet();
+        var (take, counts) = ProfileBatch.Choose(found, new BatchFilter { Max = 100 }, u => done.Contains(ProfileBatch.Key(u)));
+        Assert.Equal(c.GetProperty("discovered").GetInt32(), counts.Discovered);
+        Assert.Equal(c.GetProperty("queued").GetInt32(), counts.Queued);
+        Assert.Equal(c.GetProperty("duplicates").GetInt32(), counts.Duplicates);
+        Assert.Equal(take.Count, counts.Queued);
+    }
+}

@@ -274,7 +274,7 @@
     "Vibrate": "تىتىرەش",
     "When the app starts, finished downloads whose file was deleted or moved leave the list.": "پروگرامما قوزغالغاندا، ھۆججەتلەرنى ئۆچۈرۈپ ياكى يۆتكەپ بولغان چۈشۈرۈشلەر تىزىملىكتىن چىقىپ كېتىدۇ.",
     "With the finished and failed notifications.": "نەتىجىدە، نەتىجىگە ئېرىشەلمىگەن ۋە نەتىجىگە ئېرىشەلمىگەنلەر بار.",
-    "file[01-50].jpg makes 50 links; {jpg,png} tries each": "ھۆججەت[01-50].jpg 50 قىستۇرما ھاسىل قىلىدۇ؛ {jpg،png} ھەر بىرىنى سىنايدۇ",
+    "file[01-50].jpg makes 50 links; {jpg,png} tries each": "file[01-50].jpg makes 50 links; {jpg,png} tries each",
     "Just now": "ھازىر",
     "%d min ago": "ئالدىنقى %d مىنۇت",
     "%d h ago": "ئالدىنقى %d سائەت",

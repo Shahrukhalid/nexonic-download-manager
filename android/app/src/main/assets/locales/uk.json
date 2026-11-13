@@ -301,7 +301,7 @@
     "Light or dark text and panels for your scheme.": "Світлий або темний текст і панелі для вашої схеми.",
     "Accent (#RRGGBB)": "Наголос (# RRGGBB)",
     "Background (#RRGGBB)": "Тло (# RRGGBB)",
-    "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).": "На цьому тлі важко побачити акцент (контрастність% 1f: 1, потрібно принаймні 3: 1).",
+    "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).": "The accent is hard to see on this background (contrast %.1f:1, at least 3:1 is needed).",
     "%d found so far…": "%d found so far…",
     "%d found · %d added · %d already downloaded · %d left out by filters · %d not accessible": "Знайдено %d · Додано %d · Вже звантажено %d · %d вилучено за допомогою фільтрів · %d недоступно",
     "1080p": "1080p",

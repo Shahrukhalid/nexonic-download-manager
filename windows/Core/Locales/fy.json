@@ -229,7 +229,7 @@
     "The data is already in this folder.": "De gegevens binne al yn dizze map.",
     "Choose a folder that is not inside the current data folder (or the other way round).": "Kies in map dy' t net yn de aktive datamap sit (of omkeard).",
     "Choose an empty folder.": "Kies in lege map.",
-    "Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. A list in braces, {jpg,png}, tries each. Several ranges multiply.": "Set in berik tusken heakjes: [001- 100] behâldt trije sifers, [1- 100] net, [a- z] brûkt letters en [0- 100: 5] telt yn fiifkes. In list tusken heakjes, {jpg, png}, besiket elk. Meardere berik wurde ferdûbele.",
+    "Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. A list in braces, {jpg,png}, tries each. Several ranges multiply.": "Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. A list in braces, {jpg,png}, tries each. Several ranges multiply.",
     "Keep only (optional)": "Allinnich bewarje (opsjoneel)",
     "Words find links that contain them; * and ? are wildcards; a leading ! leaves links out. Example: *.jpg !*thumb*": "Wurden fine keppelings dy se befetsje; * en? binne jokertekens; in begjinnende! lit keppelings fuort. Foarbyld: *. jpg! * thumb *",
     "Links to download (you can edit them)": "Keppelings om yn te laden (jo kinne se bewurkje)",

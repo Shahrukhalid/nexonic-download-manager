@@ -229,7 +229,7 @@
     "The data is already in this folder.": "数据已在此文件夹中。",
     "Choose a folder that is not inside the current data folder (or the other way round).": "选择不在当前数据文件夹内的文件夹(反之亦然 ) 。",
     "Choose an empty folder.": "选择一个空文件夹。",
-    "Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. A list in braces, {jpg,png}, tries each. Several ranges multiply.": "在方括号中放入一个范围:[001-100]保留三位数字,[1-100]不保留,[a-z]使用字母,[0-100:5]以五位数计数。 括号中的列表,{jpg,png }, 尝试每个值。",
+    "Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. A list in braces, {jpg,png}, tries each. Several ranges multiply.": "将范围放在方括号中：[001-100] 保留三位数字，[1-100] 不保留，[a-z] 使用字母，[0-100:5] 每次加 5。花括号中的列表 {jpg,png} 会逐个尝试。多个范围会相乘。",
     "Keep only (optional)": "Keep only (optional)",
     "Words find links that contain them; * and ? are wildcards; a leading ! leaves links out. Example: *.jpg !*thumb*": "单词会找到包含它们的链接; * 和? 是通配符;! 排除链接。 例如: *. jpg! * thumb *",
     "Links to download (you can edit them)": "下载链接(您可以编辑它们)",

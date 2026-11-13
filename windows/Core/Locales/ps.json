@@ -229,7 +229,7 @@
     "The data is already in this folder.": ".اومتوک د مخکې نه په دې پوښۍ کې دی",
     "Choose a folder that is not inside the current data folder (or the other way round).": ".يوه پوښۍ وټاکﺉ چې د اوسني اومتوک پوښۍ دننه نه وي (يا بل ډول)",
     "Choose an empty folder.": "يوه تشه پوښۍ وټاکﺉ.",
-    "Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. A list in braces, {jpg,png}, tries each. Several ranges multiply.": "په مربع کونجونو کې یو لړ واچوئ: [001-100] درې رقمونه ساتي، [1-100] نه کوي، [a-z] لیکونه کاروي او [0-100: 5] په fives کې شمیرل کیږي. په کونجونو کې یو لیست، {jpg، png}، هر یو هڅه کوي. څو لړۍ ضرب.",
+    "Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. A list in braces, {jpg,png}, tries each. Several ranges multiply.": "Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. A list in braces, {jpg,png}, tries each. Several ranges multiply.",
     "Keep only (optional)": "(غوراويز) يوازې ساتل",
     "Words find links that contain them; * and ? are wildcards; a leading ! leaves links out. Example: *.jpg !*thumb*": "کلمې د هغوی سره تړاو لري؛ * او? ويډکارډونه دي؛ یو مشر! اړیکې پریږدي. مثال: *.jpg! *thumb *",
     "Links to download (you can edit them)": "د رالېښلو تړنې (تاسو يې سمولی شئ)",

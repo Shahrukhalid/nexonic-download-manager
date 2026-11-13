@@ -283,7 +283,7 @@
 "Upload limit" = "Ho kenya";
 "Find peers with DHT" = "Fumana balekane ka DHT";
 "Keep sharing (seeding) after the download" = "Qhobosha ho arolelana (seeding) kamora ho kenya";
-"Stop at ratio" = "Ntlafatsa ho %s";
+"Stop at ratio" = "Stop at ratio";
 "0 means no ratio limit" = "0 e bolela hore ha ho na moeli oa phapang";
 "Stop after (minutes)" = "Qhobosha ka mor'a";
 "0 means no time limit" = "0 e bolela hore ha ho lekanyetso ea nako";

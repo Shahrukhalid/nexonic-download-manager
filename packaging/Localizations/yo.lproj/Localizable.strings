@@ -243,13 +243,13 @@
 "Tries per part before a download stops: %lld" = "Àwọn ààyè-iṣẹ́ fún àwọn ààyè-iṣẹ́ nípa àwọn ààyè-iṣẹ́: %lld";
 "Reconnect a part that receives nothing for %lld s" = "Ṣàfikún ààyè-iṣẹ́ tí kò gba ohunkohun fún %lld s";
 "Torrents on" = "Àwọn Torrents";
-"Forward the listening port on my router (UPnP and NAT-PMP)" = "Ṣàfikún ààyè-iṣẹ́ ìgbọ̀n ní pàtó nínú ààyè-iṣẹ́ mìíràn mìíràn mìíràn mìíràn mìíràn mìíràn";
+"Forward the listening port on my router (UPnP and NAT-PMP)" = "Forward the listening port on my router (UPnP and NAT-PMP)";
 "Lets more peers connect to you, which usually makes torrents faster." = "Fi àwọn ìsàlẹ̀-ilà mìíràn lè sopọ sí ọ̀rọ̀ rẹ, tí a tì fi àwọn tórí̀ǹtì mú ìrànwọ́.";
 "Encryption" = "Àwọn Àmì-ìwé";
 "Prefer encrypted connections" = "Àwọn ìṣàmúlò-ètò àìfihàn";
 "Only encrypted connections" = "Àwọn ìsàlẹ̀-ilà àìfihàn tí a fi pamọ́ nìkan";
 "Off" = "Tí Kò Fẹ̀";
-"Speed limits, connections per torrent, upload slots and seeding are set for each torrent when you add it, or later under Torrent Settings. Torrents use the proxy from the Connection tab (HTTP or SOCKS5, or the Mac's proxy with \"Use the system settings\") and the speed limit for all downloads. Changes apply to torrents started afterwards. Peers and trackers can see your IP address, or your proxy's." = "Àwọn ààyè-iṣẹ́ ìjánu-ìjánu, àwọn ìpàpọ̀ nínú tóẹ̀tìnì kan, àwọn ààyè-iṣẹ́ ìṣàfilọ́lẹ̀ àti àwọn ìṣàfilọ́lẹ̀ nínú tóẹ̀tìnì kan nígbà tí o bá fi hàn o, tàbí nínú àwọn Àtòjọ-ẹ̀yàn Tóẹ̀tìnì. Tóẹ̀tìnì náà ló prókì láti inú táàbù Àtòjọ-ẹ̀yàn (HTTP tàbí SOCKS5, tàbí prókì tí Mac náà nínú \"Ló àtòjọ-ẹ̀yàn ìṣàfilọ́lẹ̀ ìṣàfilọ́lẹ̀ ìṣàfilọ́lẹ̀ ìṣàfilọ́lẹ̀ ìṣàfilọ́lẹ̀ ìṣàfilọ́lẹ̀). Àwọn ìyipadà náà";
+"Speed limits, connections per torrent, upload slots and seeding are set for each torrent when you add it, or later under Torrent Settings. Torrents use the proxy from the Connection tab (HTTP or SOCKS5, or the Mac's proxy with \"Use the system settings\") and the speed limit for all downloads. Changes apply to torrents started afterwards. Peers and trackers can see your IP address, or your proxy's." = "Speed limits, connections per torrent, upload slots and seeding are set for each torrent when you add it, or later under Torrent Settings. Torrents use the proxy from the Connection tab (HTTP or SOCKS5, or the Mac's proxy with \"Use the system settings\") and the speed limit for all downloads. Changes apply to torrents started afterwards. Peers and trackers can see your IP address, or your proxy's.";
 "Settings used for every download from a website. A site also covers its subdomains (example.com covers www.example.com). Logins are only sent to that site and are kept with the app's other secrets." = "Àtòjọ-ẹ̀yàn tí a lo fún ìṣàmúlò-ètò fún ìṣàfihàn fún ojú-ìwé-ìṣàmúlò-ètò kan. Àtòjọ-ìwé-ìṣàmúlò-ètò náà ní pàtó àwọn ààyè-iṣẹ́ rẹ (example.com pàtó www.example.com). Àwọn ìṣàfihàn náà ní pàtó sí ojú-ìwé-ìṣàmúlò-ètò náà ní pàtó àwọn ìpamọ́ ìṣàmúlò-ètò mìíràn.";
 "A backup holds your settings, site settings, queues and the downloads list. Passwords and cookies are never put in a backup." = "Àwọn ìkúndùǹ àwọn ìkúndùǹ rẹ, àwọn ìkúndùǹ ààyè-iṣẹ́, àwọn ìṣàmúlò-ètò àti àtòjọ àwọn ìṣàmúlò-ètò. Àwọn àmì-àṣírí àti àwọn kukì kò fi pamọ́ láti inú ìkúndúǹ.";
 "When you copy a link that ends in one of these types, the Add window opens with it." = "Tí o bá kọ́ líǹkì tí o kù nínú àwọn irúfẹ́ yìí, fèrèsé Àdírẹ̀sì náà á ṣí nípa rẹ̀.";
@@ -259,7 +259,7 @@
 "Install the ndm command, then for example: ndm https://example.com/file.zip --queue Night" = "Fi àwọn àṣẹ ndm hàn, ki o si bi àwọn ààyè: ndm https://example.com/file.zip --queue Night";
 "Finding the qualities on offer…" = "Finding the qualities on offer…";
 "Video sites are saved in the best quality available, with picture and sound joined." = "Àwọn ojú-ìwé vidéò nínú ìṣàfarawé àwọn ààyè-iṣẹ́ tí o dara jù láti wa nínú àwọn àwòrán àti àwòrán.";
-"Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. Several ranges multiply." = "Fi àwọn ààyè-iṣẹ́ pánẹ́ẹ̀lì kọ̀ǹpútà hàn: [001-100] ní àwọn ìdíẹ̀tà mẹ́tà, [1-100] kò ní, [a-z] lò àwọn àyọkà náà àti [0-100:5] ní àwọn àwọn àwọn ààyè-iṣẹ́ àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn";
+"Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. Several ranges multiply." = "Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. Several ranges multiply.";
 "Explores a website section and lists the files it links to. Only use it on sites you are allowed to download from." = "Àwọn ààyè-iṣẹ́ àwọn ojú-ìwé àti àwọn àtòjọ àwọn fáìlì tí o bá líǹkì sí. Lò ní pàtó nínú àwọn ojú-ìwé tí o ní ìṣẹ̀dà láti wọlé.";
 "Options (⌘,)" = "Àwọn ìkúndùǹ (⌘,)";
 "Add URL…" = "Add URL…";
@@ -322,7 +322,7 @@
 "When the amount is reached, downloads stop and continue when the next period starts. Counted while Nexonic is open." = "Tí a bá dé nígbà tí a bá gba àwọn ìṣàmúlò-ètò padà sípò nígbà tí a bá bẹrẹ àwọn ìṣàmúlò-ètò tókàn. Nígbà tí Nexonic bá jẹ́ mìíràn.";
 "Automatic configuration script (PAC)" = "Àwọn àyọkà ìṣàmúlò-ètò ìṣàmúlò-ètò (PAC)";
 "Script address or file" = "Àdírẹ̀sì àtòjọ-ẹ̀yàn tàbí fáìlì";
-"Start the Add window in the folder I used last time" = "Ṣí fèrèsé Àdírẹ̀sì nínú àtòjọ-ẹ̀yàn mìíràn mìíràn mìíràn mìíràn";
+"Start the Add window in the folder I used last time" = "Start the Add window in the folder I used last time";
 "Link Grabber" = "Àwọn Líǹkì";
 "Link Grabber…" = "Link Grabber…";
 "Find Links" = "Wá Àwọn Líǹkì";
@@ -361,7 +361,7 @@
 "Off by default. Uses your own account; links from other sites are never sent to the service. The key is saved in a private file and never in backups." = "Tí a pà nípa ìpéwọ̀n. Ló àwọn ìṣàmúlò-ètò rẹ̀; àwọn líǹkì láti inú àwọn sáà mìíràn kò bá fi pamọ́ sí iṣẹ́ náà. Bọ́tìnì náà tí a fi pamọ́ sínú fáìlì aládàbòójútó kò si nínú àwọn ìṣàfilọ́lẹ̀.";
 "RSS Feeds…" = "RSS Feeds…";
 "RSS Feeds" = "Àwọn Ìjánu-ìwé RSS";
-"New items of these feeds are downloaded when their title matches the rule: files and videos, and torrents when torrents are on. A rule lists words that must all be in the title, or a /regular expression/." = "Àwọn nǹkan tuntun láti inú àwọn ìṣàfihàn yìí nígbà tí àwọn àmì-ìwé àwọn náà bá jẹ́ àwọn àmì-ìwé àwọn fáìlì àti àwọn àwòrán, àti àwọn tónẹ́ẹ̀lì tí àwọn tónẹ́ẹ̀lì náà bá jẹ́. Àwọn àmì-ìwé àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn àwọn";
+"New items of these feeds are downloaded when their title matches the rule: files and videos, and torrents when torrents are on. A rule lists words that must all be in the title, or a /regular expression/." = "New items of these feeds are downloaded when their title matches the rule: files and videos, and torrents when torrents are on. A rule lists words that must all be in the title, or a /regular expression/.";
 "every item" = "gbogbo àwòrán";
 "not checked yet" = "tí a kò ṣayẹwo";
 "Add Feed…" = "Add Feed…";

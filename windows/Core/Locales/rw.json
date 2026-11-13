@@ -229,7 +229,7 @@
     "The data is already in this folder.": "Ibyatanzwe ni in iyi Ububiko....",
     "Choose a folder that is not inside the current data folder (or the other way round).": "A Ububiko... ni OYA Mo Imbere i KIGEZWEHO Ibyatanzwe Ububiko... (Cyangwa i Ikindi Uruziga).",
     "Choose an empty folder.": "ubusa Ububiko.",
-    "Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. A list in braces, {jpg,png}, tries each. Several ranges multiply.": "A Urutonde in kare: [1 -] Imibare, [1 -] OYA, [a - z] Ibaruwa: na [0 -: 5] in. A Urutonde in, {jpg, PNG},. Urutonde Gukuramo.",
+    "Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. A list in braces, {jpg,png}, tries each. Several ranges multiply.": "Put a range in square brackets: [001-100] keeps three digits, [1-100] does not, [a-z] uses letters and [0-100:5] counts in fives. A list in braces, {jpg,png}, tries each. Several ranges multiply.",
     "Keep only (optional)": "Byahiswemo",
     "Words find links that contain them; * and ? are wildcards; a leading ! leaves links out. Example: *.jpg !*thumb*": "Gushaka Amahuza; * na?; A! Amahuza Inyuma. Urugero:: *. jpg! * *",
     "Links to download (you can edit them)": "Kuri Iyimura Guhindura",
