@@ -15,7 +15,7 @@ enum SocialWebView {
     }
 
     static func scan(_ url: String, site: SocialSite, owner: String, pages: [String], max: Int, cookies: String? = nil,
-                     seed: [BatchEntry] = [], found: @escaping (Int) -> Void,
+                     userAgent: String? = nil, seed: [BatchEntry] = [], found: @escaping (Int) -> Void,
                      stop: @escaping () -> Bool) async throws -> ProfileBatch.Scan {
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .nonPersistent()
@@ -26,7 +26,11 @@ enum SocialWebView {
                 config.websiteDataStore.httpCookieStore.setCookie(c) { done.resume() }
             }
         }
+        // A hidden page keeps running as if it were in front (otherwise macOS pauses it and it never loads more).
+        if #available(macOS 14.0, *) { config.preferences.inactiveSchedulingPolicy = .none }
         let view = WKWebView(frame: NSRect(x: 0, y: 0, width: 1100, height: 1600), configuration: config)
+        // The browser the sign-in came from, as the site knows it.
+        if let userAgent, !userAgent.isEmpty { view.customUserAgent = userAgent }
         // An off-screen window, so the page lays out and runs its scripts as it would for a visitor.
         let window = NSWindow(contentRect: NSRect(x: -20000, y: -20000, width: 1100, height: 1600), styleMask: .borderless,
                               backing: .buffered, defer: false)
@@ -41,17 +45,28 @@ enum SocialWebView {
             view.load(URLRequest(url: link))
             // Read until the page stops changing: signed in, scrolling down a screen at a time (a person's pace) until
             // nothing new comes for a while; a visitor gets no more by scrolling.
-            var idle = 0
-            for i in 0..<(signedIn ? 1200 : 25) where idle < (signedIn ? 8 : 2) && all.count < max {
+            var idle = 0, rounds = 0, height = "", wall = ""
+            for i in 0..<(signedIn ? 1200 : 25) where idle < (signedIn ? 10 : 2) && all.count < max {
+                rounds = i + 1
                 try await Task.sleep(nanoseconds: signedIn ? 1_500_000_000 : 1_000_000_000)
                 if stop() { throw CancellationError() }
                 let now = InstagramPage.read(await run(view, site.script))
                 posts = Swift.max(posts, now.posts)
                 let grew = SocialPages.merge(&all, order: &order, now.videos, max: max)
-                idle = grew || (all.isEmpty && i < 10) ? 0 : idle + 1
+                idle = grew || i < 6 ? 0 : idle + 1  // the page's first seconds are for loading
                 if grew { found(all.count) }
-                if signedIn { _ = await run(view, "window.scrollBy(0, window.innerHeight * 2); ''") }
+                if signedIn {
+                    // Down to the last video shown and then to the end, the way a person scrolling makes the page load more.
+                    height = await run(view, """
+                        (() => { const v = [...document.querySelectorAll('a[href*="/reel/"], a[href*="/videos/"]')].pop();
+                        if (v) v.scrollIntoView({block: 'end'}); window.scrollTo(0, document.documentElement.scrollHeight);
+                        return String(document.documentElement.scrollHeight); })()
+                        """) ?? height
+                }
             }
+            wall = await run(view, "String(!!document.querySelector('form[action*=\"login\"], input[name=\"pass\"]'))") ?? ""
+            GalleryDl.note(page, cursor: nil, found: all.count,
+                           "[page] signed in: \(signedIn), rounds: \(rounds), page height: \(height), sign-in form shown: \(wall), at: \(view.url?.absoluteString ?? "")")
         }
         if all.isEmpty {
             throw ProfileBatchError(posts > 0 ? InstagramPage.noVideos(posts)

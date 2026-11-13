@@ -326,13 +326,13 @@ struct ProfileBatchView: View {
         if let l = manager.listings[key], l.pageOnly, let social = SocialPages.find(url) {
             // Facebook: the page is read in a hidden view with the browser's sign-in the extension handed over, scrolled
             // down until it shows no more; each Find Videos reads it again and adds what is new.
-            let cookies = manager.profileCookies[key]?.cookies
+            let cookies = manager.profileCookies[key]?.cookies, userAgent = manager.profileCookies[key]?.userAgent
             shownSearch = key
             status = String(format: String(localized: "Reading the %@ page in the background, scrolling until it shows no more…"), social.site.name)
             Task { @MainActor in
                 do {
                     let s = try await SocialWebView.scan(url, site: social.site, owner: social.owner, pages: social.pages, max: ProfileBatch.limit,
-                                                         cookies: cookies, seed: l.entries,
+                                                         cookies: cookies, userAgent: userAgent, seed: l.entries,
                                                          found: { n in status = String(format: String(localized: "%d found so far…"), n) },
                                                          stop: { stopRequested })
                     manager.listings[key]?.entries = s.entries

@@ -249,7 +249,7 @@ public extension GalleryDl {
     /// looked into. No cookies or passwords are in it: those go to the engine in a private settings file.
     public static var searchLog: URL { AppPaths.support.appendingPathComponent("profile-search.log") }
 
-    static func note(_ url: String, cursor: String?, found: Int, _ errors: String) {
+    public static func note(_ url: String, cursor: String?, found: Int, _ errors: String) {
         let text = "\(ISO8601DateFormatter().string(from: Date()))  \(url)\(cursor == nil ? "" : " (continued)")  \(found) found so far\n"
             + errors.split(whereSeparator: \.isNewline).suffix(40).map { "    " + $0 }.joined(separator: "\n") + "\n"
         var log = (try? Data(contentsOf: searchLog)) ?? Data()
