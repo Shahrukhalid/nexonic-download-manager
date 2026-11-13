@@ -26,17 +26,30 @@ enum SocialWebView {
                 config.websiteDataStore.httpCookieStore.setCookie(c) { done.resume() }
             }
         }
-        // A hidden page keeps running as if it were in front (otherwise macOS pauses it and it never loads more).
+        // A hidden page keeps running as if it were in front (otherwise macOS pauses it and it never loads more), and it
+        // is told it is being looked at: the sites load more posts only for a page in view.
         if #available(macOS 14.0, *) { config.preferences.inactiveSchedulingPolicy = .none }
+        config.userContentController.addUserScript(WKUserScript(source: """
+            Object.defineProperty(document, 'visibilityState', { get: () => 'visible' });
+            Object.defineProperty(document, 'hidden', { get: () => false });
+            document.hasFocus = () => true;
+            """, injectionTime: .atDocumentStart, forMainFrameOnly: true))
         let view = WKWebView(frame: NSRect(x: 0, y: 0, width: 1100, height: 1600), configuration: config)
         // The browser the sign-in came from, as the site knows it.
         if let userAgent, !userAgent.isEmpty { view.customUserAgent = userAgent }
-        // An off-screen window, so the page lays out and runs its scripts as it would for a visitor.
-        let window = NSWindow(contentRect: NSRect(x: -20000, y: -20000, width: 1100, height: 1600), styleMask: .borderless,
-                              backing: .buffered, defer: false)
+        // A see-through window on the screen that clicks pass through: macOS treats it as in view, so the page lays out,
+        // draws and loads more as it is scrolled, while the user sees nothing (an off-screen window is paused).
+        let screen = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1100, height: 900)
+        let window = NSWindow(contentRect: NSRect(x: screen.minX, y: screen.minY, width: 1100, height: Swift.min(1600, screen.height)),
+                              styleMask: .borderless, backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
+        window.alphaValue = 0
+        window.ignoresMouseEvents = true
+        window.hasShadow = false
+        window.level = .floating
+        window.collectionBehavior = [.canJoinAllSpaces, .transient, .ignoresCycle]
         window.contentView = view
-        window.orderBack(nil)
+        window.orderFrontRegardless()
         defer { view.stopLoading(); window.orderOut(nil); window.contentView = nil }
         var all: [String: BatchEntry] = [:], order: [String] = [], posts = 0
         _ = SocialPages.merge(&all, order: &order, seed, max: max)
@@ -45,7 +58,7 @@ enum SocialWebView {
             view.load(URLRequest(url: link))
             // Read until the page stops changing: signed in, scrolling down a screen at a time (a person's pace) until
             // nothing new comes for a while; a visitor gets no more by scrolling.
-            var idle = 0, rounds = 0, height = "", wall = ""
+            var idle = 0, rounds = 0, height = "", first = "", wall = ""
             for i in 0..<(signedIn ? 1200 : 25) where idle < (signedIn ? 10 : 2) && all.count < max {
                 rounds = i + 1
                 try await Task.sleep(nanoseconds: signedIn ? 1_500_000_000 : 1_000_000_000)
@@ -62,11 +75,12 @@ enum SocialWebView {
                         if (v) v.scrollIntoView({block: 'end'}); window.scrollTo(0, document.documentElement.scrollHeight);
                         return String(document.documentElement.scrollHeight); })()
                         """) ?? height
+                    if first.isEmpty { first = height }
                 }
             }
             wall = await run(view, "String(!!document.querySelector('form[action*=\"login\"], input[name=\"pass\"]'))") ?? ""
             GalleryDl.note(page, cursor: nil, found: all.count,
-                           "[page] signed in: \(signedIn), rounds: \(rounds), page height: \(height), sign-in form shown: \(wall), at: \(view.url?.absoluteString ?? "")")
+                           "[page] signed in: \(signedIn), rounds: \(rounds), page height: \(first) → \(height), sign-in form shown: \(wall), at: \(view.url?.absoluteString ?? "")")
         }
         if all.isEmpty {
             throw ProfileBatchError(posts > 0 ? InstagramPage.noVideos(posts)
