@@ -161,8 +161,8 @@ extension DownloadManager {
         l.waiting = nil
         l.found = l.entries.count
         listings[key] = l
-        let posts = ProfileBatch.postCount(l.entries)
-        if let row { update(row) { $0.streamDone = l.found; $0.streamTotal = posts; $0.status = .downloading } }
+        let postsFound = ProfileBatch.postCount(l.entries)
+        if let row { update(row) { $0.streamDone = l.found; $0.streamTotal = postsFound; $0.status = .downloading } }
         if let f = l.follow {
             let take = added.filter { !alreadyDownloaded($0.url) }
             if !take.isEmpty { queueBatch(owner: l.owner, take, folder: f.folder, quality: f.quality, maxActive: f.parallel, start: f.start) }
