@@ -83,12 +83,13 @@ enum Demo {
         // The extension's Download all: a profile listed in the background, as a row of its own.
         if let u = URL(string: profileURL) {
             var r = DownloadRecord(url: u, folder: folder, fileName: "Photos and videos of \(profileOwner)")
-            r.listing = true; r.status = .finished; r.streamDone = profileFiles; r.streamTotal = profilePosts
+            let entries = profileEntries()
+            r.listing = true; r.status = .finished; r.streamDone = entries.count; r.streamTotal = profilePosts
             r.added = Date().addingTimeInterval(-0.5 * 3600)
             records.append(r)
             var l = ProfileListing(url: profileURL, running: false)
             l.owner = profileOwner
-            l.entries = profileEntries()
+            l.entries = entries
             l.found = l.entries.count
             l.scan = SocialPages.scan(url: profileURL, owner: profileOwner, entries: l.entries, note: "")
             m.listings[ProfileBatch.key(profileURL)] = l

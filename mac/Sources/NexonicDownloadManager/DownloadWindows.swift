@@ -24,8 +24,11 @@ enum DownloadInfoWindow {
             p.makeKeyAndOrderFront(nil)
             return
         }
-        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 540, height: 300), styleMask: [.titled, .closable],
+        // A panel that takes the keyboard without bringing the app (and its main window) to the front, as a classic
+        // download manager's dialog does over the browser.
+        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 540, height: 300), styleMask: [.titled, .closable, .nonactivatingPanel],
                             backing: .buffered, defer: false)
+        panel.becomesKeyOnlyIfNeeded = false
         panel.title = "Download File Info"
         panel.isReleasedWhenClosed = false
         panel.level = .floating
@@ -42,8 +45,8 @@ enum DownloadInfoWindow {
         _ = NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: panel, queue: .main) { _ in
             Task { @MainActor in panels[key] = nil }
         }
-        NSApp.activate(ignoringOtherApps: true)
-        panel.makeKeyAndOrderFront(nil)
+        panel.orderFrontRegardless()
+        panel.makeKey()
     }
 }
 
@@ -255,6 +258,7 @@ enum ProgressWindow {
     static func show(_ id: UUID, manager: DownloadManager) {
         if let w = windows[id] {
             w.makeKeyAndOrderFront(nil)
+            w.orderFrontRegardless()
             return
         }
         guard let rec = manager.items.first(where: { $0.id == id }) else { return }
@@ -293,7 +297,7 @@ enum ProgressWindow {
         _ = NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: window, queue: .main) { _ in
             Task { @MainActor in windows[id] = nil }
         }
-        window.orderFront(nil)
+        window.orderFrontRegardless()  // over the browser, without bringing up the main window
     }
 }
 

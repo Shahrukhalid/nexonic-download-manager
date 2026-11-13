@@ -1,3 +1,12 @@
+## 0.31.2
+
+**Mac: works in the background, like a classic download manager**
+- A download from the browser now shows only the Download File Info window over the browser. The main window no
+  longer comes up with it, whether Nexonic was running or the download started it.
+- Nexonic stays in the menu bar (next to the clock) and leaves the Dock while none of its windows are open. Turn this
+  off under Settings → General if you prefer the Dock icon. Show Downloads in the menu bar opens the main window.
+- Windows already worked this way (notification area, next to the clock); nothing changes there.
+
 ## 0.31.1
 
 **Privacy and security**

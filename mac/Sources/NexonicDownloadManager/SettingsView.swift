@@ -23,7 +23,7 @@ struct SettingsView: View {
     @AppStorage(DownloadManager.manualKey) private var manualActive = 0
     @AppStorage(MissingFiles.removeOnStartKey) private var removeMissingOnStart = false
     @State private var missingMessage = ""
-    @AppStorage(AppDelegate.menuBarOnlyKey) private var menuBarOnly = false
+    @AppStorage(AppDelegate.menuBarOnlyKey) private var menuBarOnly = true
     @State private var dataFolder = AppPaths.support.path
     @State private var dataMessage = DataLocation.pending(AppPaths.usual).map { "Moves to \($0) the next time the app starts." } ?? DataLocation.lastProblem ?? ""
     private static let fontFamilies = NSFontManager.shared.availableFontFamilies.sorted()

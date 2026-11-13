@@ -180,6 +180,7 @@ struct ContentView: View {
             }
         }
         .onAppear {
+            AppDelegate.closeMainWindowIfLaunchedForLink()
             let open = openWindow
             DownloadManager.showMainWindow = {
                 open(id: "main")
