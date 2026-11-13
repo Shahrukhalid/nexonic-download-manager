@@ -3,7 +3,7 @@ import NexonicCore
 
 /// Fills the app with a sample list and saves pictures of its windows, for the README screenshots.
 /// Only active when started with NDM_DEMO=1; NDM_SNAPSHOT=<folder> saves the pictures and quits,
-/// NDM_SHEET=add|scheduler|batch|info|progress opens that window first, NDM_LIVE=<link> adds one real running download.
+/// NDM_SHEET=add|scheduler|batch|info|progress|profile opens that window first, NDM_LIVE=<link> adds one real running download.
 @MainActor
 enum Demo {
     static let nightQueueID = "demo-night"
@@ -61,7 +61,12 @@ enum Demo {
                 return Segment(id: i, start: start, end: end, written: Int64(Double(len) * share))
             }
             if status == .finished {
-                r.savedPath = folder.appendingPathComponent(name).path
+                // A small stand-in file, so the list shows Complete rather than File missing.
+                let demo = folder.appendingPathComponent("NDM Demo")
+                try? FileManager.default.createDirectory(at: demo, withIntermediateDirectories: true)
+                let path = demo.appendingPathComponent(name).path
+                if !FileManager.default.fileExists(atPath: path) { FileManager.default.createFile(atPath: path, contents: Data()) }
+                r.savedPath = path
                 r.finished = r.added.addingTimeInterval(600)
             }
             return r
@@ -75,6 +80,19 @@ enum Demo {
             rec("nature-documentary-4k.mkv", 6_200_000_000, .paused, done: 0.37, hoursAgo: 2),
             rec("photo-library-backup.zip", 2_100_000_000, .paused, done: 0.62, hoursAgo: 1.5),
         ]
+        // The extension's Download all: a profile listed in the background, as a row of its own.
+        if let u = URL(string: profileURL) {
+            var r = DownloadRecord(url: u, folder: folder, fileName: "Photos and videos of \(profileOwner)")
+            r.listing = true; r.status = .finished; r.streamDone = profileFiles; r.streamTotal = profilePosts
+            r.added = Date().addingTimeInterval(-0.5 * 3600)
+            records.append(r)
+            var l = ProfileListing(url: profileURL, running: false)
+            l.owner = profileOwner
+            l.entries = profileEntries()
+            l.found = l.entries.count
+            l.scan = SocialPages.scan(url: profileURL, owner: profileOwner, entries: l.entries, note: "")
+            m.listings[ProfileBatch.key(profileURL)] = l
+        }
         records[0].checksum = "sha256:demo"
         records[0].checksumResult = "SHA-256 matches"
         if let live = env["NDM_LIVE"], let url = URL(string: live) {
@@ -93,6 +111,29 @@ enum Demo {
         night.days = [1, 2, 3, 4, 5]
         night.afterDone = .sleep
         m.loadDemo(records, queues: [night])
+    }
+
+    static let profileURL = "https://www.instagram.com/nexonic.demo/"
+    static let profileOwner = "nexonic.demo"
+    static let profilePosts = 120
+    static let profileFiles = 186
+
+    /// Sample posts for the Profile Batch picture: some hold several photos or videos, as carousel posts do.
+    private static func profileEntries() -> [BatchEntry] {
+        var list: [[String: Any]] = []
+        let day = 86400.0, now = Date().timeIntervalSinceReferenceDate
+        for i in 0..<profilePosts {
+            let files = i % 3 == 0 ? (i % 2 == 0 ? 3 : 2) : 1
+            for f in 0..<files where list.count < profileFiles {
+                let video = (i + f) % 2 == 0
+                list.append(["url": "https://example.com/nexonic.demo/p\(i)-\(f).\(video ? "mp4" : "jpg")",
+                             "title": "nexonic.demo post \(i + 1)" + (files > 1 ? " (\(f + 1))" : ""),
+                             "date": now - Double(i) * day, "kind": video ? "video" : "photo",
+                             "available": true, "direct": true, "post": "demo\(i)"])
+            }
+        }
+        guard let data = try? JSONSerialization.data(withJSONObject: list) else { return [] }
+        return (try? JSONDecoder().decode([BatchEntry].self, from: data)) ?? []
     }
 
     private static func image(of window: NSWindow) -> NSBitmapImageRep? {

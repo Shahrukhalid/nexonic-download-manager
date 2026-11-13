@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nexonic Download Manager: free IDM alternative for Mac, Windows, Linux and Android</title>
-<meta name="description" content="Free, open-source download manager for Mac, Windows, Linux and Android. Up to 256 adaptive connections per file, pause and resume, queues and scheduler, torrents, RSS feeds, browser extension and video downloads up to 8K. No ads, no account.">
-<meta name="keywords" content="download manager, free download manager, IDM alternative, IDM for Mac, IDM for Linux, download accelerator, torrent client, RSS downloader, Mac download manager, Windows download manager, video downloader, browser extension, open source">
+<title>Nexonic Download Manager: free download manager and video downloader for Mac, Windows, Linux and Android</title>
+<meta name="description" content="Free, open-source download manager for Mac, Windows, Linux and Android. Download every photo and video of an Instagram, TikTok or Facebook profile in one click, up to 256 connections per file, pause and resume, scheduler, torrents and a browser extension. No ads, no account.">
+<meta name="keywords" content="download manager, free download manager, IDM alternative, IDM for Mac, IDM for Linux, download accelerator, Instagram profile downloader, TikTok downloader, Facebook video downloader, bulk video downloader, download all videos, torrent client, RSS downloader, Mac download manager, Windows download manager, video downloader, browser extension, open source">
 <link rel="canonical" href="https://shahrukhalid.github.io/nexonic-download-manager/">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="icon.png">
@@ -13,14 +13,14 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Nexonic Download Manager">
 <meta property="og:title" content="Nexonic Download Manager: free IDM alternative for Mac, Windows, Linux and Android">
-<meta property="og:description" content="Faster downloads with up to 256 adaptive connections, pause and resume, scheduler, browser integration and video downloads. Free and open source.">
+<meta property="og:description" content="Download every video of a profile in one click, up to 256 connections per file, pause and resume, scheduler, torrents and browser integration. Free and open source.">
 <meta property="og:url" content="https://shahrukhalid.github.io/nexonic-download-manager/">
 <meta property="og:image" content="https://shahrukhalid.github.io/nexonic-download-manager/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Nexonic Download Manager: free IDM alternative for Mac, Windows, Linux and Android">
-<meta name="twitter:description" content="Up to 256 adaptive connections per file, pause and resume, scheduler, browser extension and video downloads. Free and open source.">
+<meta name="twitter:description" content="One click to download every photo and video of a profile. Up to 256 connections per file, scheduler, torrents and a browser extension. Free and open source.">
 <meta name="twitter:image" content="https://shahrukhalid.github.io/nexonic-download-manager/og.png">
 <script type="application/ld+json">
 {
@@ -30,7 +30,8 @@
   "applicationCategory": "UtilitiesApplication",
   "operatingSystem": "macOS 13 or later, Windows 10, Windows 11, Linux, Android 10 or later",
   "softwareVersion": "__VERSION__",
-  "description": "Free, open-source download manager for Mac, Windows, Linux and Android with multi-connection downloads, pause and resume, scheduler, queues, browser integration and video downloads.",
+  "description": "Free, open-source download manager for Mac, Windows, Linux and Android with multi-connection downloads, pause and resume, scheduler, queues, browser integration, video downloads and one-click download of a whole profile.",
+  "featureList": ["Download all photos and videos of an Instagram, TikTok or Facebook profile in one click", "Up to 256 adaptive connections per file", "Pause and resume", "Scheduler and queues", "Speed limiter per download", "Actions when a download completes", "BitTorrent", "Browser extension for Chrome, Edge, Brave, Opera and Firefox", "Video downloads up to 8K"],
   "url": "https://shahrukhalid.github.io/nexonic-download-manager/",
   "downloadUrl": "https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest",
   "license": "https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/LICENSE",
@@ -48,6 +49,7 @@
     {"@type": "Question", "name": "Is Nexonic Download Manager free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. It is free and open source under the MIT or Apache-2.0 license, with no ads, no account and no tracking."}},
     {"@type": "Question", "name": "Is there an IDM alternative for Mac?", "acceptedAnswer": {"@type": "Answer", "text": "Nexonic Download Manager is a native Mac app (macOS 13 or later, Apple silicon and Intel) with IDM-style features: multi-connection downloads, pause and resume, a scheduler, queues and a browser extension."}},
     {"@type": "Question", "name": "Is there an Android app?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The Android app (Android 10 or later) has the same download engine and video engine as the desktop apps: videos from YouTube, Facebook, Instagram, TikTok and 1,000+ sites, a built-in browser that catches downloads, and Share, Download with Nexonic from Chrome or any app."}},
+    {"@type": "Question", "name": "Can I download all videos from an Instagram, TikTok or Facebook profile?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, on desktop. Open the profile in your browser and click Download all in the Nexonic extension. Nexonic finds the profile's photos and videos in the background with your own browser sign-in, then you choose the folder and quality and click Download Now. It only sees what your account can see, and you should only download what you have the right to save."}},
     {"@type": "Question", "name": "Does it work with Chrome and Firefox?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The browser extension works with Chrome, Edge, Brave, Opera and Firefox and hands downloads to the app."}},
     {"@type": "Question", "name": "Can it download videos?", "acceptedAnswer": {"@type": "Answer", "text": "It saves videos from 1,000+ sites in the quality you pick, up to 4K/8K, or sound only, and streamed video as one .mp4 file. Copy-protected services are not supported, and you should only download what you have the right to save."}},
     {"@type": "Question", "name": "How do I update the app?", "acceptedAnswer": {"@type": "Answer", "text": "The app checks for updates when it opens and shows what is new, with Update Now, Remind Me Later or Skip This Version. Every update is checked against its SHA-256 before it is installed."}},
@@ -293,7 +295,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
   <div class="wrap">
     <a class="brand" href="./"><img src="icon.png" alt="" width="30" height="30">Nexonic Download Manager</a>
     <div class="links">
-      <a href="#features">Features</a><a href="#videos">Videos</a><a href="#android">Android</a><a href="#ios">iPhone</a><a href="#screenshots">Screenshots</a><a href="#install">Install</a><a href="#faq">FAQ</a>
+      <a href="#features">Features</a><a href="#profiles">Download all</a><a href="#videos">Videos</a><a href="#android">Android</a><a href="#ios">iPhone</a><a href="#screenshots">Screenshots</a><a href="#install">Install</a><a href="#faq">FAQ</a>
       <a href="https://github.com/Shahrukhalid/nexonic-download-manager">GitHub</a>
       <a class="navsup" href="https://www.patreon.com/Shahrukhalid">&#9829; Support</a>
       <a class="navdl" href="#download">Download</a>
@@ -305,9 +307,9 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
   <div class="wrap">
     <div class="hero-grid">
       <div>
-        <a class="pill" href="#whats-new"><span class="dot"></span><b>Version __VERSION__</b> is out · see what's new</a>
+        <a class="pill" href="#profiles"><span class="dot"></span><b>New in __VERSION__</b> · download a whole profile in one click</a>
         <h1>The free download manager <span>for Mac, Windows, Linux and Android</span></h1>
-        <p class="lead">Download up to 32 times in parallel, pause and resume anytime, schedule downloads for the night and save videos from 1,000+ sites in the quality you pick. No ads, no account, no tracking.</p>
+        <p class="lead">Download every photo and video of an Instagram, TikTok or Facebook profile in one click. Up to 256 connections per file, pause and resume anytime, schedule downloads for the night and save videos from 1,000+ sites in the quality you pick. No ads, no account, no tracking.</p>
         <div class="btns">
           <a class="btn primary lg" id="hero-dl" href="#download"><svg class="i"><use href="#i-dl"/></svg><span class="t"><span id="hero-dl-label">Download free</span><small id="hero-dl-sub">Mac, Windows and Android · v__VERSION__</small></span></a>
           <a class="btn glass lg" id="hero-ext" href="#extension"><svg class="i"><use href="#i-puzzle"/></svg><span class="t"><span id="hero-ext-label">Get the browser extension</span><small>Chrome, Edge, Brave, Opera, Firefox</small></span></a>
@@ -332,7 +334,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
 
 <div class="stats">
   <div class="wrap">
-    <div><b>32</b><span>connections per file</span></div>
+    <div><b>256</b><span>connections per file</span></div>
     <div><b>1,000+</b><span>video sites, up to 8K</span></div>
     <div><b>4</b><span>platforms: Mac, Windows, Linux, Android</span></div>
     <div><b>$0</b><span>no ads, no account</span></div>
@@ -437,13 +439,14 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <div class="f"><div class="ic"><svg class="i"><use href="#i-pause"/></svg></div><h3>Pause and resume</h3><p>Stop and continue later, even after you quit the app or restart the computer. A file that changed on the server is downloaded again instead of mixed up.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-refresh"/></svg></div><h3>Refresh expired links</h3><p>Right-click a download, choose Refresh Link and paste a fresh link. It continues where it stopped, without starting over.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-globe"/></svg></div><h3>Browser integration</h3><p>Click a download link in Chrome, Edge, Brave, Opera or Firefox and a compact window shows name, size, category and folder. If the app isn't running, the browser simply keeps the download.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-dl"/></svg></div><h3>Download all, in one click</h3><p>On an Instagram, TikTok or Facebook profile, click <b>Download all</b> in the extension. Nexonic finds every photo and video in the background, then you pick the folder and quality.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-video"/></svg></div><h3>Video downloads</h3><p>Save videos from YouTube, Instagram, Facebook, X, TikTok and 1,000+ sites in the quality you pick, up to 4K/8K, or sound only.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-video"/></svg></div><h3>Playlists and Media Library</h3><p>List a playlist's or channel's videos and pick the ones to save, keep subtitles inside videos, and browse your finished videos and music with preview pictures.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-folder"/></svg></div><h3>Automatic categories</h3><p>Files are sorted into Compressed, Documents, Music, Video, Programs and Images, each saved in its own folder. Browse All, Unfinished and Finished.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-clock"/></svg></div><h3>Scheduler and queues</h3><p>Start a queue at night, stop it in the morning, run downloads one by one or a few at a time, then quit, sleep or shut down when done.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-grid"/></svg></div><h3>Batch, grabber and clipboard</h3><p>Download numbered series like <code>img[001-100].jpg</code>, every file linked from a page, or links you copy. Paste several links at once.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-grid"/></svg></div><h3>Torrents everywhere</h3><p>Open a magnet link or a .torrent file on Mac, Windows, Linux, Android, iPhone or iPad, choose the files and see seeds, peers, trackers and pieces like a BitTorrent client. Every piece is checked; off until you turn it on.</p></div>
-      <div class="f"><div class="ic"><svg class="i"><use href="#i-gauge"/></svg></div><h3>Speed limits and proxy</h3><p>Limit speed for all downloads or just one, use a proxy, sign in to password-protected files and verify checksums.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-gauge"/></svg></div><h3>Speed limiter and completion actions</h3><p>Limit speed for all downloads or just one from its progress window, and choose what happens when it finishes: open the file, show the folder, sleep or shut down (per download on Mac). Proxy, logins and checksums too.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-term"/></svg></div><h3>Command line</h3><p>Add downloads from scripts with <code>ndm &lt;link&gt;</code>, including queues, folders and limits. Run <code>ndm help</code> for every option.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-refresh"/></svg></div><h3>Updates inside the app</h3><p>New versions appear when you open the app, with what's new, Update Now, Remind Me Later or Skip. Each update is verified before it installs.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-globe"/></svg></div><h3>Your language</h3><p>English, Arabic, Chinese (Simplified and Traditional), French, German, Hindi, Indonesian, Japanese, Korean, Portuguese, Russian, Spanish, Turkish and Urdu. Pick one in Settings on every app and in the extension.</p></div>
@@ -506,6 +509,27 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
         </ul>
       </div>
       <div class="media"><img src="img/windows-ocean.png" data-focus style="--fx:50%;--fy:47%" alt="Windows app in the Ocean colour scheme" width="1240" height="684" loading="lazy" data-zoom></div>
+    </div>
+  </div>
+</section>
+
+<section id="profiles">
+  <div class="wrap">
+    <div class="split">
+      <div>
+        <span class="chip">New in __VERSION__</span>
+        <h3 style="margin-top:14px;font-size:34px">Every video of a profile, in one click</h3>
+        <p>Open an Instagram, TikTok or Facebook profile in your browser and click <b>Download all</b> in the Nexonic extension. The Nexonic window opens with what the page shows, and keeps finding the rest in the background.</p>
+        <ul class="checks">
+          <li><svg class="i"><use href="#i-check"/></svg>Photos, videos and reels, with posts and files counted separately</li>
+          <li><svg class="i"><use href="#i-check"/></svg>Choose the folder and quality, then Download Now or Add to Queue</li>
+          <li><svg class="i"><use href="#i-check"/></svg>Close the window: the search keeps going in the downloads list</li>
+          <li><svg class="i"><use href="#i-check"/></svg>Find Videos again later to add only what is new</li>
+          <li><svg class="i"><use href="#i-check"/></svg>Uses your own browser sign-in, at a pace the site accepts</li>
+        </ul>
+        <p style="font-size:14px;margin-top:16px">Desktop apps. Facebook profiles are read in the background on Mac. Nexonic only sees what your account can see; only download what you have the right to save.</p>
+      </div>
+      <div class="media"><img src="img/mac-profile.png" alt="Profile Batch window listing every photo and video of a profile, ready to download" width="1240" height="684" loading="lazy" data-zoom></div>
     </div>
   </div>
 </section>
@@ -583,7 +607,8 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <figure><img src="img/mac-main.png" alt="Main window" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>Main window</b>Categories, queues and live status</figcaption></figure>
       <figure><img src="img/mac-main-dark.png" alt="Main window in dark mode" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>Dark mode</b>Follows your system setting</figcaption></figure>
       <figure><img src="img/mac-info.png" alt="Download window from the browser" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>From the browser</b>Name, size, folder, Start</figcaption></figure>
-      <figure><img src="img/mac-progress.png" alt="Progress window" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>Progress window</b>Speed graph and connections</figcaption></figure>
+      <figure><img src="img/mac-progress.png" alt="Progress window" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>Progress window</b>Speed limiter and completion actions</figcaption></figure>
+      <figure><img src="img/mac-profile.png" alt="Profile Batch window" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>Download all</b>Every photo and video of a profile</figcaption></figure>
       <figure><img src="img/mac-scheduler.png" data-focus style="--fx:50%;--fy:42%" alt="Scheduler" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>Scheduler</b>Start and stop queues on time</figcaption></figure>
       <figure><img src="img/mac-batch.png" data-focus style="--fx:50%;--fy:45%" alt="Batch download" width="1240" height="684" loading="lazy" data-zoom><figcaption><b>Batch download</b>Numbered series in one go</figcaption></figure>
     </div>
@@ -719,31 +744,6 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
   </div>
 </section>
 
-<section id="whats-new">
-  <div class="wrap">
-    <span class="eyebrow">What's new</span>
-    <h2>Recent releases</h2>
-    <p class="sub">The full history is in the <a href="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/CHANGELOG.md">changelog</a> and on the <a href="https://github.com/Shahrukhalid/nexonic-download-manager/releases">releases page</a>.</p>
-    <div class="rel">
-      <article><h3>0.28.0 <small>Latest</small></h3><ul><li>Adaptive connections up to 256 per file: a 120 MB test download went from 15.1 s to 6.0 s.</li><li>Mirrors and Metalink, cURL import and export, a speed schedule, RSS size, episode and quality rules, debrid torrents and Windows on Arm.</li><li>Smaller installers: Windows setup 55.8 → 47.7 MB, Android 60.3 → 30.0 MB.</li></ul></article>
-      <article><h3>0.27.0</h3><ul><li>Remote management from a phone, a headless server for a NAS or Docker, and custom categories on every app.</li></ul></article>
-      <article><h3>0.25.0 – 0.26.0</h3><ul><li>Pair a phone, Download Images from Page, a Link Grabber, a download limit and proxy scripts (PAC); the video engine is fetched on first use, so installers are smaller.</li></ul></article>
-      <article><h3>0.21.0 – 0.24.0</h3><ul><li>Keep downloads on your VPN with a kill switch, a torrent blocklist, RSS feeds, .7z/.rar/.tar unpacking, an optional debrid account and an Android QR scanner.</li></ul></article>
-      <article><h3>0.20.1</h3><ul><li>Support the Project in the Help menu and the About window on every app.</li></ul></article>
-      <article><h3>0.20.0</h3><ul><li>15 languages on every platform and in the browser extension, now including Chinese (Simplified and Traditional), Japanese, Korean, Russian, Indonesian and Turkish.</li><li>Pick the language in each app's Settings; English stays the default.</li></ul></article>
-      <article><h3>0.19.0 – 0.19.2</h3><ul><li>Big downloads finish instantly: one file is written directly, with no joining step at the end.</li><li>Add Torrent opens a torrent's files by itself on Windows and Linux; drop a .torrent file on the main window.</li><li>iPhone and iPad app for sideloading in every release.</li></ul></article>
-      <article><h3>0.17.0</h3><ul><li>Android: add a playlist or channel and choose its videos; share a playlist link to Nexonic to open it.</li><li>Android: optional subtitles inside saved videos.</li><li>Media Library on Android, iPhone and iPad: finished videos and music with preview pictures; tap to play.</li></ul></article>
-      <article><h3>0.16.0</h3><ul><li>Playlists and channels on Mac, Windows and Linux: YouTube, Vimeo, SoundCloud, Bandcamp and more, up to 500 videos, tick the ones you want.</li><li>Optional subtitles in your language and English, kept inside the video.</li><li>Media Library: finished videos and music with preview pictures, search, Play and Show in Folder.</li></ul></article>
-      <article><h3>0.15.0</h3><ul><li>Saved videos keep their title, channel or artist, date, description and chapters, on every platform.</li></ul></article>
-      <article><h3>0.14.0</h3><ul><li>Windows and Linux: an IDM-style toolbar with large coloured buttons, and Tasks, Downloads, View and Help menus with shortcuts.</li><li>Unzip finished .zip files automatically (optional) on Mac, Windows and Linux.</li></ul></article>
-      <article><h3>0.13.0</h3><ul><li>Torrents on Android, iPhone and iPad: open a magnet link or .torrent file, choose files, download with every piece checked.</li><li>Windows and Linux: torrent details, Peers and Trackers windows, settings that apply while a torrent runs, port forwarding and encryption.</li><li>.torrent files and magnet links open the app; new torrents no longer cap uploading, so they download faster.</li></ul></article>
-      <article><h3>0.11.4</h3><ul><li>Mac: a toolbar like IDM's with large coloured buttons and their names, and a Downloads menu with keyboard shortcuts.</li></ul></article>
-      <article><h3>0.11.0 – 0.11.3</h3><ul><li>Torrents on Mac with uTorrent-style details: General, Trackers, Peers and Files.</li><li>Settings that apply while a torrent runs; torrents follow your proxy setting.</li></ul></article>
-      <article><h3>0.10.0</h3><ul><li>Torrents on Windows and Linux with a built-in engine: preview files, choose priorities, pause and resume, optional seeding.</li></ul></article>
-      <article><h3>0.8.0</h3><ul><li>Site settings: login, cookies, proxy and limits per website, plus backup and restore of your settings and downloads list.</li><li>Show QR Code on any download to finish it on your Android phone; Android adds bookmarks, a search engine choice and SD card folders.</li><li>Shortcuts and Siri can pause and resume on iPhone and iPad, and an optional local API lets scripts control the desktop apps.</li><li>Arabic, German, Spanish, French, Hindi, Portuguese and Urdu (machine translations under review).</li></ul></article>
-    </div>
-  </div>
-</section>
 
 <section id="support">
   <div class="wrap">
@@ -769,6 +769,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <details><summary>Which browsers work?</summary><p>Chrome, Edge, Brave and Opera through the extension, and Firefox through the add-on. Open the app once, then install the extension and restart the browser.</p></details>
       <details><summary>The browser doesn't hand over downloads. What do I do?</summary><p>Open the app once so it can register with your browsers, then restart the browser. If the app can't be reached, the browser keeps the download, so nothing is lost.</p></details>
       <details><summary>macOS says it can't verify the app. What do I do?</summary><p>That's expected: the app is free and not sold through Apple, so macOS asks once. Follow the three steps in <a href="#first-launch">First launch on Mac</a>, or install with the one-line Terminal command and there is no warning.</p></details>
+      <details><summary>Can I download all videos from a profile?</summary><p>Yes, on desktop. Open an Instagram, TikTok or Facebook profile in your browser and click <b>Download all</b> in the Nexonic extension. Nexonic finds the photos and videos in the background with your own sign-in; choose the folder and quality and click Download Now. It only sees what your account can see.</p></details>
       <details><summary>Can it download any video?</summary><p>It saves videos from 1,000+ sites and streamed video. For videos that need you to be signed in, open the video in your browser while signed in and click Download this video, or add your login under Properties → Login. Copy-protected services are not supported.</p></details>
       <details><summary>A video site stopped working.</summary><p>The video engine updates itself every day, so try again later. If it still fails, report the problem with the page link.</p></details>
       <details><summary>Does it download torrents?</summary><p>Yes, on Mac, Windows, Linux, Android, iPhone and iPad. Turn torrents on, then open a magnet link or a .torrent file, choose the files and start. You see seeds, peers, trackers and speeds, and every piece is checked. Peers and trackers can see your IP address (or your proxy's). On iPhone and iPad torrents download while the app is open. Only download what you are allowed to share.</p></details>

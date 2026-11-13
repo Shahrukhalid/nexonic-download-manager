@@ -193,6 +193,7 @@ struct ContentView: View {
                 case "scheduler": sheet = .scheduler(Demo.nightQueueID)
                 case "batch": sheet = .batch
                 case "info": DownloadInfoWindow.show(Demo.infoJob, manager: manager)
+                case "profile": MediaWindows.showPlaylist(Demo.profileURL)
                 case "progress":
                     if let r = manager.items.first(where: { $0.fileName == Demo.liveName }) { ProgressWindow.show(r.id, manager: manager) }
                 default: break

@@ -43,7 +43,7 @@ jobs:
           sed -i "s/__VERSION__/$V/g" site/index.html
           mkdir -p site/img
           git fetch --depth 1 origin screenshots
-          for f in mac-main.png mac-main-dark.png mac-add.png mac-scheduler.png mac-info.png mac-progress.png mac-batch.png \
+          for f in mac-main.png mac-main-dark.png mac-add.png mac-scheduler.png mac-info.png mac-progress.png mac-batch.png mac-profile.png \
                    windows-main.png windows-add.png windows-scheduler.png windows-info.png windows-progress.png windows-batch.png windows-options.png windows-ocean.png \
                    android-main.png android-detail.png android-add.png android-browser.png android-found.png android-settings.png android-main-dark.png \
                    ios-main.png ios-detail.png ios-add.png ios-browser.png ios-found.png ios-main-dark.png ipad-main.png ipad-browser.png; do
