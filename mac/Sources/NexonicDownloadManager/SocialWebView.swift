@@ -59,7 +59,7 @@ enum SocialWebView {
             // Read until the page stops changing: signed in, scrolling down a screen at a time (a person's pace) until
             // nothing new comes for a while; a visitor gets no more by scrolling.
             var idle = 0, rounds = 0, height = "", first = "", wall = ""
-            for i in 0..<(signedIn ? 1200 : 25) where idle < (signedIn ? 10 : 2) && all.count < max {
+            for i in 0..<(signedIn ? 1200 : 25) where idle < (signedIn ? 20 : 2) && all.count < max {
                 rounds = i + 1
                 try await Task.sleep(nanoseconds: signedIn ? 1_500_000_000 : 1_000_000_000)
                 if stop() { throw CancellationError() }
@@ -69,6 +69,7 @@ enum SocialWebView {
                 idle = grew || i < 6 ? 0 : idle + 1  // the page's first seconds are for loading
                 if grew { found(all.count) }
                 if signedIn {
+                    let before = height
                     // Down to the last video shown and then to the end, the way a person scrolling makes the page load more.
                     height = await run(view, """
                         (() => { const v = [...document.querySelectorAll('a[href*="/reel/"], a[href*="/videos/"]')].pop();
@@ -76,6 +77,7 @@ enum SocialWebView {
                         return String(document.documentElement.scrollHeight); })()
                         """) ?? height
                     if first.isEmpty { first = height }
+                    if height != before { idle = 0 }  // still loading: the page is getting longer
                 }
             }
             wall = await run(view, "String(!!document.querySelector('form[action*=\"login\"], input[name=\"pass\"]'))") ?? ""
