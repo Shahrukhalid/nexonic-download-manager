@@ -55,6 +55,9 @@ public partial class App : Application
         // The extension's Download all: Profile Batch lists the profile, then the user picks Download Now or Add to Queue.
         manager.ProfileRequested += link => { ShowWindow(); Dialogs.ProfileBatchWindow(window!, manager, link); };
         manager.ShowRequested += ShowWindow;
+        void Drops() => DropTarget.Update(manager, ShowWindow, source => { ShowWindow(); Dialogs.Torrent(window!, manager, source, DownloadQueue.MainId); });
+        manager.SettingsApplied += Drops;
+        Drops();
         tray = new TrayIcon("Nexonic Download Manager");
         tray.DoubleClick += ShowWindow;
         var menu = tray.Menu.Items;
@@ -201,8 +204,9 @@ public partial class App : Application
     /// <summary>Lets the browser extension find the helper (per user, no admin rights needed).</summary>
     static void RegisterBrowserHost()
     {
-        var host = Path.Combine(AppContext.BaseDirectory, "nexonic-host.exe");
-        if (!File.Exists(host)) return;
+        var beside = Path.Combine(AppContext.BaseDirectory, "nexonic-host.exe");
+        if (!File.Exists(beside)) return;
+        var host = StorePackage.HelperPath(beside);
         var manifest = Path.Combine(AppPaths.Support, NativeMessaging.HostName + ".json");
         File.WriteAllText(manifest, NativeMessaging.Manifest(host));
         foreach (var browser in new[] { @"Google\Chrome", @"Microsoft\Edge", @"BraveSoftware\Brave-Browser", @"Chromium", @"Vivaldi" })

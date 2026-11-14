@@ -315,6 +315,24 @@ struct SettingsView: View {
                 Text("Expected checksums are checked automatically when a download finishes. Queues can also quit the app, sleep or shut down the Mac when they are done (Scheduler).")
                     .font(.caption).foregroundStyle(.secondary)
             }
+                Section("Rename finished files") {
+                    TextField("Pattern (empty = keep the name)", text: $manager.settings.finish.renameMask,
+                              prompt: Text("{site} {date} {name}"))
+                    Text("{name} file name · {ext} extension · {site} website · {date} day · {time} time · {category} type. The extension stays even if the pattern leaves it out.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Section("Notify my phone") {
+                    TextField("Web address told when a download finishes or fails", text: $manager.settings.finish.notifyURL,
+                              prompt: Text("https://…"))
+                    Text("Use the address of a push notification service or your own server. Only the file name is sent (never the link or the folder); https, or http inside your home network.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Section("Extras") {
+                    Toggle("Show the drop target (a small window you can drop links on)", isOn: $manager.settings.finish.dropTarget)
+                    Toggle("Videos: also save the video's picture", isOn: $manager.settings.finish.saveThumbnail)
+                    Toggle("Videos: cut sponsor segments (from a community list)", isOn: $manager.settings.finish.skipSponsors)
+                        .help("Asks a public list of sponsor segments for the video and cuts them from the saved file.")
+                }
             .formStyle(.grouped)
             .tabItem { Label("After Download", systemImage: "checkmark.seal") }
 

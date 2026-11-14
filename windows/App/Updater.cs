@@ -23,6 +23,7 @@ public static class Updater
     {
         manager = m;
         if (Environment.GetEnvironmentVariable("NDM_DEMO") == "1") return;   // not while taking screenshots
+        if (StorePackage.IsPackaged) return;   // the Microsoft Store installs updates
         var first = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
         first.Tick += (_, _) => { first.Stop(); _ = Check(false); };
         first.Start();
@@ -42,6 +43,11 @@ public static class Updater
     public static async Task Check(bool manual)
     {
         if (installing) { progressWindow?.Activate(); return; }   // already updating: show that instead
+        if (StorePackage.IsPackaged)
+        {
+            if (manual) MessageBox.Show(L.T("This copy comes from Microsoft Store, which installs its updates. Open Microsoft Store → Library to update now."), "Nexonic Download Manager");
+            return;
+        }
         if (manager is null || busy || (!manual && !manager.Settings.CheckForUpdates)) return;
         busy = true;
         Updates.Release? release = null;

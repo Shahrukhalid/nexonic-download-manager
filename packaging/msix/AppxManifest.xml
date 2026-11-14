@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Microsoft Store edition of the Windows app (scripts/build-msix.ps1 fills in the values in braces).
+  Identity, publisher and publisher name come from Partner Center → the app → Product identity.
+  The Store signs the package; updates come from the Store (the app's own updater is off in this edition).
+  unvirtualizedResources: the app writes its settings and the browsers' native messaging registration to the real
+  per-user registry and AppData, exactly as the installer edition does, so browsers can find the helper.
+-->
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+         xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+         xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+         xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+         xmlns:desktop6="http://schemas.microsoft.com/appx/manifest/desktop/windows10/6"
+         xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+         IgnorableNamespaces="uap uap3 desktop desktop6 rescap">
+  <Identity Name="{IdentityName}" Publisher="{Publisher}" Version="{Version}.0" ProcessorArchitecture="{Arch}" />
+  <Properties>
+    <DisplayName>Nexonic Download Manager</DisplayName>
+    <PublisherDisplayName>{PublisherName}</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+    <desktop6:RegistryWriteVirtualization>disabled</desktop6:RegistryWriteVirtualization>
+    <desktop6:FileSystemWriteVirtualization>disabled</desktop6:FileSystemWriteVirtualization>
+  </Properties>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+  <Applications>
+    <Application Id="NexonicDownloadManager" Executable="NexonicDownloadManager.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements DisplayName="Nexonic Download Manager" Description="Free download manager: faster downloads, queues, scheduler, torrents and browser integration."
+                          BackgroundColor="transparent" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
+      </uap:VisualElements>
+      <Extensions>
+        <!-- nexonicdm:// links from the browser helper. -->
+        <uap:Extension Category="windows.protocol">
+          <uap:Protocol Name="nexonicdm"><uap:DisplayName>Nexonic Download Manager</uap:DisplayName></uap:Protocol>
+        </uap:Extension>
+        <!-- .torrent files and magnet links (only when the user chooses Nexonic for them). -->
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="torrent">
+            <uap:SupportedFileTypes><uap:FileType>.torrent</uap:FileType></uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+        <uap:Extension Category="windows.protocol">
+          <uap:Protocol Name="magnet"><uap:DisplayName>Magnet link</uap:DisplayName></uap:Protocol>
+        </uap:Extension>
+        <!-- A stable path for the browser helper and the ndm command (the package folder changes with each version). -->
+        <uap3:Extension Category="windows.appExecutionAlias" Executable="nexonic-host.exe" EntryPoint="Windows.FullTrustApplication">
+          <uap3:AppExecutionAlias><desktop:ExecutionAlias Alias="nexonic-host.exe" /></uap3:AppExecutionAlias>
+        </uap3:Extension>
+        <uap3:Extension Category="windows.appExecutionAlias" Executable="NexonicDownloadManager.exe" EntryPoint="Windows.FullTrustApplication">
+          <uap3:AppExecutionAlias><desktop:ExecutionAlias Alias="NexonicDownloadManager.exe" /></uap3:AppExecutionAlias>
+        </uap3:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+  <Capabilities>
+    <Capability Name="internetClient" />
+    <rescap:Capability Name="runFullTrust" />
+    <rescap:Capability Name="unvirtualizedResources" />
+  </Capabilities>
+</Package>

@@ -167,6 +167,17 @@ Open an Instagram, TikTok or Facebook profile in your browser and click **Downlo
 - **Network controls.** Use a proxy, encrypted DNS over HTTPS or TLS, or select IPv4 or IPv6. The desktop server panel
   shows HTTP version, measured speed and server country from a local database.
 
+### Drop, play and rename
+
+- **Drop target (desktop).** A small round window above other windows: drop links on it to download them.
+- **Play while downloading.** Start a video or song in your player once its first few MB are there.
+- **Video tools.** Save a finished video as MP4 or its sound alone without losing quality; optionally save each video's
+  picture and cut sponsor segments.
+- **Rename by pattern** such as `{site} {date} {name}`, and **notify your phone** through a web address when a
+  download finishes. Quick Look on Mac.
+- **Android:** download only while charging, pause on low battery, and a home-screen widget with speed, Pause all and
+  Add the copied link.
+
 ### Browser, media and torrents
 
 - **Desktop browser integration.** Chrome, Edge, Brave, Opera and Firefox can hand downloads to Nexonic. The download

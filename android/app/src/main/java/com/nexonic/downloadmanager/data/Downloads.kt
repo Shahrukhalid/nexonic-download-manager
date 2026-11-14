@@ -70,6 +70,9 @@ object Downloads {
     private val _capReached = MutableStateFlow(false)
     val capReached: StateFlow<Boolean> = _capReached.asStateFlow()
 
+    private val _waitingForPower = MutableStateFlow(false)
+    /** Settings → Only while charging / Pause when the battery is low: waiting for the charger or more battery. */
+    val waitingForPower: StateFlow<Boolean> = _waitingForPower.asStateFlow()
     private val _waitingForWifi = MutableStateFlow(false)
     val waitingForWifi: StateFlow<Boolean> = _waitingForWifi.asStateFlow()
 
@@ -91,6 +94,17 @@ object Downloads {
         _items.value = store.load().map { if (it.status == Status.DOWNLOADING) it.copy(status = Status.QUEUED, speed = 0) else it.copy(speed = 0) }
         if (_items.value.any { it.status == Status.QUEUED }) main.post { pump() }
         if (settings.removeMissingOnStart) Thread({ removeMissing() }, "nexonic-missing").start()
+        // Only while charging / low battery: pause and continue as the charger and battery change.
+        runCatching {
+            val f = android.content.IntentFilter().apply {
+                addAction(android.content.Intent.ACTION_POWER_CONNECTED); addAction(android.content.Intent.ACTION_POWER_DISCONNECTED)
+                addAction(android.content.Intent.ACTION_BATTERY_LOW); addAction(android.content.Intent.ACTION_BATTERY_OKAY)
+                addAction(android.content.Intent.ACTION_BATTERY_CHANGED)
+            }
+            androidx.core.content.ContextCompat.registerReceiver(app, object : android.content.BroadcastReceiver() {
+                override fun onReceive(c: Context?, i: android.content.Intent?) { main.post { powerChanged() } }
+            }, f, androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED)
+        }
         // Waiting for Wi-Fi: start as soon as an unmetered network is back.
         runCatching {
             app.getSystemService(ConnectivityManager::class.java)?.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
@@ -462,6 +476,30 @@ object Downloads {
         pump()
     }
 
+    /** Charging, or enough battery, as Settings asks (true when neither rule is on). */
+    fun powerOk(): Boolean {
+        if (!settings.chargingOnly && settings.lowBatteryPercent <= 0) return true
+        val b = app.registerReceiver(null, android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED)) ?: return true
+        val plugged = b.getIntExtra(android.os.BatteryManager.EXTRA_PLUGGED, 0) != 0
+        val level = b.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1)
+        val scale = b.getIntExtra(android.os.BatteryManager.EXTRA_SCALE, 100).coerceAtLeast(1)
+        val percent = if (level < 0) 100 else level * 100 / scale
+        return com.nexonic.downloadmanager.core.PowerRules.allowed(settings.chargingOnly, settings.lowBatteryPercent, plugged, percent)
+    }
+
+    private fun powerChanged() {
+        if (!::app.isInitialized) return
+        if (!powerOk()) { if (_items.value.any { it.status == Status.DOWNLOADING }) pauseForSystem(); pump() }
+        else if (_waitingForPower.value) pump()
+    }
+
+    fun setPowerRules(chargingOnly: Boolean, lowBatteryPercent: Int) {
+        settings.chargingOnly = chargingOnly
+        settings.lowBatteryPercent = lowBatteryPercent
+        powerChanged()
+        pump()
+    }
+
     private fun onWifiOrNotNeeded(): Boolean {
         if (!settings.wifiOnly) return true
         val cm = app.getSystemService(ConnectivityManager::class.java) ?: return true
@@ -481,6 +519,12 @@ object Downloads {
             return
         }
         _waitingForVpn.value = false
+        if (!powerOk()) {
+            _waitingForPower.value = true
+            if (transfers.isEmpty()) DownloadService.stop(app)
+            return
+        }
+        _waitingForPower.value = false
         if (!onWifiOrNotNeeded()) {
             _waitingForWifi.value = true
             if (transfers.isEmpty()) DownloadService.stop(app)

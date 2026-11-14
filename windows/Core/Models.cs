@@ -192,6 +192,8 @@ public static class FileTypes
 
 public sealed class AppSettings
 {
+    /// <summary>Options → Extras (added in 0.32.0).</summary>
+    public FinishOptions Finish { get; set; } = new();
     /// <summary>Bundled native libtorrent engine; off for existing and new installations.</summary>
     public bool TorrentsEnabled { get; set; }
     /// <summary>Ask the router to forward the torrent port (UPnP and NAT-PMP); off unless turned on.</summary>

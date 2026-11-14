@@ -1,3 +1,25 @@
+## 0.32.0
+
+**New on Mac, Windows and Linux**
+- **Drop target:** a small round window that stays above other windows (Settings → After Download, or the menu bar /
+  tray menu on Mac). Drop a link, text with links or a .torrent file on it and the Download File Info window opens.
+  Drag it anywhere; double-click it to show the downloads.
+- **Rename finished files** by a pattern such as `{site} {date} {name}` ({name}, {ext}, {site}, {date}, {time},
+  {category}). Torrents keep their names.
+- **Play while downloading:** right-click a video or song that is still downloading and choose Play While Downloading
+  once its first few MB are there. It opens in your usual player. (Some .mp4 files can only play once they are complete.)
+- **Video tools:** right-click a finished video → Video Tools → Save as MP4 or Save Sound Only. The video and sound are
+  copied as they are, so nothing loses quality. Settings can also save each video's picture beside it and cut sponsor
+  segments from videos (using a community list of marked segments).
+- **Notify my phone:** give a web address (a push notification service or your own server) and Nexonic tells it
+  when a download finishes or fails. Only the file name is sent.
+- **Mac: Quick Look** (right-click → Quick Look, or ⌘Y) previews a finished file, or the part already downloaded.
+
+**New on Android**
+- **Only while charging** and **Pause when the battery is low** (below 15%) in Settings. Downloads pause and continue
+  by themselves.
+- **Home-screen widget:** what is downloading and its speed, Pause all, and Add the copied link.
+
 ## 0.31.2
 
 **Mac: works in the background, like a classic download manager**

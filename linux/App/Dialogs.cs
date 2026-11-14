@@ -874,6 +874,13 @@ public static partial class Dialogs
         var scanCmd = Box(after, "Scanner command (the file is added at the end)", s.ScanCommand);
         Hint(after, "The default uses ClamAV (install the clamav package). Expected checksums are checked automatically when a download finishes. " +
                     "Queues can also quit the app, sleep or shut down the computer when they are done (Scheduler).");
+        var mask = Box(after, "Rename finished files by this pattern (empty = keep the name)", s.Finish.RenameMask);
+        Hint(after, "{name} file name · {ext} extension · {site} website · {date} day · {time} time · {category} type, for example {site} {date} {name}. The extension stays even if the pattern leaves it out.");
+        var notifyUrl = Box(after, "Notify my phone: web address told when a download finishes or fails", s.Finish.NotifyUrl);
+        Hint(after, "Use the address of a push notification service or your own server. Only the file name is sent (never the link or the folder); https, or http inside your home network.");
+        var dropTarget = Tick(after, "Show the drop target (a small window you can drop links on)", s.Finish.DropTarget);
+        var thumb = Tick(after, "Videos: also save the video's picture", s.Finish.SaveThumbnail);
+        var sponsors = Tick(after, "Videos: cut sponsor segments (from a community list)", s.Finish.SkipSponsors);
 
         var browsers = Tab("Browsers & Command Line");
         var integration = new Integration();
@@ -990,6 +997,11 @@ public static partial class Dialogs
             s.MarkDownloads = mark.IsChecked == true;
             s.ScanEnabled = scan.IsChecked == true;
             s.ScanCommand = (scanCmd.Text ?? "").Trim();
+            s.Finish.RenameMask = (mask.Text ?? "").Trim();
+            s.Finish.NotifyUrl = (notifyUrl.Text ?? "").Trim();
+            s.Finish.DropTarget = dropTarget.IsChecked == true;
+            s.Finish.SaveThumbnail = thumb.IsChecked == true;
+            s.Finish.SkipSponsors = sponsors.IsChecked == true;
             if (NetworkOptions.DnsProblem(doh.Text, dot.Text, strictDns.IsChecked == true) is { } dnsProblem) { error.Text = dnsProblem; return; }
             if (Adapters.BlocklistProblem(blocklist.Text) is { } blockProblem) { error.Text = blockProblem; return; }
             if ((EnginePaths.Problem(ytdlpPath.Text, "yt-dlp") ?? EnginePaths.Problem(ffmpegPath.Text, "FFmpeg")) is { } toolProblem) { error.Text = toolProblem; return; }

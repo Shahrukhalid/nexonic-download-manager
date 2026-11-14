@@ -34,8 +34,10 @@ class DownloadService : Service() {
     private val tick = object : Runnable {
         override fun run() {
             if (Downloads.activeCount == 0 && Downloads.items.value.none { it.status == com.nexonic.downloadmanager.data.Status.QUEUED }) {
+                NexonicWidget.refresh(this@DownloadService)
                 stopForegroundCompat(); stopSelf(); return
             }
+            NexonicWidget.refresh(this@DownloadService, force = false)
             NotificationManagerCompat.from(this@DownloadService).let {
                 if (canNotify(this@DownloadService)) it.notify(Notifier.ONGOING_ID, Notifier.ongoing(this@DownloadService))
             }

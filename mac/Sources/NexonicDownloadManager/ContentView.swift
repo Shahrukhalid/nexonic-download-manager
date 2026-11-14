@@ -335,6 +335,16 @@ struct ContentView: View {
         if ids.count == 1, let id = ids.first {
             Button("Open") { manager.open(id) }
             Button("Show in Finder") { manager.reveal(id) }
+            Button("Quick Look") { manager.quickLook(id) }.keyboardShortcut("y", modifiers: .command)
+            if let r = manager.items.first(where: { $0.id == id }) {
+                if PartialPlay.ready(r) { Button("Play While Downloading") { manager.playPartial(id) } }
+                if r.status == .finished, PartialPlay.isMedia(r.fileName) {
+                    Menu("Video Tools") {
+                        Button("Save as MP4") { manager.convert(id, to: "mp4") }
+                        Button("Save Sound Only") { manager.convert(id, to: "audio") }
+                    }
+                }
+            }
             Button("Show Progress") { ProgressWindow.show(id, manager: manager) }
             Button("Check Server…") { sheet = .diagnostics(manager.items.first { $0.id == id }?.url.absoluteString ?? "") }
             Divider()

@@ -311,6 +311,9 @@ public enum SiteVideo {
     public static let mediaDetails = ["--embed-metadata", "--embed-chapters"]
 
     /// The command for one video. `folder` gets the finished file, `temp` the partial one (so it can resume).
+    /// Settings → Extras: video picture beside the video, sponsor segments cut (set by the app).
+    public static var extraArguments: [String] = []
+
     public static func arguments(url: URL, folder: String, temp: String, ffmpeg: String?, quickJS: String?, audioOnly: Bool,
                                  referrer: String?, cookies: String?, userAgent: String?, username: String?, password: String?,
                                  speedLimitKBps: Int, infoJSON: String? = nil, maxHeight: Int? = nil) -> [String] {
@@ -326,7 +329,7 @@ public enum SiteVideo {
         if let quickJS { a += ["--js-runtimes", "quickjs:\(quickJS)"] }
         if let ffmpeg { a += ["--ffmpeg-location", (ffmpeg as NSString).deletingLastPathComponent] }  // folder: ffmpeg and ffprobe
         a += format(audioOnly: audioOnly, maxHeight: maxHeight)
-        if ffmpeg != nil { a += mediaDetails }
+        if ffmpeg != nil { a += mediaDetails + extraArguments }
         if ffmpeg != nil, audioOnly { a += AudioConversion.arguments(AudioConversion.current) }
         if ffmpeg != nil, !audioOnly, UserDefaults.standard.bool(forKey: VideoSubtitles.key) { a += VideoSubtitles.arguments() }
         if let referrer, !referrer.isEmpty { a += ["--referer", referrer] }

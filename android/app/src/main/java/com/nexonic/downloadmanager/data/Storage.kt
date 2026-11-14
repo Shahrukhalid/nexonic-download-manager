@@ -127,6 +127,10 @@ class Settings(context: Context) {
     /** Speed limits by time of day, one rule per line ("Mon-Fri 09:00-17:00 300"). */
     var speedSchedule: String get() = p.getString("speedSchedule", "") ?: ""; set(v) = p.edit().putString("speedSchedule", v).apply()
     var wifiOnly: Boolean get() = p.getBoolean("wifiOnly", false); set(v) = p.edit().putBoolean("wifiOnly", v).apply()
+    /** Added in 0.32.0: download only while the phone charges. */
+    var chargingOnly: Boolean get() = p.getBoolean("chargingOnly", false); set(v) = p.edit().putBoolean("chargingOnly", v).apply()
+    /** Added in 0.32.0: pause below this battery level while not charging (0 = never). */
+    var lowBatteryPercent: Int get() = p.getInt("lowBatteryPercent", 0); set(v) = p.edit().putInt("lowBatteryPercent", v).apply()
     /** Download limit: at most this many MB (0 = no limit) every [dataCapHours] hours. */
     var dataCapMB: Int get() = p.getInt("dataCapMB", 0); set(v) = p.edit().putInt("dataCapMB", v.coerceAtLeast(0)).apply()
     var dataCapHours: Int get() = p.getInt("dataCapHours", 24); set(v) = p.edit().putInt("dataCapHours", v.coerceIn(1, 24 * 31)).apply()

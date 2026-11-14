@@ -343,6 +343,9 @@ public static class SiteVideo
     public static readonly string[] MediaDetails = { "--embed-metadata", "--embed-chapters" };
 
     /// <summary>The command for one video. folder gets the finished file, temp the partial one (so it can resume).</summary>
+    /// <summary>Options → Extras: the video's picture beside it, sponsor segments cut (set by the app).</summary>
+    public static List<string> ExtraArguments { get; set; } = new();
+
     public static List<string> Arguments(string url, string folder, string temp, string? ffmpeg, string? quickJs, bool audioOnly,
         string? referrer, string? cookies, string? userAgent, string? username, string? password, int speedLimitKBps, string? infoJson = null,
         int? maxHeight = null)
@@ -361,7 +364,7 @@ public static class SiteVideo
         if (quickJs != null) a.AddRange(new[] { "--js-runtimes", $"quickjs:{quickJs}" });
         if (ffmpeg != null) a.AddRange(new[] { "--ffmpeg-location", Path.GetDirectoryName(ffmpeg)! }); // folder: ffmpeg and ffprobe
         a.AddRange(Format(audioOnly, maxHeight));
-        if (ffmpeg != null) a.AddRange(MediaDetails);
+        if (ffmpeg != null) { a.AddRange(MediaDetails); a.AddRange(ExtraArguments); }
         if (ffmpeg != null && audioOnly) a.AddRange(AudioConversion.Arguments(AudioConversion.Format));
         if (ffmpeg != null && !audioOnly && VideoSubtitles.Enabled) a.AddRange(VideoSubtitles.Arguments());
         if (!string.IsNullOrEmpty(referrer)) a.AddRange(new[] { "--referer", referrer });

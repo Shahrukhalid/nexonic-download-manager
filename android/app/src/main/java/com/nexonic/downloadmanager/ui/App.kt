@@ -39,6 +39,7 @@ import com.nexonic.downloadmanager.browser.Offer
 import com.nexonic.downloadmanager.core.DownloadRequest
 import com.nexonic.downloadmanager.core.Http
 import com.nexonic.downloadmanager.core.Playlists
+import com.nexonic.downloadmanager.core.Links
 import com.nexonic.downloadmanager.data.Downloads
 import com.nexonic.downloadmanager.data.NewDownload
 import com.nexonic.downloadmanager.data.Secrets
@@ -86,6 +87,17 @@ fun App(ui: UiState, browser: Browser) {
                 Tab.SETTINGS -> SettingsScreen(browser) { ui.message = it }
             }
         }
+    }
+
+    // The widget's Add button: Android lets an app read the clipboard only once its window has the focus.
+    val pasteContext = LocalContext.current
+    LaunchedEffect(ui.pasteCopied) {
+        if (!ui.pasteCopied) return@LaunchedEffect
+        kotlinx.coroutines.delay(400)
+        val clip = pasteContext.getSystemService(ClipboardManager::class.java)?.primaryClip
+        val text = clip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(pasteContext)?.toString().orEmpty()
+        ui.pasteCopied = false
+        ui.addText = Links.split(text).joinToString("\n")
     }
 
     // A magnet link pasted or shared as text opens the Add Torrent window instead.

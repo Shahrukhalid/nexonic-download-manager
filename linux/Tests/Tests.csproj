@@ -20,6 +20,7 @@
     <Compile Include="..\..\windows\Tests\QrTests.cs" Link="QrTests.cs" />
     <Compile Include="..\..\windows\Tests\DisplayAndDataTests.cs" Link="DisplayAndDataTests.cs" />
     <Compile Include="..\..\windows\Tests\ProfileBatchTests.cs" Link="ProfileBatchTests.cs" />
+    <Compile Include="..\..\windows\Tests\FinishingTests.cs" Link="FinishingTests.cs" />
     <Compile Include="..\..\windows\Tests\LocalApiTests.cs" Link="LocalApiTests.cs" />
     <Compile Include="..\..\windows\Tests\LocalizationTests.cs" Link="LocalizationTests.cs" />
     <Compile Include="..\..\windows\Tests\LicenseTests.cs" Link="LicenseTests.cs" />
