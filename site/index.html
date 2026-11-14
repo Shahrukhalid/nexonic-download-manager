@@ -31,7 +31,7 @@
   "operatingSystem": "macOS 13 or later, Windows 10, Windows 11, Linux, Android 10 or later",
   "softwareVersion": "__VERSION__",
   "description": "Free, open-source download manager for Mac, Windows, Linux and Android with multi-connection downloads, pause and resume, scheduler, queues, browser integration, video downloads and one-click download of a whole profile.",
-  "featureList": ["Download all photos and videos of an Instagram, TikTok or Facebook profile in one click", "Up to 256 adaptive connections per file", "Pause and resume", "Scheduler and queues", "Speed limiter per download", "Actions when a download completes", "BitTorrent", "Browser extension for Chrome, Edge, Brave, Opera and Firefox", "Video downloads up to 8K"],
+  "featureList": ["Download all photos and videos of an Instagram, TikTok or Facebook profile in one click", "Up to 256 adaptive connections per file", "Pause and resume", "Scheduler and queues", "Speed limiter per download", "Actions when a download completes", "Floating drop target", "Play while downloading", "Video tools: MP4 and sound only without re-encoding", "Rename finished files by pattern", "Android widget and charging-only downloads", "BitTorrent", "Browser extension for Chrome, Edge, Brave, Opera and Firefox", "Video downloads up to 8K"],
   "url": "https://shahrukhalid.github.io/nexonic-download-manager/",
   "downloadUrl": "https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest",
   "license": "https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/LICENSE",
@@ -307,7 +307,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
   <div class="wrap">
     <div class="hero-grid">
       <div>
-        <a class="pill" href="#profiles"><span class="dot"></span><b>New in __VERSION__</b> · download a whole profile in one click</a>
+        <a class="pill" href="#features"><span class="dot"></span><b>New in __VERSION__</b> · drop target, play while downloading, video tools</a>
         <h1>The free download manager <span>for Mac, Windows, Linux and Android</span></h1>
         <p class="lead">Download every photo and video of an Instagram, TikTok or Facebook profile in one click. Up to 256 connections per file, pause and resume anytime, schedule downloads for the night and save videos from 1,000+ sites in the quality you pick. No ads, no account, no tracking.</p>
         <div class="btns">
@@ -440,6 +440,10 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <div class="f"><div class="ic"><svg class="i"><use href="#i-refresh"/></svg></div><h3>Refresh expired links</h3><p>Right-click a download, choose Refresh Link and paste a fresh link. It continues where it stopped, without starting over.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-globe"/></svg></div><h3>Browser integration</h3><p>Click a download link in Chrome, Edge, Brave, Opera or Firefox and a compact window shows name, size, category and folder. If the app isn't running, the browser simply keeps the download.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-dl"/></svg></div><h3>Download all, in one click</h3><p>On an Instagram, TikTok or Facebook profile, click <b>Download all</b> in the extension. Nexonic finds every photo and video in the background, then you pick the folder and quality.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-dl"/></svg></div><h3>Drop target</h3><p>A small round window that stays above other windows: drop a link or a .torrent file on it and the download window opens. Mac, Windows and Linux.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-video"/></svg></div><h3>Play while downloading</h3><p>Start a video or song in your usual player once its first few MB are there, while the rest keeps downloading.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-video"/></svg></div><h3>Video tools</h3><p>Save a finished video as MP4 or keep only its sound, without losing quality. Optionally save each video's picture and cut sponsor segments.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-folder"/></svg></div><h3>Rename and notify</h3><p>Rename finished files by a pattern like <code>{site} {date} {name}</code>, and get a notification on your phone when a download finishes. Quick Look on Mac.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-video"/></svg></div><h3>Video downloads</h3><p>Save videos from YouTube, Instagram, Facebook, X, TikTok and 1,000+ sites in the quality you pick, up to 4K/8K, or sound only.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-video"/></svg></div><h3>Playlists and Media Library</h3><p>List a playlist's or channel's videos and pick the ones to save, keep subtitles inside videos, and browse your finished videos and music with preview pictures.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-folder"/></svg></div><h3>Automatic categories</h3><p>Files are sorted into Compressed, Documents, Music, Video, Programs and Images, each saved in its own folder. Browse All, Unfinished and Finished.</p></div>
@@ -517,7 +521,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
   <div class="wrap">
     <div class="split">
       <div>
-        <span class="chip">New in __VERSION__</span>
+        <span class="chip">Download all</span>
         <h3 style="margin-top:14px;font-size:34px">Every video of a profile, in one click</h3>
         <p>Open an Instagram, TikTok or Facebook profile in your browser and click <b>Download all</b> in the Nexonic extension. The Nexonic window opens with what the page shows, and keeps finding the rest in the background.</p>
         <ul class="checks">
@@ -570,6 +574,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <div class="f"><div class="ic"><svg class="i"><use href="#i-globe"/></svg></div><h3>Built-in browser</h3><p>Browse as usual: downloads open the Nexonic download window, long-press any link or image to save it, and <b>Found on this page</b> lists the videos, music and files on the page.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-dl"/></svg></div><h3>Share from Chrome</h3><p>In Chrome or any other app, tap <b>Share → Download with Nexonic</b>. Several links at once and batch patterns work too.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-bolt"/></svg></div><h3>Fast and resumable</h3><p>Up to 256 connections per file, chosen automatically, pause and resume even after a restart, retries, refresh expired links.</p></div>
+      <div class="f"><div class="ic"><svg class="i"><use href="#i-bolt"/></svg></div><h3>Battery-friendly</h3><p>Download only while charging, or pause when the battery is low. A home-screen widget shows the speed, pauses everything and adds the copied link.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-clock"/></svg></div><h3>Runs in the background</h3><p>A progress notification with Pause all, queues, a daily scheduler, Wi-Fi only and a speed limit.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-folder"/></svg></div><h3>Files you can find</h3><p>Saved in <b>Download/Nexonic</b>, sorted by type, visible in the Files app. Open, share or delete from the app.</p></div>
       <div class="f"><div class="ic"><svg class="i"><use href="#i-lock"/></svg></div><h3>Private</h3><p>Cookies and passwords are encrypted on the phone and sent only to their own site. Third-party cookies are blocked in the browser.</p></div>
