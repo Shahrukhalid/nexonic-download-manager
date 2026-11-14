@@ -6,6 +6,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Nexonic.Core;
+using Nexonic.Linux;
 
 namespace Nexonic.App;
 
