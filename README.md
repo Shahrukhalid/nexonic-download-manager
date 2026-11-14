@@ -238,6 +238,16 @@ Open an Instagram, TikTok or Facebook profile in your browser and click **Downlo
   <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/windows-options.png" alt="Windows: Options" width="440">
 </p>
 
+## Roadmap
+
+<p align="center">
+  <a href="https://github.com/users/Shahrukhalid/projects/1"><img src="docs/img/roadmap.svg" alt="Roadmap: shipped, in progress, next and planned work" width="880"></a>
+</p>
+
+Follow the plan on the [roadmap board](https://github.com/users/Shahrukhalid/projects/1) or in the
+[roadmap issues](https://github.com/Shahrukhalid/nexonic-download-manager/issues?q=is%3Aissue+is%3Aopen+label%3Aroadmap).
+Ideas and requests are welcome in [Discussions](https://github.com/Shahrukhalid/nexonic-download-manager/discussions).
+
 ## How to use
 
 | To | Do this |
