@@ -69,7 +69,8 @@ curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | 
 
 **Package managers**
 
-- **Homebrew (Mac):** `brew install --cask shahrukhalid/nexonic/nexonic-download-manager`.
+- **Homebrew (Mac):** run `brew tap shahrukhalid/nexonic https://github.com/Shahrukhalid/nexonic-download-manager`
+  and then `brew install --cask nexonic-download-manager`.
 - **Scoop (Windows x64 and Arm64):** run `scoop bucket add nexonic https://github.com/Shahrukhalid/nexonic-download-manager`
   and then `scoop install nexonic-download-manager`. Scoop uses the portable build.
 - **WinGet (Windows x64 and Arm64):** the [catalog submission for v0.28.0](https://github.com/microsoft/winget-pkgs/pull/470114)

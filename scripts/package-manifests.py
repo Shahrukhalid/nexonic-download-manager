@@ -2,7 +2,7 @@
 """Writes the package-manager files for a published release, with the checksums GitHub lists for its files:
   packaging/winget/   winget manifests (to submit to microsoft/winget-pkgs)
   bucket/             Scoop bucket (scoop bucket add nexonic https://github.com/Shahrukhalid/nexonic-download-manager)
-  packaging/homebrew/ Homebrew cask (for a tap repository named homebrew-nexonic)
+  Casks/              Homebrew cask (this repository is the tap: brew tap shahrukhalid/nexonic <repo URL>)
 Usage: scripts/package-manifests.py [VERSION]   (default: the VERSION file; the release must be published)
 Nothing is submitted anywhere; the files are only written into this repository for review.
 """
@@ -98,7 +98,7 @@ scoop = {
 }
 (bucket / "nexonic-download-manager.json").write_text(json.dumps(scoop, indent=4) + "\n")
 
-h = ROOT / "packaging" / "homebrew"
+h = ROOT / "Casks"
 h.mkdir(parents=True, exist_ok=True)
 (h / "nexonic-download-manager.rb").write_text(f"""# Created with scripts/package-manifests.py
 cask "nexonic-download-manager" do
