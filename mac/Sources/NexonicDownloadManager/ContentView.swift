@@ -240,22 +240,22 @@ struct ContentView: View {
                     Text(r.fileName).lineLimit(1).truncationMode(.middle)
                 }
             }
-            TableColumn("Size") { r in Text(r.size.map(bytes) ?? "–") }.width(80)
-            TableColumn("Progress") { r in ProgressView(value: r.status == .finished ? 1 : r.progress).progressViewStyle(.linear).tint(r.status == .finished ? .green : brand) }.width(110)
-            TableColumn("Speed") { r in Text(r.status.isActive ? speed(manager.speeds[r.id] ?? 0) : "") }.width(90)
-            TableColumn("Time Left") { r in Text(r.status.isActive ? manager.eta(r) : "") }.width(70)
+            TableColumn("Size") { r in Text(r.size.map(bytes) ?? "–") }.width(min: 40, ideal: 80, max: 320)
+            TableColumn("Progress") { r in ProgressView(value: r.status == .finished ? 1 : r.progress).progressViewStyle(.linear).tint(r.status == .finished ? .green : brand) }.width(min: 55, ideal: 110, max: 440)
+            TableColumn("Speed") { r in Text(r.status.isActive ? speed(manager.speeds[r.id] ?? 0) : "") }.width(min: 45, ideal: 90, max: 360)
+            TableColumn("Time Left") { r in Text(r.status.isActive ? manager.eta(r) : "") }.width(min: 40, ideal: 70, max: 280)
             TableColumn("Seeds / Peers") { r in
                 Text(r.torrent?.metadata.map { r.status.isActive ? "\($0.seedsText) / \($0.peersText)" : "" } ?? "")
                     .foregroundStyle(.secondary).monospacedDigit()
-            }.width(110)
+            }.width(min: 55, ideal: 110, max: 440)
             TableColumn("Status") { r in
                 HStack(spacing: 5) {
                     Circle().fill(statusColor(r)).frame(width: 7, height: 7)
                     Text(statusText(r)).foregroundStyle(r.status == .failed && !r.isCanceled ? .red : .primary)
                 }
-            }.width(120)
-            TableColumn("Queue") { r in Text(manager.queueName(r.queue)).foregroundStyle(.secondary) }.width(90)
-            TableColumn("Added") { r in Text(Units.date(r.added)).foregroundStyle(.secondary) }.width(90)
+            }.width(min: 60, ideal: 120, max: 480)
+            TableColumn("Queue") { r in Text(manager.queueName(r.queue)).foregroundStyle(.secondary) }.width(min: 45, ideal: 90, max: 360)
+            TableColumn("Added") { r in Text(Units.date(r.added)).foregroundStyle(.secondary) }.width(min: 45, ideal: 90, max: 360)
         }
         .contextMenu(forSelectionType: UUID.self) { ids in
             rowMenu(ids)
@@ -634,28 +634,28 @@ struct DownloadTable<MenuContent: View>: View {
 
     @TableColumnBuilder<DownloadRecord, Never>
     private var mainColumns: some TableColumnContent<DownloadRecord, Never> {
-        TableColumn("Name") { (r: DownloadRecord) in NameCell(record: r) }.customizationID("name")
-        TableColumn("Size") { (r: DownloadRecord) in Text(r.size.map(bytes) ?? "–") }.width(80).customizationID("size")
-        TableColumn("Progress") { (r: DownloadRecord) in ProgressCell(record: r) }.width(110).customizationID("progress")
-        TableColumn("Speed") { (r: DownloadRecord) in SpeedCell(record: r) }.width(90).customizationID("speed")
-        TableColumn("Time Left") { (r: DownloadRecord) in TimeLeftCell(record: r) }.width(70).customizationID("left")
-        TableColumn("Seeds / Peers") { (r: DownloadRecord) in PeersCell(record: r) }.width(110).customizationID("peers")
+        TableColumn("Name") { (r: DownloadRecord) in NameCell(record: r) }.width(min: 120, ideal: 320).customizationID("name")
+        TableColumn("Size") { (r: DownloadRecord) in Text(r.size.map(bytes) ?? "–") }.width(min: 40, ideal: 80, max: 320).customizationID("size")
+        TableColumn("Progress") { (r: DownloadRecord) in ProgressCell(record: r) }.width(min: 55, ideal: 110, max: 440).customizationID("progress")
+        TableColumn("Speed") { (r: DownloadRecord) in SpeedCell(record: r) }.width(min: 45, ideal: 90, max: 360).customizationID("speed")
+        TableColumn("Time Left") { (r: DownloadRecord) in TimeLeftCell(record: r) }.width(min: 40, ideal: 70, max: 280).customizationID("left")
+        TableColumn("Seeds / Peers") { (r: DownloadRecord) in PeersCell(record: r) }.width(min: 55, ideal: 110, max: 440).customizationID("peers")
     }
 
     @TableColumnBuilder<DownloadRecord, Never>
     private var moreColumns: some TableColumnContent<DownloadRecord, Never> {
-        TableColumn("Status") { (r: DownloadRecord) in StatusCell(record: r) }.width(120).customizationID("status")
-        TableColumn("Queue") { (r: DownloadRecord) in QueueCell(record: r) }.width(90).customizationID("queue")
-        TableColumn("Added") { (r: DownloadRecord) in DateCell(date: r.added) }.width(90).customizationID("added")
-        TableColumn("Finished") { (r: DownloadRecord) in DateCell(date: r.finished) }.width(90).customizationID("finished").defaultVisibility(.hidden)
+        TableColumn("Status") { (r: DownloadRecord) in StatusCell(record: r) }.width(min: 60, ideal: 120, max: 480).customizationID("status")
+        TableColumn("Queue") { (r: DownloadRecord) in QueueCell(record: r) }.width(min: 45, ideal: 90, max: 360).customizationID("queue")
+        TableColumn("Added") { (r: DownloadRecord) in DateCell(date: r.added) }.width(min: 45, ideal: 90, max: 360).customizationID("added")
+        TableColumn("Finished") { (r: DownloadRecord) in DateCell(date: r.finished) }.width(min: 45, ideal: 90, max: 360).customizationID("finished").defaultVisibility(.hidden)
         TableColumn("Share Ratio") { (r: DownloadRecord) in
             Text(r.torrent?.metadata.map { String(format: "%.2f", $0.ratio) } ?? "").foregroundStyle(.secondary).monospacedDigit()
-        }.width(80).customizationID("ratio").defaultVisibility(.hidden)
+        }.width(min: 40, ideal: 80, max: 320).customizationID("ratio").defaultVisibility(.hidden)
         TableColumn("Uploaded") { (r: DownloadRecord) in
             Text(r.torrent?.metadata.map { $0.uploaded > 0 ? bytes($0.uploaded) : "" } ?? "").foregroundStyle(.secondary)
-        }.width(80).customizationID("uploaded").defaultVisibility(.hidden)
-        TableColumn("Folder") { (r: DownloadRecord) in FolderCell(record: r) }.width(160).customizationID("folder").defaultVisibility(.hidden)
-        TableColumn("Can Resume") { (r: DownloadRecord) in Text(ListColumns.resume(r)).foregroundStyle(.secondary) }.width(80).customizationID("resume").defaultVisibility(.hidden)
+        }.width(min: 40, ideal: 80, max: 320).customizationID("uploaded").defaultVisibility(.hidden)
+        TableColumn("Folder") { (r: DownloadRecord) in FolderCell(record: r) }.width(min: 80, ideal: 160, max: 640).customizationID("folder").defaultVisibility(.hidden)
+        TableColumn("Can Resume") { (r: DownloadRecord) in Text(ListColumns.resume(r)).foregroundStyle(.secondary) }.width(min: 40, ideal: 80, max: 320).customizationID("resume").defaultVisibility(.hidden)
     }
 }
 
