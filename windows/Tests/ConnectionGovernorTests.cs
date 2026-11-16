@@ -45,9 +45,9 @@ public class ConnectionGovernorTests
         Assert.Equal(32, g.Allowed);  // still quiet
         g.Tick(T0.AddSeconds(30), 32);
         Assert.True(g.Allowed > 32);  // a fixed number slowly comes back
-        g.Refused(T0, TimeSpan.FromDays(1));
-        Assert.Equal(T0.AddMinutes(10), g.QuietUntil);  // never waits longer than 10 minutes
-        for (var i = 0; i < 10; i++) g.Refused(T0, null);
+        g.Refused(T0.AddSeconds(40), TimeSpan.FromDays(1));
+        Assert.Equal(T0.AddSeconds(40).AddMinutes(10), g.QuietUntil);  // never waits longer than 10 minutes
+        for (var i = 0; i < 10; i++) g.Refused(T0.AddSeconds(50 + i * 5), null);  // the server keeps refusing
         Assert.Equal(1, g.Allowed);  // one connection always stays
     }
 
@@ -61,10 +61,28 @@ public class ConnectionGovernorTests
         Rising();
         Assert.Equal(8, g.Allowed);       // doubles while the speed keeps rising
         g.Refused(t, TimeSpan.FromSeconds(1));
-        Assert.Equal(4, g.Allowed);
+        Assert.Equal(7, g.Allowed);       // the 7 that were accepted, not half
         t += TimeSpan.FromSeconds(2);
         for (var i = 0; i < 6; i++) Rising();
-        Assert.Equal(7, g.Allowed);       // grows again, but never back to the 8 that were refused
+        Assert.Equal(7, g.Allowed);       // never back to the 8 that were refused
+    }
+
+    [Fact]
+    public void RefusalsArrivingTogetherAreOneAnswer()
+    {
+        // A server that allows 6: at 8 connections, two are refused at almost the same moment.
+        var g = new ConnectionGovernor(auto: true, maximum: 32, T0);
+        var t = T0;
+        double speed = 1_000_000;
+        void Rising() { t += ConnectionGovernor.Sample; g.Received((long)(speed * ConnectionGovernor.Sample.TotalSeconds)); g.Tick(t, g.Allowed); speed *= 2; }
+        Rising();
+        Assert.Equal(8, g.Allowed);
+        g.Refused(t, TimeSpan.FromSeconds(1));
+        g.Refused(t.AddMilliseconds(30), TimeSpan.FromSeconds(1));
+        Assert.Equal(6, g.Allowed);       // exactly what the server allows, not 8 → 4 → 2
+        t += TimeSpan.FromSeconds(2);
+        for (var i = 0; i < 6; i++) Rising();
+        Assert.Equal(6, g.Allowed);
     }
 
     [Fact]
