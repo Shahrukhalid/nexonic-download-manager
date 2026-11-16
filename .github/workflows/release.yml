@@ -219,14 +219,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           O=build/linux-${{ matrix.arch }}
-          gh release upload "$GITHUB_REF_NAME" "$O"/*.AppImage "$O"/*.AppImage.zsync "$O"/*.deb "$O"/*.rpm "$O"/SHA256SUMS-linux-*.txt
+          gh release upload "$GITHUB_REF_NAME" "$O"/*.AppImage "$O"/*.AppImage.zsync "$O"/*.deb "$O"/*.rpm "$O"/SHA256SUMS-linux-*.txt --clobber
   windows:
     permissions:
       contents: write
       actions: write
     needs: [release, ffmpeg-windows, linux]
     runs-on: windows-latest
-    timeout-minutes: 60
+    timeout-minutes: 100
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
@@ -274,7 +274,7 @@ jobs:
           $v = (Get-Content VERSION).Trim()
           Copy-Item "build\NexonicDownloadManager-Setup-$v.exe" build\NexonicDownloadManager-Windows-Setup.exe
           Copy-Item "build\NexonicDownloadManager-$v-windows-portable.zip" build\NexonicDownloadManager-Windows-Portable.zip
-          gh release upload $env:GITHUB_REF_NAME build\NexonicDownloadManager-Windows-Setup.exe build\NexonicDownloadManager-Windows-Portable.zip
+          gh release upload $env:GITHUB_REF_NAME build\NexonicDownloadManager-Windows-Setup.exe build\NexonicDownloadManager-Windows-Portable.zip --clobber
       - name: Attach latest.json (update details the apps read when GitHub's API refuses)
         env:
           GH_TOKEN: ${{ github.token }}
@@ -296,7 +296,7 @@ jobs:
           # or making the release public; otherwise the update file can permanently omit the Android APKs.
           $expected = $required + @("Android-GPL-Sources.tar.gz")
           $ready = $false
-          for ($attempt = 0; $attempt -lt 60; $attempt++) {
+          for ($attempt = 0; $attempt -lt 90; $attempt++) {
             $details = gh release view $tag --json assets | ConvertFrom-Json
             if ($LASTEXITCODE -ne 0) { throw "Cannot inspect release assets" }
             $present = @($details.assets | Where-Object { $_.size -gt 0 -and $_.state -eq "uploaded" } | ForEach-Object { $_.name })
@@ -394,4 +394,4 @@ jobs:
           $v = (Get-Content VERSION).Trim()
           Copy-Item "build\NexonicDownloadManager-Setup-$v-arm64.exe" build\NexonicDownloadManager-Windows-ARM64-Setup.exe
           Copy-Item "build\NexonicDownloadManager-$v-windows-arm64-portable.zip" build\NexonicDownloadManager-Windows-ARM64-Portable.zip
-          gh release upload $env:GITHUB_REF_NAME build\NexonicDownloadManager-Windows-ARM64-Setup.exe build\NexonicDownloadManager-Windows-ARM64-Portable.zip
+          gh release upload $env:GITHUB_REF_NAME build\NexonicDownloadManager-Windows-ARM64-Setup.exe build\NexonicDownloadManager-Windows-ARM64-Portable.zip --clobber
