@@ -1,0 +1,75 @@
+# Engine speed: every change to the download engine is measured against the latest release on the same runner, with
+# real downloads from a local test server (bench/EngineBench). The results go to the run's summary; a scenario that got
+# more than 15% slower fails the check, so speed can only stay the same or improve.
+name: Benchmark
+
+on:
+  pull_request:
+    paths: ["windows/Core/**", "bench/**", ".github/workflows/benchmark.yml"]
+  push:
+    branches: [main]
+    paths: ["windows/Core/**", "bench/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: benchmark-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: "10.0.x"
+      - name: This version
+        run: dotnet run -c Release --project bench/EngineBench -- --out new.json --runs 3
+      - name: The latest release, on the same runner
+        id: base
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName -q .tagName)"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          git worktree add -q base "$tag"
+          mkdir -p base/bench && cp -r bench/EngineBench base/bench/
+          if dotnet run -c Release --project base/bench/EngineBench -- --out base.json --runs 3; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "The benchmark does not build against $tag; there is no comparison this time."
+          fi
+      - name: Compare
+        env:
+          TAG: ${{ steps.base.outputs.tag }}
+          BASE_OK: ${{ steps.base.outputs.ok }}
+        run: |
+          set -uo pipefail
+          {
+            echo "## Engine speed"
+            echo
+            if [ "$BASE_OK" = "true" ]; then
+              echo "Compared with $TAG on the same runner (median of 3 runs, every file checked with SHA-256)."
+              echo
+              dotnet run -c Release --project bench/EngineBench -- --compare base.json new.json --tolerance 0.15
+              status=$?
+            else
+              echo "No comparison: the benchmark could not run against $TAG."
+              status=0
+            fi
+            exit "$status"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          exit "${PIPESTATUS[0]}"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: engine-benchmark
+          path: "*.json"
