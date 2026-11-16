@@ -73,6 +73,7 @@
         <MenuItem Header="_Add URL…" InputGestureText="Ctrl+N" Click="OnAdd" />
         <MenuItem Header="Add _Torrent…" InputGestureText="Ctrl+Shift+T" Click="OnTorrents" />
         <MenuItem Header="Add _Batch Download…" InputGestureText="Ctrl+Shift+B" Click="OnBatch" />
+        <MenuItem Header="_Import Download List…" Click="OnImportList" ToolTip="A list saved by another download manager, a list of links, a JSON list or a bookmarks file: its downloads wait in the current queue" />
         <MenuItem Header="Open _Metalink File…" Click="OnMetalink" ToolTip="A .meta4 or .metalink file: each file is downloaded from all its mirrors at once and checked when done" />
         <MenuItem Header="Verify _Checksum…" InputGestureText="Ctrl+Shift+C" Click="OnChecksum" ToolTip="Calculate and compare file checksums (MD5, SHA-1, SHA-256, SHA-512)" />
         <MenuItem Header="Site _Grabber…" InputGestureText="Ctrl+Shift+G" Click="OnGrabber" />

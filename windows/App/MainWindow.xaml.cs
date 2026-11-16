@@ -463,6 +463,18 @@ public partial class MainWindow : Window
         var n = info.Length <= 4_000_000 ? manager.AddMetalink(System.IO.File.ReadAllText(d.FileName), new AddOptions { QueueId = CurrentQueue }) : 0;
         if (n == 0) MessageBox.Show(this, "This file has no downloads in it, or it is not a Metalink file.", "Open Metalink File", MessageBoxButton.OK, MessageBoxImage.Information);
     }
+    void OnImportList(object s, RoutedEventArgs e)
+    {
+        var d = new Microsoft.Win32.OpenFileDialog { Title = "Import Download List", Filter = "Download lists (*.ef2;*.txt;*.json;*.html;*.htm;*.lst)|*.ef2;*.txt;*.json;*.html;*.htm;*.lst|All files (*.*)|*.*" };
+        if (d.ShowDialog(this) != true) return;
+        var info = new System.IO.FileInfo(d.FileName);
+        var (added, skipped) = info.Length <= DownloadLists.MaxBytes
+            ? manager.AddImported(System.IO.File.ReadAllText(d.FileName), new AddOptions { QueueId = CurrentQueue, Start = false }) : (0, 0);
+        MessageBox.Show(this, ImportMessage(added, skipped), "Import Download List", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+    static string ImportMessage(int added, int skipped) =>
+        added == 0 && skipped == 0 ? "No downloads were found in this file."
+        : $"{added} download{(added == 1 ? "" : "s")} added to the queue (not started)." + (skipped > 0 ? $" {skipped} skipped: already in your list or not a web link." : "");
     void OnSettings(object s, RoutedEventArgs e) { Dialogs.Options(this, manager); BuildSidebar(); }
     void OnHelp(object s, RoutedEventArgs e) => HelpWindows.ShowHelp(this);
     void OnAbout(object s, RoutedEventArgs e) => HelpWindows.ShowAbout(this);

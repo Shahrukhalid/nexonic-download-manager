@@ -143,6 +143,20 @@ public sealed partial class DownloadManager
         return n;
     }
 
+    /// <summary>Adds the downloads of a list saved by another download manager (see <see cref="DownloadLists"/>), waiting
+    /// in the chosen queue, without the ones you already have. Returns how many were added and how many were skipped.</summary>
+    public (int Added, int Skipped) AddImported(string text, AddOptions? o = null)
+    {
+        o ??= new AddOptions { Start = false };
+        int added = 0, skipped = 0;
+        foreach (var job in DownloadLists.Read(text).Jobs)
+        {
+            if (!job.IsValid || IsDuplicate(job.Url, job.FileName, o.Folder)) { skipped++; continue; }
+            if (Add(job, o) != null) added++; else skipped++;
+        }
+        return (added, skipped);
+    }
+
     /// <summary>True when this link repeats a download you have (see <see cref="Duplicates"/>).</summary>
     public bool IsDuplicate(string url, string? fileName, string? folder) =>
         Duplicates.Find(Rows.Select(r => r.Record), url, fileName ?? FileNames.FromUrl(url),
