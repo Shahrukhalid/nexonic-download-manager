@@ -89,7 +89,12 @@ public sealed partial class DownloadManager
                 listing.Scan.Complete = true;
                 listing.Scan.Note = L.T("This site lets Nexonic take only the videos the page has loaded. To add more, scroll further down the page and click Download all again.");
             }
-            else { listing.VisitorsOnly = true; ProfileCookies.Remove(key); }
+            else
+            {
+                listing.VisitorsOnly = true;
+                // A Facebook page keeps the browser's sign-in: on Windows, Profile Batch reads the page with it.
+                if (social == null || GalleryList.IsProfile(url)) ProfileCookies.Remove(key);
+            }
             return;
         }
         var proxy = HostProfiles.Match(Settings.HostProfiles, url)?.Proxy ?? Settings.Proxy;

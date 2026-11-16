@@ -140,10 +140,23 @@ public static partial class Dialogs
                 // window may close meanwhile. Nothing is downloaded until Download Now or Add to Queue.
                 var key = ProfileBatch.Key(url);
                 var searching = L.T("Listing every photo and video with your browser's sign-in, a request every 1–2 seconds. A large profile takes a few minutes: you can close this window, Nexonic keeps going and opens Profile Batch again when it's done.");
-                if (m.Listings.TryGetValue(key, out var listing) && listing.Scan is { } listed && (!listing.Running || listing.Follow == null))
+                // A Facebook page handed over by the extension's Download all: read here with that browser's sign-in.
+                var signedPage = SocialPages.Find(url) != null && !GalleryList.IsProfile(url)
+                    && m.ProfileCookies.TryGetValue(key, out var signedIn) && !string.IsNullOrEmpty(signedIn.Cookies);
+                m.Listings.TryGetValue(key, out var listing);
+                if (!signedPage && listing?.Scan is { } listed && (!listing.Running || listing.Follow == null))
                 {
                     scan = listed;  // done, or the page's own posts while the rest is found (they can be downloaded now)
                     filter.Max = ProfileBatch.Limit;  // files, not videos: all of them are offered (a carousel alone holds 20)
+                }
+                else if (signedPage && SocialPages.Find(url) is { } page && m.ProfileCookies.TryGetValue(key, out var pageSignIn))
+                {
+                    // Scrolled in the background until the page shows no more; each Find Videos reads it again.
+                    status.Text = string.Format(L.T("Reading the {0} page in the background, scrolling until it shows no more…"), page.Site.Name);
+                    var seed = listing?.Scan?.Entries ?? new List<BatchEntry>();
+                    scan = await SocialWebView.Scan(url, page.Site, page.Owner, page.Pages, ProfileBatch.Limit,
+                        n => status.Text = string.Format(L.T("{0} found so far…"), n), token, pageSignIn.Cookies, pageSignIn.UserAgent, seed);
+                    filter.Max = ProfileBatch.Limit;
                 }
                 else if (listing is { Running: true }) { status.Text = searching; return; }
                 else if (m.ProfileCookies.ContainsKey(key) && GalleryList.IsProfile(url))
