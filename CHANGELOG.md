@@ -1,3 +1,11 @@
+## 0.33.0
+
+- **Import Download List** (Mac, Windows and Linux; Tasks menu): bring your downloads from another download manager. Nexonic
+  reads its saved list (including the common angle-bracket export format and input files with mirrors and options), JSON
+  lists, bookmark and web page files, and plain lists of links. Each download keeps its referrer, cookies, browser name,
+  login, mirrors and SHA-256 checksum. The downloads wait in the current queue without starting; ones already in your list
+  are skipped. Only web links are taken, file names never carry a folder, and the other computer's folders are not used.
+
 ## 0.32.2
 
 - Everything in 0.32.1 below (it was not published: the Windows build finished before the Windows Arm64 build and the

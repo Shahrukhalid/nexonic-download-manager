@@ -33,6 +33,10 @@ def main():
         raise ValueError('The first changelog entry must match VERSION')
     if args.tag is not None and args.tag != f'v{version}':
         raise ValueError(f'Tag {args.tag!r} does not match VERSION {version}')
+    # The release notes start with packaging/RELEASE-HEADER.md: its title must name this version.
+    header = (ROOT/'packaging/RELEASE-HEADER.md').read_text().splitlines()[0].strip()
+    if header != f'# Nexonic Download Manager {version}':
+        raise ValueError(f'packaging/RELEASE-HEADER.md title {header!r} must be "# Nexonic Download Manager {version}"')
     # Mobile builders consume VERSION; keep their shared version source explicit.
     if 'rootProject.file("../VERSION")' not in (ROOT/'android/app/build.gradle.kts').read_text():
         raise ValueError('Android must consume the root VERSION file')
