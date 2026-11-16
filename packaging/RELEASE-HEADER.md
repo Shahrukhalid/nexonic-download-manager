@@ -1,6 +1,6 @@
-# Nexonic Download Manager 0.33.0
+# Nexonic Download Manager 0.34.0
 
-**Bring your downloads with you.** Tasks → Import Download List… reads the list saved by another download manager, a JSON list, a bookmarks file or a list of links, with each download's referrer, cookies, login, mirrors and checksum. The downloads wait in the current queue; ones you already have are skipped. Also: resize the download list's columns on Mac, and Homebrew installs come straight from this repository.
+**Keep files up to date by themselves.** Right-click a finished download → Keep in Sync: Nexonic checks the server every hour, 6 hours, day or week with one tiny request and downloads the file again only when it really changed. The old copy is kept until the new one is complete, then replaced under the same name. Includes 0.33.0 (Import Download List).
 
 **Mac, first launch:** macOS says it *could not verify* the app because it's free and not sold through Apple. Click **Done**, open **System Settings → Privacy & Security**, click **Open Anyway**, then **Open Anyway** again and enter your Mac password. Only once; updates installed with **Update Now** open without a warning. [Pictures of each step](https://github.com/Shahrukhalid/nexonic-download-manager#first-launch-on-mac)
 
