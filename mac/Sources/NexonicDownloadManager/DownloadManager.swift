@@ -238,6 +238,21 @@ final class DownloadManager: ObservableObject {
         }
     }
 
+    /// Adds the downloads of a list saved by another download manager (see DownloadLists), waiting in the queue,
+    /// without the ones already in the list.
+    func addImported(_ text: String, queueID: String) -> (added: Int, skipped: Int) {
+        var options = AddOptions()
+        options.queueID = queueID
+        options.start = false
+        var added = 0
+        var skipped = 0
+        for job in DownloadLists.read(text).jobs {
+            guard let url = job.validURL, Duplicates.find(items, url) == nil else { skipped += 1; continue }
+            if add(job, options: options) != nil { added += 1 } else { skipped += 1 }
+        }
+        return (added, skipped)
+    }
+
     @discardableResult
     func add(_ job: DownloadJob, options o: AddOptions = AddOptions()) -> UUID? {
         guard let url = job.validURL else { return nil }

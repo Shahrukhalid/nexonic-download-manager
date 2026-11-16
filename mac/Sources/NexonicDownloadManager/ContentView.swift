@@ -282,6 +282,30 @@ struct ContentView: View {
         .padding(40)
     }
 
+    /// Tasks → Import Download List: a list saved by another download manager; its downloads wait in the current queue.
+    private func importList() {
+        let panel = NSOpenPanel()
+        panel.title = "Import Download List"
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+        guard size <= DownloadLists.maxBytes, let data = try? Data(contentsOf: url) else { return }
+        let text = String(decoding: data, as: UTF8.self)
+        let result = manager.addImported(text, queueID: currentQueue)
+        let alert = NSAlert()
+        alert.messageText = "Import Download List"
+        alert.informativeText = Self.importMessage(added: result.added, skipped: result.skipped)
+        alert.runModal()
+    }
+
+    static func importMessage(added: Int, skipped: Int) -> String {
+        if added == 0 && skipped == 0 { return "No downloads were found in this file." }
+        var text = "\(added) download\(added == 1 ? "" : "s") added to the queue (not started)."
+        if skipped > 0 { text += " \(skipped) skipped: already in your list or not a web link." }
+        return text
+    }
+
     /// Runs a toolbar or menu command on the current list and selection.
     private func perform(_ action: MainAction) {
         let one = selection.count == 1 ? selection.first : nil
@@ -292,6 +316,7 @@ struct ContentView: View {
         case .feeds: sheet = .feeds
         case .grabber: sheet = .grabber
         case .linkGrabber: sheet = .linkGrabber
+        case .importList: importList()
         case .diagnostics: sheet = .diagnostics(selection.count == 1 ? manager.items.first { $0.id == selection.first }?.url.absoluteString ?? "" : "")
         case .scheduler: sheet = .scheduler(currentQueue)
         case .resume: selection.forEach(manager.resume)
