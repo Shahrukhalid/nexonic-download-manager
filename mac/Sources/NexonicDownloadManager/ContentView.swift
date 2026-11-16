@@ -356,6 +356,28 @@ struct ContentView: View {
         sheet = nil
     }
 
+    /// Keep in Sync: how often to check finished files for a new version on the server.
+    @ViewBuilder private func syncMenu(_ ids: Set<UUID>) -> some View {
+        let syncable: [DownloadRecord] = manager.items.filter { ids.contains($0.id) && DownloadSync.canSync($0) }
+        if !syncable.isEmpty {
+            let current: Int? = syncable.count == 1 ? syncable[0].syncHours : nil
+            let chosen: Set<UUID> = Set(syncable.map(\.id))
+            let anySynced: Bool = syncable.contains { ($0.syncHours ?? 0) > 0 }
+            Menu("Keep in Sync") {
+                Button(current == nil ? "✓ Off" : "Off") { manager.setSync(chosen, hours: nil) }
+                ForEach(DownloadSync.choices, id: \.self) { (h: Int) in
+                    Button(syncLabel(h, current: current)) { manager.setSync(chosen, hours: h) }
+                }
+                Divider()
+                Button("Check for Changes Now") { manager.checkSyncNow(chosen) }.disabled(!anySynced)
+            }
+        }
+    }
+
+    private func syncLabel(_ hours: Int, current: Int?) -> String {
+        (current == hours ? "✓ " : "") + DownloadSync.describe(hours)
+    }
+
     @ViewBuilder private func rowMenu(_ ids: Set<UUID>) -> some View {
         if ids.count == 1, let id = ids.first {
             Button("Open") { manager.open(id) }
@@ -376,6 +398,7 @@ struct ContentView: View {
         }
         Button("Resume") { ids.forEach(manager.resume) }
         Button("Stop") { ids.forEach(manager.pause) }
+        syncMenu(ids)
         if ids.count == 1, let id = ids.first {
             if manager.items.first(where: { $0.id == id })?.torrent != nil {
                 Button("Torrent Settings…") { sheet = .torrentSettings(id) }

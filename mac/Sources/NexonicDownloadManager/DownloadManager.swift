@@ -743,8 +743,68 @@ final class DownloadManager: ObservableObject {
 
     // MARK: after a download
 
+    // MARK: keeping files in sync
+
+    private var syncing = false
+
+    /// Checks the synced files that are due, one at a time in the background (once a minute). A changed file is
+    /// downloaded again; the old copy is replaced only when the new one is complete (see DownloadSync).
+    private func checkSyncs() {
+        guard !syncing else { return }
+        let now = Date()
+        let due: [DownloadRecord] = items.filter { DownloadSync.due($0, now: now) && transfers[$0.id] == nil }
+        guard !due.isEmpty else { return }
+        syncing = true
+        let session = URLSession(configuration: Network.configuration(proxy: settings.proxy))
+        Task { @MainActor [self] in
+            var changed = false
+            for rec in due {
+                let check = await DownloadSync.check(rec, session: session)
+                guard let i = items.firstIndex(where: { $0.id == rec.id }), items[i].status == .finished else { continue }
+                items[i].syncChecked = Date()
+                if check.result == .changed {
+                    DownloadSync.prepareRedownload(&items[i])
+                    post("Updated on the server", "\(items[i].fileName): downloading the new version")
+                    changed = true
+                }
+            }
+            session.finishTasksAndInvalidate()
+            syncing = false
+            persist()
+            if changed { schedule() }
+        }
+    }
+
+    /// Keep in Sync: how often to check these finished files for a new version (nil = off).
+    func setSync(_ ids: Set<UUID>, hours: Int?) {
+        for id in ids {
+            update(id) { r in
+                guard DownloadSync.canSync(r) else { return }
+                r.syncHours = (hours ?? 0) > 0 ? hours : nil
+                r.syncChecked = Date()
+            }
+        }
+        persist()
+    }
+
+    /// Checks these synced files now instead of at their next time.
+    func checkSyncNow(_ ids: Set<UUID>) {
+        for id in ids { update(id) { r in if (r.syncHours ?? 0) > 0 { r.syncChecked = nil } } }
+        checkSyncs()
+    }
+
     private func finished(_ original: DownloadRecord) {
-        let rec = renamedByMask(original)
+        // An updated synced file takes the old copy's place and keeps its name.
+        var synced = original
+        let replaced = DownloadSync.finished(&synced, now: Date())
+        if original.syncHours != nil || original.syncReplace != nil {
+            let s = synced
+            update(original.id) { r in
+                r.syncChecked = s.syncChecked; r.syncReplace = s.syncReplace
+                r.savedPath = s.savedPath; r.fileName = s.fileName
+            }
+        }
+        let rec = replaced ? synced : renamedByMask(synced)
         guard let path = rec.savedPath else { return }
         let file = URL(fileURLWithPath: path)
         tellPhone(rec.fileName, ok: true)
@@ -998,6 +1058,7 @@ final class DownloadManager: ObservableObject {
         if ticks % 60 == 0 { applySpeedLimit() }  // every 30 seconds
         if ticks % 120 == 1 { checkFeeds() }        // feeds that are due, every minute
         if ticks % 120 == 61 { checkProfiles() }    // saved profiles that are due, every minute
+        if ticks % 120 == 91 { checkSyncs() }       // files kept in sync that are due, every minute
         var s: [UUID: Double] = [:]
         // Averaged over the last 6 seconds: video sites deliver in bursts, so a single tick is often 0.
         for item in items where item.status.isActive {
