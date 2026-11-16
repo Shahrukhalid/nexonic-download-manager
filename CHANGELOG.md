@@ -1,3 +1,10 @@
+## 0.32.1
+
+- **Mac: resize the download list's columns** by dragging their edges (Size, Progress, Speed, Time Left and the rest
+  had fixed widths). The app remembers the widths you choose.
+- **Homebrew:** this repository is now the tap. New installs: `brew tap shahrukhalid/nexonic
+  https://github.com/Shahrukhalid/nexonic-download-manager`, then `brew install --cask nexonic-download-manager`.
+
 ## 0.32.0
 
 **New on Mac, Windows and Linux**
