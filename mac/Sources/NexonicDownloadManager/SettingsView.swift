@@ -307,6 +307,12 @@ struct SettingsView: View {
             Form {
                 Toggle("Show the Download Complete window", isOn: $manager.settings.showCompleteDialog)
                 Toggle("Play a sound", isOn: $manager.settings.playSound)
+                TextField("Quiet hours", text: $manager.settings.quietHours, prompt: Text("22:00-07:00"))
+                    .disabled(!manager.settings.playSound)
+                Text(QuietHours.isValid(manager.settings.quietHours) || manager.settings.quietHours.isEmpty
+                     ? "No sounds during these hours (they may pass midnight). Leave empty to always play."
+                     : "Write the hours as 22:00-07:00.")
+                    .font(.caption).foregroundStyle(.secondary)
                 Toggle("Mark files as downloaded so macOS checks them when first opened", isOn: $manager.settings.markDownloads)
                 Toggle("Scan each finished file with a virus scanner", isOn: $manager.settings.scanEnabled)
                 TextField("Scanner command (the file is added at the end)", text: $manager.settings.scanCommand,

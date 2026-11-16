@@ -809,7 +809,7 @@ final class DownloadManager: ObservableObject {
         let file = URL(fileURLWithPath: path)
         tellPhone(rec.fileName, ok: true)
         if settings.markDownloads { markAsDownloaded(file, from: rec.url) }
-        if settings.playSound { NSSound(named: "Glass")?.play() }
+        if settings.playSound && !QuietHours.contains(settings.quietHours, at: Date()) { NSSound(named: "Glass")?.play() }
         var body = rec.fileName
         if let c = rec.checksumResult { body += " – \(c)" }
         post("Download finished", body)
