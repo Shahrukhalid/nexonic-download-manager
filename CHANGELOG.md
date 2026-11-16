@@ -1,3 +1,9 @@
+## 0.32.2
+
+- Everything in 0.32.1 below (it was not published: the Windows build finished before the Windows Arm64 build and the
+  release could not be completed).
+- Releases wait longer for the Windows Arm64 build and can be re-run without stopping on files that were already added.
+
 ## 0.32.1
 
 - **Mac: resize the download list's columns** by dragging their edges (Size, Progress, Speed, Time Left and the rest
