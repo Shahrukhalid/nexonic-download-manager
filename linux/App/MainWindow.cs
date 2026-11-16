@@ -233,6 +233,23 @@ public sealed class MainWindow : Window
         var n = new FileInfo(path).Length <= 4_000_000 ? manager.AddMetalink(await File.ReadAllTextAsync(path), new AddOptions { QueueId = CurrentQueue }) : 0;
         if (n == 0) await Ui.Message(this, "Open Metalink File", "This file has no downloads in it, or it is not a Metalink file.");
     }
+    async void ImportList()
+    {
+        var files = await StorageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+        {
+            Title = "Import Download List", AllowMultiple = false,
+            FileTypeFilter = new[]
+            {
+                new Avalonia.Platform.Storage.FilePickerFileType("Download lists") { Patterns = new[] { "*.ef2", "*.txt", "*.json", "*.html", "*.htm", "*.lst" } },
+                new Avalonia.Platform.Storage.FilePickerFileType("All files") { Patterns = new[] { "*" } },
+            },
+        });
+        if (files.Count == 0 || files[0].TryGetLocalPath() is not { } path) return;
+        var (added, skipped) = new FileInfo(path).Length <= DownloadLists.MaxBytes
+            ? manager.AddImported(await File.ReadAllTextAsync(path), new AddOptions { QueueId = CurrentQueue, Start = false }) : (0, 0);
+        await Ui.Message(this, "Import Download List", added == 0 && skipped == 0 ? "No downloads were found in this file."
+            : $"{added} download{(added == 1 ? "" : "s")} added to the queue (not started)." + (skipped > 0 ? $" {skipped} skipped: already in your list or not a web link." : ""));
+    }
     void ResumeSelected() { foreach (var r in Selected) manager.Resume(r); }
     void StopSelected() { foreach (var r in Selected) manager.Pause(r); }
     async Task OpenOptions() { await Dialogs.Options(this, manager); BuildSidebar(); }
@@ -273,6 +290,7 @@ public sealed class MainWindow : Window
             Item("_Add URL…", () => _ = OnAdd(), "Ctrl+N"),
             Item("Add _Torrent…", OpenTorrents, "Ctrl+Shift+T"),
             Item("Add _Batch Download…", OpenBatch, "Ctrl+Shift+B"),
+            Item("_Import Download List…", ImportList),
             Item("Open _Metalink File…", OpenMetalink),
             Item("Site _Grabber…", OpenGrabber, "Ctrl+Shift+G"),
             Item("_Link Grabber…", () => _ = Dialogs.LinkGrabber(this, manager), "Ctrl+Shift+K"),
