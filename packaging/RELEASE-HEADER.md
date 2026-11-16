@@ -1,6 +1,6 @@
-# Nexonic Download Manager 0.25.0
+# Nexonic Download Manager 0.33.0
 
-**Manage downloads from your phone, a server for NAS and Docker, image galleries and your own categories (Windows and Linux).** Options → Remote pairs a phone with a QR code (off by default); `nexonic-server` and the Docker image run without a window (docs/SERVER.md); Tasks → Download Images from Page; Options → Categories; Check Torrent Files Again; Help → Network Diagnostics; interface size; smaller Mac, Linux and Android downloads. Includes 0.24.0 (RSS feeds, more archive types, optional debrid).
+**Bring your downloads with you.** Tasks → Import Download List… reads the list saved by another download manager, a JSON list, a bookmarks file or a list of links, with each download's referrer, cookies, login, mirrors and checksum. The downloads wait in the current queue; ones you already have are skipped. Also: resize the download list's columns on Mac, and Homebrew installs come straight from this repository.
 
 **Mac, first launch:** macOS says it *could not verify* the app because it's free and not sold through Apple. Click **Done**, open **System Settings → Privacy & Security**, click **Open Anyway**, then **Open Anyway** again and enter your Mac password. Only once; updates installed with **Update Now** open without a warning. [Pictures of each step](https://github.com/Shahrukhalid/nexonic-download-manager#first-launch-on-mac)
 
