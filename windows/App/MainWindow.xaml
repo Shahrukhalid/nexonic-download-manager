@@ -233,6 +233,7 @@
               <MenuItem Header="Check Server…" Click="OnDiagnostics" />
               <MenuItem Header="Show QR Code…" Click="OnShowQr" />
               <MenuItem Header="Verify Checksum…" Click="OnChecksum" />
+              <MenuItem x:Name="SyncMenu" Header="Keep in Sync" ToolTip="Check a finished file for a new version on the server and download it again only when it changed" />
               <MenuItem x:Name="MoveMenu" Header="Move to Queue" />
               <Separator />
               <MenuItem Header="Delete…" Click="OnRemove" />

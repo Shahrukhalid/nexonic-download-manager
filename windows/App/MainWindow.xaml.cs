@@ -560,6 +560,25 @@ public partial class MainWindow : Window
     protected override void OnContextMenuOpening(ContextMenuEventArgs e)
     {
         MoveMenu.Items.Clear();
+        SyncMenu.Items.Clear();
+        var syncable = Selected.Where(r => r.Record.Status == DownloadStatus.Finished && r.Record.Torrent == null
+                                           && r.Record.SiteVideo != true && r.Record.IsStream != true).ToList();
+        SyncMenu.IsEnabled = syncable.Count > 0;
+        var current = syncable.Count == 1 ? syncable[0].Record.SyncHours : null;
+        var off = new MenuItem { Header = current == null ? "✓ Off" : "Off" };
+        off.Click += (_, _) => manager.SetSync(syncable, null);
+        SyncMenu.Items.Add(off);
+        foreach (var hours in DownloadSync.Choices)
+        {
+            var h = hours;
+            var item = new MenuItem { Header = (current == h ? "✓ " : "") + DownloadSync.Describe(h) };
+            item.Click += (_, _) => manager.SetSync(syncable, h);
+            SyncMenu.Items.Add(item);
+        }
+        SyncMenu.Items.Add(new Separator());
+        var now = new MenuItem { Header = "Check for Changes Now", IsEnabled = syncable.Any(r => r.Record.SyncHours is > 0) };
+        now.Click += (_, _) => manager.CheckSyncNow(syncable);
+        SyncMenu.Items.Add(now);
         RecheckItem.IsEnabled = One?.Record.Torrent is { MetadataPending: false };
         PlayItem.Visibility = One is { } pr && (PartialPlay.Ready(pr.Record) || pr.Record.Status == DownloadStatus.Finished && PartialPlay.IsMedia(pr.Record.FileName)) ? Visibility.Visible : Visibility.Collapsed;
         VideoToolsMenu.Visibility = One is { Record: { Status: DownloadStatus.Finished } vr } && PartialPlay.IsMedia(vr.FileName) ? Visibility.Visible : Visibility.Collapsed;
