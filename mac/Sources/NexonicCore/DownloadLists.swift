@@ -12,7 +12,8 @@ public enum DownloadLists {
     public enum Format: Equatable { case blocks, inputFile, json, html, text }
 
     public static func read(_ input: String) -> (jobs: [DownloadJob], format: Format) {
-        var text = input
+        // Swift treats "\r\n" as one character: make every line end a plain "\n" before reading lines.
+        var text = input.replacingOccurrences(of: "\r\n", with: "\n").replacingOccurrences(of: "\r", with: "\n")
         if text.utf8.count > maxBytes { text = String(text.prefix(maxBytes)) }
         let t = String(text.drop(while: { $0 == "\u{FEFF}" || $0.isWhitespace }))
         let format = detect(t)
