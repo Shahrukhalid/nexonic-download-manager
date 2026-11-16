@@ -37,6 +37,7 @@ public sealed class MainWindow : Window
     readonly TextBlock detailInfo = new() { FontSize = 12, TextWrapping = TextWrapping.Wrap };
     readonly TextBlock detailError = new() { FontSize = 12, Foreground = Ui.Bad, TextWrapping = TextWrapping.Wrap };
     readonly MenuItem moveMenu = new() { Header = "Move to Queue" };
+    readonly MenuItem syncMenu = new() { Header = "Keep in Sync" };
     string filter = "all";
     string sortKey = "added";
     bool sortDescending = true;
@@ -1009,6 +1010,7 @@ public sealed class MainWindow : Window
         Item("Copy as cURL", () => { if (One is { } r) _ = Clipboard?.SetTextAsync(CurlCommand.ToCommand(r.Record)); });
         Item("Check Server…", () => _ = Dialogs.Diagnostics(this, manager, One?.Record.Url));
         Item("Show QR Code…", () => { if (Selected.Count > 0) _ = Dialogs.ShowQr(this, Selected.Select(r => r.Record.Url).ToList()); });
+        menu.Items.Add(syncMenu);
         menu.Items.Add(moveMenu);
         menu.Items.Add(new Separator());
         Item("Delete…", () => _ = ConfirmRemove(Selected, toTrash: false));
@@ -1021,6 +1023,25 @@ public sealed class MainWindow : Window
             mp4.IsVisible = sound.IsVisible = media;
             recheck.IsEnabled = One?.Record.Torrent is { MetadataPending: false };
             moveMenu.Items.Clear();
+            syncMenu.Items.Clear();
+            var syncable = Selected.Where(r => r.Record.Status == DownloadStatus.Finished && r.Record.Torrent == null
+                                               && r.Record.SiteVideo != true && r.Record.IsStream != true).ToList();
+            syncMenu.IsEnabled = syncable.Count > 0;
+            var current = syncable.Count == 1 ? syncable[0].Record.SyncHours : null;
+            var off = new MenuItem { Header = current == null ? "✓ Off" : "Off" };
+            off.Click += (_, _) => manager.SetSync(syncable, null);
+            syncMenu.Items.Add(off);
+            foreach (var hours in DownloadSync.Choices)
+            {
+                var h = hours;
+                var item = new MenuItem { Header = (current == h ? "✓ " : "") + DownloadSync.Describe(h) };
+                item.Click += (_, _) => manager.SetSync(syncable, h);
+                syncMenu.Items.Add(item);
+            }
+            syncMenu.Items.Add(new Separator());
+            var now = new MenuItem { Header = "Check for Changes Now", IsEnabled = syncable.Any(r => r.Record.SyncHours is > 0) };
+            now.Click += (_, _) => manager.CheckSyncNow(syncable);
+            syncMenu.Items.Add(now);
             foreach (var q in manager.Queues)
             {
                 var item = new MenuItem { Header = q.Name };

@@ -728,9 +728,66 @@ public sealed partial class DownloadManager
 
     // ---- after a download ----
 
+    // ---- keeping files in sync ----
+
+    bool syncing;
+
+    /// <summary>Checks the synced files that are due, one at a time in the background (once a minute). A changed file
+    /// is downloaded again; the old copy is replaced only when the new one is complete (see <see cref="DownloadSync"/>).</summary>
+    async void CheckSyncs()
+    {
+        if (syncing) return;
+        var due = Rows.Where(r => DownloadSync.Due(r.Record, DateTime.Now) && !transfers.ContainsKey(r.Record.Id)).ToList();
+        if (due.Count == 0) return;
+        syncing = true;
+        try
+        {
+            using var http = new HttpClient(Network.Handler(Settings.Proxy)) { Timeout = TimeSpan.FromSeconds(60) };
+            var changed = false;
+            foreach (var row in due)
+            {
+                var r = row.Record;
+                var check = await DownloadSync.CheckAsync(r, http, CancellationToken.None);
+                if (!Rows.Contains(row) || r.Status != DownloadStatus.Finished) continue;
+                r.SyncChecked = DateTime.Now;
+                if (check.Result == DownloadSync.Result.Changed)
+                {
+                    DownloadSync.PrepareRedownload(r);
+                    Notify?.Invoke("Updated on the server", $"{r.FileName}: downloading the new version");
+                    changed = true;
+                }
+                row.Refresh();
+            }
+            Save();
+            if (changed) Schedule();
+        }
+        finally { syncing = false; }
+    }
+
+    /// <summary>Keep In Sync: how often to check these finished files for a new version (null = off).</summary>
+    public void SetSync(IEnumerable<Row> rows, int? hours)
+    {
+        foreach (var row in rows)
+        {
+            if (row.Record.Torrent != null || row.Record.SiteVideo == true || row.Record.IsStream == true) continue;
+            row.Record.SyncHours = hours is > 0 ? hours : null;
+            row.Record.SyncChecked = DateTime.Now;
+            row.Refresh();
+        }
+        Save();
+    }
+
+    /// <summary>Checks these synced files now instead of at their next time.</summary>
+    public void CheckSyncNow(IEnumerable<Row> rows)
+    {
+        foreach (var row in rows) if (row.Record.SyncHours is > 0) row.Record.SyncChecked = null;
+        CheckSyncs();
+    }
+
     void AfterDownload(DownloadRecord rec)
     {
-        RenameMask.RenameFinished(rec, Settings.Finish.RenameMask);
+        // An updated synced file takes the old copy's place and keeps its name.
+        if (!DownloadSync.Finished(rec, DateTime.Now)) RenameMask.RenameFinished(rec, Settings.Finish.RenameMask);
         FinishNotice.Send(Settings.Finish.NotifyUrl, rec.FileName, true);
         if (rec.SavedPath is not { } path) return;
         if (Settings.MarkDownloads)
@@ -797,6 +854,7 @@ public sealed partial class DownloadManager
             if (Settings.DataCapMB > 0) dataCap.Save();
         }
         if (ticks % 120 == 30) CheckProfiles();  // saved profiles, once a minute
+        if (ticks % 120 == 90) CheckSyncs();     // files kept in sync, once a minute
     }
 
     /// <summary>Download limit: counts what arrived since the last tick; at the limit, downloads stop until the next period.</summary>

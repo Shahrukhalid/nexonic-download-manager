@@ -88,6 +88,11 @@ public sealed class DownloadRecord
     public FileCategory Category => FileCategories.Of(FileName);
     /// <summary>Started or resumed by hand while separate slots for those are on (Options → Connection); cleared when it stops.</summary>
     public bool? Manual { get; set; }
+    // Added in 0.34.0: keep a finished file in sync with the server. Checked every SyncHours (null = off); when the file
+    // changed it is downloaded again and replaces the copy at SyncReplace only once the new download is complete.
+    public int? SyncHours { get; set; }
+    public DateTime? SyncChecked { get; set; }
+    public string? SyncReplace { get; set; }
     public bool IsActive => Status is DownloadStatus.Probing or DownloadStatus.Downloading or DownloadStatus.Seeding;
     public string Queue => QueueId ?? DownloadQueue.MainId;
 }
