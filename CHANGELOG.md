@@ -1,3 +1,12 @@
+## 0.34.0
+
+- **Keep in Sync** (Mac, Windows and Linux; right-click a finished download): Nexonic checks the file on the server every
+  hour, 6 hours, day or week and downloads it again only when it changed. Each check is one tiny request that asks the
+  server whether the file is new (by its version tag, date or size), so unchanged files cost almost nothing. The update
+  downloads at full speed, and the old copy stays until the new one is complete, then is replaced under the same name.
+  Check for Changes Now checks at once. Cookies and logins are only sent to the file's own site. Torrents, site videos
+  and streams are not synced.
+
 ## 0.33.0
 
 - **Import Download List** (Mac, Windows and Linux; Tasks menu): bring your downloads from another download manager. Nexonic
