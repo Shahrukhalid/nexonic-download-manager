@@ -23,7 +23,7 @@ public enum CommandLineTool {
       --audio               video sites: save the sound only
       --json                print the result as JSON (for scripts)
 
-    IDM-style switches work too:
+    Windows-style switches work too:
       /d <link>  /p <folder>  /f <file name>  /a (add without starting)
       /n /q /h /s are accepted and ignored (the app never asks questions for added downloads).
     """
@@ -65,7 +65,7 @@ public enum CommandLineTool {
         }
         while i < args.count {
             let a = args[i]
-            // IDM's switches: /d link, /p folder, /f file name, /a = add without starting; /n /q /h /s need nothing here.
+            // Windows-style switches: /d link, /p folder, /f file name, /a = add without starting; /n /q /h /s need nothing here.
             if idmSwitches.contains(a.lowercased()) {
                 let s = a.lowercased()
                 if ["/n", "/q", "/h", "/s"].contains(s) { i += 1; continue }

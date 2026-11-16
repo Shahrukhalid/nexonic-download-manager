@@ -6,7 +6,7 @@ import UniformTypeIdentifiers
 
 enum SidebarFilter: Hashable {
     case all, active, unfinished, finished, category(FileCategory), queue(String)
-    case unfinishedIn(FileCategory), finishedIn(FileCategory)  // IDM-style: a type inside Unfinished or Finished
+    case unfinishedIn(FileCategory), finishedIn(FileCategory)  // a type inside Unfinished or Finished
 
     @MainActor func title(_ m: DownloadManager) -> String {
         switch self {
@@ -36,7 +36,7 @@ enum SidebarFilter: Hashable {
 }
 
 extension FileCategory {
-    /// Name in the sidebar: files of no particular type are "General", as in IDM.
+    /// Name in the sidebar: files of no particular type are "General".
     var label: String { self == .other ? "General" : rawValue }
 }
 
@@ -113,7 +113,7 @@ struct ContentView: View {
     var body: some View {
         NavigationSplitView {
             List(selection: $filter) {
-                // Like IDM: each list opens into the file types it holds (sorted automatically by file type).
+                // Each list opens into the file types it holds (sorted automatically by file type).
                 Section("Downloads") {
                     DisclosureGroup(isExpanded: $openAll) {
                         categoryRows(SidebarFilter.category)
@@ -223,7 +223,7 @@ struct ContentView: View {
         }
     }
 
-    /// Like IDM: a finished download opens its file; any other shows its progress window.
+    /// A finished download opens its file; any other shows its progress window.
     private func primaryAction(_ ids: Set<UUID>) {
         guard let id = ids.first else { return }
         // A Profile Batch search: its window, with the count so far or what was found (Download Now, Add to Queue, Stop).
@@ -260,7 +260,7 @@ struct ContentView: View {
         .contextMenu(forSelectionType: UUID.self) { ids in
             rowMenu(ids)
         } primaryAction: { ids in
-            // Like IDM: a finished download opens its file; any other shows its progress window.
+            // A finished download opens its file; any other shows its progress window.
             guard let id = ids.first else { return }
             if manager.items.first(where: { $0.id == id })?.status == .finished { manager.open(id) }
             else { ProgressWindow.show(id, manager: manager) }

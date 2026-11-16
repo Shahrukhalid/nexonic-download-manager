@@ -126,7 +126,7 @@ public partial class MainWindow : Window
             row.Children.Add(new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center });
             Sidebar.Items.Add(new ListBoxItem { Content = row, Tag = key, Padding = new Thickness(14 + indent * 16, 5, 4, 5), HorizontalContentAlignment = HorizontalAlignment.Stretch });
         }
-        // Like IDM: each list opens into the file types it holds (sorted automatically by file type).
+        // Each list opens into the file types it holds (sorted automatically by file type).
         static string Label(string c) => L.T(c == nameof(FileCategory.Other) ? "General" : c);
         void Types(string prefix) { foreach (var c in Enum.GetNames<FileCategory>()) Entry(Label(c), prefix + c, 1); }
         Header(L.T("Downloads"));
@@ -227,7 +227,7 @@ public partial class MainWindow : Window
 
     void OnSelection(object s, SelectionChangedEventArgs e) { ShowDetails(); UpdateButtons(); }
 
-    /// <summary>Resume, Stop and Delete work on the selection, so they are greyed out without one (as in IDM).</summary>
+    /// <summary>Resume, Stop and Delete work on the selection, so they are greyed out without one.</summary>
     void UpdateButtons()
     {
         var any = Grid.SelectedItems.Count > 0;

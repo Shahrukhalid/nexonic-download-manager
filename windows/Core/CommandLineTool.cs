@@ -24,7 +24,7 @@ public static class CommandLineTool
       --audio               video sites: save the sound only
       --json                print the result as JSON (for scripts)
 
-    IDM-style switches work too:
+    Windows-style switches work too:
       /d <link>  /p <folder>  /f <file name>  /a (add without starting)
       /n /q /h /s are accepted and ignored (the app never asks questions for added downloads).
     """;
@@ -63,7 +63,7 @@ public static class CommandLineTool
         while (i < args.Count)
         {
             var a = args[i];
-            // IDM's switches: /d link, /p folder, /f file name, /a = add without starting; /n /q /h /s need nothing here.
+            // Windows-style switches: /d link, /p folder, /f file name, /a = add without starting; /n /q /h /s need nothing here.
             if (a.Length == 2 && a[0] == '/' && "dpfanqhsDPFANQHS".Contains(a[1]))
             {
                 var s = char.ToLowerInvariant(a[1]);

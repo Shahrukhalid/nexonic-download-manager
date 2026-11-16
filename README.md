@@ -6,8 +6,8 @@
 
 **Free, open-source download manager for macOS, Windows, Linux and Android, with an iPhone and iPad build for testing.**
 
-**Download every photo and video of an Instagram, TikTok or Facebook profile in one click.** An alternative to
-Internet Download Manager (IDM) with up to 256 adaptive connections, resumable downloads, queues, scheduling,
+**Download every photo and video of an Instagram, TikTok or Facebook profile in one click.** A free download manager with up to
+256 adaptive connections, resumable downloads, queues, scheduling,
 a per-download speed limiter, BitTorrent and browser integration. Save videos from YouTube, Instagram, Facebook,
 X, TikTok and 1,000+ sites on desktop and Android.
 
@@ -296,7 +296,7 @@ cd ios && NDM_VERSION=$(cat ../VERSION) xcodegen   # iPhone/iPad (Xcode 16, Xcod
 
 Licensed under either of the [MIT License](LICENSE) or the [Apache License 2.0](LICENSE-APACHE), at your option
 (SPDX: `MIT OR Apache-2.0`).
-© 2026 Shahrukh Khalid. Not affiliated with Internet Download Manager or any of the sites mentioned;
+© 2026 Shahrukh Khalid. Not affiliated with any of the sites mentioned;
 their names belong to their owners.
 
 Unless you explicitly state otherwise, any contribution you submit for inclusion is dual licensed as above,

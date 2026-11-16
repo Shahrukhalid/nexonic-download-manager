@@ -20,7 +20,7 @@ final class MainActions: ObservableObject {
     }
 }
 
-/// One toolbar button in the style of IDM: a large coloured icon with its name underneath.
+/// One toolbar button in the classic style: a large coloured icon with its name underneath.
 /// The whole tile takes clicks, not only the icon and its caption (a plain button inside a scroll view on macOS only
 /// reacts where something is drawn).
 struct TileButtonStyle: ButtonStyle {
@@ -67,7 +67,7 @@ struct ToolbarTile: View {
     }
 }
 
-/// The main toolbar: the same commands as IDM's toolbar, in its order, with coloured icons and names.
+/// The main toolbar: the usual download manager commands, with coloured icons and names.
 struct MainToolbar: View {
     let hasSelection: Bool
     let hasItems: Bool
@@ -130,7 +130,7 @@ private struct OptionsTileLabel: View {
     }
 }
 
-/// Menus in the menu bar like IDM's Tasks, Downloads and View menus.
+/// Menus in the menu bar: Tasks, Downloads and View menus.
 struct MainMenus: Commands {
     @ObservedObject private var language = LanguageState.shared
     @AppStorage("toolbarText") private var showText = true

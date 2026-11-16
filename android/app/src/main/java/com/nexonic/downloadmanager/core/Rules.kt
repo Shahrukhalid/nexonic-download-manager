@@ -111,7 +111,7 @@ enum class FileCategory(val label: String) {
     COMPRESSED("Compressed"), DOCUMENTS("Documents"), MUSIC("Music"), VIDEO("Video"),
     PROGRAMS("Programs"), IMAGES("Images"), OTHER("General"), MODELS("Models");
 
-    /** Subfolder like IDM; files of no particular type stay in the main folder. */
+    /** Subfolder for the type; files of no particular type stay in the main folder. */
     val folder: String? get() = if (this == OTHER) null else label
 
     companion object {

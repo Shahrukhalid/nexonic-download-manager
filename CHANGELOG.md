@@ -284,7 +284,7 @@ installs. Every number below compares 0.27.0 with 0.28.0 on the same machine.
 - **Unpacking:** split archives wait until every part is downloaded; on Mac, .7z, .rar and .tar unpack too.
 - **Queues:** drag downloads onto a queue in the sidebar to move them; Start/Stop All Queues and Open Downloads Folder
   in the tray and menu bar; Windows can wake the computer from sleep to start a queue.
-- **Command line:** `ndm` accepts IDM-style switches (`/d`, `/p`, `/f`, `/a`), and `ndm list --json` prints the list
+- **Command line:** `ndm` accepts Windows-style switches (`/d`, `/p`, `/f`, `/a`), and `ndm list --json` prints the list
   for scripts (no cookies or passwords).
 - **Crash reports** are saved on your device (never sent anywhere); Help → Crash Reports opens them.
 - **Check Server…** in a download's menu checks the link step by step; **several QR codes** when the selected links
@@ -458,7 +458,7 @@ installs. Every number below compares 0.27.0 with 0.28.0 on the same machine.
 
 ## 0.17.3
 
-- **Mac: Cancel keeps the download in the list** as Canceled (like IDM) instead of removing it. What was downloaded
+- **Mac: Cancel keeps the download in the list** as Canceled instead of removing it. What was downloaded
   is deleted; Resume starts it again from the beginning.
 - **Mac: double-click a download that isn't finished** to open its progress window; a finished one still opens its
   file.
@@ -509,10 +509,10 @@ installs. Every number below compares 0.27.0 with 0.28.0 on the same machine.
 
 ## 0.14.0
 
-- **Windows and Linux: a toolbar like IDM's.** Large coloured buttons with their names, in IDM's order: Add URL,
+- **Windows and Linux: a classic toolbar.** Large coloured buttons with their names, in this order: Add URL,
   Torrents, Resume, Stop, Stop All, Select All, Delete, Delete Completed, Scheduler, Start Queue, Stop Queue, Grabber,
   Batch and Options. Resume, Stop and Delete are greyed out until downloads are selected.
-- **Windows and Linux: menus like IDM's.** Tasks, Downloads, View and Help, with shortcuts: Ctrl+R resume, Ctrl+.
+- **Windows and Linux: classic menus.** Tasks, Downloads, View and Help, with shortcuts: Ctrl+R resume, Ctrl+.
   stop, Ctrl+Shift+R resume all, Ctrl+Shift+P stop all, Ctrl+O open, Ctrl+Shift+T add torrent, Ctrl+Shift+B batch,
   Ctrl+Shift+G grabber. View › Show Toolbar Buttons and Show Button Names hide the buttons or just their names.
 - **Unzip when finished** (Mac, Windows and Linux; Downloads › Unzip Finished .zip Files, off by default): a finished
@@ -548,7 +548,7 @@ installs. Every number below compares 0.27.0 with 0.28.0 on the same machine.
 
 ## 0.11.4
 
-- **Mac: a toolbar like IDM's.** Large coloured buttons with their names: Add URL, Torrent, Resume, Stop, Stop All,
+- **Mac: a classic toolbar.** Large coloured buttons with their names: Add URL, Torrent, Resume, Stop, Stop All,
   Select All, Delete, Delete Completed, Scheduler, Start Queue, Stop Queue, Grabber, Batch and Options. Turn the
   buttons or their names off under View.
 - **Mac: menus for every command.** File has Add URL, Add Torrent, Add Batch Download and Site Grabber; a new
@@ -739,7 +739,7 @@ Torrent functionality is unchanged from v0.9.0. Native all-platform torrent deve
   list keeps the files unless you tick "Also move the downloaded files to the Trash".
 - **Download this video** in the browser shows *Video, best quality* and *Sound only* at once again (no waiting).
   The app's download window still lets you pick another quality.
-- **Categories like IDM:** files are sorted by type automatically. All Downloads, Unfinished and Finished each open
+- **Categories:** files are sorted by type automatically. All Downloads, Unfinished and Finished each open
   into Compressed, Documents, Music, Video, Programs, Images and General, and each type is saved in its own folder
   (Downloads/Video, Downloads/Music…; General files stay in Downloads). On for everyone; turn it off in Settings.
 - **Pasted image links from Google Images** now download the picture itself instead of Google's page (also Google
@@ -836,7 +836,7 @@ Torrent functionality is unchanged from v0.9.0. Native all-platform torrent deve
 
 ## 0.5.5
 
-- **Videos start right away:** the download window now looks the video up while it is open, like IDM checks a file
+- **Videos start right away:** the download window now looks the video up while it is open, as it does for a file
   (real title, file size and best quality, with "Finding the best quality…" meanwhile). Pressing Start reuses what was
   found, so the download begins at once instead of waiting 10–15 seconds at 0%.
 - **Progress window for videos:** a compact window with real details (video site, best quality or sound only, folder,
