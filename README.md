@@ -198,7 +198,7 @@ Open an Instagram, TikTok or Facebook profile in your browser and click **Downlo
 - **Desktop controls.** See each download's speed, estimated time and progress. Use custom categories to route
   downloads by file type or site. Custom colour schemes, fonts, quiet hours for sounds and saved column layouts
   are available on macOS, Windows and Linux.
-- **Local remote management.** On Windows and Linux, enable **Options → Remote** and scan the pairing code to manage
+- **Local remote management.** On macOS, Windows and Linux, enable **Options → Remote** and scan the pairing code to manage
   downloads from a phone on the same network. For headless use on a NAS or home server, see the
   [server and Docker guide](docs/SERVER.md).
 - **Android.** Share links to Nexonic, find files or videos in its built-in browser, and use Wi-Fi-only transfers.

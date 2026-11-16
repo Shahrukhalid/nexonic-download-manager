@@ -44,10 +44,38 @@ final class DownloadManager: ObservableObject {
             }
             if settings.debrid.key != oldValue.debrid.key { Debrid.saveKey(settings.debrid.key) }
             Debrid.settings = settings.debrid
+            if settings.remote != oldValue.remote { applyRemote() }
             saveSettings()
             schedule()
         }
     }
+
+    // Options → Remote: the server for phones on this network, running while it is turned on.
+    private var remoteServer: RemoteServer?
+    @Published private(set) var remoteProblem: String?
+
+    func applyRemote() {
+        let r = settings.remote
+        guard r.enabled else {
+            remoteServer?.stop(); remoteServer = nil; remoteProblem = nil
+            return
+        }
+        if r.key.count < 16 { settings.remote.key = RemoteHTTP.newKey(); return }  // saved, and started again by didSet
+        if let s = remoteServer, s.port == r.port, s.key == r.key { return }
+        remoteServer?.stop()
+        let server = RemoteServer(port: r.port, key: r.key, control: self)
+        do {
+            try server.start()
+            remoteServer = server
+            remoteProblem = nil
+        } catch {
+            remoteServer = nil
+            remoteProblem = String(format: String(localized: "Port %d could not be opened. Choose another port."), r.port)
+        }
+    }
+
+    /// Unpairs every phone: a new key, so the old QR code no longer works.
+    func newRemoteKey() { settings.remote.key = RemoteHTTP.newKey() }
 
     /// Settings → General → Appearance: the same as macOS, light or dark.
     static func applyAppearance(_ choice: String, scheme: String = "") {
@@ -183,6 +211,7 @@ final class DownloadManager: ObservableObject {
         saveSettings()
         collectInbox()
         schedule()
+        applyRemote()
         DispatchQueue.global(qos: .utility).async { SiteVideoTools.prepare() }  // keeps the video engine current
     }
 
@@ -405,7 +434,7 @@ final class DownloadManager: ObservableObject {
         schedule()
     }
 
-    /// Stops a download and deletes what was downloaded so far, keeping it in the list as Canceled (like IDM).
+    /// Stops a download and deletes what was downloaded so far, keeping it in the list as Canceled.
     /// Resume or Try Again starts it again from the beginning.
     func cancel(_ id: UUID) {
         canceled.insert(id)  // late updates from the stopped transfer are ignored
@@ -1234,4 +1263,25 @@ final class DownloadManager: ObservableObject {
     }
 
     private static func load<T: Decodable>(_ type: T.Type, from url: URL) -> T? { SavedFile.load(type, from: url) }
+}
+
+// The phone remote's commands (Options → Remote), the same as the buttons in the window.
+extension DownloadManager: RemoteControl {
+    func remoteDownloads() -> [DownloadRecord] { items.filter { $0.listing != true } }
+    func remoteQueues() -> [DownloadQueue] { queues }
+
+    func remoteAdd(_ urls: [URL], queue: String?, start: Bool) -> [UUID] {
+        var o = AddOptions()
+        o.start = start
+        o.rememberFolder = false
+        if let q = queue, !q.isEmpty { o.queueID = queues.first { $0.id == q || $0.name.caseInsensitiveCompare(q) == .orderedSame }?.id ?? DownloadQueue.mainID }
+        return urls.compactMap { add(DownloadJob(url: $0.absoluteString), options: o) }
+    }
+
+    private func has(_ id: UUID) -> Bool { items.contains { $0.id == id && $0.listing != true } }
+    func remotePause(_ id: UUID) -> Bool { guard has(id) else { return false }; pause(id); return true }
+    func remoteResume(_ id: UUID) -> Bool { guard has(id) else { return false }; resume(id); return true }
+    func remoteRemove(_ id: UUID) -> Bool { guard has(id) else { return false }; remove(id); return true }
+    func remoteStartQueue(_ id: String) -> Bool { guard queues.contains(where: { $0.id == id }) else { return false }; startQueue(id); return true }
+    func remoteStopQueue(_ id: String) -> Bool { guard queues.contains(where: { $0.id == id }) else { return false }; stopQueue(id); return true }
 }

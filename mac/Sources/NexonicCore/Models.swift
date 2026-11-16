@@ -274,6 +274,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var playSound: Bool = true
     // Added in 0.35.0: no sounds during these hours ("22:00-07:00", may pass midnight); empty = always
     public var quietHours: String = ""
+    // Added in 0.35.0: Options → Remote (manage downloads from a phone on this network); off by default
+    public var remote = RemoteSettings()
     public var markDownloads: Bool = true
     public var scanEnabled: Bool = false
     public var scanCommand: String = ""
@@ -327,7 +329,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         case torrentsEnabled, connections, maxActive, speedLimitKBps, folder, sortIntoCategoryFolders = "categoryFolders", notifications, monitorClipboard,
              clipboardTypes, proxy, showCompleteDialog, playSound, quietHours, markDownloads, scanEnabled, scanCommand,
              showDownloadDialog, showProgressWindow, bringToFrontOnBrowserDownload, checkForUpdates, skippedVersion, network, hostProfiles, torrentNetwork,
-             dataCapMB, dataCapHours, rememberLastFolder, lastFolder, appearance, customCategories, autoConnections, speedSchedule, duplicateAction, colorScheme, debrid, finish
+             dataCapMB, dataCapHours, rememberLastFolder, lastFolder, appearance, customCategories, autoConnections, speedSchedule, duplicateAction, colorScheme, debrid, finish, remote
     }
 
     /// Missing keys keep their defaults, so settings from older versions still load.
@@ -350,6 +352,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         showCompleteDialog = try c.decodeIfPresent(Bool.self, forKey: .showCompleteDialog) ?? d.showCompleteDialog
         playSound = try c.decodeIfPresent(Bool.self, forKey: .playSound) ?? d.playSound
         quietHours = try c.decodeIfPresent(String.self, forKey: .quietHours) ?? d.quietHours
+        remote = try c.decodeIfPresent(RemoteSettings.self, forKey: .remote) ?? d.remote
         markDownloads = try c.decodeIfPresent(Bool.self, forKey: .markDownloads) ?? d.markDownloads
         scanEnabled = try c.decodeIfPresent(Bool.self, forKey: .scanEnabled) ?? d.scanEnabled
         scanCommand = try c.decodeIfPresent(String.self, forKey: .scanCommand) ?? d.scanCommand

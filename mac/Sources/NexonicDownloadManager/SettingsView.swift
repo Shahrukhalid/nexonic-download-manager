@@ -305,6 +305,38 @@ struct SettingsView: View {
             .tabItem { Label("Clipboard", systemImage: "doc.on.clipboard") }
 
             Form {
+                Toggle("Manage downloads from my phone", isOn: $manager.settings.remote.enabled)
+                TextField("Port", value: $manager.settings.remote.port, format: .number.grouping(.never))
+                    .disabled(!manager.settings.remote.enabled)
+                Text("Scan the code with a phone on the same Wi-Fi to see, add, stop and resume downloads. Use this only on networks you trust (home or office), never on public Wi-Fi.")
+                    .font(.caption).foregroundStyle(.secondary)
+                if let problem = manager.remoteProblem {
+                    Text(problem).font(.caption).foregroundStyle(.red)
+                } else if manager.settings.remote.enabled, manager.settings.remote.key.count >= 16 {
+                    let hosts = RemoteHTTP.lanAddresses()
+                    if let host = hosts.first {
+                        let link = RemoteHTTP.pairingURL(host: host, port: manager.settings.remote.port, key: manager.settings.remote.key)
+                        if let code = QrWindow.image(link) {
+                            HStack {
+                                Spacer()
+                                Image(nsImage: code).interpolation(.none).resizable().frame(width: 200, height: 200)
+                                Spacer()
+                            }
+                        }
+                        Text("The code opens http://\(host):\(String(manager.settings.remote.port)) on the phone, paired with this Mac.")
+                            .font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
+                    } else {
+                        Text("This Mac is not on a network right now.").font(.caption).foregroundStyle(.secondary)
+                    }
+                    Button("Unpair All Phones") { manager.newRemoteKey() }
+                    Text("Makes a new code: phones paired before must scan it again.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            .formStyle(.grouped)
+            .tabItem { Label("Remote", systemImage: "iphone") }
+
+            Form {
                 Toggle("Show the Download Complete window", isOn: $manager.settings.showCompleteDialog)
                 Toggle("Play a sound", isOn: $manager.settings.playSound)
                 TextField("Quiet hours", text: $manager.settings.quietHours, prompt: Text("22:00-07:00"))

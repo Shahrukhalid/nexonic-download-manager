@@ -126,6 +126,7 @@ public final class MemoryStore: SecretStore {
 /// Lists saved by older versions (with the secrets in the file) are moved into the Keychain on the first save.
 public enum Secrets {
     public static let proxyKey = "proxy.password"
+    public static let remoteKey = "remote.key"
     static func key(_ id: UUID, _ field: String) -> String { "download.\(id.uuidString).\(field)" }
     static func siteKey(_ id: UUID, _ field: String) -> String { "site.\(id.uuidString).\(field)" }
 
@@ -137,6 +138,7 @@ public enum Secrets {
             if let p = r.password, !p.isEmpty { out[key(r.id, "password")] = p }
         }
         if !settings.proxy.password.isEmpty { out[proxyKey] = settings.proxy.password }
+        if !settings.remote.key.isEmpty { out[remoteKey] = settings.remote.key }
         for p in settings.hostProfiles {
             if let pw = p.password, !pw.isEmpty { out[siteKey(p.id, "password")] = pw }
             if let pw = p.proxy?.password, !pw.isEmpty { out[siteKey(p.id, "proxy")] = pw }
@@ -157,6 +159,7 @@ public enum Secrets {
     public static func stripped(_ settings: AppSettings) -> AppSettings {
         var s = settings
         s.proxy.password = ""
+        s.remote.key = ""
         for i in s.hostProfiles.indices {
             s.hostProfiles[i].password = nil
             s.hostProfiles[i].proxy?.password = ""
@@ -171,6 +174,7 @@ public enum Secrets {
             if records[i].password?.isEmpty ?? true, let p = values[key(records[i].id, "password")] { records[i].password = p }
         }
         if settings.proxy.password.isEmpty, let p = values[proxyKey] { settings.proxy.password = p }
+        if settings.remote.key.isEmpty, let k = values[remoteKey] { settings.remote.key = k }
         for i in settings.hostProfiles.indices {
             let id = settings.hostProfiles[i].id
             if settings.hostProfiles[i].password?.isEmpty ?? true, let p = values[siteKey(id, "password")] { settings.hostProfiles[i].password = p }
