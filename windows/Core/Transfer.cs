@@ -226,21 +226,31 @@ public sealed class Transfer : IDownloader
         using var stop = CancellationTokenSource.CreateLinkedTokenSource(outer);
         var ct = stop.Token;
         var running = new Dictionary<Task, Segment>();
+        var resting = new Dictionary<Segment, DateTime>();  // refused parts: not asked for again before the server's wait ends
+        var lastQuietOpen = DateTime.MinValue;               // during a wait, at most one replacement per sample
         while (true)
         {
             var now = DateTime.UtcNow;
             governor.Tick(now, running.Count);
-            if (now >= governor.QuietUntil)
+            // While the server's wait runs, nothing grows, but a finished connection is still replaced as long as others are
+            // being served: the server accepts that many, and idling them would only slow the download down.
+            var quiet = now < governor.QuietUntil;
+            if (!quiet || running.Count > 0 && running.Count < governor.Allowed && now - lastQuietOpen >= ConnectionGovernor.Sample)
             {
+                // While waiting, open at most one connection now; otherwise up to the allowed number.
+                var limit = quiet ? Math.Min(governor.Allowed, running.Count + 1) : governor.Allowed;
+                if (quiet) lastQuietOpen = now;
                 List<Segment> waiting;
-                lock (Record.Segments) waiting = Record.Segments.Where(s => !s.IsComplete && !running.ContainsValue(s)).ToList();
+                lock (Record.Segments)
+                    waiting = Record.Segments.Where(s => !s.IsComplete && !running.ContainsValue(s)
+                                                         && !(resting.TryGetValue(s, out var until) && until > now)).ToList();
                 foreach (var seg in waiting)
                 {
-                    if (running.Count >= (Record.AcceptsRanges ? governor.Allowed : 1)) break;
+                    if (running.Count >= (Record.AcceptsRanges ? limit : 1)) break;
                     running[SegmentAsync(seg, ct, running.Count > 0)] = seg;
                 }
                 // Spare connections take over half of the largest remaining part.
-                while (Record.AcceptsRanges && running.Count < governor.Allowed)
+                while (Record.AcceptsRanges && running.Count < limit)
                 {
                     Segment? added = null;
                     lock (Record.Segments)
@@ -268,10 +278,11 @@ public sealed class Transfer : IDownloader
             var tick = Task.Delay(ConnectionGovernor.Sample, outer);
             var done = await Task.WhenAny(running.Keys.Append(tick));
             if (done == tick) { outer.ThrowIfCancellationRequested(); continue; }
-            running.Remove(done);
+            running.Remove(done, out var doneSegment);
             if (done.IsFaulted && done.Exception?.InnerException is RefusedException refused)
             {
                 governor.Refused(DateTime.UtcNow, refused.RetryAfter);  // its part stays as it is and is picked up again
+                if (doneSegment != null) resting[doneSegment] = governor.QuietUntil;
                 continue;
             }
             if (done.IsFaulted || (done.IsCanceled && !outer.IsCancellationRequested))
