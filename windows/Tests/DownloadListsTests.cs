@@ -62,13 +62,14 @@ public class DownloadListsTests
     [Fact]
     public void NeverThrowsOnJunk()
     {
-        var rnd = new Random(7);
         foreach (var seed in new[] { "<", "<\n>", "<\nhttps://x.test\n", "[", "{\"url\":", "  out=x", "﻿", new string('<', 5000) })
             DownloadLists.Read(seed);
+        // A fixed, repeatable sequence of junk (no random generator, so every run tests the same inputs).
+        const string alphabet = "<>\n\t =:[]{}\"'ahtps/.#";
         for (var i = 0; i < 500; i++)
         {
-            var chars = new char[rnd.Next(0, 400)];
-            for (var k = 0; k < chars.Length; k++) chars[k] = "<>\n\t =:[]{}\"'ahtps/.#"[rnd.Next(21)];
+            var chars = new char[(i * 37) % 400];
+            for (var k = 0; k < chars.Length; k++) chars[k] = alphabet[(i * 31 + k * 17 + k * k) % alphabet.Length];
             DownloadLists.Read(new string(chars));
         }
     }
