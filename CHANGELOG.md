@@ -1,3 +1,16 @@
+## 0.35.0
+
+- **Faster automatic connections** (Mac, Windows and Linux): Nexonic tries more connections sooner, reads a server that
+  turns several away at once as one answer instead of backing off again and again, and opens no extra connections while
+  the server asks it to wait. In the speed test that runs with every Windows and Linux engine change, a file from a server that limits
+  each connection to 1 MB/s downloaded 17% faster than in 0.34.0 (4.13 s → 3.44 s); the other tests were unchanged.
+- **Mac: manage downloads from your phone** (Options → Remote, off by default): scan the code with a phone on the same
+  Wi-Fi to see, add, stop, resume and remove downloads, as on Windows and Linux. Unpair All Phones makes a new code.
+  Use it only on networks you trust.
+- **Mac: quiet hours for sounds** (Options → After Download): no sound during the hours you choose, such as 22:00-07:00.
+- **Windows: whole Facebook pages.** Download all on a Facebook page now reads the full page with the sign-in of the
+  browser you used, scrolling it in the background until no more videos appear (before, only the latest posts).
+
 ## 0.34.0
 
 - **Keep in Sync** (Mac, Windows and Linux; right-click a finished download): Nexonic checks the file on the server every

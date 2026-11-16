@@ -1,6 +1,6 @@
-# Nexonic Download Manager 0.34.0
+# Nexonic Download Manager 0.35.0
 
-**Keep files up to date by themselves.** Right-click a finished download → Keep in Sync: Nexonic checks the server every hour, 6 hours, day or week with one tiny request and downloads the file again only when it really changed. The old copy is kept until the new one is complete, then replaced under the same name. Includes 0.33.0 (Import Download List).
+**Faster downloads, and your phone as a remote on Mac too.** Automatic connections ramp up sooner and handle busy servers better: 17% faster in our Windows and Linux speed test on servers that limit each connection. On Mac, manage downloads from your phone (Options → Remote) and set quiet hours for sounds. On Windows, Download all reads whole Facebook pages with your browser's sign-in. Includes 0.34.0 (Keep in Sync).
 
 **Mac, first launch:** macOS says it *could not verify* the app because it's free and not sold through Apple. Click **Done**, open **System Settings → Privacy & Security**, click **Open Anyway**, then **Open Anyway** again and enter your Mac password. Only once; updates installed with **Update Now** open without a warning. [Pictures of each step](https://github.com/Shahrukhalid/nexonic-download-manager#first-launch-on-mac)
 
