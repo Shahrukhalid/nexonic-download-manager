@@ -97,6 +97,11 @@ public struct DownloadRecord: Codable, Identifiable, Sendable {
     // Added in 0.31.0: what happens when this download is done (the progress window's Options on completion): open the
     // file, show it in Finder, or quit, sleep or shut down as a queue can
     public var onComplete: String?
+    // Added in 0.34.0: keep a finished file in sync with the server (see DownloadSync). Checked every syncHours
+    // (nil = off); a changed file is downloaded again and replaces the copy at syncReplace once the new one is complete.
+    public var syncHours: Int?
+    public var syncChecked: Date?
+    public var syncReplace: String?
 
     public init(url: URL, folder: URL, fileName: String? = nil, referrer: String? = nil, cookies: String? = nil,
                 userAgent: String? = nil) {
