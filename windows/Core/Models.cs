@@ -209,7 +209,7 @@ public sealed class AppSettings
     public int MaxActive { get; set; } = 3;
     public int SpeedLimitKBps { get; set; }
     public string Folder { get; set; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
-    /// <summary>Each type in its own folder (Video, Music, Documents…), like IDM. On by default since 0.6.6 (saved under a
+    /// <summary>Each type in its own folder (Video, Music, Documents…). On by default since 0.6.6 (saved under a
     /// new name, so earlier installs get it too).</summary>
     [System.Text.Json.Serialization.JsonPropertyName("CategoryFolders")]
     public bool SortIntoCategoryFolders { get; set; } = true;
@@ -269,7 +269,7 @@ public sealed class AppSettings
     // Added in 0.6.0: in-app updates
     public bool CheckForUpdates { get; set; } = true;
     public string SkippedVersion { get; set; } = "";
-    // Added in 0.14.0: IDM-style toolbar and menus on Windows and Linux (View menu)
+    // Added in 0.14.0: classic toolbar and menus on Windows and Linux (View menu)
     public bool ShowToolbar { get; set; } = true;
     public bool ToolbarText { get; set; } = true;
     /// <summary>Unzip finished .zip downloads into a folder next to them (off unless turned on).</summary>

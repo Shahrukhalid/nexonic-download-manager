@@ -258,7 +258,7 @@ public sealed class MainWindow : Window
     void StartQueue() { manager.StartQueue(CurrentQueue); BuildSidebar(); }
     void StopQueue() { manager.StopQueue(CurrentQueue); BuildSidebar(); }
 
-    /// <summary>Menus like IDM's: Tasks, Downloads, View and Help. Each item does the same as its toolbar button.</summary>
+    /// <summary>Menus: Tasks, Downloads, View and Help. Each item does the same as its toolbar button.</summary>
     Menu BuildMenu()
     {
         MenuItem Item(string header, Action run, string? keys = null)
@@ -347,7 +347,7 @@ public sealed class MainWindow : Window
             if (b.Content is StackPanel p && p.Children.Count > 1) p.Children[1].IsVisible = showNames;
     }
 
-    /// <summary>Resume, Stop and Delete work on the selection, so they are greyed out without one (as in IDM).</summary>
+    /// <summary>Resume, Stop and Delete work on the selection, so they are greyed out without one.</summary>
     void UpdateButtons()
     {
         var any = list.SelectedItems?.Count > 0;
@@ -694,7 +694,7 @@ public sealed class MainWindow : Window
             row.Children.Add(new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis });
             sidebar.Items.Add(new ListBoxItem { Content = row, Tag = key, Padding = new Thickness(16 + indent * 16, 5, 8, 5), HorizontalContentAlignment = HorizontalAlignment.Stretch });
         }
-        // Like IDM: each list opens into the file types it holds (sorted automatically by file type).
+        // Each list opens into the file types it holds (sorted automatically by file type).
         static string Label(string c) => L.T(c == nameof(FileCategory.Other) ? "General" : c);
         void Types(string prefix) { foreach (var c in Enum.GetNames<FileCategory>()) Entry(Label(c), prefix + c, 1); }
         Header(L.T("Downloads"));

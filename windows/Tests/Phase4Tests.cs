@@ -2,7 +2,7 @@ using System.Globalization;
 using Nexonic.Core;
 using Xunit;
 
-/// <summary>IDM-style command line, JSON list, crash reports, several QR codes and regional dates.</summary>
+/// <summary>Windows-style command line, JSON list, crash reports, several QR codes and regional dates.</summary>
 public class Phase4Tests
 {
     [Fact]

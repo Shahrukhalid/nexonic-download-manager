@@ -19,7 +19,7 @@ public enum FileCategory: String, Codable, CaseIterable, Sendable {
         self = FileCategory.map.first { $0.value.contains(ext) }?.key ?? .other
     }
 
-    /// The subfolder of the download folder for this type, like IDM. Files of no particular type stay in the folder.
+    /// The subfolder of the download folder for this type. Files of no particular type stay in the folder.
     public var folder: String? { self == .other ? nil : rawValue }
 
     public var symbol: String {

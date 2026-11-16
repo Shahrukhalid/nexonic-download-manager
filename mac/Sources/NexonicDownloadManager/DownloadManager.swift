@@ -405,7 +405,7 @@ final class DownloadManager: ObservableObject {
         schedule()
     }
 
-    /// Stops a download and deletes what was downloaded so far, keeping it in the list as Canceled (like IDM).
+    /// Stops a download and deletes what was downloaded so far, keeping it in the list as Canceled.
     /// Resume or Try Again starts it again from the beginning.
     func cancel(_ id: UUID) {
         canceled.insert(id)  // late updates from the stopped transfer are ignored
