@@ -239,13 +239,29 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
         t.resume()
     }
 
+    /// Refused parts are not asked for again before the server's wait ends.
+    private var resting: [Int: Date] = [:]
+    /// During a wait, at most one replacement connection per sample.
+    private var lastQuietOpen = Date.distantPast
+
     private func fill() {
-        guard !stopping, Date() >= governor.quietUntil else { return }
+        guard !stopping else { return }
+        let now = Date()
+        let quiet = now < governor.quietUntil
+        // While the server's wait runs, nothing grows, but a finished connection is still replaced (one per sample) as
+        // long as others are being served: idling them would only slow the download down.
+        if quiet {
+            guard !running.isEmpty, running.count < governor.allowed,
+                  now.timeIntervalSince(lastQuietOpen) >= ConnectionGovernor.sample else { return }
+            lastQuietOpen = now
+        }
+        let limit = quiet ? min(governor.allowed, running.count + 1) : governor.allowed
         let busy = Set(running.values.map(\.segmentID))
-        for seg in record.segments where !seg.isComplete && !busy.contains(seg.id) && running.count < governor.allowed {
+        for seg in record.segments where !seg.isComplete && !busy.contains(seg.id) && running.count < limit {
+            if let until = resting[seg.id], until > now { continue }
             launch(seg.id)
         }
-        while record.acceptsRanges && running.count < governor.allowed {
+        while record.acceptsRanges && running.count < limit {
             let before = running.count
             splitAndLaunch()
             if running.count == before { break }
@@ -408,6 +424,7 @@ public final class Transfer: NSObject, URLSessionDataDelegate, @unchecked Sendab
         guard !stopping, let i = record.segments.firstIndex(where: { $0.id == run.segmentID }) else { return }
         if let retryAfter = refusal, !record.segments[i].isComplete {
             governor.refused(now: Date(), retryAfter: retryAfter)
+            resting[run.segmentID] = governor.quietUntil
             if !running.isEmpty { return }  // the pacer starts this part again when the server is ready
             let wait = max(1, governor.quietUntil.timeIntervalSinceNow)
             let id = run.segmentID

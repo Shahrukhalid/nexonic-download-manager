@@ -272,6 +272,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var proxy = ProxySettings()
     public var showCompleteDialog: Bool = true
     public var playSound: Bool = true
+    // Added in 0.35.0: no sounds during these hours ("22:00-07:00", may pass midnight); empty = always
+    public var quietHours: String = ""
     public var markDownloads: Bool = true
     public var scanEnabled: Bool = false
     public var scanCommand: String = ""
@@ -323,7 +325,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case torrentsEnabled, connections, maxActive, speedLimitKBps, folder, sortIntoCategoryFolders = "categoryFolders", notifications, monitorClipboard,
-             clipboardTypes, proxy, showCompleteDialog, playSound, markDownloads, scanEnabled, scanCommand,
+             clipboardTypes, proxy, showCompleteDialog, playSound, quietHours, markDownloads, scanEnabled, scanCommand,
              showDownloadDialog, showProgressWindow, bringToFrontOnBrowserDownload, checkForUpdates, skippedVersion, network, hostProfiles, torrentNetwork,
              dataCapMB, dataCapHours, rememberLastFolder, lastFolder, appearance, customCategories, autoConnections, speedSchedule, duplicateAction, colorScheme, debrid, finish
     }
@@ -347,6 +349,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         proxy = try c.decodeIfPresent(ProxySettings.self, forKey: .proxy) ?? d.proxy
         showCompleteDialog = try c.decodeIfPresent(Bool.self, forKey: .showCompleteDialog) ?? d.showCompleteDialog
         playSound = try c.decodeIfPresent(Bool.self, forKey: .playSound) ?? d.playSound
+        quietHours = try c.decodeIfPresent(String.self, forKey: .quietHours) ?? d.quietHours
         markDownloads = try c.decodeIfPresent(Bool.self, forKey: .markDownloads) ?? d.markDownloads
         scanEnabled = try c.decodeIfPresent(Bool.self, forKey: .scanEnabled) ?? d.scanEnabled
         scanCommand = try c.decodeIfPresent(String.self, forKey: .scanCommand) ?? d.scanCommand

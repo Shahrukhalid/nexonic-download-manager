@@ -43,10 +43,27 @@ final class ConnectionGovernorTests: XCTestCase {
         rising()
         XCTAssertEqual(g.allowed, 8)
         g.refused(now: t, retryAfter: 1)
-        XCTAssertEqual(g.allowed, 4)
+        XCTAssertEqual(g.allowed, 7)  // the 7 that were accepted, not half
         t += 2
         for _ in 0..<6 { rising() }
-        XCTAssertEqual(g.allowed, 7)
+        XCTAssertEqual(g.allowed, 7)  // never back to the 8 that were refused
+    }
+
+    func testRefusalsArrivingTogetherAreOneAnswer() {
+        // A server that allows 6: at 8 connections, two are refused at almost the same moment.
+        let start = Date(timeIntervalSince1970: 0)
+        let g = ConnectionGovernor(auto: true, maximum: 32, now: start)
+        var t = start
+        var speed = 1_000_000
+        func rising() { t += 1; g.received(speed); g.tick(now: t, running: g.allowed); speed *= 2 }
+        rising()
+        XCTAssertEqual(g.allowed, 8)
+        g.refused(now: t, retryAfter: 1)
+        g.refused(now: t + 0.03, retryAfter: 1)
+        XCTAssertEqual(g.allowed, 6)  // exactly what the server allows, not 8 → 4 → 2
+        t += 2
+        for _ in 0..<6 { rising() }
+        XCTAssertEqual(g.allowed, 6)
     }
 
     func testReadsRetryAfter() {
