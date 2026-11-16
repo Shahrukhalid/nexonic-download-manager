@@ -740,7 +740,7 @@ public sealed partial class DownloadManager
         syncing = true;
         try
         {
-            using var http = new HttpClient(Network.Handler(Settings.Proxy)) { Timeout = TimeSpan.FromSeconds(60) };
+            using var http = new System.Net.Http.HttpClient(Network.Handler(Settings.Proxy)) { Timeout = TimeSpan.FromSeconds(60) };
             var changed = false;
             foreach (var row in due)
             {
