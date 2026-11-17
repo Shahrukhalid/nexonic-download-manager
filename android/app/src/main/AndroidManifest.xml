@@ -33,12 +33,6 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- Links shared from Chrome and other apps. -->
-            <intent-filter android:label="@string/share_download">
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="text/plain" />
-            </intent-filter>
             <!-- nexonic://add?url=… links, for example from a QR code shown by the desktop app. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -72,6 +66,23 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="http" />
                 <data android:scheme="https" />
+            </intent-filter>
+        </activity>
+
+        <!-- Links shared from Chrome and other apps: the download window pops up over the app you shared from. -->
+        <activity
+            android:name=".ShareActivity"
+            android:exported="true"
+            android:label="@string/share_download"
+            android:theme="@style/Theme.Nexonic.Popup"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="standard"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter android:label="@string/share_download">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
 

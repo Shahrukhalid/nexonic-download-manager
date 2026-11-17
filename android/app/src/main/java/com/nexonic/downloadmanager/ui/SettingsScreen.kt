@@ -62,6 +62,7 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
     var limit by remember { mutableStateOf(if (s.speedLimitKB > 0) s.speedLimitKB.toString() else "") }
     var wifiOnly by remember { mutableStateOf(s.wifiOnly) }
     var ask by remember { mutableStateOf(s.askBeforeDownload) }
+    var popup by remember { mutableStateOf(s.sharePopup) }
     var folders by remember { mutableStateOf(s.categoryFolders) }
     var subtitles by remember { mutableStateOf(s.videoSubtitles) }
     var schedule by remember { mutableStateOf(s.scheduleEnabled) }
@@ -277,6 +278,7 @@ fun SettingsScreen(browser: Browser, message: (String) -> Unit) {
                 vpnOnly = it; Downloads.setVpnOnly(it)
             }
             Toggle("Ask before downloading", "Show the download window when the browser starts a download.", ask) { ask = it; s.askBeforeDownload = it }
+            Toggle("Pop-up for shared links", "Sharing a link to Nexonic opens the download window over the app you are in, instead of the whole app.", popup) { popup = it; s.sharePopup = it }
             Toggle("Folders by type", "Save into Nexonic/Video, /Music, /Documents…", folders) { folders = it; s.categoryFolders = it }
             // Default browser: links from other apps open here (pages in the built-in browser, files as downloads).
             val roles = remember { context.getSystemService(android.app.role.RoleManager::class.java) }
