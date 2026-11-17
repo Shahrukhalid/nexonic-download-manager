@@ -148,6 +148,8 @@ class Settings(context: Context) {
     var torrentBlocklist: String get() = p.getString("torrentBlocklist", "") ?: ""; set(v) = p.edit().putString("torrentBlocklist", v.trim()).apply()
     var vpnOnly: Boolean get() = p.getBoolean("vpnOnly", false); set(v) = p.edit().putBoolean("vpnOnly", v).apply()
     var askBeforeDownload: Boolean get() = p.getBoolean("ask", true); set(v) = p.edit().putBoolean("ask", v).apply()
+    /** Links shared from other apps open the download window as a pop-up over that app (added in 0.36.0). */
+    var sharePopup: Boolean get() = p.getBoolean("sharePopup", true); set(v) = p.edit().putBoolean("sharePopup", v).apply()
     var categoryFolders: Boolean get() = p.getBoolean("categoryFolders", true); set(v) = p.edit().putBoolean("categoryFolders", v).apply()
     /** The user's own categories (Settings), checked in order before the built-in types. */
     var customCategories: List<com.nexonic.downloadmanager.core.CustomCategory>

@@ -349,6 +349,8 @@
     "Choose Download now, or Add to queue to start them later.": "Choose Download now, or Add to queue to start them later.",
     "Opening the profile like a visitor's browser…": "Opening the profile like a visitor's browser…",
     "no videos were shown to a visitor who is not signed in (the profile may be private or not exist).": "no videos were shown to a visitor who is not signed in (the profile may be private or not exist).",
-    "visitors who are not signed in see only the latest posts; Nexonic took the videos among them.": "visitors who are not signed in see only the latest posts; Nexonic took the videos among them."
+    "visitors who are not signed in see only the latest posts; Nexonic took the videos among them.": "visitors who are not signed in see only the latest posts; Nexonic took the videos among them.",
+    "Pop-up for shared links": "Pop-up for shared links",
+    "Sharing a link to Nexonic opens the download window over the app you are in, instead of the whole app.": "Sharing a link to Nexonic opens the download window over the app you are in, instead of the whole app."
   }
 }
