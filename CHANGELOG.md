@@ -1,3 +1,9 @@
+## 0.36.0
+
+- **Android: a pop-up for shared links.** Share a link to Nexonic from YouTube, Instagram, Chrome or any other app and
+  the download window opens right over that app: pick the quality, tap Download and carry on where you were. Torrents
+  and playlists still open the full app. Turn it off in Settings → Pop-up for shared links.
+
 ## 0.35.0
 
 - **Faster automatic connections** (Mac, Windows and Linux): Nexonic tries more connections sooner, reads a server that

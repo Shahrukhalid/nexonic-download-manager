@@ -1,6 +1,6 @@
-# Nexonic Download Manager 0.35.0
+# Nexonic Download Manager 0.36.0
 
-**Faster downloads, and your phone as a remote on Mac too.** Automatic connections ramp up sooner and handle busy servers better: 17% faster in our Windows and Linux speed test on servers that limit each connection. On Mac, manage downloads from your phone (Options → Remote) and set quiet hours for sounds. On Windows, Download all reads whole Facebook pages with your browser's sign-in. Includes 0.34.0 (Keep in Sync).
+**Android: download without leaving the app you're in.** Share a link to Nexonic and the download window pops up right over YouTube, Instagram, Chrome or wherever you are; pick the quality, tap Download and carry on. Includes 0.35.0 (faster automatic connections, a phone remote and quiet hours on Mac, whole Facebook pages on Windows).
 
 **Mac, first launch:** macOS says it *could not verify* the app because it's free and not sold through Apple. Click **Done**, open **System Settings → Privacy & Security**, click **Open Anyway**, then **Open Anyway** again and enter your Mac password. Only once; updates installed with **Update Now** open without a warning. [Pictures of each step](https://github.com/Shahrukhalid/nexonic-download-manager#first-launch-on-mac)
 
