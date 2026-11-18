@@ -16,6 +16,10 @@ to `NativeMessaging.AllowedExtensionIds` (`windows/Core/NativeMessaging.cs`) and
 (`mac/Sources/NexonicCore/NativeMessaging.swift`) so the browser helper accepts the store version, and release the apps.
 The Firefox ID stays the same (`browser_specific_settings` in the add-on).
 
+Each release signs the Firefox add-on twice with the AMO keys: as <version> for the GitHub download (unlisted), and as
+<version>.1 for the public listing on addons.mozilla.org (listed, after Mozilla's review). Mozilla accepts each version
+number only once, which is why the listed copy has the extra `.1`.
+
 ## Listing texts
 
 **Single purpose:** sends downloads, videos and links from the browser to the Nexonic Download Manager app on the same
