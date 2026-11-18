@@ -1,6 +1,6 @@
-# Nexonic Download Manager 0.36.0
+# Nexonic Download Manager 0.36.1
 
-**Android: download without leaving the app you're in.** Share a link to Nexonic and the download window pops up right over YouTube, Instagram, Chrome or wherever you are; pick the quality, tap Download and carry on. Includes 0.35.0 (faster automatic connections, a phone remote and quiet hours on Mac, whole Facebook pages on Windows).
+**Mac fixes and an up-to-date Firefox add-on page.** On Mac, the About window no longer opens by itself after downloads and updates, and finished downloads can be dragged straight into Finder or other apps as files. The Firefox add-on is now kept up to date on addons.mozilla.org. Includes 0.36.0 (Android pop-up for shared links).
 
 **Mac, first launch:** macOS says it *could not verify* the app because it's free and not sold through Apple. Click **Done**, open **System Settings → Privacy & Security**, click **Open Anyway**, then **Open Anyway** again and enter your Mac password. Only once; updates installed with **Update Now** open without a warning. [Pictures of each step](https://github.com/Shahrukhalid/nexonic-download-manager#first-launch-on-mac)
 

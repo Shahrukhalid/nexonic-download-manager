@@ -1,3 +1,11 @@
+## 0.36.1
+
+- **Mac: no more About window popping up.** It used to open by itself after downloads from the browser and after an
+  update.
+- **Mac: drag finished downloads as files.** Drag a finished download from the list into a Finder folder or another app
+  to move or copy the file (it used to drop a text clipping).
+- **Firefox:** the add-on is now updated on its addons.mozilla.org page with every release, after Mozilla's review.
+
 ## 0.36.0
 
 - **Android: a pop-up for shared links.** Share a link to Nexonic from YouTube, Instagram, Chrome or any other app and
