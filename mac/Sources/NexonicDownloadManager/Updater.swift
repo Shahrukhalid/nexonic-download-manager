@@ -156,6 +156,9 @@ enum Updater {
             message("The update could not be installed", error.localizedDescription)
             return
         }
+        // Windows open at quit come back at the next launch: the About window (where Check for Updates was clicked)
+        // must not open again after the update.
+        NSApp.windows.filter { $0.identifier?.rawValue.hasPrefix("about") == true }.forEach { $0.close() }
         NSApp.terminate(nil)
     }
 
