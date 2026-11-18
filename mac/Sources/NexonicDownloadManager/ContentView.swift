@@ -205,7 +205,8 @@ struct ContentView: View {
             // A dropped .torrent file (or magnet link) opens Add Torrent; other links open Add Download.
             for p in providers {
                 _ = p.loadObject(ofClass: URL.self) { url, _ in
-                    guard let url else { return }
+                    // A file other than a .torrent is not a download link (for example a row dragged within the window).
+                    guard let url, !url.isFileURL || url.pathExtension.lowercased() == "torrent" else { return }
                     Task { @MainActor in
                         if !TorrentInbox.shared.accept(url) { manager.addRequest = AddRequest(links: url.absoluteString) }
                     }
@@ -674,9 +675,17 @@ struct DownloadTable<MenuContent: View>: View {
         .contextMenu(forSelectionType: UUID.self) { ids in menu(ids) } primaryAction: { ids in primary(ids) }
     }
 
+    /// A finished download drags as its file (drop it in Finder or another app to move or copy it); the download ids
+    /// come along as text for dropping rows on a queue in the sidebar.
     private func dragItem(_ r: DownloadRecord) -> NSItemProvider {
         let ids: Set<UUID> = selection.contains(r.id) ? selection : [r.id]
         let text: String = ids.map(\.uuidString).joined(separator: ",")
+        if r.status == .finished, let path = r.savedPath, FileManager.default.fileExists(atPath: path),
+           let provider = NSItemProvider(contentsOf: URL(fileURLWithPath: path)) {
+            provider.suggestedName = URL(fileURLWithPath: path).lastPathComponent
+            provider.registerObject(text as NSString, visibility: .ownProcess)
+            return provider
+        }
         return NSItemProvider(object: text as NSString)
     }
 

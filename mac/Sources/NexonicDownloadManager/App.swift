@@ -67,6 +67,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // In the menu bar only by default (the Dock icon shows while a window is open); Settings can change it.
         UserDefaults.standard.register(defaults: [Self.menuBarOnlyKey: true])
         Self.launchedForLink = NSAppleEventManager.shared().currentAppleEvent?.eventID == AEEventID(kAEGetURL)
+        // Links (nexonicdm://, magnet:) come straight here. Left to SwiftUI, a link opened a window that accepts links
+        // (the About window, since the main window doesn't) after every download from the browser.
+        NSAppleEventManager.shared().setEventHandler(self, andSelector: #selector(handleLink(_:reply:)),
+                                                     forEventClass: AEEventClass(kInternetEventClass), andEventID: AEEventID(kAEGetURL))
+    }
+
+    @objc func handleLink(_ event: NSAppleEventDescriptor, reply: NSAppleEventDescriptor) {
+        guard let text = event.paramDescriptor(forKeyword: keyDirectObject)?.stringValue, let url = URL(string: text) else { return }
+        application(NSApp, open: [url])
     }
 
     /// Closes the main window SwiftUI opens at launch when the browser helper started the app.
