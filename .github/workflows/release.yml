@@ -67,6 +67,26 @@ jobs:
           signed="$(ls build/signed/*.xpi | head -1)"
           cp "$signed" "build/NexonicFirefoxAddon-$V.xpi"
           echo "Signed: $signed"
+      - name: Send the Firefox add-on to the public listing (addons.mozilla.org)
+        # The public listing gets every release too, after Mozilla's review (a day or two). Mozilla allows each version
+        # number once, and the GitHub download above already used it, so the listed copy is numbered <version>.1.
+        # It does not wait for the review, and a problem here never stops the release.
+        continue-on-error: true
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          V="$(cat VERSION)"
+          rm -rf build/extension-firefox-listed && cp -R build/extension-firefox build/extension-firefox-listed
+          python3 - "$V.1" <<'PY'
+          import json, sys
+          p = "build/extension-firefox-listed/manifest.json"
+          m = json.load(open(p))
+          m["version"] = sys.argv[1]
+          json.dump(m, open(p, "w"), indent=2)
+          PY
+          npx --yes web-ext@8 sign --source-dir build/extension-firefox-listed --channel listed --approval-timeout 0 \
+            --api-key "$AMO_JWT_ISSUER" --api-secret "$AMO_JWT_SECRET" --artifacts-dir build/listed --timeout 900000
       - name: Draft release
         env:
           GH_TOKEN: ${{ github.token }}
