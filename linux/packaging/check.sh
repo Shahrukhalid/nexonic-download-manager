@@ -68,7 +68,7 @@ if command -v unsquashfs >/dev/null; then
   [[ "$SB" == *"Block size 1048576"* ]] || fail "the AppImage is not packed with 1 MB blocks"
   if grep -qE "libmscordbi|libmscordaccore|/createdump$" <<<"$LIST"; then fail "debugger files are in the AppImage"; fi
 fi
-grep -aq "gh-releases-zsync|Shahrukhalid|nexonic-download-manager|latest|$(basename "$AI").zsync" "$AI" || fail "the AppImage has no update information"
+grep -aq "gh-releases-zsync|nexonic-technologies|nexonic-download-manager|latest|$(basename "$AI").zsync" "$AI" || fail "the AppImage has no update information"
 chmod +x "$AI"
 [ "$(APPIMAGE_EXTRACT_AND_RUN=1 "$AI" --version)" = "$V" ] || fail "the AppImage does not start"
 APPIMAGE_EXTRACT_AND_RUN=1 "$AI" --host help | grep -q "ndm batch" || fail "the AppImage's ndm command"

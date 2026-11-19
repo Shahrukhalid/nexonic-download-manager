@@ -12,9 +12,9 @@ namespace Nexonic.App;
 public static class HelpWindows
 {
     public const string Author = "Shahrukh Khalid";
-    public const string Website = "https://www.shahrukhalid.com";
-    public const string GitHub = "https://github.com/Shahrukhalid";
-    public const string Project = "https://github.com/Shahrukhalid/nexonic-download-manager";
+    public const string Website = "https://nexonictechnologies.com";
+    public const string GitHub = "https://github.com/nexonic-technologies";
+    public const string Project = "https://github.com/nexonic-technologies/nexonic-download-manager";
     public const string OnlineHelp = Project + "/blob/main/docs/HELP.md";
     public const string Releases = Project + "/releases/latest";
     public const string ReportProblem = Project + "/issues/new";

@@ -35,10 +35,10 @@ IN NO EVENT SHALL THE AUTHOR OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAG
 
 8. CHANGES
 These terms may be updated with new versions of the Software. The current version is always at:
-https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/TERMS.md
+https://github.com/nexonic-technologies/nexonic-download-manager/blob/main/TERMS.md
 
 9. CONTACT
-Questions or problems: https://github.com/Shahrukhalid/nexonic-download-manager/issues
+Questions or problems: https://github.com/nexonic-technologies/nexonic-download-manager/issues
 Author: Shahrukh Khalid - https://www.shahrukhalid.com
 
 --------------------------------------------------------------------------------

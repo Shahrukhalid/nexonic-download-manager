@@ -108,7 +108,7 @@ in the code, never cookies or passwords, so downloads that need you to be signed
 
 **A link has expired.** Right-click the download, choose Refresh Link and paste a fresh link. The download continues without starting over.
 
-**macOS won't open the app.** Install or update with one Terminal command and macOS won't ask: curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | bash — otherwise: 1) when macOS says the app was Not Opened, click Done; 2) open System Settings, then Privacy & Security, scroll to Security and click Open Anyway; 3) click Open Anyway again and enter your Mac password. macOS asks only once, and updates installed with Update Now open without a warning. On macOS 13 and 14 you can also right-click the app and choose Open. Pictures of each step: https://github.com/Shahrukhalid/nexonic-download-manager#first-launch-on-mac
+**macOS won't open the app.** Install or update with one Terminal command and macOS won't ask: curl -fsSL https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/main/site/install.sh | bash — otherwise: 1) when macOS says the app was Not Opened, click Done; 2) open System Settings, then Privacy & Security, scroll to Security and click Open Anyway; 3) click Open Anyway again and enter your Mac password. macOS asks only once, and updates installed with Update Now open without a warning. On macOS 13 and 14 you can also right-click the app and choose Open. Pictures of each step: https://github.com/nexonic-technologies/nexonic-download-manager#first-launch-on-mac
 
 **macOS says the app is damaged.** Open Terminal and run: xattr -cr "/Applications/Nexonic Download Manager.app" Then open the app again. This happens because the app is free and not sold through Apple.
 
@@ -139,8 +139,8 @@ Ctrl+F  Search · Del  Delete · F1  Help
 
 ## Still stuck?
 
-- [Report a problem](https://github.com/Shahrukhalid/nexonic-download-manager/issues/new) (include your system, the app version from About, and the link if it is public).
-- [Latest version and release notes](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest)
+- [Report a problem](https://github.com/nexonic-technologies/nexonic-download-manager/issues/new) (include your system, the app version from About, and the link if it is public).
+- [Latest version and release notes](https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest)
 - [Terms of Use and License Agreement](../TERMS.md)
 
-Made by [Shahrukh Khalid](https://www.shahrukhalid.com) · [GitHub](https://github.com/Shahrukhalid) · MIT OR Apache-2.0
+Made by [Shahrukh Khalid](https://www.shahrukhalid.com) · [GitHub](https://github.com/nexonic-technologies) · MIT OR Apache-2.0

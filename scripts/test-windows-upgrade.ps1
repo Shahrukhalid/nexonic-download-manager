@@ -14,7 +14,7 @@ $version = (Get-Content VERSION).Trim()
 $candidate = (Resolve-Path "build/NexonicDownloadManager-Setup-$version.exe").Path
 $old = Join-Path $env:RUNNER_TEMP 'Nexonic-0.21.0-Setup.exe'
 Write-Host 'Downloading checksum-pinned v0.21.0 installer (bounded retries)'
-& curl.exe --fail --location --retry 3 --retry-delay 3 --connect-timeout 15 --max-time 180 --output $old 'https://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v0.21.0/NexonicDownloadManager-Windows-Setup.exe'
+& curl.exe --fail --location --retry 3 --retry-delay 3 --connect-timeout 15 --max-time 180 --output $old 'https://github.com/nexonic-technologies/nexonic-download-manager/releases/download/v0.21.0/NexonicDownloadManager-Windows-Setup.exe'
 if ($LASTEXITCODE -ne 0) { throw 'Cannot download the pinned v0.21.0 installer within the retry limit.' }
 if ((Get-FileHash $old -Algorithm SHA256).Hash.ToLower() -ne '7f3862109bf753cb6b06f5ed47b4adfe9803aae035e5ed2da48ff06e8a27341a') { throw 'v0.21.0 installer checksum mismatch.' }
 New-Item -ItemType Directory -Force $support | Out-Null

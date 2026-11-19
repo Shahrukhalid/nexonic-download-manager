@@ -8,10 +8,10 @@ public class MirrorTests
     public void LatestJsonReadsLikeTheApi()
     {
         const string json = """
-        {"tag_name": "v0.6.5", "html_url": "https://github.com/Shahrukhalid/nexonic-download-manager/releases/tag/v0.6.5",
+        {"tag_name": "v0.6.5", "html_url": "https://github.com/nexonic-technologies/nexonic-download-manager/releases/tag/v0.6.5",
          "draft": false, "prerelease": false, "body": "## 0.6.5\n- x",
          "assets": [{"name": "NexonicDownloadManager-Windows-Setup.exe",
-                     "browser_download_url": "https://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v0.6.5/NexonicDownloadManager-Windows-Setup.exe",
+                     "browser_download_url": "https://github.com/nexonic-technologies/nexonic-download-manager/releases/download/v0.6.5/NexonicDownloadManager-Windows-Setup.exe",
                      "digest": "sha256:ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABAB"}]}
         """;
         var r = Updates.Parse(json)!;

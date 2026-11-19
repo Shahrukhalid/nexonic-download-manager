@@ -11,7 +11,7 @@
 a per-download speed limiter, BitTorrent and browser integration. Save videos from YouTube, Instagram, Facebook,
 X, TikTok and 1,000+ sites on desktop and Android.
 
-[![Latest release](https://img.shields.io/github/v/release/Shahrukhalid/nexonic-download-manager?label=download)](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest)
+[![Latest release](https://img.shields.io/github/v/release/nexonic-technologies/nexonic-download-manager?label=download)](https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest)
 [![Support on Patreon](https://img.shields.io/badge/support-Patreon-f96854?logo=patreon&logoColor=white)](https://www.patreon.com/Shahrukhalid)
 ![macOS 13+](https://img.shields.io/badge/macOS-13%2B-black)
 ![Windows 10+](https://img.shields.io/badge/Windows-10%2B-0078D6)
@@ -20,9 +20,9 @@ X, TikTok and 1,000+ sites on desktop and Android.
 ![iOS 17+ (testing)](https://img.shields.io/badge/iPhone%20%26%20iPad-testing-555555)
 [![MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](LICENSE)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16392/badge)](https://www.bestpractices.dev/projects/16392)
-[![Website](https://img.shields.io/badge/website-online-2563eb)](https://shahrukhalid.github.io/nexonic-download-manager/)
+[![Website](https://img.shields.io/badge/website-online-2563eb)](https://nexonictechnologies.com/project/ndm/)
 
-<img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/mac-main.png" alt="Nexonic Download Manager on macOS" width="880">
+<img src="https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/screenshots/mac-main.png" alt="Nexonic Download Manager on macOS" width="880">
 
 </div>
 
@@ -30,18 +30,18 @@ X, TikTok and 1,000+ sites on desktop and Android.
 
 | System | File |
 |---|---|
-| **Mac** (macOS 13+, Apple silicon and Intel) | [NexonicDownloadManager-Mac.dmg](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Mac.dmg) |
-| **Windows** 10 / 11 | [NexonicDownloadManager-Windows-Setup.exe](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Setup.exe) |
-| Windows, no install | [NexonicDownloadManager-Windows-Portable.zip](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Portable.zip) |
-| **Windows 11 on Arm** | [NexonicDownloadManager-Windows-ARM64-Setup.exe](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-ARM64-Setup.exe) · [portable](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-ARM64-Portable.zip) |
-| **Linux**, x86-64 | [NexonicDownloadManager-Linux-x86_64.AppImage](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Linux-x86_64.AppImage) |
-| Linux on ARM (64-bit) | [NexonicDownloadManager-Linux-aarch64.AppImage](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Linux-aarch64.AppImage) |
-| Ubuntu, Debian, Mint, Pop!_OS (.deb) and Fedora, openSUSE (.rpm) | [All Linux files](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest) · [Linux guide](docs/LINUX.md) |
-| **Android** 10+ (phones and tablets) | [NexonicDownloadManager-Android.apk](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android.apk) |
-| Android, older 32-bit phones | [NexonicDownloadManager-Android-32bit.apk](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android-32bit.apk) |
-| **iPhone and iPad** (iOS/iPadOS 17+, testing) | [Unsigned IPA](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-iOS-unsigned.ipa) · [Signing and installation guide](ios/README.md) |
-| Chrome, Edge, Brave, Opera extension | [NexonicExtension-Chrome.zip](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicExtension-Chrome.zip) |
-| Firefox add-on | [NexonicAddon-Firefox.xpi](https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicAddon-Firefox.xpi) |
+| **Mac** (macOS 13+, Apple silicon and Intel) | [NexonicDownloadManager-Mac.dmg](https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Mac.dmg) |
+| **Windows** 10 / 11 | [NexonicDownloadManager-Windows-Setup.exe](https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Setup.exe) |
+| Windows, no install | [NexonicDownloadManager-Windows-Portable.zip](https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-Portable.zip) |
+| **Windows 11 on Arm** | [NexonicDownloadManager-Windows-ARM64-Setup.exe](https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-ARM64-Setup.exe) · [portable](https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Windows-ARM64-Portable.zip) |
+| **Linux**, x86-64 | [NexonicDownloadManager-Linux-x86_64.AppImage](https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Linux-x86_64.AppImage) |
+| Linux on ARM (64-bit) | [NexonicDownloadManager-Linux-aarch64.AppImage](https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Linux-aarch64.AppImage) |
+| Ubuntu, Debian, Mint, Pop!_OS (.deb) and Fedora, openSUSE (.rpm) | [All Linux files](https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest) · [Linux guide](docs/LINUX.md) |
+| **Android** 10+ (phones and tablets) | [NexonicDownloadManager-Android.apk](https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android.apk) |
+| Android, older 32-bit phones | [NexonicDownloadManager-Android-32bit.apk](https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Android-32bit.apk) |
+| **iPhone and iPad** (iOS/iPadOS 17+, testing) | [Unsigned IPA](https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-iOS-unsigned.ipa) · [Signing and installation guide](ios/README.md) |
+| Chrome, Edge, Brave, Opera extension | [NexonicExtension-Chrome.zip](https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest/download/NexonicExtension-Chrome.zip) |
+| Firefox add-on | [NexonicAddon-Firefox.xpi](https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest/download/NexonicAddon-Firefox.xpi) |
 
 The file and torrent engines are included. On macOS, Windows and Linux, the app fetches the video engine from its
 official release the first time you save a video. On macOS, Windows and Linux x64, whole-gallery downloads also fetch their engine on first use.
@@ -52,10 +52,10 @@ Release assets come with SHA-256 checksums and GitHub build attestations. See [V
 ## Install
 
 **Mac, Terminal installer:** this installs or updates the app in Applications and opens it. You can
-[inspect the installer script](https://shahrukhalid.github.io/nexonic-download-manager/install.sh) before running it.
+[inspect the installer script](https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/main/site/install.sh) before running it.
 
 ```bash
-curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/main/site/install.sh | bash
 ```
 
 **Mac, from the disk image**
@@ -69,9 +69,9 @@ curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | 
 
 **Package managers**
 
-- **Homebrew (Mac):** run `brew tap shahrukhalid/nexonic https://github.com/Shahrukhalid/nexonic-download-manager`
+- **Homebrew (Mac):** run `brew tap nexonic-technologies/nexonic https://github.com/nexonic-technologies/nexonic-download-manager`
   and then `brew install --cask nexonic-download-manager`.
-- **Scoop (Windows x64 and Arm64):** run `scoop bucket add nexonic https://github.com/Shahrukhalid/nexonic-download-manager`
+- **Scoop (Windows x64 and Arm64):** run `scoop bucket add nexonic https://github.com/nexonic-technologies/nexonic-download-manager`
   and then `scoop install nexonic-download-manager`. Scoop uses the portable build.
 - **WinGet (Windows x64 and Arm64):** the [catalog submission for v0.28.0](https://github.com/microsoft/winget-pkgs/pull/470114)
   tracks availability. See the [package manager guide](docs/PACKAGES.md).
@@ -148,7 +148,7 @@ Open an Instagram, TikTok or Facebook profile in your browser and click **Downlo
   what your account can see.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/mac-profile.png" alt="Profile Batch: every photo and video of a profile, ready to download" width="760">
+  <img src="https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/screenshots/mac-profile.png" alt="Profile Batch: every photo and video of a profile, ready to download" width="760">
 </p>
 
 ### Downloads and scheduling
@@ -211,32 +211,32 @@ Open an Instagram, TikTok or Facebook profile in your browser and click **Downlo
 ## Screenshots
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/mac-info.png" alt="Download window that opens when a link is clicked in the browser" width="440">
-  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/mac-progress.png" alt="Progress window with speed limiter and completion tabs" width="440">
+  <img src="https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/screenshots/mac-info.png" alt="Download window that opens when a link is clicked in the browser" width="440">
+  <img src="https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/screenshots/mac-progress.png" alt="Progress window with speed limiter and completion tabs" width="440">
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/ios-add.png" alt="iPhone: download window" width="200">
-  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/ios-main.png" alt="iPhone: downloads" width="200">
-  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/ipad-main.png" alt="iPad" width="280">
+  <img src="https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/screenshots/ios-add.png" alt="iPhone: download window" width="200">
+  <img src="https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/screenshots/ios-main.png" alt="iPhone: downloads" width="200">
+  <img src="https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/screenshots/ipad-main.png" alt="iPad" width="280">
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/android-main.png" alt="Android: downloads" width="200">
-  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/android-found.png" alt="Android: Found on this page" width="200">
-  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/android-detail.png" alt="Android: download details" width="200">
-  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/android-add.png" alt="Android: download window" width="200">
+  <img src="https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/screenshots/android-main.png" alt="Android: downloads" width="200">
+  <img src="https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/screenshots/android-found.png" alt="Android: Found on this page" width="200">
+  <img src="https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/screenshots/android-detail.png" alt="Android: download details" width="200">
+  <img src="https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/screenshots/android-add.png" alt="Android: download window" width="200">
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/mac-add.png" alt="Add URL" width="290">
-  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/mac-scheduler.png" alt="Scheduler" width="290">
-  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/windows-main.png" alt="Windows" width="290">
+  <img src="https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/screenshots/mac-add.png" alt="Add URL" width="290">
+  <img src="https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/screenshots/mac-scheduler.png" alt="Scheduler" width="290">
+  <img src="https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/screenshots/windows-main.png" alt="Windows" width="290">
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/windows-ocean.png" alt="Windows in the Ocean colour scheme" width="440">
-  <img src="https://raw.githubusercontent.com/Shahrukhalid/nexonic-download-manager/screenshots/windows-options.png" alt="Windows: Options" width="440">
+  <img src="https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/screenshots/windows-ocean.png" alt="Windows in the Ocean colour scheme" width="440">
+  <img src="https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/screenshots/windows-options.png" alt="Windows: Options" width="440">
 </p>
 
 ## How to use
@@ -261,9 +261,9 @@ right to save.
 - **User guide:** [docs/HELP.md](docs/HELP.md), also built into the app: **Help → Nexonic Download Manager Help** (⌘?)
   on Mac, the **Help** button or **F1** on Windows.
 - **About:** the About window shows your version, links and a **Check for Updates** button.
-- **Report a problem:** [open an issue](https://github.com/Shahrukhalid/nexonic-download-manager/issues/new) with your
+- **Report a problem:** [open an issue](https://github.com/nexonic-technologies/nexonic-download-manager/issues/new) with your
   system, the app version (from About) and the link if it is public.
-- **What's new:** [CHANGELOG.md](CHANGELOG.md) and the [releases page](https://github.com/Shahrukhalid/nexonic-download-manager/releases).
+- **What's new:** [CHANGELOG.md](CHANGELOG.md) and the [releases page](https://github.com/nexonic-technologies/nexonic-download-manager/releases).
 
 ## Support the project
 
@@ -284,7 +284,7 @@ SignPath Foundation (application in progress).
 ## Build from source
 
 ```bash
-git clone https://github.com/Shahrukhalid/nexonic-download-manager.git && cd nexonic-download-manager
+git clone https://github.com/nexonic-technologies/nexonic-download-manager.git && cd nexonic-download-manager
 UNIVERSAL=0 bash scripts/build-app.sh     # Mac
 pwsh windows/build.ps1                    # Windows (.NET 10 SDK, Inno Setup 6)
 bash linux/packaging/build.sh x64 FFMPEG_DIR TOOLS_DIR   # Linux AppImage, .deb, .rpm (see docs/LINUX.md)
@@ -305,5 +305,5 @@ without any additional terms or conditions. Third-party components keep their ow
 The Android app as a whole is distributed under GPL-3.0, because its video engine is GPL-3.0
 ([details](android/README.md#license)).
 
-Made by **[Shahrukh Khalid](https://www.shahrukhalid.com)** · [GitHub](https://github.com/Shahrukhalid). If this app
+Made by **[Shahrukh Khalid](https://www.shahrukhalid.com)** · [GitHub](https://github.com/nexonic-technologies). If this app
 saves you time, please ⭐ star the repo so others can find it.

@@ -81,7 +81,7 @@ cat > "$OUT/NOTICE-video-tools-1.txt" <<TXT
 This app includes ffmpeg and ffprobe ($VERSION), used only to re-pack downloaded video (no re-encoding).
 ffmpeg is licensed under the GNU Lesser General Public License, version 2.1 or later.
 Source: https://github.com/FFmpeg/FFmpeg/tree/$VERSION
-It is built from that source, unmodified, by scripts/build-ffmpeg.sh in https://github.com/Shahrukhalid/nexonic-download-manager
+It is built from that source, unmodified, by scripts/build-ffmpeg.sh in https://github.com/nexonic-technologies/nexonic-download-manager
 License text: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html (full text below)
 
 TXT

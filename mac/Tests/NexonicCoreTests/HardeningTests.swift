@@ -139,12 +139,12 @@ final class VideoEngineTests: XCTestCase {
 /// Updates: only this app's own release file, checked against GitHub's published SHA-256.
 final class UpdateTests: XCTestCase {
     func testUpdatesAreVerified() throws {
-        let json = #"{"tag_name":"v0.7.0","html_url":"https://x/r","assets":[{"name":"NexonicDownloadManager-Mac.zip","browser_download_url":"https://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v0.7.0/NexonicDownloadManager-Mac.zip","digest":"sha256:BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD"}]}"#
+        let json = #"{"tag_name":"v0.7.0","html_url":"https://x/r","assets":[{"name":"NexonicDownloadManager-Mac.zip","browser_download_url":"https://github.com/nexonic-technologies/nexonic-download-manager/releases/download/v0.7.0/NexonicDownloadManager-Mac.zip","digest":"sha256:BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD"}]}"#
         let r = try XCTUnwrap(Updates.parse(Data(json.utf8)))
         let sha = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
         XCTAssertEqual(r.digests["NexonicDownloadManager-Mac.zip"], sha)
         XCTAssertTrue(Updates.trustedAsset(try XCTUnwrap(r.assets["NexonicDownloadManager-Mac.zip"])))
-        XCTAssertFalse(Updates.trustedAsset(URL(string: "http://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v1/a.zip")!))
+        XCTAssertFalse(Updates.trustedAsset(URL(string: "http://github.com/nexonic-technologies/nexonic-download-manager/releases/download/v1/a.zip")!))
         XCTAssertFalse(Updates.trustedAsset(URL(string: "https://github.com/someone/else/releases/download/v1/a.zip")!))
         let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try Data("abc".utf8).write(to: file)

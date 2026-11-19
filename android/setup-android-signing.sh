@@ -3,7 +3,7 @@
 # so the Android workflow signs the release APK. The key never goes into the repository.
 # KEEP the folder it creates: every future update of the app must be signed with this same key.
 set -euo pipefail
-REPO="Shahrukhalid/nexonic-download-manager"
+REPO="nexonic-technologies/nexonic-download-manager"
 DIR="$HOME/Vision Quest AI/nexonic-android-signing"
 KS="$DIR/nexonic-release.p12"
 ALIAS="nexonic"

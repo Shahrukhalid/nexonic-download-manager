@@ -1,18 +1,18 @@
 #!/bin/bash
 # Installs or updates Nexonic Download Manager on a Mac:
-#   curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/main/site/install.sh | bash
 # Downloads the latest release from GitHub, copies the app into /Applications and opens it.
 set -euo pipefail
 
 APP_NAME="Nexonic Download Manager"
-DMG_URL="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Mac.dmg"
-ZIP_URL="https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Mac.zip"
-TERMS_URL="https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/TERMS.md"
+DMG_URL="https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Mac.dmg"
+ZIP_URL="https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest/download/NexonicDownloadManager-Mac.zip"
+TERMS_URL="https://github.com/nexonic-technologies/nexonic-download-manager/blob/main/TERMS.md"
 DEST="/Applications"
 
 if [ "$(uname -s)" != "Darwin" ]; then
   echo "This installer is for macOS. Windows: download the Setup file from"
-  echo "https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest"
+  echo "https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest"
   exit 1
 fi
 

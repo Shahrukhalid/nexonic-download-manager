@@ -52,8 +52,8 @@
 
 - **Mac: resize the download list's columns** by dragging their edges (Size, Progress, Speed, Time Left and the rest
   had fixed widths). The app remembers the widths you choose.
-- **Homebrew:** this repository is now the tap. New installs: `brew tap shahrukhalid/nexonic
-  https://github.com/Shahrukhalid/nexonic-download-manager`, then `brew install --cask nexonic-download-manager`.
+- **Homebrew:** this repository is now the tap. New installs: `brew tap nexonic-technologies/nexonic
+  https://github.com/nexonic-technologies/nexonic-download-manager`, then `brew install --cask nexonic-download-manager`.
 
 ## 0.32.0
 
@@ -931,7 +931,7 @@ Torrent functionality is unchanged from v0.9.0. Native all-platform torrent deve
 
 - New app icon on Mac, Windows and in the browser extension.
 - Mac installer window: clear "drag to Applications" layout, the browser add-ons below, and a thank-you note with links
-  to github.com/Shahrukhalid and www.shahrukhalid.com.
+  to github.com/nexonic-technologies and nexonictechnologies.com.
 - Windows installer: the same thank-you note and links on the last page.
 
 ## 0.4.1
