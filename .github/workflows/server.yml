@@ -32,7 +32,7 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:47813/v1/status)" = 401
           test "$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $KEY" -H 'Origin: http://evil.example' http://127.0.0.1:47813/v1/status)" = 403
           curl -fsS -H "Authorization: Bearer $KEY" http://127.0.0.1:47813/v1/status | grep -q '"total"'
-          curl -fsS -H "Authorization: Bearer $KEY" -H 'Content-Type: application/json' -d '{"url":"https://github.com/Shahrukhalid/nexonic-download-manager/raw/main/VERSION"}' http://127.0.0.1:47813/v1/downloads | grep -q '"ids"'
+          curl -fsS -H "Authorization: Bearer $KEY" -H 'Content-Type: application/json' -d '{"url":"https://github.com/nexonic-technologies/nexonic-download-manager/raw/main/VERSION"}' http://127.0.0.1:47813/v1/downloads | grep -q '"ids"'
           for i in $(seq 1 30); do ls "$NDM_DOWNLOADS" 2>/dev/null | grep -q VERSION && break; sleep 1; done
           find "$NDM_DOWNLOADS" -name 'VERSION*' | grep -q .
           kill %1; wait || true
