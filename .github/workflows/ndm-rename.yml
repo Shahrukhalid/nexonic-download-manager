@@ -37,7 +37,7 @@ jobs:
           ]
           for f in subprocess.check_output(['git', 'ls-files'], text=True).split('\n'):
               p = pathlib.Path(f)
-              if not f or f in skip or not p.is_file(): continue
+              if not f or f in skip or f.startswith('.github/workflows/') or not p.is_file(): continue
               try: s = p.read_text(encoding='utf-8')
               except Exception: continue
               o = s
