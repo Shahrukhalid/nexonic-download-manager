@@ -1,3 +1,13 @@
+## 0.36.2
+
+- **Now published by Nexonic Technologies.** The project has moved to
+  [github.com/nexonic-technologies](https://github.com/nexonic-technologies) and its official website is
+  [nexonictechnologies.com/project/ndm](https://nexonictechnologies.com/project/ndm/). The About window, installers,
+  package details, licence, terms and help now name Nexonic Technologies, and every link points to the new home.
+- **About window:** "Made by Nexonic Technologies" opens nexonictechnologies.com, and Website opens the app's own page.
+- **winget:** the package ID stays `Shahrukhalid.NexonicDownloadManager`, so existing winget installs keep updating;
+  the publisher shown is now Nexonic Technologies.
+
 ## 0.36.1
 
 - **Mac: no more About window popping up.** It used to open by itself after downloads from the browser and after an
@@ -52,8 +62,8 @@
 
 - **Mac: resize the download list's columns** by dragging their edges (Size, Progress, Speed, Time Left and the rest
   had fixed widths). The app remembers the widths you choose.
-- **Homebrew:** this repository is now the tap. New installs: `brew tap shahrukhalid/nexonic
-  https://github.com/Shahrukhalid/nexonic-download-manager`, then `brew install --cask nexonic-download-manager`.
+- **Homebrew:** this repository is now the tap. New installs: `brew tap nexonic-technologies/nexonic
+  https://github.com/nexonic-technologies/nexonic-download-manager`, then `brew install --cask nexonic-download-manager`.
 
 ## 0.32.0
 
@@ -931,7 +941,7 @@ Torrent functionality is unchanged from v0.9.0. Native all-platform torrent deve
 
 - New app icon on Mac, Windows and in the browser extension.
 - Mac installer window: clear "drag to Applications" layout, the browser add-ons below, and a thank-you note with links
-  to github.com/Shahrukhalid and www.shahrukhalid.com.
+  to github.com/nexonic-technologies and nexonictechnologies.com.
 - Windows installer: the same thank-you note and links on the last page.
 
 ## 0.4.1

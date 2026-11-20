@@ -9,7 +9,7 @@ TERMS OF USE AND LICENSE AGREEMENT
 Please read these terms before installing or using Nexonic Download Manager ("the Software"). By installing, copying or using the Software you agree to these terms. If you do not agree, do not install or use it.
 
 1. LICENSE
-The Software is free and open-source, made by Shahrukh Khalid and released under the MIT License or the Apache License 2.0, at your option (the MIT text is below; the Apache text is in LICENSE-APACHE and at https://www.apache.org/licenses/LICENSE-2.0). You may use, copy, modify and share it, for personal or commercial purposes, free of charge, as long as the copyright notice and the chosen license are kept.
+The Software is free and open-source, made by Nexonic Technologies and released under the MIT License or the Apache License 2.0, at your option (the MIT text is below; the Apache text is in LICENSE-APACHE and at https://www.apache.org/licenses/LICENSE-2.0). You may use, copy, modify and share it, for personal or commercial purposes, free of charge, as long as the copyright notice and the chosen license are kept.
 
 2. YOUR RESPONSIBILITY
 The Software is a tool that downloads files and media that you point it to. You alone are responsible for what you download and how you use it. You agree to:
@@ -40,16 +40,16 @@ IN NO EVENT SHALL THE AUTHOR OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAG
 
 8. CHANGES
 These terms may be updated with new versions of the Software. The current version is always at:
-https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/TERMS.md
+https://github.com/nexonic-technologies/nexonic-download-manager/blob/main/TERMS.md
 
 9. CONTACT
-Questions or problems: https://github.com/Shahrukhalid/nexonic-download-manager/issues
-Author: Shahrukh Khalid - https://www.shahrukhalid.com
+Questions or problems: https://github.com/nexonic-technologies/nexonic-download-manager/issues
+Author: Nexonic Technologies - https://nexonictechnologies.com
 
 --------------------------------------------------------------------------------
 MIT LICENSE
 
-Copyright (c) 2026 Shahrukh Khalid
+Copyright (c) 2026 Nexonic Technologies
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 

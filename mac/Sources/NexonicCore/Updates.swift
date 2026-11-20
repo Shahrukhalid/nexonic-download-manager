@@ -2,10 +2,10 @@ import Foundation
 
 /// Finds out whether a newer version is published on GitHub Releases.
 public enum Updates {
-    public static let latestURL = URL(string: "https://api.github.com/repos/Shahrukhalid/nexonic-download-manager/releases/latest")!
+    public static let latestURL = URL(string: "https://api.github.com/repos/nexonic-technologies/nexonic-download-manager/releases/latest")!
     /// The same details as a file attached to every release. Used when GitHub's API refuses (it allows 60 checks an
     /// hour per network, which shared office and mobile networks use up).
-    public static let mirrorURL = URL(string: "https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest/download/latest.json")!
+    public static let mirrorURL = URL(string: "https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest/download/latest.json")!
 
     public struct Release: Equatable, Sendable {
         public var version: String
@@ -18,7 +18,7 @@ public enum Updates {
     /// Only files attached to this app's own GitHub releases are ever downloaded as updates.
     public static func trustedAsset(_ url: URL) -> Bool {
         url.scheme == "https" && url.host == "github.com"
-            && url.path.hasPrefix("/Shahrukhalid/nexonic-download-manager/releases/download/")
+            && url.path.hasPrefix("/nexonic-technologies/nexonic-download-manager/releases/download/")
     }
 
     /// True when the downloaded file is exactly the one GitHub published.

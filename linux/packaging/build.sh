@@ -101,7 +101,7 @@ esac
 ZS="NexonicDownloadManager-Linux-$AI.AppImage.zsync"
 APPIMAGE_EXTRACT_AND_RUN=1 ARCH="$AI" "$TOOLDIR/appimagetool-$HOST_AI.AppImage" --no-appstream --runtime-file "$TOOLDIR/runtime-$AI" \
   --comp zstd --mksquashfs-opt -Xcompression-level --mksquashfs-opt 22 --mksquashfs-opt -b --mksquashfs-opt 1M \
-  -u "gh-releases-zsync|Shahrukhalid|nexonic-download-manager|latest|$ZS" \
+  -u "gh-releases-zsync|nexonic-technologies|nexonic-download-manager|latest|$ZS" \
   "$AD" "$OUT/NexonicDownloadManager-Linux-$AI.AppImage"
 rm -f "$OUT/$ZS" "$ZS"  # made below from the final file, whatever appimagetool did
 command -v zsyncmake >/dev/null || { echo "zsyncmake is needed for the .zsync update file (apt install zsync)" >&2; exit 1; }
@@ -129,8 +129,8 @@ Section: net
 Priority: optional
 Architecture: $DEB
 Installed-Size: $SIZE
-Maintainer: Shahrukh Khalid <90670731+Shahrukhalid@users.noreply.github.com>
-Homepage: https://github.com/Shahrukhalid/nexonic-download-manager
+Maintainer: Nexonic Technologies <info@nexonictechnologies.com>
+Homepage: https://github.com/nexonic-technologies/nexonic-download-manager
 Depends: dotnet-runtime-10.0, libc6 (>= 2.31), libstdc++6, zlib1g, libfontconfig1, libx11-6, libice6, libsm6, libssl3 | libssl3t64 | libssl1.1
 Recommends: libsecret-tools, xdg-utils, libnotify-bin
 Suggests: clamav, gnome-keyring
@@ -158,7 +158,7 @@ Version: $VERSION
 Release: 1
 Summary: Fast download manager with queues, a scheduler and video downloads
 License: MIT OR Apache-2.0
-URL: https://github.com/Shahrukhalid/nexonic-download-manager
+URL: https://github.com/nexonic-technologies/nexonic-download-manager
 AutoReqProv: no
 Requires: fontconfig
 Requires: dotnet-runtime-10.0

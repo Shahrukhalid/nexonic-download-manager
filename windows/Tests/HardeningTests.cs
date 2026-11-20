@@ -407,13 +407,13 @@ public class UpdateTests
         File.WriteAllText(file, "abc");
         const string sha = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
         var r = Updates.Parse("{\"tag_name\":\"v0.7.0\",\"html_url\":\"https://x/r\",\"assets\":[{\"name\":\"Setup.exe\"," +
-                              "\"browser_download_url\":\"https://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v0.7.0/Setup.exe\"," +
+                              "\"browser_download_url\":\"https://github.com/nexonic-technologies/nexonic-download-manager/releases/download/v0.7.0/Setup.exe\"," +
                               "\"digest\":\"sha256:BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD\"},{\"name\":\"old.zip\",\"browser_download_url\":\"https://github.com/x\"}]}")!;
         Assert.Equal(sha, Updates.Digest(r, "Setup.exe"));
         Assert.Null(Updates.Digest(r, "old.zip"));  // no published checksum: not installed automatically
         Assert.True(Updates.TrustedAsset(r.Assets["Setup.exe"]));
-        Assert.False(Updates.TrustedAsset("http://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v1/a.exe"));
-        Assert.False(Updates.TrustedAsset("https://github.com.evil.io/Shahrukhalid/nexonic-download-manager/releases/download/v1/a.exe"));
+        Assert.False(Updates.TrustedAsset("http://github.com/nexonic-technologies/nexonic-download-manager/releases/download/v1/a.exe"));
+        Assert.False(Updates.TrustedAsset("https://github.com.evil.io/nexonic-technologies/nexonic-download-manager/releases/download/v1/a.exe"));
         Assert.False(Updates.TrustedAsset("https://github.com/someone/else/releases/download/v1/a.exe"));
         Assert.True(Updates.Verify(file, sha));
         File.WriteAllText(file, "abd");

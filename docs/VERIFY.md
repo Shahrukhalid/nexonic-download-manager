@@ -26,7 +26,7 @@ to download: the signature names the workflow that made it. With [cosign](https:
 ```sh
 cosign verify-blob SHA256SUMS.txt \
   --bundle SHA256SUMS.txt.sigstore.json \
-  --certificate-identity-regexp '^https://github.com/Shahrukhalid/nexonic-download-manager/' \
+  --certificate-identity-regexp '^https://github.com/nexonic-technologies/nexonic-download-manager/' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
@@ -37,7 +37,7 @@ cosign verify-blob SHA256SUMS.txt \
 Every release file has a GitHub build attestation. With the [GitHub CLI](https://cli.github.com/):
 
 ```sh
-gh attestation verify NexonicDownloadManager-Mac.dmg --repo Shahrukhalid/nexonic-download-manager
+gh attestation verify NexonicDownloadManager-Mac.dmg --repo nexonic-technologies/nexonic-download-manager
 ```
 
 It shows the workflow, commit and run that produced the file.

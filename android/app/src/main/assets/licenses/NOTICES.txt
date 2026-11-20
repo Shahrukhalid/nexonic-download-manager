@@ -4,14 +4,14 @@ The Android app as a whole (the APK) is distributed under the GNU General Public
 License, version 3 (GPL-3.0), because it includes the video engine below, which is
 licensed under GPL-3.0. The full text is in GPL-3.0.txt.
 
-Nexonic's own source code (by Shahrukh Khalid) is also available separately under
+Nexonic's own source code (by Nexonic Technologies) is also available separately under
 MIT OR Apache-2.0, at your option (MIT-Nexonic.txt, Apache-2.0.txt). Both licenses
 are compatible with GPL-3.0. Nothing in the app's terms of use limits the rights the
 GPL-3.0 and the other licenses below give you.
 
 SOURCE CODE (Corresponding Source)
 - Nexonic Download Manager, exactly as built for each release: the matching version
-  tag at https://github.com/Shahrukhalid/nexonic-download-manager (build steps:
+  tag at https://github.com/nexonic-technologies/nexonic-download-manager (build steps:
   android/README.md). The source archive is also attached to every GitHub release.
 - Every release also has Android-GPL-Sources.tar.gz attached: the source of
   youtubedl-android 0.18.1 (https://github.com/yausername/youtubedl-android),
@@ -21,7 +21,7 @@ SOURCE CODE (Corresponding Source)
 - FFmpeg is built unmodified from the FFmpeg n7.1 source by scripts/build-ffmpeg.sh
   in the Nexonic repository above (https://github.com/FFmpeg/FFmpeg/tree/n7.1).
 If you cannot get any of this source, ask at
-https://github.com/Shahrukhalid/nexonic-download-manager/issues and it will be
+https://github.com/nexonic-technologies/nexonic-download-manager/issues and it will be
 provided free of charge for at least three years after the last release that
 included it.
 

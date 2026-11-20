@@ -21,7 +21,7 @@ public class LicenseTests
     {
         // Exactly two license files, so GitHub shows "MIT" and "Apache-2.0" and nothing else.
         Assert.StartsWith("MIT License", Read("LICENSE"));
-        Assert.Contains("Copyright (c) 2026 Shahrukh Khalid", Read("LICENSE"));
+        Assert.Contains("Copyright (c) 2026 Nexonic Technologies", Read("LICENSE"));
         Assert.False(File.Exists(Path.Combine(Root(), "LICENSE-MIT")));
         Assert.Contains("MIT OR Apache-2.0", Read("README.md"));
         var apache = Read("LICENSE-APACHE");

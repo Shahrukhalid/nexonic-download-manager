@@ -12,10 +12,10 @@ Commands:
   - ndm
 Installers:
   - Architecture: x64
-    InstallerUrl: https://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v0.31.0/NexonicDownloadManager-Windows-Setup.exe
+    InstallerUrl: https://github.com/nexonic-technologies/nexonic-download-manager/releases/download/v0.31.0/NexonicDownloadManager-Windows-Setup.exe
     InstallerSha256: 31125C3C6C350CFCD9978EAE235B03594CCB6703BBC063092D9488BBBFB9B14A
   - Architecture: arm64
-    InstallerUrl: https://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v0.31.0/NexonicDownloadManager-Windows-ARM64-Setup.exe
+    InstallerUrl: https://github.com/nexonic-technologies/nexonic-download-manager/releases/download/v0.31.0/NexonicDownloadManager-Windows-ARM64-Setup.exe
     InstallerSha256: 45F63DC72B85B29F319FB4B05F057649A4727DB28F94ABD895978AAEA926EA40
 ManifestType: installer
 ManifestVersion: 1.6.0

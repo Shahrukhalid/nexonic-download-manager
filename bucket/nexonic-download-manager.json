@@ -1,15 +1,15 @@
 {
     "version": "0.31.0",
     "description": "Free, open-source download manager: up to 256 automatic connections per file, every file checked, pause and resume, queues and a scheduler, batch download, site grabber, browser extension and videos from YouTube and 1,000+ other sites.",
-    "homepage": "https://github.com/Shahrukhalid/nexonic-download-manager",
+    "homepage": "https://github.com/nexonic-technologies/nexonic-download-manager",
     "license": "MIT OR Apache-2.0",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v0.31.0/NexonicDownloadManager-Windows-Portable.zip",
+            "url": "https://github.com/nexonic-technologies/nexonic-download-manager/releases/download/v0.31.0/NexonicDownloadManager-Windows-Portable.zip",
             "hash": "6e0f5d03288b484afad0b8c120a517321a1f15118739fec89e68e53d85f59d04"
         },
         "arm64": {
-            "url": "https://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v0.31.0/NexonicDownloadManager-Windows-ARM64-Portable.zip",
+            "url": "https://github.com/nexonic-technologies/nexonic-download-manager/releases/download/v0.31.0/NexonicDownloadManager-Windows-ARM64-Portable.zip",
             "hash": "39788fa2382fb81935ad594481574d7cbc62683c6f69cb1264d55cdd9c737cfc"
         }
     },
@@ -26,15 +26,15 @@
         ]
     ],
     "checkver": {
-        "github": "https://github.com/Shahrukhalid/nexonic-download-manager"
+        "github": "https://github.com/nexonic-technologies/nexonic-download-manager"
     },
     "autoupdate": {
         "architecture": {
             "64bit": {
-                "url": "https://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v$version/NexonicDownloadManager-Windows-Portable.zip"
+                "url": "https://github.com/nexonic-technologies/nexonic-download-manager/releases/download/v$version/NexonicDownloadManager-Windows-Portable.zip"
             },
             "arm64": {
-                "url": "https://github.com/Shahrukhalid/nexonic-download-manager/releases/download/v$version/NexonicDownloadManager-Windows-ARM64-Portable.zip"
+                "url": "https://github.com/nexonic-technologies/nexonic-download-manager/releases/download/v$version/NexonicDownloadManager-Windows-ARM64-Portable.zip"
             }
         }
     }

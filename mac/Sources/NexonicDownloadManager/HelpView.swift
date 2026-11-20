@@ -3,15 +3,16 @@ import SwiftUI
 
 /// Links shown in the About window and the Help menu.
 enum AppLinks {
-    static let author = "Shahrukh Khalid"
-    static let website = URL(string: "https://www.shahrukhalid.com")!
-    static let github = URL(string: "https://github.com/Shahrukhalid")!
-    static let project = URL(string: "https://github.com/Shahrukhalid/nexonic-download-manager")!
-    static let onlineHelp = URL(string: "https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/docs/HELP.md")!
-    static let releases = URL(string: "https://github.com/Shahrukhalid/nexonic-download-manager/releases/latest")!
-    static let reportProblem = URL(string: "https://github.com/Shahrukhalid/nexonic-download-manager/issues/new")!
-    static let terms = URL(string: "https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/TERMS.md")!
-    static let license = URL(string: "https://github.com/Shahrukhalid/nexonic-download-manager/blob/main/LICENSE")!
+    static let author = "Nexonic Technologies"
+    static let company = URL(string: "https://nexonictechnologies.com")!
+    static let website = URL(string: "https://nexonictechnologies.com/project/ndm/")!
+    static let github = URL(string: "https://github.com/nexonic-technologies")!
+    static let project = URL(string: "https://github.com/nexonic-technologies/nexonic-download-manager")!
+    static let onlineHelp = URL(string: "https://github.com/nexonic-technologies/nexonic-download-manager/blob/main/docs/HELP.md")!
+    static let releases = URL(string: "https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest")!
+    static let reportProblem = URL(string: "https://github.com/nexonic-technologies/nexonic-download-manager/issues/new")!
+    static let terms = URL(string: "https://github.com/nexonic-technologies/nexonic-download-manager/blob/main/TERMS.md")!
+    static let license = URL(string: "https://github.com/nexonic-technologies/nexonic-download-manager/blob/main/LICENSE")!
     static let support = URL(string: "https://www.patreon.com/Shahrukhalid")!
 
     static var version: String {
@@ -73,7 +74,7 @@ enum HelpContent {
         ]),
         HelpTopic(id: "trouble", title: "Troubleshooting", symbol: "wrench.and.screwdriver", sections: [
             HelpSection(heading: "A link has expired", text: "Right-click the download, choose Refresh Link and paste a fresh link. The download continues without starting over."),
-            HelpSection(heading: "macOS won't open the app", text: "Install or update with one Terminal command and macOS won't ask: curl -fsSL https://shahrukhalid.github.io/nexonic-download-manager/install.sh | bash — otherwise open System Settings, then Privacy & Security, and click Open Anyway. On macOS 13 and 14 you can also right-click the app and choose Open."),
+            HelpSection(heading: "macOS won't open the app", text: "Install or update with one Terminal command and macOS won't ask: curl -fsSL https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/main/site/install.sh | bash — otherwise open System Settings, then Privacy & Security, and click Open Anyway. On macOS 13 and 14 you can also right-click the app and choose Open."),
             HelpSection(heading: "macOS says the app is damaged", text: "Open Terminal and run: xattr -cr \"/Applications/Nexonic Download Manager.app\" Then open the app again. This happens because the app is free and not sold through Apple."),
             HelpSection(heading: "The old icon still shows", text: "Install the new version over the old one in Applications, quit the app and open it again. Restarting the Mac refreshes the icon cache."),
             HelpSection(heading: "The browser doesn't hand over downloads", text: "Open the app once so it can register itself with your browsers, then restart the browser."),
@@ -136,7 +137,7 @@ struct AboutView: View {
                 .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
             HStack(spacing: 4) {
                 Text("Made by")
-                Link(AppLinks.author, destination: AppLinks.website)
+                Link(AppLinks.author, destination: AppLinks.company)
             }
             .padding(.top, 6)
             HStack(spacing: 14) {

@@ -4,9 +4,9 @@
 
 Please report security problems privately, not in a public issue:
 
-- Use **Report a vulnerability** on the [Security tab](https://github.com/Shahrukhalid/nexonic-download-manager/security)
+- Use **Report a vulnerability** on the [Security tab](https://github.com/nexonic-technologies/nexonic-download-manager/security)
   of this repository (GitHub's private vulnerability reporting), or
-- email **sk@shahrukhalid.com** with "Security" in the subject.
+- email **info@nexonictechnologies.com** with "Security" in the subject.
 
 Include the app and version (Help › About), your system, and the steps that show the problem. You will get a reply
 within a few days. Please give us a reasonable time to fix it before you publish details.

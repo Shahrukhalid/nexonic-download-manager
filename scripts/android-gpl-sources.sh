@@ -126,7 +126,7 @@ This archive holds:
   checked against the recipes);
 - COMPONENTS.txt: every component and where its source came from.
 Nexonic's own source code is the "Source code" archive of the same release, or the matching tag at
-https://github.com/Shahrukhalid/nexonic-download-manager. Questions: open an issue in that repository.
+https://github.com/nexonic-technologies/nexonic-download-manager. Questions: open an issue in that repository.
 TXT
 if grep -q 'NOT INCLUDED' "$ROOT/COMPONENTS.txt"; then
   echo "::error::Source collection is incomplete; refusing to package an incomplete archive."

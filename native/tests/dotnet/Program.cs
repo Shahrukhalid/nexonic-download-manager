@@ -34,22 +34,35 @@ try
     new Random(42).NextBytes(bytes);
     await File.WriteAllBytesAsync(Path.Combine(source, "selected.bin"), bytes);
     await File.WriteAllTextAsync(Path.Combine(source, "skipped.txt"), "Legal Nexonic test data\n");
-    using var seed = new NativeTorrentSession(Path.Combine(root, "seed-state"), true, false, library, bind: "127.0.0.1");
-    var metadata = seed.Invoke(new { action = "create_torrent", path = source }).GetProperty("metainfo").GetString()!;
-    seed.Invoke(new { action = "add", id = "seed", source = "fixture", metainfo = metadata, preview = false,
-        destination = Path.GetDirectoryName(source), seed = true, ratio_limit = 0, upload_limit = 0 });
-    seed.Invoke(new { action = "resume", id = "seed" });
-    var seedStatus = await Wait(seed, "seed", s => s.GetProperty("state").GetString() == "seeding");
     // Every session here is held to the loopback adapter: on Windows "all adapters" gives each adapter its own port,
     // and the one reported need not be the loopback one the peers connect to.
-    // The listen socket opens shortly after seeding starts: wait for its port (0 until then).
+    // The listen socket opens shortly after seeding starts (port 0 until then). On a busy CI machine it now and then
+    // never opens; a fresh seeder session then gets a new one (same approach as native/tests/engine_test.cpp).
+    NativeTorrentSession? seeder = null;
+    string metadata = "";
+    JsonElement seedStatus = default;
     var port = 0;
-    for (var tries = 0; port <= 0 && tries < 150; tries++)
+    var listenError = "";
+    for (var attempt = 0; attempt < 3 && port <= 0; attempt++)
     {
-        port = seed.Invoke(new { action = "list" }).GetProperty("listen_port").GetInt32();
-        if (port <= 0) await Task.Delay(100);
+        seeder?.Dispose();
+        seeder = new NativeTorrentSession(Path.Combine(root, "seed-state-" + attempt), true, false, library, bind: "127.0.0.1");
+        metadata = seeder.Invoke(new { action = "create_torrent", path = source }).GetProperty("metainfo").GetString()!;
+        seeder.Invoke(new { action = "add", id = "seed", source = "fixture", metainfo = metadata, preview = false,
+            destination = Path.GetDirectoryName(source), seed = true, ratio_limit = 0, upload_limit = 0 });
+        seeder.Invoke(new { action = "resume", id = "seed" });
+        seedStatus = await Wait(seeder, "seed", s => s.GetProperty("state").GetString() == "seeding");
+        for (var tries = 0; port <= 0 && tries < 100; tries++)
+        {
+            var listed = seeder.Invoke(new { action = "list" });
+            port = listed.GetProperty("listen_port").GetInt32();
+            if (listed.TryGetProperty("listen_error", out var error)) listenError = error.GetString() ?? "";
+            if (port <= 0) await Task.Delay(100);
+        }
+        if (port <= 0) Console.Error.WriteLine($"Seeder had no listen port (attempt {attempt + 1}){(listenError.Length > 0 ? ": " + listenError : "")}");
     }
-    Require(port > 0, "No peer port");
+    using var seed = seeder!;
+    Require(port > 0, "No peer port" + (listenError.Length > 0 ? ": " + listenError : ""));
     // connect_peer is a one-shot hint (no DHT or trackers here): repeat it each second until a peer is attached.
     var ticks = 0;
     bool Hint(NativeTorrentSession engine, string id, JsonElement s)

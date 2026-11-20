@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Writes the package-manager files for a published release, with the checksums GitHub lists for its files:
   packaging/winget/   winget manifests (to submit to microsoft/winget-pkgs)
-  bucket/             Scoop bucket (scoop bucket add nexonic https://github.com/Shahrukhalid/nexonic-download-manager)
-  Casks/              Homebrew cask (this repository is the tap: brew tap shahrukhalid/nexonic <repo URL>)
+  bucket/             Scoop bucket (scoop bucket add nexonic https://github.com/nexonic-technologies/nexonic-download-manager)
+  Casks/              Homebrew cask (this repository is the tap: brew tap nexonic-technologies/nexonic <repo URL>)
 Usage: scripts/package-manifests.py [VERSION]   (default: the VERSION file; the release must be published)
 Nothing is submitted anywhere; the files are only written into this repository for review.
 """
@@ -10,7 +10,7 @@ import json, sys, urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-REPO = "Shahrukhalid/nexonic-download-manager"
+REPO = "nexonic-technologies/nexonic-download-manager"
 VERSION = sys.argv[1] if len(sys.argv) > 1 else (ROOT / "VERSION").read_text().strip()
 BASE = f"https://github.com/{REPO}/releases/download/v{VERSION}"
 DESCRIPTION = ("Free, open-source download manager: up to 256 automatic connections per file, every file checked, pause and resume, queues and a scheduler, "
@@ -58,8 +58,8 @@ ManifestVersion: 1.6.0
 (w / f"{ident}.locale.en-US.yaml").write_text(head + f"""PackageIdentifier: {ident}
 PackageVersion: {VERSION}
 PackageLocale: en-US
-Publisher: Shahrukh Khalid
-PublisherUrl: https://www.shahrukhalid.com
+Publisher: Nexonic Technologies
+PublisherUrl: https://nexonictechnologies.com
 PublisherSupportUrl: https://github.com/{REPO}/issues
 PackageName: Nexonic Download Manager
 PackageUrl: https://github.com/{REPO}
