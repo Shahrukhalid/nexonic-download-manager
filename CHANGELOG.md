@@ -5,7 +5,8 @@
   [nexonictechnologies.com/project/ndm](https://nexonictechnologies.com/project/ndm/). The About window, installers,
   package details, licence, terms and help now name Nexonic Technologies, and every link points to the new home.
 - **About window:** "Made by Nexonic Technologies" opens nexonictechnologies.com, and Website opens the app's own page.
-- **winget:** the package ID is now `NexonicTechnologies.NexonicDownloadManager`.
+- **winget:** the package ID stays `Shahrukhalid.NexonicDownloadManager`, so existing winget installs keep updating;
+  the publisher shown is now Nexonic Technologies.
 
 ## 0.36.1
 
