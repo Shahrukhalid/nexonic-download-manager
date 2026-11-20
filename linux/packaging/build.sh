@@ -129,7 +129,7 @@ Section: net
 Priority: optional
 Architecture: $DEB
 Installed-Size: $SIZE
-Maintainer: Shahrukh Khalid <90670731+Shahrukhalid@users.noreply.github.com>
+Maintainer: Nexonic Technologies <info@nexonictechnologies.com>
 Homepage: https://github.com/nexonic-technologies/nexonic-download-manager
 Depends: dotnet-runtime-10.0, libc6 (>= 2.31), libstdc++6, zlib1g, libfontconfig1, libx11-6, libice6, libsm6, libssl3 | libssl3t64 | libssl1.1
 Recommends: libsecret-tools, xdg-utils, libnotify-bin

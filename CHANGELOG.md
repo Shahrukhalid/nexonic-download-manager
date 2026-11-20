@@ -1,3 +1,12 @@
+## 0.36.2
+
+- **Now published by Nexonic Technologies.** The project has moved to
+  [github.com/nexonic-technologies](https://github.com/nexonic-technologies) and its official website is
+  [nexonictechnologies.com/project/ndm](https://nexonictechnologies.com/project/ndm/). The About window, installers,
+  package details, licence, terms and help now name Nexonic Technologies, and every link points to the new home.
+- **About window:** "Made by Nexonic Technologies" opens nexonictechnologies.com, and Website opens the app's own page.
+- **winget:** the package ID is now `NexonicTechnologies.NexonicDownloadManager`.
+
 ## 0.36.1
 
 - **Mac: no more About window popping up.** It used to open by itself after downloads from the browser and after an

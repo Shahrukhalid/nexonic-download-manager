@@ -4,7 +4,7 @@ The Android app as a whole (the APK) is distributed under the GNU General Public
 License, version 3 (GPL-3.0), because it includes the video engine below, which is
 licensed under GPL-3.0. The full text is in GPL-3.0.txt.
 
-Nexonic's own source code (by Shahrukh Khalid) is also available separately under
+Nexonic's own source code (by Nexonic Technologies) is also available separately under
 MIT OR Apache-2.0, at your option (MIT-Nexonic.txt, Apache-2.0.txt). Both licenses
 are compatible with GPL-3.0. Nothing in the app's terms of use limits the rights the
 GPL-3.0 and the other licenses below give you.

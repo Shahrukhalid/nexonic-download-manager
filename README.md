@@ -20,7 +20,9 @@ X, TikTok and 1,000+ sites on desktop and Android.
 ![iOS 17+ (testing)](https://img.shields.io/badge/iPhone%20%26%20iPad-testing-555555)
 [![MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](LICENSE)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16392/badge)](https://www.bestpractices.dev/projects/16392)
-[![Website](https://img.shields.io/badge/website-online-2563eb)](https://nexonictechnologies.com/project/ndm/)
+[![Website](https://img.shields.io/badge/website-nexonictechnologies.com-4f46e5)](https://nexonictechnologies.com/project/ndm/)
+
+**[Official website](https://nexonictechnologies.com/project/ndm/)** · **[Download](https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest)** · **[User guide](docs/HELP.md)** · **[What's new](CHANGELOG.md)** · **[Contact us](https://nexonictechnologies.com/contact/)**
 
 <img src="https://raw.githubusercontent.com/nexonic-technologies/nexonic-download-manager/screenshots/mac-main.png" alt="Nexonic Download Manager on macOS" width="880">
 
@@ -264,6 +266,10 @@ right to save.
 - **Report a problem:** [open an issue](https://github.com/nexonic-technologies/nexonic-download-manager/issues/new) with your
   system, the app version (from About) and the link if it is public.
 - **What's new:** [CHANGELOG.md](CHANGELOG.md) and the [releases page](https://github.com/nexonic-technologies/nexonic-download-manager/releases).
+- **Website:** [nexonictechnologies.com/project/ndm](https://nexonictechnologies.com/project/ndm/), with downloads for every
+  platform, the newest features and a quick guide.
+- **Contact:** [nexonictechnologies.com/contact](https://nexonictechnologies.com/contact/) or
+  [info@nexonictechnologies.com](mailto:info@nexonictechnologies.com).
 
 ## Support the project
 
@@ -296,7 +302,7 @@ cd ios && NDM_VERSION=$(cat ../VERSION) xcodegen   # iPhone/iPad (Xcode 16, Xcod
 
 Licensed under either of the [MIT License](LICENSE) or the [Apache License 2.0](LICENSE-APACHE), at your option
 (SPDX: `MIT OR Apache-2.0`).
-© 2026 Shahrukh Khalid. Not affiliated with any of the sites mentioned;
+© 2026 Nexonic Technologies. Not affiliated with any of the sites mentioned;
 their names belong to their owners.
 
 Unless you explicitly state otherwise, any contribution you submit for inclusion is dual licensed as above,
@@ -305,5 +311,7 @@ without any additional terms or conditions. Third-party components keep their ow
 The Android app as a whole is distributed under GPL-3.0, because its video engine is GPL-3.0
 ([details](android/README.md#license)).
 
-Made by **[Shahrukh Khalid](https://www.shahrukhalid.com)** · [GitHub](https://github.com/nexonic-technologies). If this app
-saves you time, please ⭐ star the repo so others can find it.
+Made by **[Nexonic Technologies](https://nexonictechnologies.com)** · [Website](https://nexonictechnologies.com/project/ndm/) ·
+[GitHub](https://github.com/nexonic-technologies) · [LinkedIn](https://www.linkedin.com/company/nexonic-technologies/) ·
+[YouTube](https://www.youtube.com/@NexonicTechnologies). If this app saves you time, please ⭐ star the repo so others can
+find it.

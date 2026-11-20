@@ -19,7 +19,7 @@ else
   PASS="$(openssl rand -base64 32 | tr -dc 'A-Za-z0-9' | head -c 32)"
   KEY="$(mktemp)"; CERT="$(mktemp)"
   openssl req -x509 -newkey rsa:4096 -sha256 -days 10950 -nodes -keyout "$KEY" -out "$CERT" \
-    -subj "/CN=Shahrukh Khalid/O=Nexonic/C=PK" 2>/dev/null
+    -subj "/CN=Nexonic Technologies/O=Nexonic Technologies/C=PK" 2>/dev/null
   # PKCS12 with widely supported algorithms so every JDK can read it.
   openssl pkcs12 -export -name "$ALIAS" -inkey "$KEY" -in "$CERT" -out "$KS" -passout "pass:$PASS" \
     -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -macalg sha1 2>/dev/null \

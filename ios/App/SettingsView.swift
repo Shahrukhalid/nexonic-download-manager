@@ -75,7 +75,7 @@ struct SettingsView: View {
                     Link("Source Code and Help", destination: URL(string: "https://github.com/nexonic-technologies/nexonic-download-manager")!)
                     Link("Report a Problem", destination: URL(string: "https://github.com/nexonic-technologies/nexonic-download-manager/issues/new")!)
                     Link("Support the Project", destination: URL(string: "https://www.patreon.com/Shahrukhalid")!)
-                    Text("Free and open source (MIT or Apache-2.0) by Shahrukh Khalid. Only download what you have the right to save; copy-protected video is not supported.")
+                    Text("Free and open source (MIT or Apache-2.0) by Nexonic Technologies. Only download what you have the right to save; copy-protected video is not supported.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
             }

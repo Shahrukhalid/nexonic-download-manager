@@ -23,7 +23,7 @@ for need in ("NexonicDownloadManager-Windows-Setup.exe", "NexonicDownloadManager
     if need not in sha:
         sys.exit(f"{need} has no checksum in v{VERSION}'s latest.json")
 
-ident = "Shahrukhalid.NexonicDownloadManager"
+ident = "NexonicTechnologies.NexonicDownloadManager"
 # Windows on Arm files (from 0.28.0): listed when the release has them.
 ARM_SETUP, ARM_ZIP = "NexonicDownloadManager-Windows-ARM64-Setup.exe", "NexonicDownloadManager-Windows-ARM64-Portable.zip"
 ARM_INSTALLER = (f"  - Architecture: arm64\n    InstallerUrl: {BASE}/{ARM_SETUP}\n    InstallerSha256: {sha[ARM_SETUP].upper()}\n"
@@ -58,7 +58,7 @@ ManifestVersion: 1.6.0
 (w / f"{ident}.locale.en-US.yaml").write_text(head + f"""PackageIdentifier: {ident}
 PackageVersion: {VERSION}
 PackageLocale: en-US
-Publisher: Shahrukh Khalid
+Publisher: Nexonic Technologies
 PublisherUrl: https://nexonictechnologies.com
 PublisherSupportUrl: https://github.com/{REPO}/issues
 PackageName: Nexonic Download Manager

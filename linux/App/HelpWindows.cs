@@ -11,8 +11,9 @@ namespace Nexonic.App;
 /// <summary>Help and About windows, with the same topics and links as the Windows and Mac apps.</summary>
 public static class HelpWindows
 {
-    public const string Author = "Shahrukh Khalid";
-    public const string Website = "https://nexonictechnologies.com";
+    public const string Author = "Nexonic Technologies";
+    public const string Company = "https://nexonictechnologies.com";
+    public const string Website = "https://nexonictechnologies.com/project/ndm/";
     public const string GitHub = "https://github.com/nexonic-technologies";
     public const string Project = "https://github.com/nexonic-technologies/nexonic-download-manager";
     public const string OnlineHelp = Project + "/blob/main/docs/HELP.md";
@@ -142,7 +143,7 @@ public static class HelpWindows
         p.Children.Add(new StackPanel
         {
             Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 12, 0, 0),
-            Children = { new TextBlock { Text = "Made by ", VerticalAlignment = VerticalAlignment.Center }, Ui.Link(Author, Website) },
+            Children = { new TextBlock { Text = "Made by ", VerticalAlignment = VerticalAlignment.Center }, Ui.Link(Author, Company) },
         });
         p.Children.Add(new WrapPanel
         {

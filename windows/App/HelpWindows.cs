@@ -12,8 +12,9 @@ namespace Nexonic.App;
 /// <summary>Help and About windows, with the same topics and links as the Mac app.</summary>
 public static class HelpWindows
 {
-    public const string Author = "Shahrukh Khalid";
-    public const string Website = "https://nexonictechnologies.com";
+    public const string Author = "Nexonic Technologies";
+    public const string Company = "https://nexonictechnologies.com";
+    public const string Website = "https://nexonictechnologies.com/project/ndm/";
     public const string GitHub = "https://github.com/nexonic-technologies";
     public const string Project = "https://github.com/nexonic-technologies/nexonic-download-manager";
     public const string OnlineHelp = Project + "/blob/main/docs/HELP.md";
@@ -175,7 +176,7 @@ public static class HelpWindows
         p.Children.Add(new TextBlock { Text = "Free, open-source download manager for Mac, Windows, Linux, Android, iPhone and iPad.", Foreground = Brushes.Gray, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 6, 0, 0) });
         var made = new TextBlock { HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 12, 0, 0) };
         made.Inlines.Add(new Run("Made by "));
-        made.Inlines.Add(Link(Author, Website));
+        made.Inlines.Add(Link(Author, Company));
         p.Children.Add(made);
         p.Children.Add(LinkRow(("Website", Website), ("GitHub", GitHub), ("Source Code", Project), ("Report a Problem", ReportProblem)));
         p.Children.Add(LinkRow((L.T("Support the Project"), Support)));

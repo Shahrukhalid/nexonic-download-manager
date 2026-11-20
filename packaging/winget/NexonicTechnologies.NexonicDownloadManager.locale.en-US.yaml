@@ -1,8 +1,8 @@
 # Created with scripts/package-manifests.py
-PackageIdentifier: Shahrukhalid.NexonicDownloadManager
+PackageIdentifier: NexonicTechnologies.NexonicDownloadManager
 PackageVersion: 0.31.0
 PackageLocale: en-US
-Publisher: Shahrukh Khalid
+Publisher: Nexonic Technologies
 PublisherUrl: https://nexonictechnologies.com
 PublisherSupportUrl: https://github.com/nexonic-technologies/nexonic-download-manager/issues
 PackageName: Nexonic Download Manager

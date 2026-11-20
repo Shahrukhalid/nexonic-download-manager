@@ -4,11 +4,11 @@
 AppId={{6F1C2E4B-8B7D-4C55-9E2A-3D9B1F0A7C21}
 AppName=Nexonic Download Manager
 AppVersion={#Version}
-AppPublisher=Shahrukh Khalid
+AppPublisher=Nexonic Technologies
 AppPublisherURL=https://nexonictechnologies.com
 AppSupportURL=https://github.com/nexonic-technologies/nexonic-download-manager/issues
 AppUpdatesURL=https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest
-AppCopyright=Copyright (c) 2026 Shahrukh Khalid. MIT OR Apache-2.0.
+AppCopyright=Copyright (c) 2026 Nexonic Technologies. MIT OR Apache-2.0.
 LicenseFile=..\packaging\TERMS.txt
 DefaultDirName={localappdata}\Programs\Nexonic Download Manager
 DefaultGroupName=Nexonic Download Manager

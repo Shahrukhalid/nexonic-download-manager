@@ -3,8 +3,9 @@ import SwiftUI
 
 /// Links shown in the About window and the Help menu.
 enum AppLinks {
-    static let author = "Shahrukh Khalid"
-    static let website = URL(string: "https://nexonictechnologies.com")!
+    static let author = "Nexonic Technologies"
+    static let company = URL(string: "https://nexonictechnologies.com")!
+    static let website = URL(string: "https://nexonictechnologies.com/project/ndm/")!
     static let github = URL(string: "https://github.com/nexonic-technologies")!
     static let project = URL(string: "https://github.com/nexonic-technologies/nexonic-download-manager")!
     static let onlineHelp = URL(string: "https://github.com/nexonic-technologies/nexonic-download-manager/blob/main/docs/HELP.md")!
@@ -136,7 +137,7 @@ struct AboutView: View {
                 .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
             HStack(spacing: 4) {
                 Text("Made by")
-                Link(AppLinks.author, destination: AppLinks.website)
+                Link(AppLinks.author, destination: AppLinks.company)
             }
             .padding(.top, 6)
             HStack(spacing: 14) {

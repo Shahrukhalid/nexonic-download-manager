@@ -30,8 +30,8 @@ included as published by their own projects and are not signed by this project.
 
 | Role | Members |
 |---|---|
-| Committers and reviewers | [Shahrukh Khalid](https://github.com/nexonic-technologies) |
-| Approvers | [Shahrukh Khalid](https://github.com/nexonic-technologies) |
+| Committers and reviewers | [Nexonic Technologies](https://github.com/nexonic-technologies) |
+| Approvers | [Nexonic Technologies](https://github.com/nexonic-technologies) |
 
 Changes from other contributors are reviewed by a reviewer before they are merged. All team members use multi-factor
 authentication for GitHub and SignPath.

@@ -143,4 +143,4 @@ Ctrl+F  Search · Del  Delete · F1  Help
 - [Latest version and release notes](https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest)
 - [Terms of Use and License Agreement](../TERMS.md)
 
-Made by [Shahrukh Khalid](https://www.shahrukhalid.com) · [GitHub](https://github.com/nexonic-technologies) · MIT OR Apache-2.0
+Made by [Nexonic Technologies](https://nexonictechnologies.com) · [GitHub](https://github.com/nexonic-technologies) · MIT OR Apache-2.0
