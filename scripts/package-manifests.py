@@ -23,7 +23,7 @@ for need in ("NexonicDownloadManager-Windows-Setup.exe", "NexonicDownloadManager
     if need not in sha:
         sys.exit(f"{need} has no checksum in v{VERSION}'s latest.json")
 
-ident = "NexonicTechnologies.NexonicDownloadManager"
+ident = "Shahrukhalid.NexonicDownloadManager"
 # Windows on Arm files (from 0.28.0): listed when the release has them.
 ARM_SETUP, ARM_ZIP = "NexonicDownloadManager-Windows-ARM64-Setup.exe", "NexonicDownloadManager-Windows-ARM64-Portable.zip"
 ARM_INSTALLER = (f"  - Architecture: arm64\n    InstallerUrl: {BASE}/{ARM_SETUP}\n    InstallerSha256: {sha[ARM_SETUP].upper()}\n"
