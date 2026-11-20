@@ -47,7 +47,7 @@ jobs:
         if: steps.check.outputs.go == 'true'
         uses: vedantmgoyal9/winget-releaser@b7370d4d152efdce803a26cc6ca9eee58cb2ad54 # v2
         with:
-          identifier: Shahrukhalid.NexonicDownloadManager
+          identifier: NexonicTechnologies.NexonicDownloadManager
           version: ${{ steps.check.outputs.version }}
           release-tag: ${{ steps.check.outputs.tag }}
           installers-regex: 'NexonicDownloadManager-Windows-(ARM64-)?Setup\.exe$'
