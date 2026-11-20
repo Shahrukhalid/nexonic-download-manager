@@ -1,5 +1,5 @@
 # Created with scripts/package-manifests.py
-PackageIdentifier: NexonicTechnologies.NexonicDownloadManager
+PackageIdentifier: Shahrukhalid.NexonicDownloadManager
 PackageVersion: 0.31.0
 DefaultLocale: en-US
 ManifestType: version
