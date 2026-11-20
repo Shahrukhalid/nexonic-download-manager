@@ -6,7 +6,7 @@ The files for winget, Scoop and Homebrew are made from each published release by
 | Package manager | File in this repository | How people install | Status |
 |---|---|---|---|
 | **Scoop** (Windows) | `bucket/nexonic-download-manager.json` | `scoop bucket add nexonic https://github.com/nexonic-technologies/nexonic-download-manager` then `scoop install nexonic-download-manager` | works from this repository |
-| **winget** (Windows) | `packaging/winget/` | `winget install NexonicTechnologies.NexonicDownloadManager` | after the manifests are accepted into [microsoft/winget-pkgs](https://github.com/microsoft/winget-pkgs) |
+| **winget** (Windows) | `packaging/winget/` | `winget install Shahrukhalid.NexonicDownloadManager` | after the manifests are accepted into [microsoft/winget-pkgs](https://github.com/microsoft/winget-pkgs) |
 | **Homebrew** (Mac) | `Casks/nexonic-download-manager.rb` | `brew tap nexonic-technologies/nexonic https://github.com/nexonic-technologies/nexonic-download-manager` then `brew install --cask nexonic-download-manager` | works from this repository (it is its own tap) |
 
 All three add the `ndm` command. Scoop installs the portable version (updates come through `scoop update`); winget
