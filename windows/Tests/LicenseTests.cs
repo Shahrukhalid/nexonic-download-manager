@@ -31,7 +31,7 @@ public class LicenseTests
 
     [Theory]
     [InlineData("bucket/nexonic-download-manager.json")]
-    [InlineData("packaging/winget/NexonicTechnologies.NexonicDownloadManager.locale.en-US.yaml")]
+    [InlineData("packaging/winget/Shahrukhalid.NexonicDownloadManager.locale.en-US.yaml")]
     [InlineData("scripts/package-manifests.py")]
     [InlineData("linux/packaging/build.sh")]
     [InlineData("README.md")]
