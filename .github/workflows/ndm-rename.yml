@@ -1,0 +1,107 @@
+name: Rename to Nexonic Technologies
+on:
+  push:
+    branches: [org-move]
+    paths: [.github/workflows/ndm-rename.yml]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: org-move
+      - name: Apply and commit
+        run: |
+          set -euo pipefail
+          cat > /tmp/apply.py <<'PYEOF'
+          import pathlib, subprocess, re
+          def ed(f, pairs):
+              p = pathlib.Path(f); s = p.read_text(encoding='utf-8')
+              for a, b in pairs:
+                  assert s.count(a) == 1, (f, a[:60], s.count(a)); s = s.replace(a, b)
+              p.write_text(s, encoding='utf-8')
+          skip = {'CHANGELOG.md', '.github/workflows/translate.yml', '.github/workflows/screenshots.yml', 'scripts/publish-screenshots.sh', '.github/workflows/ndm-rename.yml'}
+          rep = [
+           ('Maintainer: Shahrukh Khalid <90670731+Shahrukhalid@users.noreply.github.com>', 'Maintainer: Nexonic Technologies <info@nexonictechnologies.com>'),
+           ('[Shahrukh Khalid](https://www.shahrukhalid.com)', '[Nexonic Technologies](https://nexonictechnologies.com)'),
+           ('<a href="https://www.shahrukhalid.com" style="display:inline;color:var(--brand)">Shahrukh Khalid</a>', '<a href="https://nexonictechnologies.com" style="display:inline;color:var(--brand)">Nexonic Technologies</a>'),
+           ('"author": { "@type": "Person", "name": "Shahrukh Khalid", "url": "https://www.shahrukhalid.com" }', '"author": { "@type": "Organization", "name": "Nexonic Technologies", "url": "https://nexonictechnologies.com" }'),
+           ('Shahrukh Khalid - https://www.shahrukhalid.com', 'Nexonic Technologies - https://nexonictechnologies.com'),
+           ('[Shahrukh Khalid](https://github.com/nexonic-technologies)', '[Nexonic Technologies](https://github.com/nexonic-technologies)'),
+           ('/CN=Shahrukh Khalid/O=Nexonic/', '/CN=Nexonic Technologies/O=Nexonic Technologies/'),
+           ('Shahrukh Khalid', 'Nexonic Technologies'),
+           ('Shahrukhalid.NexonicDownloadManager', 'NexonicTechnologies.NexonicDownloadManager'),
+          ]
+          for f in subprocess.check_output(['git', 'ls-files'], text=True).split('\n'):
+              p = pathlib.Path(f)
+              if not f or f in skip or not p.is_file(): continue
+              try: s = p.read_text(encoding='utf-8')
+              except Exception: continue
+              o = s
+              for a, b in rep: s = s.replace(a, b)
+              if s != o: p.write_text(s, encoding='utf-8')
+          for f in sorted(pathlib.Path('packaging/winget').glob('Shahrukhalid.*')):
+              subprocess.check_call(['git', 'mv', str(f), str(f).replace('Shahrukhalid.', 'NexonicTechnologies.')])
+          ed('mac/Sources/NexonicDownloadManager/HelpView.swift', [
+           ('    static let website = URL(string: "https://nexonictechnologies.com")!\n',
+            '    static let company = URL(string: "https://nexonictechnologies.com")!\n    static let website = URL(string: "https://nexonictechnologies.com/project/ndm/")!\n'),
+           ('Link(AppLinks.author, destination: AppLinks.website)', 'Link(AppLinks.author, destination: AppLinks.company)')])
+          for f in ['windows/App/HelpWindows.cs', 'linux/App/HelpWindows.cs']:
+              ed(f, [('    public const string Website = "https://nexonictechnologies.com";\n',
+                      '    public const string Company = "https://nexonictechnologies.com";\n    public const string Website = "https://nexonictechnologies.com/project/ndm/";\n')])
+          ed('windows/App/HelpWindows.cs', [('made.Inlines.Add(Link(Author, Website));', 'made.Inlines.Add(Link(Author, Company));')])
+          ed('linux/App/HelpWindows.cs', [('Ui.Link(Author, Website) }', 'Ui.Link(Author, Company) }')])
+          ed('README.md', [
+           ('[![Website](https://img.shields.io/badge/website-online-2563eb)](https://nexonictechnologies.com/project/ndm/)\n',
+            '[![Website](https://img.shields.io/badge/website-nexonictechnologies.com-4f46e5)](https://nexonictechnologies.com/project/ndm/)\n\n'
+            '**[Official website](https://nexonictechnologies.com/project/ndm/)** · '
+            '**[Download](https://github.com/nexonic-technologies/nexonic-download-manager/releases/latest)** · '
+            '**[User guide](docs/HELP.md)** · '
+            '**[What\'s new](CHANGELOG.md)** · '
+            '**[Contact us](https://nexonictechnologies.com/contact/)**\n'),
+           ('- **What\'s new:** [CHANGELOG.md](CHANGELOG.md) and the [releases page](https://github.com/nexonic-technologies/nexonic-download-manager/releases).\n',
+            '- **What\'s new:** [CHANGELOG.md](CHANGELOG.md) and the [releases page](https://github.com/nexonic-technologies/nexonic-download-manager/releases).\n'
+            '- **Website:** [nexonictechnologies.com/project/ndm](https://nexonictechnologies.com/project/ndm/), with downloads for every\n'
+            '  platform, the newest features and a quick guide.\n'
+            '- **Contact:** [nexonictechnologies.com/contact](https://nexonictechnologies.com/contact/) or\n'
+            '  [info@nexonictechnologies.com](mailto:info@nexonictechnologies.com).\n'),
+           ('Made by **[Nexonic Technologies](https://nexonictechnologies.com)** · [GitHub](https://github.com/nexonic-technologies). If this app\nsaves you time, please ⭐ star the repo so others can find it.',
+            'Made by **[Nexonic Technologies](https://nexonictechnologies.com)** · [Website](https://nexonictechnologies.com/project/ndm/) ·\n'
+            '[GitHub](https://github.com/nexonic-technologies) · [LinkedIn](https://www.linkedin.com/company/nexonic-technologies/) ·\n'
+            '[YouTube](https://www.youtube.com/@NexonicTechnologies). If this app saves you time, please ⭐ star the repo so others can\nfind it.')])
+          pathlib.Path('VERSION').write_text('0.36.2\n')
+          ed('extension/manifest.json', [('"version": "0.36.1"', '"version": "0.36.2"')])
+          ed('mac/Sources/NexonicHost/main.swift', [('let version = "0.36.1"', 'let version = "0.36.2"')])
+          ed('windows/Directory.Build.props', [('<Version>0.36.1</Version>', '<Version>0.36.2</Version>')])
+          ed('windows/Host/Program.cs', [('const string Version = "0.36.1";', 'const string Version = "0.36.2";')])
+          h = pathlib.Path('packaging/RELEASE-HEADER.md'); L = h.read_text(encoding='utf-8').split('\n')
+          assert L[0] == '# Nexonic Download Manager 0.36.1' and L[2].startswith('**Mac fixes')
+          L[0] = '# Nexonic Download Manager 0.36.2'
+          L[2] = ('**Nexonic Download Manager is now published by Nexonic Technologies.** The app, its source code and its downloads have moved to '
+                  '[github.com/nexonic-technologies](https://github.com/nexonic-technologies), and its official website is '
+                  '[nexonictechnologies.com/project/ndm](https://nexonictechnologies.com/project/ndm/). The About window, installers, licence and '
+                  'help now name Nexonic Technologies, and every link points to the new home. Includes 0.36.1 (Mac About window and drag fixes).')
+          h.write_text('\n'.join(L), encoding='utf-8')
+          c = pathlib.Path('CHANGELOG.md')
+          c.write_text('''## 0.36.2
+          
+          - **Now published by Nexonic Technologies.** The project has moved to
+            [github.com/nexonic-technologies](https://github.com/nexonic-technologies) and its official website is
+            [nexonictechnologies.com/project/ndm](https://nexonictechnologies.com/project/ndm/). The About window, installers,
+            package details, licence, terms and help now name Nexonic Technologies, and every link points to the new home.
+          - **About window:** "Made by Nexonic Technologies" opens nexonictechnologies.com, and Website opens the app's own page.
+          - **winget:** the package ID is now `NexonicTechnologies.NexonicDownloadManager`.
+          
+          ''' + c.read_text(encoding='utf-8'), encoding='utf-8')
+          PYEOF
+          python3 /tmp/apply.py
+          python3 scripts/check-release.py
+          git add -A
+          git reset -q .github/workflows/ndm-rename.yml || true
+          git config user.name "Shahrukh Khalid"
+          git config user.email "90670731+Shahrukhalid@users.noreply.github.com"
+          git commit -qm "Nexonic Technologies name and links everywhere; 0.36.2"
+          git push origin HEAD:org-move
