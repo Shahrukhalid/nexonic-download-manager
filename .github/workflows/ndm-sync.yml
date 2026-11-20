@@ -1,0 +1,40 @@
+name: Sync with main
+on:
+  push:
+    branches: [org-move]
+    paths: [.github/workflows/ndm-sync.yml]
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: org-move
+          fetch-depth: 0
+      - name: Merge main and keep both changes
+        run: |
+          set -euo pipefail
+          git fetch -q origin main
+          git config user.name "Shahrukh Khalid"
+          git config user.email "90670731+Shahrukhalid@users.noreply.github.com"
+          base=$(git merge-base HEAD origin/main)
+          git merge --no-ff --no-commit origin/main || true
+          python3 - "$base" <<'PY'
+          import subprocess, sys
+          b = subprocess.check_output(['git','show',sys.argv[1]+':site/index.html'], text=True).split('\n')
+          o = subprocess.check_output(['git','show','HEAD:site/index.html'], text=True).split('\n')
+          m = subprocess.check_output(['git','show','origin/main:site/index.html'], text=True).split('\n')
+          assert len(b) == len(o) == len(m)
+          out = []
+          for x, y, z in zip(b, o, m):
+              assert y == x or z == x or y == z
+              out.append(y if y != x else z)
+          open('site/index.html', 'w', encoding='utf-8').write('\n'.join(out))
+          PY
+          git add site/index.html
+          test -z "$(git diff --name-only --diff-filter=U)"
+          git commit -qm "Merge main into org-move"
+          git push origin HEAD:org-move
